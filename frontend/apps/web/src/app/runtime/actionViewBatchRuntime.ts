@@ -33,7 +33,7 @@ export function resolveBatchActionGuardMessage(options: {
   text: (key: string, fallback: string) => string;
 }): string {
   if (options.reason === 'active_field_required') {
-    return options.text('batch_msg_model_no_active_field', '当前模型不支持 active 字段，无法批量归档/激活');
+    return options.text('batch_msg_model_no_active_field', '当前业务对象暂不支持归档状态，无法批量归档/激活');
   }
   if (options.reason === 'delete_mode_unavailable') {
     return options.text('batch_msg_delete_mode_unavailable', '当前场景暂不支持删除，请联系管理员检查删除权限。');
@@ -61,7 +61,7 @@ export function resolveBatchAssignGuardMessage(options: {
   text: (key: string, fallback: string) => string;
 }): string {
   if (options.reason === 'missing_assignee_field') {
-    return options.text('batch_msg_model_no_assignee_field', '当前模型不支持负责人字段，无法批量指派');
+    return options.text('batch_msg_model_no_assignee_field', '当前业务对象暂不支持负责人字段，无法批量指派');
   }
   if (options.reason === 'missing_assignee') {
     return options.text('batch_msg_select_assignee_first', '请先选择负责人');

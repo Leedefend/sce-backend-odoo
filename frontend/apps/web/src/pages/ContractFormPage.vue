@@ -2806,7 +2806,7 @@ function isSuggestedInternalFormField(fieldKey: string, label = '') {
   return [
     'last updated on',
     'project manager',
-    '原始录入',
+    '初始录入',
     '录入时间',
     '来源',
     '协作成员',
@@ -3954,7 +3954,7 @@ const contractMetaLine = computed(() => {
     pivot: '透视',
     graph: '图表',
   });
-  return `契约模式：${modeLabel} · 承载界面：${surfaceLabel} · 视图类型：${viewTypeLabel} · 页面状态：${profileLabels[renderProfile.value] || renderProfile.value} · 筛选项：${filters} · 流转项：${transitions} · 操作权限：${permissionLabels.join('、') || '无可用权限'}`;
+  return `配置模式：${modeLabel} · 承载界面：${surfaceLabel} · 视图类型：${viewTypeLabel} · 页面状态：${profileLabels[renderProfile.value] || renderProfile.value} · 筛选项：${filters} · 流转项：${transitions} · 操作权限：${permissionLabels.join('、') || '无可用权限'}`;
 });
 
 function viewTypeDisplayLabel(value: unknown) {
@@ -9064,32 +9064,32 @@ const viewOrchestrationHudSummary = computed(() => {
 });
 
 const hudEntries = computed(() => [
-  { label: '业务模型', value: model.value || '-' },
+  { label: '业务对象', value: model.value || '-' },
   { label: '操作编号', value: actionId.value || '-' },
   { label: '记录编号', value: recordIdDisplay.value },
   { label: '配置已加载', value: Boolean(contract.value) },
   { label: '配置可用', value: contractReadiness.value.usable },
   { label: '配置问题数', value: contractReadiness.value.issues.length },
-  { label: 'V2 暂存可用', value: v2ShadowStoreReady.value },
-  { label: 'V2 组件数', value: v2ShadowWidgetCount.value },
-  { label: 'V2 操作数', value: v2ShadowActionCount.value },
-  { label: 'V2 按钮状态数', value: v2ShadowButtonStatusCount.value },
-  { label: 'V2 字段编码数', value: v2ShadowFieldCodeCount.value },
-  { label: 'V2 字段重叠数', value: v2ShadowLegacyFieldOverlapCount.value },
-  { label: 'V2 缺失字段', value: v2ShadowLegacyFieldMissingPreview.value },
-  { label: 'V2 布局来源', value: v2ShadowLayoutSourceKind.value },
-  { label: 'V2 全局来源', value: v2ShadowGlobalSourceKind.value },
-  { label: 'V2 上下文来源', value: v2ShadowSourceContextKind.value },
-  { label: 'V2 状态字段数', value: v2ShadowStatusFieldCount.value },
-  { label: 'V2 值字段数', value: v2ShadowValueFieldCount.value },
-  { label: 'V2 主数据字段数', value: v2ShadowMainDataFieldCount.value },
-  { label: 'V2 只读值数', value: v2ShadowReadonlyValueCount.value },
-  { label: 'V2 值来源', value: v2ShadowValueSourceKind.value },
+  { label: '新版配置暂存可用', value: v2ShadowStoreReady.value },
+  { label: '新版配置组件数', value: v2ShadowWidgetCount.value },
+  { label: '新版配置操作数', value: v2ShadowActionCount.value },
+  { label: '新版配置按钮状态数', value: v2ShadowButtonStatusCount.value },
+  { label: '新版配置字段编码数', value: v2ShadowFieldCodeCount.value },
+  { label: '新版配置字段重叠数', value: v2ShadowLegacyFieldOverlapCount.value },
+  { label: '新版配置缺失字段', value: v2ShadowLegacyFieldMissingPreview.value },
+  { label: '新版配置布局来源', value: v2ShadowLayoutSourceKind.value },
+  { label: '新版配置全局来源', value: v2ShadowGlobalSourceKind.value },
+  { label: '新版配置上下文来源', value: v2ShadowSourceContextKind.value },
+  { label: '新版配置状态字段数', value: v2ShadowStatusFieldCount.value },
+  { label: '新版配置值字段数', value: v2ShadowValueFieldCount.value },
+  { label: '新版配置主数据字段数', value: v2ShadowMainDataFieldCount.value },
+  { label: '新版配置只读值数', value: v2ShadowReadonlyValueCount.value },
+  { label: '新版配置值来源', value: v2ShadowValueSourceKind.value },
   { label: '配置解析问题', value: v2ContractDecodeError.value || '-' },
-  { label: '契约视图类型', value: contract.value?.head?.view_type || contract.value?.view_type || '-' },
+  { label: '配置视图类型', value: contract.value?.head?.view_type || contract.value?.view_type || '-' },
   { label: '视图编排已应用', value: viewOrchestrationHudSummary.value.applied },
   { label: '视图编排责任层', value: viewOrchestrationHudSummary.value.owner },
-  { label: '视图编排契约数', value: viewOrchestrationHudSummary.value.contractCount },
+  { label: '视图编排配置数', value: viewOrchestrationHudSummary.value.contractCount },
   { label: '视图编排名称', value: viewOrchestrationHudSummary.value.contractNames },
   { label: '表单配置字段数', value: viewOrchestrationHudSummary.value.businessConfigFieldCount },
   { label: '跳过策略字段', value: viewOrchestrationHudSummary.value.skippedLegacyPolicyFields },

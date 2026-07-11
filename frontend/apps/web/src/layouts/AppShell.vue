@@ -1140,7 +1140,7 @@ const hudEntries = computed(() => {
   { label: '当前用户', value: userName.value || '-' },
   { label: '当前企业库', value: effectiveDb.value || '-' },
   { label: '导航版本', value: navVersion.value || '-' },
-  { label: '业务模型', value: asText(asDict(session.currentAction)?.model) || '-' },
+  { label: '业务对象', value: asText(asDict(session.currentAction)?.model) || '-' },
   { label: '处理建议类型', value: latestSuggestedAction.value?.suggested_action_kind || '-' },
   { label: '处理建议结果', value: latestSuggestedAction.value?.suggested_action_success === undefined ? '-' : (latestSuggestedAction.value.suggested_action_success ? '成功' : '失败') },
   { label: '处理建议时间', value: latestSuggestedActionTs.value },
@@ -1171,12 +1171,12 @@ const defaultKindActions = ['open_record', 'copy_trace', 'refresh'];
 const hudActions = computed(() => [
   {
     key: 'toggle-extract-stats',
-    label: showExtractionStats.value ? '隐藏抽取统计' : '显示抽取统计',
+    label: showExtractionStats.value ? '隐藏数据统计' : '显示数据统计',
     onClick: () => {
       showExtractionStats.value = !showExtractionStats.value;
       hudMessage.value = showExtractionStats.value
-        ? '抽取统计已显示。'
-        : '抽取统计已隐藏。';
+        ? '数据统计已显示。'
+        : '数据统计已隐藏。';
     },
   },
   { key: 'export-sa-all', label: '导出全部处理建议', onClick: () => exportSuggestedActionJson() },

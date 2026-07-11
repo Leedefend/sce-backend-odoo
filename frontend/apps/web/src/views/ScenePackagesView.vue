@@ -121,7 +121,7 @@
           <span>发布通道</span>
           <select v-model="exportChannel">
             <option value="stable">稳定版</option>
-            <option value="beta">灰度版</option>
+            <option value="beta">试运行版</option>
             <option value="dev">开发版</option>
           </select>
         </label>

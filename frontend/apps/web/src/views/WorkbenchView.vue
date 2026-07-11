@@ -73,7 +73,7 @@
         <span class="value">{{ route.fullPath }}</span>
       </div>
       <div v-if="diag" class="detail">
-        <span class="label">{{ pageText('hud_label_diag', '诊断') }}</span>
+        <span class="label">{{ pageText('hud_label_diag', '运行状态') }}</span>
         <span class="value">{{ diag }}</span>
       </div>
       <div v-if="showHud && diagActionType" class="detail">
@@ -306,7 +306,7 @@ const reasonLabel = computed(() => {
     case ErrorCodes.NAV_MENU_NO_ACTION:
       return pageText('reason_nav_menu_no_action', '菜单分组（无可执行动作）');
     case ErrorCodes.ACT_NO_MODEL:
-      return pageText('reason_act_no_model', '动作未绑定模型');
+      return pageText('reason_act_no_model', '入口未绑定业务对象');
     case ErrorCodes.ACT_UNSUPPORTED_TYPE:
       return pageText('reason_act_unsupported_type', '当前操作暂不支持');
     case ErrorCodes.CONTRACT_CONTEXT_MISSING:
@@ -323,7 +323,7 @@ const message = computed(() => {
     case ErrorCodes.NAV_MENU_NO_ACTION:
       return pageText('message_nav_menu_no_action', '当前菜单是目录，暂时没有可进入的子菜单。');
     case ErrorCodes.ACT_NO_MODEL:
-      return pageText('message_act_no_model', '当前动作对应的是自定义工作区，未绑定数据模型。');
+      return pageText('message_act_no_model', '当前入口对应的是自定义工作区，暂未绑定可打开的业务对象。');
     case ErrorCodes.ACT_UNSUPPORTED_TYPE:
       return pageText('message_act_unsupported_type', '');
     case ErrorCodes.CONTRACT_CONTEXT_MISSING:

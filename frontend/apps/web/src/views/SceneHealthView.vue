@@ -105,7 +105,7 @@
             <span>目标通道</span>
             <select v-model="targetChannel">
               <option value="stable">稳定版</option>
-              <option value="beta">灰度版</option>
+              <option value="beta">试运行版</option>
               <option value="dev">开发版</option>
             </select>
           </label>
@@ -245,7 +245,7 @@ const healthSchemaVersionLabel = computed(() => {
 function sceneChannelLabel(value: unknown): string {
   const channel = String(value || '');
   if (channel === 'stable') return '稳定版';
-  if (channel === 'beta') return '灰度版';
+  if (channel === 'beta') return '试运行版';
   if (channel === 'dev') return '开发版';
   return channel || '-';
 }
@@ -258,7 +258,7 @@ function runtimeSourceLabel(value: unknown): string {
   if (source === 'rollback') return '回滚稳定版';
   if (source === 'contract') return '已发布配置';
   if (source === 'fallback') return '系统补充配置';
-  if (source === 'legacy') return '历史数据适配';
+  if (source === 'legacy') return '历史数据兼容';
   if (source === 'dev') return '开发配置';
   return source.replace(/[_-]+/g, ' ');
 }

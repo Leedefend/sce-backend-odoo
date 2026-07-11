@@ -101,7 +101,7 @@ async function load() {
   error.value = '';
   truncated.value = false;
   if (!props.model) {
-    error.value = '缺少关联模型配置';
+    error.value = '缺少关联业务对象配置';
     return;
   }
   if (!Array.isArray(props.ids) || props.ids.length === 0) {
