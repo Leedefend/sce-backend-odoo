@@ -171,8 +171,29 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
 
         payload = print_mock.call_args.args[0]
         self.assertIn('"required_target_body_order_tokens": 3', payload)
+        self.assertIn('"required_doc_token_groups": 3', payload)
         self.assertIn('"required_evidence_artifact_paths": 9', payload)
         self.assertIn('"required_closeout_fields": 6', payload)
+
+    def test_duplicate_doc_token_fails(self) -> None:
+        duplicated_tokens = [*guard.REQUIRED_DOC_TOKENS, "用户体验"]
+        with mock.patch.object(guard, "REQUIRED_DOC_TOKENS", duplicated_tokens), mock.patch.dict(
+            guard.REQUIRED_DOC_TOKEN_GROUPS,
+            {"doc": duplicated_tokens},
+        ):
+            errors = guard.validate(_doc_text(), _make_text())
+
+        self.assertIn("doc token duplicated: 用户体验", errors)
+
+    def test_cross_classified_doc_token_fails(self) -> None:
+        cross_classified_paths = [*guard.REQUIRED_EVIDENCE_ARTIFACT_PATHS, "可重复验收证据"]
+        with mock.patch.object(guard, "REQUIRED_EVIDENCE_ARTIFACT_PATHS", cross_classified_paths), mock.patch.dict(
+            guard.REQUIRED_DOC_TOKEN_GROUPS,
+            {"evidence_artifact": cross_classified_paths},
+        ):
+            errors = guard.validate(_doc_text(), _make_text())
+
+        self.assertIn("doc token cross-classified: 可重复验收证据 in doc and evidence_artifact", errors)
 
     def test_doc_must_keep_frontend_backend_contract_boundary(self) -> None:
         doc_text = _doc_text().replace("前端只消费后端契约", "")

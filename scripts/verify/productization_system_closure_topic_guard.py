@@ -68,6 +68,12 @@ REQUIRED_CLOSEOUT_FIELDS = [
     "是否具备交付用户使用的条件",
 ]
 
+REQUIRED_DOC_TOKEN_GROUPS = {
+    "doc": REQUIRED_DOC_TOKENS,
+    "evidence_artifact": REQUIRED_EVIDENCE_ARTIFACT_PATHS,
+    "closeout_field": REQUIRED_CLOSEOUT_FIELDS,
+}
+
 REQUIRED_MAKE_TARGETS = [
     "verify.productization.system_closure.topic_guard",
     "verify.system_user_experience.quick",
@@ -339,6 +345,16 @@ def _tokens_in_order(text: str, tokens: list[str]) -> bool:
     return True
 
 
+def _duplicate_tokens(tokens: list[str]) -> list[str]:
+    seen: set[str] = set()
+    duplicates: list[str] = []
+    for token in tokens:
+        if token in seen and token not in duplicates:
+            duplicates.append(token)
+        seen.add(token)
+    return duplicates
+
+
 def validate(doc_text: str, make_text: str) -> list[str]:
     errors: list[str] = []
 
@@ -347,7 +363,17 @@ def validate(doc_text: str, make_text: str) -> list[str]:
     if not make_text:
         errors.append("missing Makefile")
 
-    for token in REQUIRED_DOC_TOKENS + REQUIRED_EVIDENCE_ARTIFACT_PATHS + REQUIRED_CLOSEOUT_FIELDS:
+    seen_doc_token_groups: dict[str, str] = {}
+    for group, tokens in REQUIRED_DOC_TOKEN_GROUPS.items():
+        for token in _duplicate_tokens(tokens):
+            errors.append(f"{group} token duplicated: {token}")
+        for token in tokens:
+            previous_group = seen_doc_token_groups.get(token)
+            if previous_group and previous_group != group:
+                errors.append(f"doc token cross-classified: {token} in {previous_group} and {group}")
+            seen_doc_token_groups[token] = group
+
+    for token in [token for tokens in REQUIRED_DOC_TOKEN_GROUPS.values() for token in tokens]:
         if token not in doc_text:
             errors.append(f"doc missing token: {token}")
 
@@ -404,6 +430,7 @@ def main() -> int:
         "doc": str(DOC.relative_to(ROOT)),
         "errors": errors,
         "required_doc_tokens": len(REQUIRED_DOC_TOKENS),
+        "required_doc_token_groups": len(REQUIRED_DOC_TOKEN_GROUPS),
         "required_evidence_artifact_paths": len(REQUIRED_EVIDENCE_ARTIFACT_PATHS),
         "required_closeout_fields": len(REQUIRED_CLOSEOUT_FIELDS),
         "required_make_targets": len(REQUIRED_MAKE_TARGETS),
