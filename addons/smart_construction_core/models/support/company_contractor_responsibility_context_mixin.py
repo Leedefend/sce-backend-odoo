@@ -87,24 +87,74 @@ class CompanyContractorResponsibilityContextMixin(models.AbstractModel):
         self.company_contractor_self_funding_balance = 0.0
         self.company_contractor_responsibility_notice = _("未匹配公司-承包人责任余额")
 
+    def _set_company_contractor_responsibility_context(self, summary):
+        self.ensure_one()
+        if not summary:
+            self._empty_company_contractor_responsibility_context()
+            return
+        self.company_contractor_responsibility_summary_id = summary
+        self.company_contractor_responsibility_state = summary.responsibility_state
+        self.company_contractor_arrival_unprocessed_amount = summary.arrival_unprocessed_amount
+        self.company_contractor_arrival_over_processed_amount = summary.arrival_over_processed_amount
+        self.company_contractor_self_funding_balance = summary.self_funding_balance
+        self.company_contractor_responsibility_notice = self._company_contractor_responsibility_notice(summary)
+
     @api.depends("project_id", "partner_id")
     def _compute_company_contractor_responsibility_context(self):
         Summary = self.env["sc.company.contractor.responsibility.summary"].sudo()
-        for rec in self:
-            domain = rec._responsibility_context_domain()
-            if not domain:
+        partner_records = self.filtered(lambda rec: rec.project_id and rec.partner_id)
+        partner_name_records = self - partner_records
+        summaries_by_partner = {}
+        summaries_by_partner_name = {}
+
+        if partner_records:
+            project_ids = list(set(partner_records.mapped("project_id").ids))
+            partner_ids = list(set(partner_records.mapped("partner_id").ids))
+            summaries = Summary.search(
+                [
+                    ("project_id", "in", project_ids),
+                    ("partner_id", "in", partner_ids),
+                ]
+            )
+            for summary in summaries:
+                key = (summary.project_id.id, summary.partner_id.id)
+                summaries_by_partner.setdefault(key, summary)
+
+        partner_name_keys = {}
+        for rec in partner_name_records:
+            if not rec.project_id:
                 rec._empty_company_contractor_responsibility_context()
                 continue
-            summary = Summary.search(domain, limit=1)
-            if not summary:
+            partner_name = rec._responsibility_context_partner_name()
+            if not partner_name:
                 rec._empty_company_contractor_responsibility_context()
                 continue
-            rec.company_contractor_responsibility_summary_id = summary
-            rec.company_contractor_responsibility_state = summary.responsibility_state
-            rec.company_contractor_arrival_unprocessed_amount = summary.arrival_unprocessed_amount
-            rec.company_contractor_arrival_over_processed_amount = summary.arrival_over_processed_amount
-            rec.company_contractor_self_funding_balance = summary.self_funding_balance
-            rec.company_contractor_responsibility_notice = rec._company_contractor_responsibility_notice(summary)
+            partner_name_keys[(rec.project_id.id, partner_name)] = True
+
+        if partner_name_keys:
+            summaries = Summary.search(
+                [
+                    ("project_id", "in", list({key[0] for key in partner_name_keys})),
+                    ("partner_id", "=", False),
+                    ("partner_name", "in", list({key[1] for key in partner_name_keys})),
+                ]
+            )
+            for summary in summaries:
+                key = (summary.project_id.id, summary.partner_name)
+                summaries_by_partner_name.setdefault(key, summary)
+
+        for rec in partner_records:
+            summary = summaries_by_partner.get((rec.project_id.id, rec.partner_id.id))
+            rec._set_company_contractor_responsibility_context(summary)
+
+        for rec in partner_name_records:
+            if not rec.project_id:
+                continue
+            partner_name = rec._responsibility_context_partner_name()
+            if not partner_name:
+                continue
+            summary = summaries_by_partner_name.get((rec.project_id.id, partner_name))
+            rec._set_company_contractor_responsibility_context(summary)
 
     def _company_contractor_responsibility_notice(self, summary):
         self.ensure_one()

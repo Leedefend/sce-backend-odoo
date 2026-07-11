@@ -12,6 +12,8 @@ class ScFinanceProjectCapitalPosition(models.Model):
     _auto = False
     _rec_name = "display_name"
     _order = "project_id"
+    _sc_skip_default_list_aggregates = True
+    _sc_skip_default_list_total = True
     _sc_readonly_navigation_button_methods = {
         "action_open_finance_facts",
         "action_open_interfund_facts",

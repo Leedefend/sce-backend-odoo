@@ -11,6 +11,7 @@ import { resolveDisplayText } from '../app/displayText';
 import { isConfiguredDbPinned, resolveActiveDb, resolveConfiguredDb, resolveLoginRoutingDb, setActiveDb } from '../services/dbContext';
 
 let appInitInFlight: Promise<void> | null = null;
+let appInitReadySignature = '';
 
 function resolveAvailableSceneRoute(rawPath: string): string {
   const normalized = normalizeLegacyWorkbenchPath(String(rawPath || '').trim());
@@ -1473,10 +1474,6 @@ export const useSessionStore = defineStore('session', {
           // previous bootstrap request failed.
         }
       }
-      const run = (async () => {
-      this.initStatus = 'loading';
-      this.initError = null;
-      this.initTraceId = null;
       const bootstrapIntent = String(this.bootstrapNextIntent || 'system.init').trim();
       if (bootstrapIntent === 'session.bootstrap') {
         await intentRequest({ intent: 'session.bootstrap', params: {} });
@@ -1514,6 +1511,17 @@ export const useSessionStore = defineStore('session', {
           ...(this.projectContext?.selected?.id ? { current_project_id: this.projectContext.selected.id } : {}),
         },
       };
+      const requestSignature = JSON.stringify(requestParams.params);
+      if (!options.force && this.isReady && this.initStatus === 'ready' && appInitReadySignature === requestSignature) {
+        if (debugIntent) {
+          console.groupEnd();
+        }
+        return;
+      }
+      const run = (async () => {
+      this.initStatus = 'loading';
+      this.initError = null;
+      this.initTraceId = null;
       if (debugIntent) {
         console.log('4. Request params:', JSON.stringify(requestParams, null, 2));
         console.groupEnd();
@@ -1801,6 +1809,12 @@ export const useSessionStore = defineStore('session', {
       this.menuExpandedKeys = filterExpandedKeys(this.menuTree, this.menuExpandedKeys);
       this.isReady = true;
       this.initStatus = 'ready';
+      appInitReadySignature = JSON.stringify({
+        ...requestParams.params,
+        ...(this.projectContext?.company_id ? { company_id: this.projectContext.company_id } : {}),
+        ...(this.projectContext?.operation_strategy ? { operation_strategy: this.projectContext.operation_strategy } : {}),
+        ...(this.projectContext?.selected?.id ? { current_project_id: this.projectContext.selected.id } : {}),
+      });
       this.persist();
       })();
       appInitInFlight = run;

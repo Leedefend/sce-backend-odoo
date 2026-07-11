@@ -538,6 +538,8 @@ class ApiDataHandler(BaseIntentHandler):
         return len(rows or [])
 
     def _build_numeric_aggregates(self, env_model, domain, fields_safe: List[str]) -> Dict[str, Dict[str, Any]]:
+        if bool(getattr(env_model, "_sc_skip_default_list_aggregates", False)):
+            return {}
         numeric_types = {"integer", "float", "monetary"}
         aggregate_fields = []
         for field_name in fields_safe or []:
@@ -1666,7 +1668,8 @@ class ApiDataHandler(BaseIntentHandler):
                 return order_error
 
         need_total = self._get_bool(p, "need_total", False)
-        total = env_model.search_count(domain or []) if need_total else None
+        skip_default_total = bool(getattr(env_model, "_sc_skip_default_list_total", False))
+        total = env_model.search_count(domain or []) if need_total and not skip_default_total else None
         need_aggregates = self._get_bool(p, "need_aggregates", False)
         aggregates = self._build_numeric_aggregates(env_model, domain, fields_safe) if need_aggregates else {}
         group_summary_probe = self._build_group_summary_with_offset(

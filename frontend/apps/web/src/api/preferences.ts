@@ -15,8 +15,29 @@ export type UserViewPreferenceScope = {
   preference_key?: string;
 };
 
+const preferenceCache = new Map<string, UserViewPreferenceContract>();
+const preferenceInFlight = new Map<string, Promise<UserViewPreferenceContract>>();
+
+function preferenceScopeKey(scope: UserViewPreferenceScope): string {
+  return [
+    Number(scope.action_id || 0) || 0,
+    String(scope.model || '').trim(),
+    String(scope.view_type || 'list').trim() || 'list',
+    String(scope.preference_key || 'list_columns').trim() || 'list_columns',
+  ].join('|');
+}
+
 export async function getUserViewPreference(scope: UserViewPreferenceScope) {
-  return intentRequest<UserViewPreferenceContract>({
+  const key = preferenceScopeKey(scope);
+  const cached = preferenceCache.get(key);
+  if (cached) {
+    return cached;
+  }
+  const existing = preferenceInFlight.get(key);
+  if (existing) {
+    return existing;
+  }
+  const request = intentRequest<UserViewPreferenceContract>({
     intent: 'user.view.preference.get',
     params: {
       action_id: scope.action_id,
@@ -25,10 +46,19 @@ export async function getUserViewPreference(scope: UserViewPreferenceScope) {
       preference_key: scope.preference_key || 'list_columns',
     },
   });
+  preferenceInFlight.set(key, request);
+  try {
+    const result = await request;
+    preferenceCache.set(key, result);
+    return result;
+  } finally {
+    preferenceInFlight.delete(key);
+  }
 }
 
 export async function setUserViewPreference(scope: UserViewPreferenceScope, preference: ListColumnPreference) {
-  return intentRequest<UserViewPreferenceContract>({
+  const key = preferenceScopeKey(scope);
+  const result = await intentRequest<UserViewPreferenceContract>({
     intent: 'user.view.preference.set',
     params: {
       action_id: scope.action_id,
@@ -38,4 +68,6 @@ export async function setUserViewPreference(scope: UserViewPreferenceScope, pref
       preference,
     },
   });
+  preferenceCache.set(key, result);
+  return result;
 }

@@ -1215,7 +1215,7 @@ const listColumnWidths = ref<Record<string, number>>({});
 const listColumnSaveStatus = ref<'idle' | 'saving' | 'saved' | 'error'>('idle');
 const listColumnPreferenceScope = computed(() => {
   const aid = Number(actionId.value || 0);
-  const targetModel = String(resolvedModelRef.value || model.value || '').trim();
+  const targetModel = String(resolvedModelRef.value || '').trim();
   return {
     action_id: aid || undefined,
     model: targetModel,
@@ -1318,6 +1318,16 @@ const contractWarningCount = ref(0);
 const contractDegraded = ref(false);
 const actionContract = ref<ActionViewRuntimeContract | null>(null);
 const resolvedModelRef = ref('');
+watch(
+  actionId,
+  () => {
+    resolvedModelRef.value = '';
+    actionContract.value = null;
+    listColumnVisibility.value = {};
+    listColumnOrder.value = [];
+    listColumnWidths.value = {};
+  },
+);
 const activeGroupByField = ref('');
 const {
   activeContractFilterKey,
@@ -3024,7 +3034,7 @@ function setListColumnSaveStatus(status: 'idle' | 'saving' | 'saved' | 'error') 
 async function loadListColumnPreference(): Promise<void> {
   const seq = ++listColumnPreferenceLoadSeq;
   const scope = listColumnPreferenceScope.value;
-  if (!scope.action_id && !scope.model) {
+  if (!scope.action_id || !scope.model) {
     listColumnVisibility.value = {};
     listColumnOrder.value = [];
     listColumnWidths.value = {};
