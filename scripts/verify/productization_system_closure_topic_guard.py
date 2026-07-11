@@ -478,12 +478,16 @@ def validate(doc_text: str, make_text: str) -> list[str]:
         if not target_body:
             errors.append(f"Makefile missing command body: {target}")
             continue
+        for token in _duplicate_tokens(tokens):
+            errors.append(f"{target} required command token duplicated: {token}")
         for token in tokens:
             if token not in target_body:
                 errors.append(f"{target} missing command token: {token}")
 
     for target, tokens in REQUIRED_TARGET_BODY_ORDER.items():
         target_body = _target_body(make_text, target)
+        for token in _duplicate_tokens(tokens):
+            errors.append(f"{target} command order token duplicated: {token}")
         if target_body and not _tokens_in_order(target_body, tokens):
             errors.append(f"{target} command order mismatch")
 

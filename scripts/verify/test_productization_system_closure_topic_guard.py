@@ -304,6 +304,37 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
         errors = guard.validate(_doc_text(), make_text)
         self.assertIn("verify.productization.system_closure.topic_guard command order mismatch", errors)
 
+    def test_duplicate_required_command_token_fails(self) -> None:
+        duplicated_body_tokens = {
+            **guard.REQUIRED_TARGET_BODY_TOKENS,
+            "verify.productization.system_closure.topic_guard": [
+                *guard.REQUIRED_TARGET_BODY_TOKENS["verify.productization.system_closure.topic_guard"],
+                "python3 scripts/verify/productization_system_closure_topic_guard.py",
+            ],
+        }
+        with mock.patch.object(guard, "REQUIRED_TARGET_BODY_TOKENS", duplicated_body_tokens):
+            errors = guard.validate(_doc_text(), _make_text())
+
+        self.assertIn(
+            "verify.productization.system_closure.topic_guard required command token duplicated: python3 scripts/verify/productization_system_closure_topic_guard.py",
+            errors,
+        )
+
+    def test_duplicate_command_order_token_fails(self) -> None:
+        duplicated_order_tokens = {
+            "verify.productization.system_closure.topic_guard": [
+                *guard.REQUIRED_TARGET_BODY_ORDER["verify.productization.system_closure.topic_guard"],
+                "python3 scripts/verify/productization_system_closure_topic_guard.py",
+            ],
+        }
+        with mock.patch.object(guard, "REQUIRED_TARGET_BODY_ORDER", duplicated_order_tokens):
+            errors = guard.validate(_doc_text(), _make_text())
+
+        self.assertIn(
+            "verify.productization.system_closure.topic_guard command order token duplicated: python3 scripts/verify/productization_system_closure_topic_guard.py",
+            errors,
+        )
+
     def test_duplicate_required_target_fails(self) -> None:
         make_text = _make_text() + "\n" + _target("verify.frontend.product_language.guard", ["guard.prod.forbid"])
         errors = guard.validate(_doc_text(), make_text)
