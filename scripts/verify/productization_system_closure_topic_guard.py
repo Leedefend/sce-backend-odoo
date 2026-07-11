@@ -500,8 +500,14 @@ def validate(doc_text: str, make_text: str) -> list[str]:
 
     for target, tokens in REQUIRED_TARGET_BODY_ORDER.items():
         target_body = _target_body(make_text, target)
+        required_command_tokens = REQUIRED_TARGET_BODY_TOKENS.get(target, [])
+        if not required_command_tokens:
+            errors.append(f"{target} command order target missing required command token inventory")
         for token in _duplicate_tokens(tokens):
             errors.append(f"{target} command order token duplicated: {token}")
+        for token in tokens:
+            if token not in required_command_tokens:
+                errors.append(f"{target} command order token not guarded as required command token: {token}")
         if target_body and not _tokens_in_order(target_body, tokens):
             errors.append(f"{target} command order mismatch")
 

@@ -338,6 +338,44 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
             errors,
         )
 
+    def test_command_order_target_must_have_required_command_inventory(self) -> None:
+        make_text = _make_text()
+        order_only_target = {
+            "verify.system_user_experience.quick": [
+                "node --check frontend/apps/web/scripts/config_workbench_operation_acceptance.mjs",
+            ],
+        }
+        body_tokens_without_target = {
+            key: value
+            for key, value in guard.REQUIRED_TARGET_BODY_TOKENS.items()
+            if key != "verify.system_user_experience.quick"
+        }
+        with mock.patch.object(guard, "REQUIRED_TARGET_BODY_ORDER", order_only_target), mock.patch.object(
+            guard,
+            "REQUIRED_TARGET_BODY_TOKENS",
+            body_tokens_without_target,
+        ):
+            errors = guard.validate(_doc_text(), make_text)
+
+        self.assertIn(
+            "verify.system_user_experience.quick command order target missing required command token inventory",
+            errors,
+        )
+
+    def test_command_order_token_must_be_required_command_token(self) -> None:
+        order_tokens = {
+            "verify.productization.system_closure.topic_guard": [
+                "echo unguarded command",
+            ],
+        }
+        with mock.patch.object(guard, "REQUIRED_TARGET_BODY_ORDER", order_tokens):
+            errors = guard.validate(_doc_text(), _make_text())
+
+        self.assertIn(
+            "verify.productization.system_closure.topic_guard command order token not guarded as required command token: echo unguarded command",
+            errors,
+        )
+
     def test_duplicate_makefile_command_fails(self) -> None:
         duplicated_command = "\t@python3 scripts/verify/productization_system_closure_topic_guard.py"
         make_text = _make_text().replace(
