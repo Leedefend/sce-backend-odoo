@@ -31,6 +31,7 @@ REQUIRED_DOC_TOKENS = [
     "make verify.system_user_experience.full_browser",
     "make verify.business_system.usability_readiness",
     "make verify.production_git.authority.guard",
+    "make verify.project_context.selector_product_boundary.guard.prod",
     "make verify.business_system.usability_readiness.prod",
 ]
 
@@ -72,6 +73,11 @@ REQUIRED_TARGET_DEPS = {
         "check-compose-project",
         "check-compose-env",
     ],
+    "verify.project_context.selector_product_boundary.guard.prod": [
+        "guard.prod.readonly",
+        "check-compose-project",
+        "check-compose-env",
+    ],
     "verify.system_user_experience.full_browser": [
         "verify.system_user_experience.coverage_guard",
         "verify.product.page_structure",
@@ -92,6 +98,11 @@ REQUIRED_TARGET_BODY_TOKENS = {
         "BUSINESS_SYSTEM_READINESS_PROD_READONLY=1",
         "BUSINESS_SYSTEM_READINESS_INCLUDE_P1=0",
         "scripts/ops/validate_business_system_usability_readiness.sh",
+    ],
+    "verify.project_context.selector_product_boundary.guard.prod": [
+        "python3 -m py_compile scripts/verify/project_context_selector_product_boundary_guard.py",
+        "PROD_READONLY_VERIFY=1",
+        "scripts/verify/project_context_selector_product_boundary_guard.py",
     ],
     "verify.system_user_experience.shell_acceptance": [
         "scripts/system_user_experience_shell_acceptance.mjs",
