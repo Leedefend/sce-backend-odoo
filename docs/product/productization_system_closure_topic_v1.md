@@ -103,6 +103,10 @@ make verify.project_context.selector_product_boundary.guard.prod
 make verify.formal_menu.runtime_no_legacy_carrier_guard.prod
 make verify.formal_list_surface.no_test_placeholder_guard.prod
 make verify.business_system.usability_readiness.prod
+make history.attachment.custody.probe.prod
+make verify.legacy_online_attachment.custody.evidence.prod
+make verify.legacy_attachment.frontend_browser.sample_manifest.prod
+make verify.attachment_upload.surface_manifest.prod
 ```
 
 ## 收口结论格式

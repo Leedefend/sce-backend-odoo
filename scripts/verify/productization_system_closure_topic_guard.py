@@ -38,6 +38,10 @@ REQUIRED_DOC_TOKENS = [
     "make verify.formal_menu.runtime_no_legacy_carrier_guard.prod",
     "make verify.formal_list_surface.no_test_placeholder_guard.prod",
     "make verify.business_system.usability_readiness.prod",
+    "make history.attachment.custody.probe.prod",
+    "make verify.legacy_online_attachment.custody.evidence.prod",
+    "make verify.legacy_attachment.frontend_browser.sample_manifest.prod",
+    "make verify.attachment_upload.surface_manifest.prod",
 ]
 
 REQUIRED_MAKE_TARGETS = [
@@ -54,6 +58,10 @@ REQUIRED_MAKE_TARGETS = [
     "verify.project_context.selector_product_boundary.guard.prod",
     "verify.formal_menu.runtime_no_legacy_carrier_guard.prod",
     "verify.formal_list_surface.no_test_placeholder_guard.prod",
+    "history.attachment.custody.probe.prod",
+    "verify.legacy_online_attachment.custody.evidence.prod",
+    "verify.legacy_attachment.frontend_browser.sample_manifest.prod",
+    "verify.attachment_upload.surface_manifest.prod",
     "verify.frontend.product_language.guard",
 ]
 
@@ -105,6 +113,26 @@ REQUIRED_TARGET_DEPS = {
         "verify.formal_menu.no_legacy_carrier_guard",
     ],
     "verify.formal_list_surface.no_test_placeholder_guard.prod": [
+        "guard.prod.readonly",
+        "check-compose-project",
+        "check-compose-env",
+    ],
+    "history.attachment.custody.probe.prod": [
+        "guard.prod.readonly",
+        "check-compose-project",
+        "check-compose-env",
+    ],
+    "verify.legacy_online_attachment.custody.evidence.prod": [
+        "guard.prod.readonly",
+        "check-compose-project",
+        "check-compose-env",
+    ],
+    "verify.legacy_attachment.frontend_browser.sample_manifest.prod": [
+        "guard.prod.readonly",
+        "check-compose-project",
+        "check-compose-env",
+    ],
+    "verify.attachment_upload.surface_manifest.prod": [
         "guard.prod.readonly",
         "check-compose-project",
         "check-compose-env",
@@ -161,6 +189,24 @@ REQUIRED_TARGET_BODY_TOKENS = {
         "python3 -m py_compile scripts/verify/formal_list_surface_no_test_placeholder_guard.py",
         "PROD_READONLY_VERIFY=1",
         "scripts/verify/formal_list_surface_no_test_placeholder_guard.py",
+    ],
+    "history.attachment.custody.probe.prod": [
+        "MIGRATION_ARTIFACT_ROOT",
+        "scripts/migration/history_attachment_custody_probe.py",
+    ],
+    "verify.legacy_online_attachment.custody.evidence.prod": [
+        "LEGACY_ATTACHMENT_CUSTODY_EVIDENCE_JOB_ROOT",
+        "LEGACY_ATTACHMENT_CUSTODY_EVIDENCE_SOURCE_CONTAINS",
+        "scripts/verify/legacy_online_attachment_custody_evidence.py",
+    ],
+    "verify.legacy_attachment.frontend_browser.sample_manifest.prod": [
+        "LEGACY_ATTACHMENT_BROWSER_SAMPLE_MANIFEST_OUTPUT",
+        "scripts/verify/legacy_attachment_frontend_browser_sample_manifest.py",
+    ],
+    "verify.attachment_upload.surface_manifest.prod": [
+        "LEGACY_ATTACHMENT_UPLOAD_SURFACE_OUTPUT",
+        "LEGACY_ATTACHMENT_UPLOAD_SURFACE_REQUIRED_MODELS",
+        "scripts/verify/attachment_upload_surface_manifest.py",
     ],
     "verify.system_user_experience.shell_acceptance": [
         "scripts/system_user_experience_shell_acceptance.mjs",

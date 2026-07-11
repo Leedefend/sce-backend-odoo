@@ -91,6 +91,26 @@ def _make_text() -> str:
             guard.REQUIRED_TARGET_DEPS["verify.formal_list_surface.no_test_placeholder_guard.prod"],
             guard.REQUIRED_TARGET_BODY_TOKENS["verify.formal_list_surface.no_test_placeholder_guard.prod"],
         ),
+        _target(
+            "history.attachment.custody.probe.prod",
+            guard.REQUIRED_TARGET_DEPS["history.attachment.custody.probe.prod"],
+            guard.REQUIRED_TARGET_BODY_TOKENS["history.attachment.custody.probe.prod"],
+        ),
+        _target(
+            "verify.legacy_online_attachment.custody.evidence.prod",
+            guard.REQUIRED_TARGET_DEPS["verify.legacy_online_attachment.custody.evidence.prod"],
+            guard.REQUIRED_TARGET_BODY_TOKENS["verify.legacy_online_attachment.custody.evidence.prod"],
+        ),
+        _target(
+            "verify.legacy_attachment.frontend_browser.sample_manifest.prod",
+            guard.REQUIRED_TARGET_DEPS["verify.legacy_attachment.frontend_browser.sample_manifest.prod"],
+            guard.REQUIRED_TARGET_BODY_TOKENS["verify.legacy_attachment.frontend_browser.sample_manifest.prod"],
+        ),
+        _target(
+            "verify.attachment_upload.surface_manifest.prod",
+            guard.REQUIRED_TARGET_DEPS["verify.attachment_upload.surface_manifest.prod"],
+            guard.REQUIRED_TARGET_BODY_TOKENS["verify.attachment_upload.surface_manifest.prod"],
+        ),
         _target("verify.frontend.product_language.guard", ["guard.prod.forbid"]),
         _target(
             "verify.business_config.unit",
@@ -323,6 +343,35 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
         errors = guard.validate(_doc_text(), make_text)
         self.assertIn(
             "verify.formal_list_surface.no_test_placeholder_guard.prod missing command token: PROD_READONLY_VERIFY=1",
+            errors,
+        )
+
+    def test_doc_must_keep_attachment_production_gate_commands(self) -> None:
+        doc_text = _doc_text().replace("make verify.attachment_upload.surface_manifest.prod", "")
+        errors = guard.validate(doc_text, _make_text())
+        self.assertIn("doc missing token: make verify.attachment_upload.surface_manifest.prod", errors)
+
+    def test_attachment_custody_prod_gate_must_keep_readonly_dependency(self) -> None:
+        make_text = _make_text().replace(
+            "history.attachment.custody.probe.prod: guard.prod.readonly",
+            "history.attachment.custody.probe.prod:",
+        )
+        errors = guard.validate(_doc_text(), make_text)
+        self.assertIn("history.attachment.custody.probe.prod missing dependency: guard.prod.readonly", errors)
+
+    def test_online_attachment_custody_prod_gate_must_keep_evidence_script(self) -> None:
+        make_text = _make_text().replace("scripts/verify/legacy_online_attachment_custody_evidence.py", "")
+        errors = guard.validate(_doc_text(), make_text)
+        self.assertIn(
+            "verify.legacy_online_attachment.custody.evidence.prod missing command token: scripts/verify/legacy_online_attachment_custody_evidence.py",
+            errors,
+        )
+
+    def test_attachment_upload_manifest_prod_gate_must_keep_required_models(self) -> None:
+        make_text = _make_text().replace("LEGACY_ATTACHMENT_UPLOAD_SURFACE_REQUIRED_MODELS", "")
+        errors = guard.validate(_doc_text(), make_text)
+        self.assertIn(
+            "verify.attachment_upload.surface_manifest.prod missing command token: LEGACY_ATTACHMENT_UPLOAD_SURFACE_REQUIRED_MODELS",
             errors,
         )
 
