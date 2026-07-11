@@ -569,7 +569,7 @@
             <td v-if="columnChoices.length" class="cell-column-picker"></td>
           </tr>
         </tbody>
-        <tfoot>
+        <tfoot v-if="showFooterSummary">
           <tr>
             <td v-if="showSelectionColumn" class="cell-select"></td>
             <th v-if="showRowNumberColumn" class="cell-row-number footer-row-label">{{ footerRowLabel('page', pageVisibleRows.length) }}</th>
@@ -1970,6 +1970,14 @@ function isNumericDisplayColumn(field: string) {
   return /金额|税额|总额|余额|收入|支出|价税|含税|不含税|附加税|抵扣|付款|收款|借款|还款|未还款|利息|保证金|合同价|控制价|单价|数量|税率|累计|本期|已退|未退|张数|份数|天数/.test(label);
 }
 
+function isBusinessMetricColumn(field: string) {
+  const label = columnLabel(field).trim();
+  if (!label || /序号|优先级|编号|单号|号码|账号|代码|日期|时间|状态|是否|项目|名称|单位|人员|录入人|附件|备注|类型/.test(label)) {
+    return false;
+  }
+  return /金额|税额|总额|余额|收入|支出|价税|含税|不含税|附加税|抵扣|付款|收款|借款|还款|未还款|利息|保证金|合同价|控制价|单价|数量|税率|累计|本期|已退|未退|张数|份数|天数/.test(label);
+}
+
 function numericCellValue(value: unknown) {
   const raw = normalizeCellRawValue(value);
   if (typeof raw === 'number' && Number.isFinite(raw)) return raw;
@@ -2024,27 +2032,37 @@ function formatFooterNumber(value: number, field: string) {
 
 const pageFooterStats = computed(() =>
   displayedColumns.value
-    .filter((field) => isNumericColumn(field))
+    .filter((field) => isBusinessMetricColumn(field))
     .map((field) => {
       const values = pageVisibleRows.value
         .map((row) => numericCellValue(row[field]))
         .filter((value): value is number => typeof value === 'number');
+      const sum = values.reduce((total, value) => total + value, 0);
       return {
         name: field,
         label: uiLabel('page_footer_summary', '{column} 汇总', { column: columnLabel(field) }),
         count: values.length,
-        sumText: formatFooterNumber(values.reduce((total, value) => total + value, 0), field),
+        sum,
+        sumText: formatFooterNumber(sum, field),
       };
     })
-    .filter((item) => item.count > 0),
+    .filter((item) => item.count > 0 && Math.abs(item.sum) > 0.000001),
 );
 
 const pageFooterStatsMap = computed(() =>
-  pageFooterStats.value.reduce<Record<string, { sumText: string; count: number }>>((acc, item) => {
-    acc[item.name] = { sumText: item.sumText, count: item.count };
+  pageFooterStats.value.reduce<Record<string, { sumText: string; count: number; sum: number }>>((acc, item) => {
+    acc[item.name] = { sumText: item.sumText, count: item.count, sum: item.sum };
     return acc;
   }, {}),
 );
+
+const showFooterSummary = computed(() => (
+  pageFooterStats.value.length > 0
+  || displayedColumns.value.some((field) => {
+    const value = totalAggregateValue(field);
+    return isBusinessMetricColumn(field) && value !== null && Math.abs(value) > 0.000001;
+  })
+));
 
 function totalAggregateValue(field: string) {
   const aggregate = props.listAggregates?.[field] || {};
@@ -2054,7 +2072,7 @@ function totalAggregateValue(field: string) {
 
 function footerCellText(field: string, scope: 'page' | 'total', rowCount: number) {
   void rowCount;
-  if (!isNumericColumn(field)) return '';
+  if (!isBusinessMetricColumn(field)) return '';
   if (scope === 'page') {
     return pageFooterStatsMap.value[field]?.sumText || '--';
   }
@@ -2081,7 +2099,7 @@ function groupFooterCellText(
   group: { sampleRows: Array<Record<string, unknown>>; aggregates?: Record<string, Record<string, unknown>> },
   scope: 'page' | 'total',
 ) {
-  if (!isNumericColumn(field)) return '';
+  if (!isBusinessMetricColumn(field)) return '';
   if (scope === 'page') {
     const value = rowsNumericSum(group.sampleRows || [], field);
     return value === null ? '--' : formatFooterNumber(value, field);
