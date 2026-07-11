@@ -142,6 +142,21 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
         errors = guard.validate(doc_text, _make_text())
         self.assertIn("doc missing token: 菜单配置展示口径必须与主导航展示口径一致", errors)
 
+    def test_doc_must_keep_group_menu_boundary(self) -> None:
+        doc_text = _doc_text().replace("分组菜单是导航组织能力", "")
+        errors = guard.validate(doc_text, _make_text())
+        self.assertIn("doc missing token: 分组菜单是导航组织能力", errors)
+
+    def test_doc_must_keep_configurable_menu_contract_boundary(self) -> None:
+        doc_text = _doc_text().replace("真实可配置对象必须由后端契约明确给出", "")
+        errors = guard.validate(doc_text, _make_text())
+        self.assertIn("doc missing token: 真实可配置对象必须由后端契约明确给出", errors)
+
+    def test_doc_must_keep_odoo_group_menu_write_boundary(self) -> None:
+        doc_text = _doc_text().replace("不写回 Odoo 分组菜单", "")
+        errors = guard.validate(doc_text, _make_text())
+        self.assertIn("doc missing token: 不写回 Odoo 分组菜单", errors)
+
     def test_topic_guard_must_forbid_production_write_context(self) -> None:
         make_text = _make_text().replace(
             "verify.productization.system_closure.topic_guard: guard.prod.forbid",
