@@ -12089,6 +12089,17 @@ onBeforeUnmount(() => {
   box-shadow: var(--sc-app-shadow);
 }
 
+.contract-form-native-shell :deep(.template-page-header--title-hidden:not(:has(.template-page-header-status > *))) {
+  justify-content: flex-start;
+  width: fit-content;
+  max-width: 100%;
+  margin-bottom: 10px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
 .contract-form-native-shell :deep(.template-page-header-main) {
   min-width: 220px;
   max-width: 360px;
