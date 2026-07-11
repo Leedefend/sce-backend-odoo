@@ -125,7 +125,7 @@
       </section>
       <p v-if="attachmentErrorText" class="list-inline-feedback is-error">{{ attachmentErrorText }}</p>
 
-      <section class="table sc-product-main-surface">
+      <section class="table sc-product-main-surface" :class="{ 'table--wide': showWideTableHint }">
 	        <section v-if="showGroupedRows" class="grouped-table">
         <header class="grouped-toolbar">
           <div class="grouped-toolbar-title">
@@ -600,6 +600,9 @@
           </tr>
         </tfoot>
       </table>
+      <div v-if="showWideTableHint" class="table-scroll-hint" aria-hidden="true">
+        左右滑动查看更多列
+      </div>
     </section>
 
       <section v-if="showGroupedWindowPagination" class="pagination-footer">
@@ -1703,6 +1706,9 @@ const tableMinWidthPx = computed(() => {
 const tableWidthStyle = computed(() => ({
   minWidth: `max(100%, ${tableMinWidthPx.value}px)`,
 }));
+const showWideTableHint = computed(() =>
+  displayedColumns.value.length >= 7 || tableMinWidthPx.value >= 1080,
+);
 
 function firstSortClause(value: string) {
   return String(value || '').split(',')[0]?.trim() || '';
@@ -2193,6 +2199,7 @@ onBeforeUnmount(() => {
 }
 
 .table {
+  position: relative;
   width: 100%;
   max-width: 100%;
   max-height: max(420px, calc(100vh - 210px));
@@ -2203,6 +2210,43 @@ onBeforeUnmount(() => {
   box-shadow: 0 20px 40px var(--sc-app-shadow);
   overscroll-behavior: contain;
   touch-action: pan-x pan-y;
+}
+
+.table--wide::before {
+  content: '';
+  position: sticky;
+  right: 0;
+  top: 0;
+  z-index: 4;
+  float: right;
+  width: 42px;
+  height: calc(100vh - 230px);
+  max-height: 100%;
+  margin-left: -42px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, var(--sc-app-panel) 78%);
+}
+
+.table-scroll-hint {
+  position: sticky;
+  right: 12px;
+  bottom: 10px;
+  z-index: 5;
+  display: block;
+  width: max-content;
+  max-width: calc(100% - 24px);
+  margin: -42px 12px 10px auto;
+  border: 1px solid var(--sc-app-info-border);
+  border-radius: 999px;
+  background: var(--sc-app-info-bg);
+  color: var(--sc-app-info-text);
+  box-shadow: var(--sc-app-shadow);
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
+  pointer-events: none;
+  white-space: nowrap;
 }
 
 .list-plain-search {
