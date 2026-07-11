@@ -30,13 +30,13 @@ const LABELS: Partial<Record<SuggestedActionKind, string>> = {
   open_action: '打开相关操作',
   open_route: '打开相关页面',
   open_url: '打开链接',
-  copy_trace: '复制追踪 ID',
-  copy_reason: '复制原因编码',
+  copy_trace: '复制处理编号',
+  copy_reason: '复制处理状态',
   copy_message: '复制错误消息',
   copy_error_line: '复制错误摘要',
-  copy_action: '复制建议动作',
-  copy_json_error: '复制错误详情',
-  copy_full_error: '复制完整错误信息',
+  copy_action: '复制处理建议',
+  copy_json_error: '复制处理详情',
+  copy_full_error: '复制完整处理信息',
 };
 
 const HINTS: Partial<Record<SuggestedActionKind, string>> = {
@@ -69,13 +69,13 @@ const HINTS: Partial<Record<SuggestedActionKind, string>> = {
   open_action: '打开相关操作继续处理。',
   open_route: '打开相关页面继续处理。',
   open_url: '打开提供的链接继续处理。',
-  copy_trace: '复制追踪 ID，便于排查问题。',
-  copy_reason: '复制原因编码，便于定位问题。',
+  copy_trace: '复制处理编号，便于沟通处理。',
+  copy_reason: '复制处理状态，便于沟通处理。',
   copy_message: '复制错误消息，便于沟通处理。',
   copy_error_line: '复制简要错误摘要，便于快速沟通。',
-  copy_action: '复制建议动作，便于排查处理。',
-  copy_json_error: '复制结构化错误详情，便于技术排查。',
-  copy_full_error: '复制完整错误信息，便于完整排查。',
+  copy_action: '复制处理建议，便于沟通处理。',
+  copy_json_error: '复制处理详情，便于沟通处理。',
+  copy_full_error: '复制完整处理信息，便于沟通处理。',
 };
 
 export function suggestedActionLabel(parsed: SuggestedActionParsed): string {

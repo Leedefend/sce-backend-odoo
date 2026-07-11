@@ -16,6 +16,13 @@ const COPY_ACTIONS = new Set<SuggestedActionKind>([
   'copy_json_error',
   'copy_full_error',
 ]);
+const SUPPORT_COPY_ACTIONS = new Set<SuggestedActionKind>([
+  'copy_reason',
+  'copy_error_line',
+  'copy_action',
+  'copy_json_error',
+  'copy_full_error',
+]);
 const DIRECT_ACTIONS = new Set<SuggestedActionKind>([
   'check_permission',
   'relogin',
@@ -131,6 +138,7 @@ function tryHandleCopyAction(
   finish: (success: boolean) => boolean,
 ) {
   if (!COPY_ACTIONS.has(parsed.kind)) return null;
+  if (SUPPORT_COPY_ACTIONS.has(parsed.kind) && !import.meta.env.DEV) return finish(false);
   if (parsed.kind === 'copy_trace') void copyText(options.traceId || '');
   if (parsed.kind === 'copy_reason') void copyText(options.reasonCode || '');
   if (parsed.kind === 'copy_message') void copyText(options.message || '');
@@ -159,6 +167,7 @@ export function canRunSuggestedAction(
   if (parsed.kind === 'open_project') return Boolean(parsed.projectId);
   if (ROUTE_ACTIONS.has(parsed.kind)) return Boolean(parsed.url && isSafeRelativePath(parsed.url));
   if (DIRECT_ACTIONS.has(parsed.kind)) return true;
+  if (SUPPORT_COPY_ACTIONS.has(parsed.kind) && !import.meta.env.DEV) return false;
   if (parsed.kind === 'copy_trace') return Boolean(String(options.traceId || '').trim());
   if (parsed.kind === 'copy_reason') return Boolean(String(options.reasonCode || '').trim());
   if (parsed.kind === 'copy_message') return Boolean(String(options.message || '').trim());
