@@ -97,7 +97,7 @@ function nodeLabel(node: NavNode) {
     .replace(/^executive$/i, '管理层')
     .replace(/^ops$/i, '运维专员')
     .replace(/^admin$/i, '系统管理员')
-    .replace(/^workbench$/i, '诊断页')
+    .replace(/^workbench$/i, '工作台')
     .replace(/^dashboard$/i, '看板');
 }
 

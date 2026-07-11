@@ -22,7 +22,7 @@ function routeTitle(routeName: string | symbol | null | undefined): string {
     scene: '业务场景',
     menu: '业务菜单',
     action: '业务动作',
-    workbench: '诊断页',
+    workbench: '工作台',
     'scene-health': '场景健康',
     'scene-packages': '场景发布包',
     'usage-analytics': '使用分析',

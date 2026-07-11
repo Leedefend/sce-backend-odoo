@@ -174,7 +174,7 @@ const headerBadges = computed(() => {
   if (isCompanyDashboardPage.value) {
     return [
       { label: '经营总览', tone: 'info' },
-      { label: '契约驱动', tone: 'neutral' },
+      { label: '配置驱动', tone: 'neutral' },
     ];
   }
   return [];

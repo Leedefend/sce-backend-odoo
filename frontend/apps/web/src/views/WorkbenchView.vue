@@ -9,7 +9,7 @@
   <section v-else class="workbench">
     <header v-if="pageSectionEnabled('header', true) && pageSectionTagIs('header', 'header')" class="header" :style="pageSectionStyle('header')">
       <div>
-        <p v-if="showHud" class="diagnostic">{{ pageText('diagnostic_hint', '诊断页仅用于排查，不作为正式产品界面。') }}</p>
+        <p v-if="showHud" class="diagnostic">{{ pageText('diagnostic_hint', '运行详情仅在开发模式显示。') }}</p>
         <h2>{{ pageText('header_title', '页面暂时无法打开') }}</h2>
         <p class="meta">{{ pageText('header_subtitle', '我们已为你保留可继续操作的入口。') }}</p>
         <p v-if="hasContext" class="context-line">
@@ -77,19 +77,19 @@
         <span class="value">{{ diag }}</span>
       </div>
       <div v-if="showHud && diagActionType" class="detail">
-        <span class="label">{{ pageText('hud_label_action_type', '动作类型') }}</span>
+        <span class="label">{{ pageText('hud_label_action_type', '操作类型') }}</span>
         <span class="value">{{ diagActionType }}</span>
       </div>
       <div v-if="showHud && diagContractType" class="detail">
-        <span class="label">{{ pageText('hud_label_contract_type', '契约类型') }}</span>
+        <span class="label">{{ pageText('hud_label_contract_type', '配置类型') }}</span>
         <span class="value">{{ diagContractType }}</span>
       </div>
       <div v-if="showHud && diagContractUrl" class="detail">
-        <span class="label">{{ pageText('hud_label_contract_url', '契约链接') }}</span>
+        <span class="label">{{ pageText('hud_label_contract_url', '配置链接') }}</span>
         <span class="value">{{ diagContractUrl }}</span>
       </div>
       <div v-if="showHud && diagMetaUrl" class="detail">
-        <span class="label">{{ pageText('hud_label_meta_url', '元信息链接') }}</span>
+        <span class="label">{{ pageText('hud_label_meta_url', '补充信息链接') }}</span>
         <span class="value">{{ diagMetaUrl }}</span>
       </div>
       <div v-if="showHud" class="detail">
@@ -104,7 +104,7 @@
         </span>
       </div>
       <div v-if="showHud" class="detail">
-        <span class="label">{{ pageText('hud_label_data_source', '数据源协议') }}</span>
+        <span class="label">{{ pageText('hud_label_data_source', '数据来源') }}</span>
         <span class="value">
           {{ hasStatusPanelDataSource ? pageText('hud_value_ready', '就绪') : pageText('hud_value_missing', '缺失') }}
           （{{ pageText('hud_data_source_type_label', '类型') }}：{{ statusPanelDataSourceType || pageText('hud_value_na', '暂无') }}）
@@ -308,7 +308,7 @@ const reasonLabel = computed(() => {
     case ErrorCodes.ACT_NO_MODEL:
       return pageText('reason_act_no_model', '动作未绑定模型');
     case ErrorCodes.ACT_UNSUPPORTED_TYPE:
-      return pageText('reason_act_unsupported_type', '动作类型暂不支持');
+      return pageText('reason_act_unsupported_type', '当前操作暂不支持');
     case ErrorCodes.CONTRACT_CONTEXT_MISSING:
       return pageText('reason_contract_context_missing', '页面上下文缺失');
     case ErrorCodes.CAPABILITY_MISSING:
