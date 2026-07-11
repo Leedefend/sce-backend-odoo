@@ -75,6 +75,8 @@ UPGRADE_STANDARD_TOKENS = (
     "不覆盖数据库、filestore、附件镜像目录",
     "Python handler/model 变更：至少 `prod.restart.safe`。",
     "XML/security/data/migration 变更：必须 `mod.upgrade`，然后 `prod.restart.safe`。",
+    "make verify.formal_menu.runtime_no_legacy_carrier_guard.prod",
+    "make verify.formal_list_surface.no_test_placeholder_guard.prod",
     "低代码升级必须执行",
     "deployed_not_verified",
     "rolled_forward_with_open_risk",

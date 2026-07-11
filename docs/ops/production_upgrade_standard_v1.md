@@ -203,6 +203,8 @@ ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod make verify.non_demo_data_contaminat
 
 ```bash
 ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 make verify.business_system.usability_readiness.prod
+ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 make verify.formal_menu.runtime_no_legacy_carrier_guard.prod
+ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 make verify.formal_list_surface.no_test_placeholder_guard.prod
 ENV=prod ENV_FILE=.env.prod DB_NAME=sc_prod PROD_READONLY_VERIFY=1 make history.attachment.custody.probe.prod
 ```
 
