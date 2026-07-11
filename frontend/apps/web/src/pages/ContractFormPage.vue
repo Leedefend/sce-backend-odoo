@@ -12091,8 +12091,8 @@ onBeforeUnmount(() => {
 
 .contract-form-native-shell :deep(.template-page-header--title-hidden:not(:has(.template-page-header-status > *))) {
   justify-content: flex-start;
-  width: fit-content;
-  max-width: 100%;
+  width: 100%;
+  max-width: none;
   margin-bottom: 10px;
   padding: 0;
   border: 0;

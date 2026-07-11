@@ -2334,5 +2334,30 @@ async function logout() {
     overflow: visible;
   }
 
+  .topbar {
+    position: static;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .topbar-main,
+  .topbar-actions {
+    flex: 1 1 100%;
+    width: 100%;
+  }
+
+  .topbar-actions {
+    justify-content: flex-start;
+  }
+
+  .topbar--scene-minimal,
+  .topbar--minimal {
+    border: 1px solid var(--sc-app-border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    background: var(--panel);
+    box-shadow: var(--sc-app-shadow);
+  }
+
 }
 </style>
