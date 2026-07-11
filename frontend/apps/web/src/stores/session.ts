@@ -727,8 +727,8 @@ function normalizeActivityPage(raw: unknown): ActivityPage | null {
 }
 
 function trimActivityPages(pages: ActivityPage[], activeKey: string): ActivityPage[] {
-  if (pages.length <= MAX_ACTIVITY_PAGES) return pages;
-  const keep = [...pages];
+  const keep = compactDuplicateNewRecordActivities(pages, activeKey);
+  if (keep.length <= MAX_ACTIVITY_PAGES) return keep;
   while (keep.length > MAX_ACTIVITY_PAGES) {
     const removable = keep
       .filter((page) => page.key !== activeKey && !page.dirty)
@@ -739,6 +739,33 @@ function trimActivityPages(pages: ActivityPage[], activeKey: string): ActivityPa
     else break;
   }
   return keep;
+}
+
+function newRecordActivityCompactKey(page: ActivityPage): string {
+  if (page.kind !== 'record_form' || page.dirty) return '';
+  const recordId = asText(page.record_id).toLowerCase();
+  if (recordId && recordId !== 'new') return '';
+  const title = asText(page.title).toLowerCase();
+  const model = asText(page.model).toLowerCase();
+  if (!title || !model) return '';
+  return `${model}|${title}`;
+}
+
+function compactDuplicateNewRecordActivities(pages: ActivityPage[], activeKey: string): ActivityPage[] {
+  const byCompactKey = new Map<string, ActivityPage>();
+  pages.forEach((page) => {
+    const compactKey = newRecordActivityCompactKey(page);
+    if (!compactKey) return;
+    const current = byCompactKey.get(compactKey);
+    if (!current || page.key === activeKey || (current.key !== activeKey && page.last_active_at > current.last_active_at)) {
+      byCompactKey.set(compactKey, page);
+    }
+  });
+  return pages.filter((page) => {
+    const compactKey = newRecordActivityCompactKey(page);
+    if (!compactKey) return true;
+    return byCompactKey.get(compactKey)?.key === page.key;
+  });
 }
 
 function isRetainedActivityPage(page: ActivityPage | null): page is ActivityPage {
@@ -1070,10 +1097,13 @@ export const useSessionStore = defineStore('session', {
           this.roleSurface = parsed.roleSurface ?? null;
           this.roleSurfaceMap = parsed.roleSurfaceMap ?? {};
           this.projectContext = projectContextStorageSnapshot(normalizeProjectContext(parsed.projectContext));
-          this.activityPages = Array.isArray(parsed.activityPages)
-            ? parsed.activityPages.map((item) => normalizeActivityPage(item)).filter(isRetainedActivityPage)
-            : [];
           const restoredActiveKey = asText(parsed.activeActivityPageKey);
+          this.activityPages = Array.isArray(parsed.activityPages)
+            ? trimActivityPages(
+              parsed.activityPages.map((item) => normalizeActivityPage(item)).filter(isRetainedActivityPage),
+              restoredActiveKey,
+            )
+            : [];
           this.activeActivityPageKey = this.activityPages.some((page) => page.key === restoredActiveKey)
             ? restoredActiveKey
             : '';
