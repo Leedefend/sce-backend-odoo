@@ -153,10 +153,70 @@
         <field name="groups_id" eval="[(6, 0, [ref('smart_construction_core.group_sc_cap_config_admin')])]"/>
     </record>
 
+    <record id="view_sc_company_user_roster_tree" model="ir.ui.view">
+        <field name="name">res.users.sc.company.roster.tree</field>
+        <field name="model">res.users</field>
+        <field name="arch" type="xml">
+            <tree string="公司人员名册" create="0" edit="0" delete="0" default_order="name asc">
+                <field name="name" string="姓名"/>
+                <field name="phone" string="手机号"/>
+                <field name="email" string="邮箱"/>
+                <field name="company_id" string="所属公司"/>
+                <field name="sc_user_role_group_names" string="业务角色"/>
+                <field name="active" string="启用"/>
+            </tree>
+        </field>
+    </record>
+
+    <record id="view_sc_company_user_roster_form" model="ir.ui.view">
+        <field name="name">res.users.sc.company.roster.form</field>
+        <field name="model">res.users</field>
+        <field name="arch" type="xml">
+            <form string="公司人员名册" create="0" edit="0" delete="0">
+                <sheet>
+                    <group>
+                        <group string="人员信息">
+                            <field name="name" string="姓名" readonly="1"/>
+                            <field name="phone" string="手机号" readonly="1"/>
+                            <field name="email" string="邮箱" readonly="1"/>
+                        </group>
+                        <group string="组织与角色">
+                            <field name="company_id" string="所属公司" readonly="1"/>
+                            <field name="sc_user_role_group_names" string="业务角色" readonly="1"/>
+                            <field name="active" string="启用" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_sc_company_user_roster_search" model="ir.ui.view">
+        <field name="name">res.users.sc.company.roster.search</field>
+        <field name="model">res.users</field>
+        <field name="arch" type="xml">
+            <search string="公司人员名册">
+                <field name="name" string="姓名"/>
+                <field name="phone" string="手机号"/>
+                <field name="email" string="邮箱"/>
+                <field name="company_id" string="所属公司"/>
+                <field name="sc_user_role_group_ids" string="业务角色组"/>
+                <filter string="启用" name="active_user" domain="[('active', '=', True)]"/>
+                <filter string="停用" name="inactive_user" domain="[('active', '=', False)]"/>
+                <filter string="按公司" name="group_company" context="{'group_by': 'company_id'}"/>
+                <filter string="按角色" name="group_role" context="{'group_by': 'sc_user_role_group_ids'}"/>
+            </search>
+        </field>
+    </record>
+
     <record id="action_sc_company_user_roster_formal" model="ir.actions.act_window">
         <field name="name">公司人员名册</field>
         <field name="res_model">res.users</field>
         <field name="view_mode">tree,form</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'tree', 'view_id': ref('view_sc_company_user_roster_tree')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('view_sc_company_user_roster_form')})]"/>
+        <field name="search_view_id" ref="view_sc_company_user_roster_search"/>
         <field name="domain">[('sc_runtime_company_real_user', '=', True)]</field>
         <field name="context">{'create': False, 'edit': False, 'delete': False}</field>
         <field name="groups_id" eval="[(6, 0, [

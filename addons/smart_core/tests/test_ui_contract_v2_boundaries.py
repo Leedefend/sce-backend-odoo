@@ -434,8 +434,8 @@ class TestUiContractV2Boundaries(unittest.TestCase):
             }
 
         class _ConfigModel:
-            def _effective_view_orchestration_contracts(self, model_name, view_type, action_id=0):
-                self.request = (model_name, view_type, action_id)
+            def _effective_view_orchestration_contracts(self, model_name, view_type, action_id=0, view_id=None):
+                self.request = (model_name, view_type, action_id, view_id)
                 return [_Config()]
 
         class _Env(dict):
@@ -449,6 +449,7 @@ class TestUiContractV2Boundaries(unittest.TestCase):
         source_contract = {
             "action_id": 949,
             "model": "sc.demo",
+            "view_ids_by_type": {"tree": 4001},
             "views": {"tree": {"columns": [{"name": "id"}, {"name": "name"}]}},
             "list_profile": {},
         }
@@ -463,7 +464,7 @@ class TestUiContractV2Boundaries(unittest.TestCase):
             type_for=lambda name: "char",
         )
 
-        self.assertEqual(config_model.request, ("sc.demo", "tree", 949))
+        self.assertEqual(config_model.request, ("sc.demo", "tree", 949, 4001))
         self.assertEqual(
             source_contract["list_profile"]["columns"][:3],
             ["state", "name", "project_id"],
@@ -491,7 +492,7 @@ class TestUiContractV2Boundaries(unittest.TestCase):
             }
 
         class _ConfigModel:
-            def _effective_view_orchestration_contracts(self, model_name, view_type, action_id=0):
+            def _effective_view_orchestration_contracts(self, model_name, view_type, action_id=0, view_id=None):
                 return [_Config()]
 
         class _Env(dict):
@@ -562,7 +563,7 @@ class TestUiContractV2Boundaries(unittest.TestCase):
             }
 
         class _ConfigModel:
-            def _effective_view_orchestration_contracts(self, model_name, view_type, action_id=0):
+            def _effective_view_orchestration_contracts(self, model_name, view_type, action_id=0, view_id=None):
                 return [_Config()]
 
         class _Env(dict):
@@ -623,7 +624,7 @@ class TestUiContractV2Boundaries(unittest.TestCase):
             }
 
         class _ConfigModel:
-            def _effective_view_orchestration_contracts(self, model_name, view_type, action_id=0):
+            def _effective_view_orchestration_contracts(self, model_name, view_type, action_id=0, view_id=None):
                 return [_Config()]
 
         class _Env(dict):
@@ -682,7 +683,7 @@ class TestUiContractV2Boundaries(unittest.TestCase):
             }
 
         class _ConfigModel:
-            def _effective_view_orchestration_contracts(self, model_name, view_type, action_id=0):
+            def _effective_view_orchestration_contracts(self, model_name, view_type, action_id=0, view_id=None):
                 return [_Config()]
 
         class _Env(dict):

@@ -2708,10 +2708,12 @@ class UiContractV2Handler(BaseIntentHandler):
         ).strip()
         if model_name and "ui.business.config.contract" in self.env:
             try:
+                view_ids = source_contract.get("view_ids_by_type") if isinstance(source_contract.get("view_ids_by_type"), dict) else {}
                 direct_configs = self.env["ui.business.config.contract"]._effective_view_orchestration_contracts(
                     model_name,
                     view_type="tree",
                     action_id=self._source_action_id(source_contract),
+                    view_id=view_ids.get("tree") or view_ids.get("list"),
                 )
             except Exception:
                 direct_configs = []

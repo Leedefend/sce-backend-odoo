@@ -55,6 +55,11 @@ class ResUsers(models.Model):
         inverse="_inverse_sc_user_permission_group_ids",
         store=False,
     )
+    sc_user_role_group_names = fields.Char(
+        string="业务角色",
+        compute="_compute_sc_user_role_group_names",
+        store=False,
+    )
 
     @api.model
     def _sc_internal_group(self):
@@ -189,6 +194,11 @@ class ResUsers(models.Model):
 
     def _inverse_sc_user_permission_group_ids(self):
         self._inverse_assignable_user_groups("sc_user_permission_group_ids")
+
+    @api.depends("groups_id")
+    def _compute_sc_user_role_group_names(self):
+        for user in self:
+            user.sc_user_role_group_names = "、".join(user.sc_user_role_group_ids.mapped("name"))
 
     @api.model
     def _sc_runtime_user_management_allowed(self):

@@ -1035,10 +1035,36 @@ function selectionLabel(option: ColumnOption | null, value: unknown) {
   return option.selection.find((item) => item.value === key)?.label || '';
 }
 
+function relationCellText(field: string, value: unknown) {
+  const fieldType = String(columnOption(field)?.type || '').trim().toLowerCase();
+  if (fieldType !== 'many2many' && fieldType !== 'one2many') return '';
+  if (!Array.isArray(value) || !value.length) return '';
+
+  const labels = value
+    .map((item) => {
+      if (Array.isArray(item)) {
+        return item.length > 1 && item[1] !== null && item[1] !== undefined ? String(item[1]).trim() : '';
+      }
+      if (item && typeof item === 'object') {
+        const row = item as Record<string, unknown>;
+        return String(row.display_name || row.name || row.label || row.text || '').trim();
+      }
+      const text = String(item ?? '').trim();
+      return /^\d+$/.test(text) ? '' : text;
+    })
+    .filter(Boolean);
+
+  if (labels.length) return labels.join('、');
+  return fieldType === 'one2many'
+    ? uiLabel('relation_rows_count', '{count} 条明细', { count: value.length })
+    : uiLabel('relation_items_count', '已关联 {count} 项', { count: value.length });
+}
+
 function semanticCell(field: string, value: unknown) {
   const option = columnOption(field);
   const raw = normalizeCellRawValue(value);
   const selectionText = selectionLabel(option, value);
+  const relationText = relationCellText(field, value);
   const numericText = formatNumericCellValue(field, raw);
   const dateText = formatDateCellValue(field, raw);
   const fieldType = String(option?.type || '').trim().toLowerCase();
@@ -1056,7 +1082,7 @@ function semanticCell(field: string, value: unknown) {
         ? '0'
       : (typeof raw === 'boolean'
         ? (fieldType === 'boolean' ? uiLabel(raw ? 'boolean_true' : 'boolean_false', raw ? '是' : '否') : '--')
-        : attachmentText || numericText || dateText || String(raw)))));
+        : attachmentText || relationText || numericText || dateText || String(raw)))));
   const toneKey = String(raw ?? '').trim();
   const tone = option?.cellRole === 'status'
     ? (option.toneByValue?.[toneKey] || 'neutral')

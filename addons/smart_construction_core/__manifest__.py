@@ -277,6 +277,7 @@
         'data/labor_equipment_plan_attendance_form_productization_contract.xml',
         'data/payment_execution_actual_outflow_form_productization_contract.xml',
         'data/construction_plan_form_productization_contract.xml',
+        'data/company_user_roster_productization_contract.xml',
         'data/remaining_p2_form_productization_contract.xml',
         'data/settlement_adjustment_form_productization_contract.xml',
         'data/remaining_p3_form_productization_contract.xml',

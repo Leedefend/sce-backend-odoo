@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data noupdate="0">
+        <record id="business_config_contract_company_user_roster_productized_tree_v1" model="ui.business.config.contract">
+            <field name="name">company_user_roster_productized_tree_v1</field>
+            <field name="model">res.users</field>
+            <field name="view_type">tree</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_company_user_roster_formal"/>
+            <field name="view_id" ref="smart_construction_core.view_sc_company_user_roster_tree"/>
+            <field name="priority">720</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {'source': 'smart_construction_core.product_release', 'source_status': 'product_release'},
+                    'views': {
+                        'tree': {
+                            'title': '公司人员名册',
+                            'columns': [
+                                {'name': 'name', 'sequence': 10},
+                                {'name': 'phone', 'sequence': 20},
+                                {'name': 'email', 'sequence': 30},
+                                {'name': 'company_id', 'sequence': 40},
+                                {'name': 'sc_user_role_group_names', 'sequence': 50},
+                                {'name': 'active', 'sequence': 60}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_company_user_roster_productized_form_v1" model="ui.business.config.contract">
+            <field name="name">company_user_roster_productized_form_v1</field>
+            <field name="model">res.users</field>
+            <field name="view_type">form</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_company_user_roster_formal"/>
+            <field name="view_id" ref="smart_construction_core.view_sc_company_user_roster_form"/>
+            <field name="priority">720</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {'source': 'smart_construction_core.product_release', 'source_status': 'product_release'},
+                    'views': {
+                        'form': {
+                            'fields': [
+                                {'name': 'name', 'sequence': 10, 'readonly': True},
+                                {'name': 'phone', 'sequence': 20, 'readonly': True},
+                                {'name': 'email', 'sequence': 30, 'readonly': True},
+                                {'name': 'company_id', 'sequence': 40, 'readonly': True},
+                                {'name': 'sc_user_role_group_names', 'sequence': 50, 'readonly': True},
+                                {'name': 'active', 'sequence': 60, 'readonly': True}
+                            ],
+                            'layout': [
+                                {
+                                    'type': 'sheet',
+                                    'children': [
+                                        {'type': 'group', 'label': '人员信息', 'children': [
+                                            {'type': 'field', 'name': 'name'},
+                                            {'type': 'field', 'name': 'phone'},
+                                            {'type': 'field', 'name': 'email'}
+                                        ]},
+                                        {'type': 'group', 'label': '组织与角色', 'children': [
+                                            {'type': 'field', 'name': 'company_id'},
+                                            {'type': 'field', 'name': 'sc_user_role_group_names'},
+                                            {'type': 'field', 'name': 'active'}
+                                        ]}
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+
+        <record id="business_config_contract_company_user_roster_productized_search_v1" model="ui.business.config.contract">
+            <field name="name">company_user_roster_productized_search_v1</field>
+            <field name="model">res.users</field>
+            <field name="view_type">search</field>
+            <field name="action_id" ref="smart_construction_core.action_sc_company_user_roster_formal"/>
+            <field name="view_id" ref="smart_construction_core.view_sc_company_user_roster_search"/>
+            <field name="priority">720</field>
+            <field name="company_id" eval="False"/>
+            <field name="active" eval="True"/>
+            <field name="status">published</field>
+            <field name="version_no">1</field>
+            <field name="contract_json" eval="{
+                'view_orchestration': {
+                    'context': {'source': 'smart_construction_core.product_release', 'source_status': 'product_release'},
+                    'views': {
+                        'search': {
+                            'fields': [
+                                {'name': 'name', 'sequence': 10},
+                                {'name': 'phone', 'sequence': 20},
+                                {'name': 'email', 'sequence': 30},
+                                {'name': 'company_id', 'sequence': 40},
+                                {'name': 'sc_user_role_group_ids', 'sequence': 50}
+                            ],
+                            'filters': [
+                                {'name': 'active_user', 'label': '启用', 'domain': [['active', '=', True]], 'sequence': 10},
+                                {'name': 'inactive_user', 'label': '停用', 'domain': [['active', '=', False]], 'sequence': 20}
+                            ],
+                            'group_by': [
+                                {'field': 'company_id', 'label': '按公司', 'sequence': 10},
+                                {'field': 'sc_user_role_group_ids', 'label': '按角色', 'sequence': 20}
+                            ]
+                        }
+                    }
+                }
+            }"/>
+        </record>
+    </data>
+</odoo>
