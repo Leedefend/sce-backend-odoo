@@ -191,6 +191,31 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
         errors = guard.validate(doc_text, _make_text())
         self.assertIn("doc missing token: 不写回 Odoo 分组菜单", errors)
 
+    def test_doc_must_keep_repeatable_acceptance_evidence_boundary(self) -> None:
+        doc_text = _doc_text().replace("可重复验收证据", "")
+        errors = guard.validate(doc_text, _make_text())
+        self.assertIn("doc missing token: 可重复验收证据", errors)
+
+    def test_doc_must_keep_browser_report_closeout_field(self) -> None:
+        doc_text = _doc_text().replace("浏览器验收结果与结构化报告路径", "")
+        errors = guard.validate(doc_text, _make_text())
+        self.assertIn("doc missing token: 浏览器验收结果与结构化报告路径", errors)
+
+    def test_doc_must_keep_backlog_closeout_field(self) -> None:
+        doc_text = _doc_text().replace("已修复的问题类型和仍保留的 backlog", "")
+        errors = guard.validate(doc_text, _make_text())
+        self.assertIn("doc missing token: 已修复的问题类型和仍保留的 backlog", errors)
+
+    def test_doc_must_keep_three_environment_closeout_field(self) -> None:
+        doc_text = _doc_text().replace("本地、日常开发服务器、生产服务器的验证结论", "")
+        errors = guard.validate(doc_text, _make_text())
+        self.assertIn("doc missing token: 本地、日常开发服务器、生产服务器的验证结论", errors)
+
+    def test_doc_must_keep_user_delivery_decision_field(self) -> None:
+        doc_text = _doc_text().replace("是否具备交付用户使用的条件", "")
+        errors = guard.validate(doc_text, _make_text())
+        self.assertIn("doc missing token: 是否具备交付用户使用的条件", errors)
+
     def test_topic_guard_must_forbid_production_write_context(self) -> None:
         make_text = _make_text().replace(
             "verify.productization.system_closure.topic_guard: guard.prod.forbid",

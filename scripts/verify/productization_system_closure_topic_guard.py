@@ -19,6 +19,7 @@ REQUIRED_DOC_TOKENS = [
     "业务办理闭环",
     "附件闭环",
     "发布链路",
+    "可重复验收证据",
     "项目隔离契约由后端输出",
     "前端只消费后端契约",
     "菜单配置展示口径必须与主导航展示口径一致",
@@ -44,6 +45,12 @@ REQUIRED_DOC_TOKENS = [
     "make verify.legacy_online_attachment.custody.evidence.prod",
     "make verify.legacy_attachment.frontend_browser.sample_manifest.prod",
     "make verify.attachment_upload.surface_manifest.prod",
+    "分支、提交、部署环境和版本",
+    "覆盖的用户角色、页面类型、业务任务和低代码任务",
+    "浏览器验收结果与结构化报告路径",
+    "已修复的问题类型和仍保留的 backlog",
+    "本地、日常开发服务器、生产服务器的验证结论",
+    "是否具备交付用户使用的条件",
 ]
 
 REQUIRED_MAKE_TARGETS = [
