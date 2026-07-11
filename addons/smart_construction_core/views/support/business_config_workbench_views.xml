@@ -1,11 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
+  <record id="view_sc_business_config_workbench_tree" model="ir.ui.view">
+    <field name="name">ui.business.config.contract.productized.workbench.tree</field>
+    <field name="model">ui.business.config.contract</field>
+    <field name="arch" type="xml">
+      <tree string="配置工作台" create="false" edit="false" delete="false" default_order="write_date desc, id desc">
+        <field name="model" string="业务模型"/>
+        <field name="view_type" string="视图类型"/>
+        <field name="action_id" string="业务入口"/>
+        <field name="status" string="发布状态"/>
+        <field name="version_no" string="版本"/>
+        <field name="write_date" string="更新时间"/>
+      </tree>
+    </field>
+  </record>
+
   <record id="action_sc_business_config_workbench" model="ir.actions.act_window">
     <field name="name">配置工作台</field>
     <field name="res_model">ui.business.config.contract</field>
     <field name="view_mode">tree,form</field>
+    <field name="view_id" ref="smart_construction_core.view_sc_business_config_workbench_tree"/>
+    <field name="view_ids" eval="[(5, 0, 0),
+      (0, 0, {'view_mode': 'tree', 'view_id': ref('smart_construction_core.view_sc_business_config_workbench_tree')})
+    ]"/>
     <field name="target">current</field>
-    <field name="context">{'sc_web_route': '/admin/business-config', 'business_config_root_menu_xmlid': 'smart_construction_core.menu_sc_root'}</field>
+    <field name="context">{'sc_web_route': '/admin/business-config', 'business_config_root_menu_xmlid': 'smart_construction_core.menu_sc_root', 'sc_productized_list': True}</field>
     <field name="groups_id" eval="[(6, 0, [
       ref('smart_construction_core.group_sc_cap_business_config_admin'),
       ref('smart_core.group_smart_core_business_config_admin'),

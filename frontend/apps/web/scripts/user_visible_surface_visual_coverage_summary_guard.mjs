@@ -68,6 +68,7 @@ function missingRequiredBusinessHeaders(rows) {
   const requiredByAction = new Map([
     [753, ["结算单号", "合同名称", "合同总额", "往来单位", "未付款金额"]],
     [754, ["单据状态", "单据编号", "项目名称", "结算单位", "结算金额"]],
+    [1009, ["业务模型", "视图类型", "业务入口", "发布状态", "版本"]],
   ]);
   return rows
     .map((row) => {

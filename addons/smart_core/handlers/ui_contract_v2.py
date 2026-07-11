@@ -3033,7 +3033,7 @@ class UiContractV2Handler(BaseIntentHandler):
             or direct_orchestration_columns
             or direct_orchestration_labels
         )
-        action_view_override = None if business_view_orchestration_applied else self._action_scoped_visible_list_columns(source_contract)
+        action_view_override = self._action_scoped_visible_list_columns(source_contract)
         action_view_columns = list(action_view_override.get("columns") or []) if action_view_override else []
         action_view_labels = dict(action_view_override.get("column_labels") or {}) if action_view_override else {}
         legacy_view_columns = []
@@ -3284,6 +3284,11 @@ class UiContractV2Handler(BaseIntentHandler):
             return None
         if not action:
             return None
+        action_context = _safe_eval_action_value(getattr(action, "context", None), {})
+        productized_action_list = bool(
+            isinstance(action_context, dict)
+            and action_context.get("sc_productized_list") is True
+        )
 
         candidate_views = []
         try:
@@ -3318,13 +3323,16 @@ class UiContractV2Handler(BaseIntentHandler):
             except Exception:
                 _logger.debug("ui.contract.v2 action-scoped visible list arch parse skipped", exc_info=True)
                 continue
+            productized_list = productized_action_list
             columns: list[str] = []
             labels: dict[str, str] = {}
             for node in root.xpath(".//field"):
                 name = str(node.get("name") or "").strip()
                 if not name:
                     continue
-                if not (name.startswith("p1_visible_") or name.startswith("legacy_visible_")):
+                if not productized_list and not (name.startswith("p1_visible_") or name.startswith("legacy_visible_")):
+                    continue
+                if productized_list and str(node.get("invisible") or "").strip().lower() in {"1", "true", "yes"}:
                     continue
                 if model_fields and name not in model_fields:
                     continue
@@ -3334,7 +3342,7 @@ class UiContractV2Handler(BaseIntentHandler):
                 label = str(node.get("string") or "").strip()
                 if label:
                     labels[name] = label
-            if columns and all(name.startswith("p1_visible_") for name in columns):
+            if columns and (productized_list or all(name.startswith("p1_visible_") for name in columns)):
                 return {
                     "source": "ir.actions.act_window.tree_view",
                     "action_id": action_id,
