@@ -327,6 +327,7 @@ def _validate_lowcode_release_verification_docs(errors: list[dict]) -> None:
         "make verify.lowcode_config.boundary.guard",
         "make verify.lowcode_config.runtime_boundary.guard",
         "make verify.business_config.snapshot",
+        "make verify.business_config.full_acceptance",
         "lowcode_customer_config_baseline_manifest.v1",
         "LOWCODE_CONFIG_RUNTIME_SOURCE_STATUS_STRICT=1",
         "BUSINESS_CONFIG_SNAPSHOT_COMPARE_PATH",

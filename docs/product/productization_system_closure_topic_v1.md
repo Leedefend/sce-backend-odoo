@@ -87,6 +87,9 @@
 ```bash
 make verify.productization.system_closure.topic_guard
 make verify.system_user_experience.quick
+make verify.business_config.unit
+make verify.business_config.config_workbench_operation_quick
+make verify.business_config.full_acceptance
 make verify.system_user_experience.visible_surface_visual_coverage
 make verify.system_user_experience.full_browser
 make verify.business_system.usability_readiness

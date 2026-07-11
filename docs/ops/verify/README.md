@@ -42,6 +42,36 @@
   - Verifies the form productization standard keeps product-layer
     responsibilities, field classification, entry semantics, density rules,
     state/action rules, attachment rules, and audit wiring intact.
+- `make verify.business_config.unit`
+  - Low-code business configuration unit baseline for release closure.
+  - Runs the user-language guard, low-code boundary guard, backend contract
+    boundary guard, and focused backend tests for menu configuration, form
+    field configuration, business configuration surface, API write boundaries,
+    and approval-policy configuration.
+  - Depends on `verify.frontend.product_language.guard`, so frontend
+    user-visible product wording is a hard failure inside the low-code
+    verification chain.
+- `make verify.business_config.config_workbench_operation_quick`
+  - Fast local check for the configuration workbench operation walkthrough.
+  - Runs frontend product-language guard, script syntax checks, operation
+    coverage guard, page-structure guard, frontend typecheck, and `git diff
+    --check`.
+  - Use this before browser acceptance when changing configuration workbench
+    structure, copy, operation flow, or page layout.
+- `make verify.business_config.config_workbench_operation_acceptance`
+  - Browser acceptance for the configuration workbench operation walkthrough.
+  - Covers user-level journeys, screenshots, operation assertions, console
+    error checks, and product usability dimensions for the low-code
+    configuration surface.
+- `make verify.business_config.full_acceptance`
+  - Full low-code productization acceptance gate.
+  - Chains the guard inventory, unit baseline, frontend build, coverage,
+    snapshot, approval runtime, browser acceptance, product navigation
+    boundary, low-code acceptance, configuration workbench operation
+    acceptance, layout/runtime/menu alignment checks, global stability, and
+    user-menu reachability guard.
+  - This is the authoritative local/daily-development gate before promoting
+    low-code configuration changes toward release.
 - `make verify.view.orchestration_product_boundary_guard`
   - Verifies P1 product-release form contracts keep the backend orchestration
     boundary intact.
