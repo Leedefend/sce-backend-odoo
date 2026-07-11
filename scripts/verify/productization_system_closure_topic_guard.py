@@ -27,16 +27,20 @@ REQUIRED_DOC_TOKENS = [
     "make verify.business_config.unit",
     "make verify.business_config.config_workbench_operation_quick",
     "make verify.business_config.full_acceptance",
+    "make verify.system_user_experience.visible_surface_visual_coverage",
     "make verify.system_user_experience.full_browser",
     "make verify.business_system.usability_readiness",
+    "make verify.production_git.authority.guard",
     "make verify.business_system.usability_readiness.prod",
 ]
 
 REQUIRED_MAKE_TARGETS = [
     "verify.productization.system_closure.topic_guard",
     "verify.system_user_experience.quick",
+    "verify.system_user_experience.visible_surface_visual_coverage",
     "verify.system_user_experience.full_browser",
     "verify.business_system.usability_readiness",
+    "verify.production_git.authority.guard",
     "verify.business_system.usability_readiness.prod",
     "verify.project_context.selector_product_boundary.guard.prod",
     "verify.frontend.product_language.guard",
