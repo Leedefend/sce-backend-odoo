@@ -1170,7 +1170,7 @@ async function executeHeaderAction(actionKey: string) {
     },
   });
   if (!handled) {
-    setActionFeedback(pageText('enter_error_message_fallback', '功能入口暂时不可用'), true);
+    setActionFeedback(pageText('enter_error_message_fallback', '当前入口暂时无法打开，请稍后重试。'), true);
   }
 }
 

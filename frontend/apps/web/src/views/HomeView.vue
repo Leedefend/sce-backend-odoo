@@ -9,7 +9,7 @@
 
   <section v-else-if="showMinimumWorkspaceFallback" class="minimum-workspace-fallback">
     <h2>{{ pageText('minimum_workspace_title', '工作区已就绪') }}</h2>
-    <p>{{ pageText('minimum_workspace_hint', '当前环境未返回完整首页契约，已切换到最小可用视图。') }}</p>
+    <p>{{ pageText('minimum_workspace_hint', '首页内容正在补齐，已为你显示当前可进入的业务入口。') }}</p>
     <div class="minimum-workspace-actions">
       <button class="primary" @click="openRoleLanding">{{ pageText('minimum_workspace_open_landing', '进入默认场景') }}</button>
       <button class="ghost" @click="goToMyWork">{{ pageText('minimum_workspace_open_my_work', '进入我的工作') }}</button>
@@ -2148,7 +2148,7 @@ function handleKeydown(event: KeyboardEvent) {
 }
 
 function resolveEnterErrorMessage(error: unknown) {
-  const message = asText((error as { message?: unknown })?.message) || pageText('enter_error_message_fallback', '功能入口暂时不可用');
+  const message = asText((error as { message?: unknown })?.message) || pageText('enter_error_message_fallback', '当前入口暂时无法打开，请稍后重试。');
   const code = asText((error as { code?: unknown })?.code)
     || asText((error as { reasonCode?: unknown })?.reasonCode)
     || 'ENTER_FAILED';

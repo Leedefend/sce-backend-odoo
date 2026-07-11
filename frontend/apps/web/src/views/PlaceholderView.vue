@@ -15,7 +15,7 @@
       class="card"
       :style="pageSectionStyle('card')"
     >
-      <h1>{{ pageText('title', '当前入口暂不可用') }}</h1>
+      <h1>{{ pageText('title', '当前入口正在配置') }}</h1>
       <p>{{ pageText('description', '请返回工作台重新选择业务入口，或联系管理员检查该入口的发布状态。') }}</p>
       <button class="primary" type="button" @click="goHome">{{ pageText('action_back_home', '返回工作台') }}</button>
     </section>

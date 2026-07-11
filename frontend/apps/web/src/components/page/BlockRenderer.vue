@@ -13,7 +13,7 @@
     />
   </div>
   <article v-else class="block-fallback">
-    <p class="block-fallback-title">页面内容暂不可用</p>
+    <p class="block-fallback-title">页面模块正在配置</p>
     <p class="block-fallback-meta">请稍后刷新，或联系管理员检查页面配置。</p>
   </article>
 </template>
