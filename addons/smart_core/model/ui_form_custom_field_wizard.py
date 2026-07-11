@@ -32,8 +32,8 @@ class UIFormCustomFieldWizard(models.TransientModel):
         required=True,
         domain=[("transient", "=", False)],
     )
-    model = fields.Char(related="model_id.model", string="技术模型")
-    field_name = fields.Char(string="技术字段名", default="x_custom_field")
+    model = fields.Char(related="model_id.model", string="数据模型")
+    field_name = fields.Char(string="字段标识", default="x_custom_field")
     label = fields.Char(string="字段标题", required=True)
     ttype = fields.Selection(SAFE_TYPES, string="字段类型", required=True, default="char")
     help = fields.Char(string="帮助说明")

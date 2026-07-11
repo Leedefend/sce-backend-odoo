@@ -57,7 +57,7 @@
                         <field name="scope_summary" readonly="1"/>
                     </group>
                     <group string="高级设置" invisible="1">
-                        <field name="field_name" string="技术字段名" readonly="field_id"/>
+                        <field name="field_name" string="字段标识" readonly="field_id"/>
                         <field name="field_type" readonly="1"/>
                         <field name="view_id" string="限定表单视图" domain="[('model', '=', model), ('type', '=', 'form')]"/>
                     </group>
@@ -82,7 +82,7 @@
                 <filter name="visible_rows" string="显示字段" domain="[('visible', '=', True)]"/>
                 <filter name="hidden_rows" string="隐藏字段" domain="[('visible', '=', False)]"/>
                 <group expand="0" string="分组">
-                    <filter name="group_model" string="模型" context="{'group_by': 'model_id'}"/>
+                    <filter name="group_model" string="业务对象" context="{'group_by': 'model_id'}"/>
                     <filter name="group_visible" string="显示状态" context="{'group_by': 'visible'}"/>
                 </group>
             </search>
@@ -124,7 +124,7 @@
                         <field name="sequence" string="显示顺序"/>
                     </group>
                     <group string="高级设置" invisible="1">
-                        <field name="field_name" string="技术字段名" placeholder="系统自动生成，必要时可调整为 x_ 开头"/>
+                        <field name="field_name" string="字段标识" placeholder="系统自动生成，必要时可调整为 x_ 开头"/>
                         <field name="view_id" string="限定表单视图" domain="[('model', '=', model), ('type', '=', 'form')]"/>
                     </group>
                     <group string="说明">
