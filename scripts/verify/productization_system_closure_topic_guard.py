@@ -120,6 +120,11 @@ REQUIRED_PROD_FORBID_TARGETS = [
     "verify.business_system.usability_readiness",
 ]
 
+REQUIRED_TARGET_MODE_GROUPS = {
+    "prod_readonly": REQUIRED_PROD_READONLY_TARGETS,
+    "prod_forbid": REQUIRED_PROD_FORBID_TARGETS,
+}
+
 REQUIRED_QUICK_DEPS = [
     "verify.productization.system_closure.topic_guard",
     "verify.system_user_experience.coverage_guard",
@@ -400,6 +405,18 @@ def validate(doc_text: str, make_text: str) -> list[str]:
         if token not in doc_text:
             errors.append(f"doc missing token: {token}")
 
+    seen_target_mode_groups: dict[str, str] = {}
+    for group, targets in REQUIRED_TARGET_MODE_GROUPS.items():
+        for target in _duplicate_tokens(targets):
+            errors.append(f"{group} target duplicated: {target}")
+        for target in targets:
+            previous_group = seen_target_mode_groups.get(target)
+            if previous_group and previous_group != group:
+                errors.append(f"target mode cross-classified: {target} in {previous_group} and {group}")
+            seen_target_mode_groups[target] = group
+            if target not in REQUIRED_MAKE_TARGETS:
+                errors.append(f"{group} target not guarded as required Makefile target: {target}")
+
     for target in REQUIRED_MAKE_TARGETS:
         if not _target_line(make_text, target):
             errors.append(f"Makefile missing target: {target}")
@@ -471,6 +488,7 @@ def main() -> int:
         "required_evidence_artifact_paths": len(REQUIRED_EVIDENCE_ARTIFACT_PATHS),
         "required_closeout_fields": len(REQUIRED_CLOSEOUT_FIELDS),
         "required_make_targets": len(REQUIRED_MAKE_TARGETS),
+        "required_target_mode_groups": len(REQUIRED_TARGET_MODE_GROUPS),
         "required_prod_readonly_targets": len(REQUIRED_PROD_READONLY_TARGETS),
         "required_prod_forbid_targets": len(REQUIRED_PROD_FORBID_TARGETS),
         "required_quick_dependencies": len(REQUIRED_QUICK_DEPS),

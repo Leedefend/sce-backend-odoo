@@ -174,6 +174,7 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
         self.assertIn('"required_doc_token_groups": 3', payload)
         self.assertIn('"required_evidence_artifact_paths": 9', payload)
         self.assertIn('"required_closeout_fields": 6', payload)
+        self.assertIn('"required_target_mode_groups": 2', payload)
         self.assertIn('"required_prod_readonly_targets": 8', payload)
         self.assertIn('"required_prod_forbid_targets": 9', payload)
 
@@ -345,6 +346,48 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
         errors = guard.validate(_doc_text(), make_text)
         self.assertIn("verify.formal_business.release_gate must use guard.prod.forbid", errors)
         self.assertIn("verify.formal_business.release_gate must not use guard.prod.readonly", errors)
+
+    def test_target_mode_group_duplicate_fails(self) -> None:
+        duplicated_targets = [
+            *guard.REQUIRED_PROD_READONLY_TARGETS,
+            "verify.business_system.usability_readiness.prod",
+        ]
+        with mock.patch.object(guard, "REQUIRED_PROD_READONLY_TARGETS", duplicated_targets), mock.patch.dict(
+            guard.REQUIRED_TARGET_MODE_GROUPS,
+            {"prod_readonly": duplicated_targets},
+        ):
+            errors = guard.validate(_doc_text(), _make_text())
+
+        self.assertIn("prod_readonly target duplicated: verify.business_system.usability_readiness.prod", errors)
+
+    def test_target_mode_cross_classification_fails(self) -> None:
+        cross_classified_targets = [
+            *guard.REQUIRED_PROD_FORBID_TARGETS,
+            "verify.business_system.usability_readiness.prod",
+        ]
+        with mock.patch.object(guard, "REQUIRED_PROD_FORBID_TARGETS", cross_classified_targets), mock.patch.dict(
+            guard.REQUIRED_TARGET_MODE_GROUPS,
+            {"prod_forbid": cross_classified_targets},
+        ):
+            errors = guard.validate(_doc_text(), _make_text())
+
+        self.assertIn(
+            "target mode cross-classified: verify.business_system.usability_readiness.prod in prod_readonly and prod_forbid",
+            errors,
+        )
+
+    def test_target_mode_member_must_be_required_make_target(self) -> None:
+        unguarded_targets = [*guard.REQUIRED_PROD_READONLY_TARGETS, "verify.untracked.prod"]
+        with mock.patch.object(guard, "REQUIRED_PROD_READONLY_TARGETS", unguarded_targets), mock.patch.dict(
+            guard.REQUIRED_TARGET_MODE_GROUPS,
+            {"prod_readonly": unguarded_targets},
+        ):
+            errors = guard.validate(_doc_text(), _make_text())
+
+        self.assertIn(
+            "prod_readonly target not guarded as required Makefile target: verify.untracked.prod",
+            errors,
+        )
 
     def test_full_browser_gate_must_keep_config_workbench_acceptance(self) -> None:
         make_text = _make_text().replace(" verify.business_config.config_workbench_operation_acceptance", "")
