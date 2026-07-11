@@ -183,7 +183,7 @@
         </label>
       </div>
       <div class="create-panel-footer">
-        <span>复制入口会沿用已有菜单打开的页面；长期固定入口需沉淀到用户模块。</span>
+        <span>复制入口会沿用已有菜单打开的页面；长期使用的入口建议纳入正式菜单基线。</span>
         <button type="button" class="primary" :disabled="creatingMenu || !createForm.name.trim()" @click="createMenuEntry">
           {{ creatingMenu ? '创建中...' : '创建菜单' }}
         </button>
@@ -1295,7 +1295,7 @@ const canDeleteSelectedMenu = computed(() => {
 const selectedMenuDeleteHint = computed(() => {
   if (!selectedMenu.value) return '请选择一个菜单后再删除。';
   if (canDeleteSelectedMenu.value) return '该菜单由配置新增，可以删除。';
-  return '系统内置菜单不能物理删除，需要关闭“显示菜单”来隐藏。';
+  return '系统内置菜单不能直接删除，需要关闭“显示菜单”来隐藏。';
 });
 const rootMenuXmlid = computed(() => String(route.query.root_menu_xmlid || config.startupRootXmlid || '').trim());
 const shouldLoadFullRootMenuConfig = computed(() => (

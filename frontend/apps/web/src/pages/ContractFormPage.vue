@@ -2968,7 +2968,7 @@ async function auditCurrentFormConfiguration() {
       hasConflict: Boolean(result.has_conflict),
     };
   } catch (err) {
-    errorMessage.value = err instanceof Error ? err.message : '表单配置审计失败';
+    errorMessage.value = err instanceof Error ? err.message : '表单配置检查失败';
     status.value = 'error';
   } finally {
     formConfigAuditBusy.value = false;
@@ -3933,14 +3933,14 @@ const contractMetaLine = computed(() => {
     return labels[normalized] || value;
   };
   const modeLabel = valueLabel(mode, {
-    native: '原生表单',
-    governed: '治理表单',
-    action: '动作页面',
+    native: '标准表单',
+    governed: '受控表单',
+    action: '操作页面',
     legacy: '历史承载',
   });
   const surfaceLabel = valueLabel(surface, {
-    native: '原生界面',
-    governed: '治理界面',
+    native: '标准界面',
+    governed: '受控界面',
     business_config: '配置界面',
     lowcode_config: '低代码配置',
   });
@@ -9087,10 +9087,10 @@ const hudEntries = computed(() => [
   { label: '新版配置值来源', value: v2ShadowValueSourceKind.value },
   { label: '配置解析问题', value: v2ContractDecodeError.value || '-' },
   { label: '配置视图类型', value: contract.value?.head?.view_type || contract.value?.view_type || '-' },
-  { label: '视图编排已应用', value: viewOrchestrationHudSummary.value.applied },
-  { label: '视图编排责任层', value: viewOrchestrationHudSummary.value.owner },
-  { label: '视图编排配置数', value: viewOrchestrationHudSummary.value.contractCount },
-  { label: '视图编排名称', value: viewOrchestrationHudSummary.value.contractNames },
+  { label: '页面编排已应用', value: viewOrchestrationHudSummary.value.applied },
+  { label: '页面编排责任层', value: viewOrchestrationHudSummary.value.owner },
+  { label: '页面编排配置数', value: viewOrchestrationHudSummary.value.contractCount },
+  { label: '页面编排名称', value: viewOrchestrationHudSummary.value.contractNames },
   { label: '表单配置字段数', value: viewOrchestrationHudSummary.value.businessConfigFieldCount },
   { label: '跳过策略字段', value: viewOrchestrationHudSummary.value.skippedLegacyPolicyFields },
   { label: '历史策略覆盖', value: viewOrchestrationHudSummary.value.legacyOverlay },

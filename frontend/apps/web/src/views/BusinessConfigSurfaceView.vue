@@ -1469,7 +1469,7 @@ const snapshotSummaryText = computed(() => {
   const viewTypes = Object.entries(summary.view_type_counts || {})
     .map(([key, count]) => `${viewTypeLabel(key)} ${count}`)
     .join('、');
-  return `配置快照 ${summary.contract_count}，已发布 ${published}，按动作 ${summary.action_scope_count}${viewTypes ? `，${viewTypes}` : ''}`;
+  return `配置快照 ${summary.contract_count}，已发布 ${published}，按业务操作 ${summary.action_scope_count}${viewTypes ? `，${viewTypes}` : ''}`;
 });
 const snapshotCompareSummary = computed(() => {
   const result = snapshotCompareResult.value;
@@ -1489,7 +1489,7 @@ const snapshotRemediationSummary = computed(() => {
   const result = snapshotCompareResult.value;
   if (!result) return '';
   const total = result.changed_count + result.added_count + result.removed_count;
-  if (!total) return '两个环境配置一致，无需生成整改动作。';
+  if (!total) return '两个环境配置一致，无需生成整改项。';
   return `可生成 ${total} 条整改项：新增 ${result.added_count}，移除 ${result.removed_count}，变化 ${result.changed_count}。`;
 });
 const pageTypeOptions = [
@@ -1516,7 +1516,7 @@ const listSearchPanelDescription = computed(() => (
 ));
 const versionPanelDescription = computed(() => (
   advancedPanelOpen.value
-    ? '按当前模型、动作、视图、角色作用域读取正式业务配置版本。'
+    ? '按当前业务对象、业务操作、页面类型、角色范围读取正式业务配置版本。'
     : '查看这个页面的配置保存记录，可在需要时回滚到历史版本。'
 ));
 const versionPanelGuide = computed(() => {
@@ -2197,7 +2197,7 @@ async function scanCoverage() {
     });
     hydrateSelectedCoverageRowFromScan();
   } catch (err) {
-    error.value = err instanceof Error ? err.message : '业务配置覆盖扫描失败';
+    error.value = err instanceof Error ? err.message : '业务配置覆盖检查失败';
   } finally {
     scanLoading.value = false;
   }
@@ -2218,7 +2218,7 @@ async function scanSystemRootCoverage() {
     });
     hydrateSelectedCoverageRowFromScan();
   } catch (err) {
-    error.value = err instanceof Error ? err.message : '系统根菜单覆盖扫描失败';
+    error.value = err instanceof Error ? err.message : '系统根菜单覆盖检查失败';
   } finally {
     scanLoading.value = false;
   }
@@ -2240,7 +2240,7 @@ async function scanCurrentModel() {
     });
     hydrateSelectedCoverageRowFromScan();
   } catch (err) {
-    error.value = err instanceof Error ? err.message : '当前模型覆盖扫描失败';
+    error.value = err instanceof Error ? err.message : '当前业务对象覆盖检查失败';
   } finally {
     scanLoading.value = false;
   }
@@ -2277,7 +2277,7 @@ function buildCoverageSummaryText() {
     : '无';
   return [
     `低代码配置覆盖验收：${overallStatusLabel(summary.overall_status)}`,
-    `${coverageScopeLabel.value}；范围：${scan.model || '全部模型'}，动作 ${summary.action_count}`,
+    `${coverageScopeLabel.value}；范围：${scan.model || '全部业务对象'}，业务操作 ${summary.action_count}`,
     `严重级别：阻断 ${summary.severity_counts.error || 0}，警告 ${summary.severity_counts.warning || 0}，提示 ${summary.severity_counts.notice || 0}`,
     `未配置：配置 ${summary.missing_count}，办理页 ${summary.runtime_missing_count}，分析页 ${summary.runtime_missing_analysis_count || 0}，无菜单 ${summary.no_menu_count}，个人设置 ${summary.user_preference_count}`,
     `原因：未发布 ${summary.not_published_gap_count}，作用域未命中 ${summary.not_runtime_applicable_gap_count}`,
