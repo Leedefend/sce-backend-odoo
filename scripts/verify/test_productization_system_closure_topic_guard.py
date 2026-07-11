@@ -54,6 +54,16 @@ def _make_text() -> str:
             guard.REQUIRED_TARGET_DEPS["verify.project_context.selector_product_boundary.guard.prod"],
             guard.REQUIRED_TARGET_BODY_TOKENS["verify.project_context.selector_product_boundary.guard.prod"],
         ),
+        _target(
+            "verify.formal_menu.runtime_no_legacy_carrier_guard.prod",
+            guard.REQUIRED_TARGET_DEPS["verify.formal_menu.runtime_no_legacy_carrier_guard.prod"],
+            guard.REQUIRED_TARGET_BODY_TOKENS["verify.formal_menu.runtime_no_legacy_carrier_guard.prod"],
+        ),
+        _target(
+            "verify.formal_list_surface.no_test_placeholder_guard.prod",
+            guard.REQUIRED_TARGET_DEPS["verify.formal_list_surface.no_test_placeholder_guard.prod"],
+            guard.REQUIRED_TARGET_BODY_TOKENS["verify.formal_list_surface.no_test_placeholder_guard.prod"],
+        ),
         _target("verify.frontend.product_language.guard", ["guard.prod.forbid"]),
         _target(
             "verify.business_config.unit",
@@ -147,6 +157,34 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
         errors = guard.validate(_doc_text(), make_text)
         self.assertIn(
             "verify.project_context.selector_product_boundary.guard.prod missing command token: PROD_READONLY_VERIFY=1",
+            errors,
+        )
+
+    def test_prod_formal_menu_guard_must_keep_readonly_dependency(self) -> None:
+        make_text = _make_text().replace(
+            "verify.formal_menu.runtime_no_legacy_carrier_guard.prod: guard.prod.readonly",
+            "verify.formal_menu.runtime_no_legacy_carrier_guard.prod:",
+        )
+        errors = guard.validate(_doc_text(), make_text)
+        self.assertIn(
+            "verify.formal_menu.runtime_no_legacy_carrier_guard.prod missing dependency: guard.prod.readonly",
+            errors,
+        )
+
+    def test_prod_formal_list_guard_must_keep_readonly_parameter(self) -> None:
+        target_with_token = _target(
+            "verify.formal_list_surface.no_test_placeholder_guard.prod",
+            guard.REQUIRED_TARGET_DEPS["verify.formal_list_surface.no_test_placeholder_guard.prod"],
+            guard.REQUIRED_TARGET_BODY_TOKENS["verify.formal_list_surface.no_test_placeholder_guard.prod"],
+        )
+        target_without_token = target_with_token.replace(
+            "PROD_READONLY_VERIFY=1",
+            "",
+        )
+        make_text = _make_text().replace(target_with_token, target_without_token)
+        errors = guard.validate(_doc_text(), make_text)
+        self.assertIn(
+            "verify.formal_list_surface.no_test_placeholder_guard.prod missing command token: PROD_READONLY_VERIFY=1",
             errors,
         )
 

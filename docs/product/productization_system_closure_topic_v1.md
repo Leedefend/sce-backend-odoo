@@ -100,6 +100,8 @@ make verify.business_system.usability_readiness
 ```bash
 make verify.production_git.authority.guard
 make verify.project_context.selector_product_boundary.guard.prod
+make verify.formal_menu.runtime_no_legacy_carrier_guard.prod
+make verify.formal_list_surface.no_test_placeholder_guard.prod
 make verify.business_system.usability_readiness.prod
 ```
 

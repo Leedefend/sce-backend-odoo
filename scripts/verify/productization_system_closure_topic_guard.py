@@ -32,6 +32,8 @@ REQUIRED_DOC_TOKENS = [
     "make verify.business_system.usability_readiness",
     "make verify.production_git.authority.guard",
     "make verify.project_context.selector_product_boundary.guard.prod",
+    "make verify.formal_menu.runtime_no_legacy_carrier_guard.prod",
+    "make verify.formal_list_surface.no_test_placeholder_guard.prod",
     "make verify.business_system.usability_readiness.prod",
 ]
 
@@ -44,6 +46,8 @@ REQUIRED_MAKE_TARGETS = [
     "verify.production_git.authority.guard",
     "verify.business_system.usability_readiness.prod",
     "verify.project_context.selector_product_boundary.guard.prod",
+    "verify.formal_menu.runtime_no_legacy_carrier_guard.prod",
+    "verify.formal_list_surface.no_test_placeholder_guard.prod",
     "verify.frontend.product_language.guard",
 ]
 
@@ -76,6 +80,17 @@ REQUIRED_TARGET_DEPS = {
         "check-compose-env",
     ],
     "verify.project_context.selector_product_boundary.guard.prod": [
+        "guard.prod.readonly",
+        "check-compose-project",
+        "check-compose-env",
+    ],
+    "verify.formal_menu.runtime_no_legacy_carrier_guard.prod": [
+        "guard.prod.readonly",
+        "check-compose-project",
+        "check-compose-env",
+        "verify.formal_menu.no_legacy_carrier_guard",
+    ],
+    "verify.formal_list_surface.no_test_placeholder_guard.prod": [
         "guard.prod.readonly",
         "check-compose-project",
         "check-compose-env",
@@ -117,6 +132,16 @@ REQUIRED_TARGET_BODY_TOKENS = {
         "python3 -m py_compile scripts/verify/project_context_selector_product_boundary_guard.py",
         "PROD_READONLY_VERIFY=1",
         "scripts/verify/project_context_selector_product_boundary_guard.py",
+    ],
+    "verify.formal_menu.runtime_no_legacy_carrier_guard.prod": [
+        "python3 -m py_compile scripts/verify/formal_menu_runtime_no_legacy_carrier_guard.py",
+        "PROD_READONLY_VERIFY=1",
+        "scripts/verify/formal_menu_runtime_no_legacy_carrier_guard.py",
+    ],
+    "verify.formal_list_surface.no_test_placeholder_guard.prod": [
+        "python3 -m py_compile scripts/verify/formal_list_surface_no_test_placeholder_guard.py",
+        "PROD_READONLY_VERIFY=1",
+        "scripts/verify/formal_list_surface_no_test_placeholder_guard.py",
     ],
     "verify.system_user_experience.shell_acceptance": [
         "scripts/system_user_experience_shell_acceptance.mjs",
