@@ -12199,7 +12199,7 @@ onBeforeUnmount(() => {
 }
 
 .contract-form-native-shell :deep(.template-page-header--title-hidden:not(:has(.template-page-header-status > *))) {
-  justify-content: flex-start;
+  justify-content: flex-end;
   width: 100%;
   max-width: none;
   margin-bottom: 10px;
@@ -12287,6 +12287,10 @@ onBeforeUnmount(() => {
     align-items: stretch;
     flex-direction: column;
     flex-wrap: nowrap;
+  }
+
+  .contract-form-native-shell :deep(.template-page-header--title-hidden:not(:has(.template-page-header-status > *))) {
+    justify-content: flex-start;
   }
 
   .contract-form-native-shell :deep(.template-page-header-status) {
