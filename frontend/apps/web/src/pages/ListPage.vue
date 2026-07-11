@@ -2298,14 +2298,12 @@ onBeforeUnmount(() => {
 }
 
 .table-scroll-hint {
-  position: sticky;
-  right: 12px;
-  bottom: 10px;
+  position: static;
   z-index: 5;
   display: block;
   width: max-content;
   max-width: calc(100% - 24px);
-  margin: -42px 12px 10px auto;
+  margin: 8px 12px 10px auto;
   border: 1px solid var(--sc-app-info-border);
   border-radius: 999px;
   background: var(--sc-app-info-bg);
