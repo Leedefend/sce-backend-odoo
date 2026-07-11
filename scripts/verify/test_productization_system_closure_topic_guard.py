@@ -116,6 +116,14 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
         errors = guard.validate(_doc_text(), make_text)
         self.assertIn("topic guard must use guard.prod.forbid", errors)
 
+    def test_topic_guard_requires_exact_production_forbid_dependency(self) -> None:
+        make_text = _make_text().replace(
+            "verify.productization.system_closure.topic_guard: guard.prod.forbid",
+            "verify.productization.system_closure.topic_guard: guard.prod.forbidden",
+        )
+        errors = guard.validate(_doc_text(), make_text)
+        self.assertIn("topic guard must use guard.prod.forbid", errors)
+
     def test_topic_guard_must_run_its_regression_tests(self) -> None:
         make_text = _make_text().replace(
             "cd scripts/verify && python3 test_productization_system_closure_topic_guard.py",
@@ -129,6 +137,14 @@ class ProductizationSystemClosureTopicGuardTests(unittest.TestCase):
 
     def test_missing_quick_dependency_fails(self) -> None:
         make_text = _make_text().replace(" verify.formal_list_surface.no_test_placeholder_guard", "")
+        errors = guard.validate(_doc_text(), make_text)
+        self.assertIn("quick gate missing dependency: verify.formal_list_surface.no_test_placeholder_guard", errors)
+
+    def test_quick_dependency_requires_exact_target_name(self) -> None:
+        make_text = _make_text().replace(
+            " verify.formal_list_surface.no_test_placeholder_guard",
+            " verify.formal_list_surface.no_test_placeholder_guard_fake",
+        )
         errors = guard.validate(_doc_text(), make_text)
         self.assertIn("quick gate missing dependency: verify.formal_list_surface.no_test_placeholder_guard", errors)
 

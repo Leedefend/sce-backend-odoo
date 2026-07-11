@@ -172,6 +172,13 @@ def _target_line(text: str, target: str) -> str:
     return match.group(0) if match else ""
 
 
+def _target_deps(text: str, target: str) -> list[str]:
+    target_line = _target_line(text, target)
+    if not target_line:
+        return []
+    return target_line.split(":", 1)[1].split()
+
+
 def _target_body(text: str, target: str) -> str:
     pattern = re.compile(
         rf"^{re.escape(target)}\s*:[^\n]*\n(?P<body>(?:\t[^\n]*\n|[ \t]*\n)*)",
@@ -197,9 +204,9 @@ def validate(doc_text: str, make_text: str) -> list[str]:
         if not _target_line(make_text, target):
             errors.append(f"Makefile missing target: {target}")
 
-    quick_line = _target_line(make_text, "verify.system_user_experience.quick")
+    quick_deps = _target_deps(make_text, "verify.system_user_experience.quick")
     for dep in REQUIRED_QUICK_DEPS:
-        if dep not in quick_line:
+        if dep not in quick_deps:
             errors.append(f"quick gate missing dependency: {dep}")
 
     for target, deps in REQUIRED_TARGET_DEPS.items():
@@ -207,8 +214,9 @@ def validate(doc_text: str, make_text: str) -> list[str]:
         if not target_line:
             errors.append(f"Makefile missing target: {target}")
             continue
+        actual_deps = _target_deps(make_text, target)
         for dep in deps:
-            if dep not in target_line:
+            if dep not in actual_deps:
                 errors.append(f"{target} missing dependency: {dep}")
 
     for target, tokens in REQUIRED_TARGET_BODY_TOKENS.items():
@@ -221,7 +229,7 @@ def validate(doc_text: str, make_text: str) -> list[str]:
                 errors.append(f"{target} missing command token: {token}")
 
     topic_line = _target_line(make_text, "verify.productization.system_closure.topic_guard")
-    if topic_line and "guard.prod.forbid" not in topic_line:
+    if topic_line and "guard.prod.forbid" not in _target_deps(make_text, "verify.productization.system_closure.topic_guard"):
         errors.append("topic guard must use guard.prod.forbid")
 
     return errors
