@@ -1,6 +1,18 @@
 import { parseMaybeJsonRecord } from '../../app/contractRuntime';
 import { dictOrEmpty } from './recordUtils';
-import type { NativeStatusbarVm } from './types';
+import type { FieldDescriptor } from '@sc/schema';
+import type { NativeStatusbarVm, StatusbarState } from './types';
+
+export type NativeFormStatusbarInput = {
+  recordId: number;
+  formView: unknown;
+  fields: Record<string, FieldDescriptor>;
+  formData: Record<string, unknown>;
+  mainData: Record<string, unknown>;
+  fieldReadonly: (field: string) => boolean;
+  readonly: boolean;
+  fallback: NativeStatusbarVm;
+};
 
 export function workflowActionMethodAliases(key: string): string[] {
   const normalized = String(key || '').trim();
@@ -132,5 +144,43 @@ export function normalizeWorkflowPhaseStatusbar(workflow: Record<string, unknown
     states,
     reachedValues: currentIndex >= 0 ? states.slice(0, currentIndex).map((item) => String(item.value)) : [],
     readonly: true,
+  };
+}
+
+export function normalizeNativeFormStatusbar(input: NativeFormStatusbarInput): NativeStatusbarVm {
+  if (!input.recordId) {
+    return { visible: false, field: '', current: '', states: [], reachedValues: [], readonly: true };
+  }
+  const formView = dictOrEmpty(input.formView);
+  const raw = dictOrEmpty(formView.statusbar);
+  const field = String(raw.field || '').trim();
+  const descriptor = field ? input.fields[field] : undefined;
+  const rawStates = Array.isArray(raw.states) ? raw.states as Array<Record<string, unknown>> : [];
+  const selectionStates = Array.isArray(descriptor?.selection)
+    ? descriptor.selection.map((item) => {
+      const pair = item as unknown[];
+      return { value: String(pair[0] ?? ''), label: String(pair[1] ?? pair[0] ?? '') };
+    })
+    : [];
+  const states: StatusbarState[] = (rawStates.length
+    ? rawStates.map((item) => ({ value: item.value as string | number, label: String(item.label || item.value || '') }))
+    : selectionStates)
+    .filter((item) => String(item.value ?? '').trim() && String(item.label || '').trim());
+  const rawFormStatus = input.formData[field];
+  const formStatusValue = rawFormStatus === false || rawFormStatus == null ? '' : String(rawFormStatus).trim();
+  const current = String(
+    formStatusValue
+      || (Object.prototype.hasOwnProperty.call(input.mainData, field) ? input.mainData[field] : '')
+      || '',
+  ).trim();
+  const currentIndex = states.findIndex((item) => String(item.value) === current);
+  if (!field || !states.length) return input.fallback;
+  return {
+    visible: true,
+    field,
+    current,
+    states,
+    reachedValues: currentIndex >= 0 ? states.slice(0, currentIndex).map((item) => String(item.value)) : [],
+    readonly: Boolean(input.fieldReadonly(field) || input.readonly),
   };
 }

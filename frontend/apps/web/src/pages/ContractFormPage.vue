@@ -622,6 +622,7 @@ import {
   isWorkflowTransitionMethod,
   normalizeWorkflowActionRows,
   normalizeWorkflowEvidenceGateRows,
+  normalizeNativeFormStatusbar,
   normalizeWorkflowPhaseStatusbar,
   workflowActionMethodAliases,
   workflowActionRowForMethod,
@@ -665,7 +666,6 @@ import {
   type RelationSearchColumn,
   type RelationSearchRow,
   type RelationUiLabels,
-  type StatusbarState,
   type UiStatus,
 } from './contractForm/types';
 import {
@@ -4619,53 +4619,19 @@ const nativeFavoriteFieldNames = computed(() => {
   return names;
 });
 
-function workflowPhaseStatusbar(): NativeStatusbarVm {
-  return normalizeWorkflowPhaseStatusbar(currentWorkflowContract());
-}
-
 const nativeStatusbar = computed<NativeStatusbarVm>(() => {
-  if (!recordId.value) {
-    return { visible: false, field: '', current: '', states: [], reachedValues: [], readonly: true };
-  }
-  const formView = contract.value?.views?.form as Record<string, unknown> | undefined;
-  const raw = formView?.statusbar && typeof formView.statusbar === 'object'
-    ? formView.statusbar as Record<string, unknown>
-    : {};
-  const field = String(raw.field || '').trim();
-  const descriptor = field ? contract.value?.fields?.[field] : undefined;
-  const rawStates = Array.isArray(raw.states) ? raw.states as Array<Record<string, unknown>> : [];
-  const selectionStates = Array.isArray(descriptor?.selection)
-    ? descriptor.selection.map((item) => {
-      const pair = item as unknown[];
-      return { value: String(pair[0] ?? ''), label: String(pair[1] ?? pair[0] ?? '') };
-    })
-    : [];
-  const states: StatusbarState[] = (rawStates.length
-    ? rawStates.map((item) => ({ value: item.value as string | number, label: String(item.label || item.value || '') }))
-    : selectionStates)
-    .filter((item) => String(item.value ?? '').trim() && String(item.label || '').trim());
   const storeMainData = resolveContractV2MainData(v2ContractStore.value);
   const contractMainData = Object.keys(storeMainData).length ? storeMainData : resolveUnifiedPageContractV2MainData(contract.value);
-  const rawFormStatus = formData[field];
-  const formStatusValue = rawFormStatus === false || rawFormStatus == null ? '' : String(rawFormStatus).trim();
-  const current = String(
-    formStatusValue
-      || (Object.prototype.hasOwnProperty.call(contractMainData, field) ? contractMainData[field] : '')
-      || '',
-  ).trim();
-  const currentIndex = states.findIndex((item) => String(item.value) === current);
-  const state = field ? runtimeState(field) : { readonly: true };
-  if (!field || !states.length) {
-    return workflowPhaseStatusbar();
-  }
-  return {
-    visible: Boolean(field && states.length),
-    field,
-    current,
-    states,
-    reachedValues: currentIndex >= 0 ? states.slice(0, currentIndex).map((item) => String(item.value)) : [],
-    readonly: Boolean(state.readonly || renderProfile.value === 'readonly' || (recordId.value ? !rights.value.write : !rights.value.create)),
-  };
+  return normalizeNativeFormStatusbar({
+    recordId: recordId.value,
+    formView: contract.value?.views?.form,
+    fields: contract.value?.fields || {},
+    formData: formData as Record<string, unknown>,
+    mainData: contractMainData,
+    fieldReadonly: (field) => runtimeState(field).readonly,
+    readonly: renderProfile.value === 'readonly' || (recordId.value ? !rights.value.write : !rights.value.create),
+    fallback: normalizeWorkflowPhaseStatusbar(currentWorkflowContract()),
+  });
 });
 
 function setStatusbarValue(value: string) {
