@@ -26,6 +26,16 @@ export type NativeFormDesignFields = {
   labels: Record<string, string>;
 };
 
+export type FormDataFieldNameInput = {
+  contract: unknown;
+  fields: Record<string, FieldDescriptor>;
+  rawNativeLayoutNodes: NativeLayoutLikeNode[];
+  layoutFieldNames: string[];
+  visibleFields: string[];
+  statusField?: string;
+  mainData?: Record<string, unknown>;
+};
+
 const CHILD_KEYS = ['children', 'pages', 'tabs', 'nodes', 'items'] as const;
 
 export function nativeLayoutNodeType(node: NativeLayoutLikeNode) {
@@ -138,6 +148,48 @@ export function collectNativeVisibleFieldOrder(
   };
   walk(nodes);
   return out;
+}
+
+export function collectFormDataFieldNames(input: FormDataFieldNameInput): string[] {
+  const contractRecord = input.contract && typeof input.contract === 'object' && !Array.isArray(input.contract)
+    ? input.contract as Record<string, unknown>
+    : {};
+  const toolbar = contractRecord.toolbar && typeof contractRecord.toolbar === 'object' && !Array.isArray(contractRecord.toolbar)
+    ? contractRecord.toolbar as Record<string, unknown>
+    : {};
+  const views = contractRecord.views && typeof contractRecord.views === 'object' && !Array.isArray(contractRecord.views)
+    ? contractRecord.views as Record<string, unknown>
+    : {};
+  const formView = views.form && typeof views.form === 'object' && !Array.isArray(views.form)
+    ? views.form as Record<string, unknown>
+    : {};
+  const names = new Set<string>();
+  const fieldMap = input.fields || {};
+  collectNativeLayoutFieldNames(input.rawNativeLayoutNodes, names, (name) => Boolean(fieldMap[name]));
+  collectNativeLayoutBadgeCountFieldNames(input.rawNativeLayoutNodes, names);
+  collectContractActionBadgeCountFieldNames(contractRecord.buttons, names);
+  collectContractActionBadgeCountFieldNames(toolbar.header, names);
+  collectContractActionBadgeCountFieldNames(toolbar.sidebar, names);
+  collectContractActionBadgeCountFieldNames(toolbar.footer, names);
+  collectContractActionBadgeCountFieldNames(formView.header_buttons, names);
+  collectContractActionBadgeCountFieldNames(formView.button_box, names);
+  collectContractActionBadgeCountFieldNames(formView.business_actions, names);
+  input.layoutFieldNames.forEach((name) => {
+    if (fieldMap[name]) names.add(name);
+  });
+  input.visibleFields.forEach((name) => {
+    if (fieldMap[name]) names.add(name);
+  });
+  const statusField = String(input.statusField || '').trim();
+  if (statusField && fieldMap[statusField]) names.add(statusField);
+  ['can_review', 'validation_status'].forEach((name) => {
+    if (fieldMap[name] || Object.prototype.hasOwnProperty.call(input.mainData || {}, name)) names.add(name);
+  });
+  if (fieldMap.active) names.add('active');
+  if (!names.size) {
+    Object.keys(fieldMap).slice(0, 40).forEach((name) => names.add(name));
+  }
+  return Array.from(names);
 }
 
 function stringList(value: unknown): string[] {
