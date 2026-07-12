@@ -5998,9 +5998,9 @@ verify.unified_page_contract.lite: guard.prod.forbid
 # ----------------------------------------------------------------------
 # v1.1 Engineering Convergence quality entries
 # ----------------------------------------------------------------------
-.PHONY: ci test.frontend test.unit test.odoo.integration test.contract test.e2e.preflight test.e2e.fixed_data.odoo test.e2e test.all test.inventory test.inventory.summary test.e2e.matrix architecture.module_dependency_map architecture.complexity_report architecture.split_plan_queue security.secrets.scan
+.PHONY: ci test.frontend test.unit test.odoo.integration test.contract test.e2e.preflight test.e2e.fixed_data.odoo test.e2e test.all test.inventory test.inventory.summary test.e2e.matrix architecture.module_dependency_map architecture.complexity_report architecture.split_plan_queue github.remote_execution_plan security.secrets.scan
 
-ci: guard.prod.forbid security.secrets.scan test.inventory test.inventory.summary test.e2e.matrix architecture.module_dependency_map architecture.complexity_report architecture.split_plan_queue test.unit test.frontend test.contract test.e2e.preflight
+ci: guard.prod.forbid security.secrets.scan test.inventory test.inventory.summary test.e2e.matrix architecture.module_dependency_map architecture.complexity_report architecture.split_plan_queue github.remote_execution_plan test.unit test.frontend test.contract test.e2e.preflight
 	@git diff --check
 	@echo "[OK] v1.1 PR quality gate passed"
 
@@ -6054,6 +6054,9 @@ architecture.complexity_report:
 
 architecture.split_plan_queue:
 	@python3 scripts/ci/generate_split_plan_queue.py
+
+github.remote_execution_plan:
+	@python3 scripts/ci/generate_github_remote_execution_plan.py
 
 security.secrets.scan:
 	@python3 scripts/ci/secret_scan.py
