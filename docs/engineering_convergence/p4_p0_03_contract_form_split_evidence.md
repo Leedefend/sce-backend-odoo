@@ -13,6 +13,8 @@ Extracted responsibilities:
 - Shared contract form types and constants moved to `frontend/apps/web/src/pages/contractForm/types.ts`.
 - Action-contract parsing helpers moved to `frontend/apps/web/src/pages/contractForm/actionContract.ts`.
 - Generic contract record helpers moved to `frontend/apps/web/src/pages/contractForm/recordUtils.ts`.
+- Field, relation-display, date-input, view-label, and UI-error helpers moved to `frontend/apps/web/src/pages/contractForm/fieldUtils.ts`.
+- Access-policy normalization moved to `frontend/apps/web/src/pages/contractForm/accessPolicy.ts`.
 
 The route component remains the orchestration shell and still owns runtime state, navigation, persistence, and user interaction flow.
 
@@ -20,7 +22,7 @@ The route component remains the orchestration shell and still owns runtime state
 
 | File | Before | After |
 | --- | ---: | ---: |
-| `frontend/apps/web/src/pages/ContractFormPage.vue` | 13762 | 13519 |
+| `frontend/apps/web/src/pages/ContractFormPage.vue` | 13762 | 13393 |
 
 ## Boundary Decision
 

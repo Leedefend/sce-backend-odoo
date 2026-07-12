@@ -1205,7 +1205,7 @@ import { buildCanonicalSceneRouteTarget, buildEntryTargetRouteTarget } from '../
 import { readWorkspaceContext } from '../app/workspaceContext';
 import { collectPolicyValidationErrors, evaluateActionPolicy, evaluateFieldPolicy } from '../app/contractPolicies';
 import { buildRuntimeFieldStates } from '../app/modifierEngine';
-import { buildOne2ManyInlineCommands, buildX2ManyCommands, extractX2ManyIds } from '../app/x2manyCommands';
+import { buildOne2ManyInlineCommands, buildX2ManyCommands } from '../app/x2manyCommands';
 import { resolveSceneValidationSuggestedAction } from '../app/sceneValidationRecoveryStrategy';
 import { findSceneReadyEntry, resolveFormSceneReady } from '../app/resolvers/sceneReadyResolver';
 import { normalizeSceneActionProtocol } from '../app/sceneActionProtocol';
@@ -1263,6 +1263,22 @@ import {
   normalizeRequiredParams,
   resolveV2ButtonStatus,
 } from './contractForm/actionContract';
+import { normalizeContractAccessPolicy } from './contractForm/accessPolicy';
+import {
+  cleanRelationDisplayLabel,
+  fieldType,
+  fromDatetimeInputValue,
+  lowCodeFieldSizeClass,
+  normalizeLowCodeColumns,
+  normalizeLowCodeColumnsOrNull,
+  normalizeLowCodeFieldSize,
+  normalizeRelationIds,
+  parseMany2oneDisplay,
+  sanitizeUiErrorMessage,
+  toDateInputValue,
+  toDatetimeInputValue,
+  viewTypeDisplayLabel,
+} from './contractForm/fieldUtils';
 import { dictOrEmpty, mergeFieldLabelsFromSource } from './contractForm/recordUtils';
 import {
   MANY2ONE_CREATE_OPTION,
@@ -2301,17 +2317,6 @@ const hasFieldGroupChanges = computed(() => Object.keys(fieldGroupDraft).some((f
   return Boolean(draft) && draft !== base;
 }));
 
-function normalizeLowCodeColumns(value: unknown, fallback: 1 | 2 | 3 = 2): 1 | 2 | 3 {
-  const columns = Number(value);
-  if (columns === 1 || columns === 2 || columns === 3) return columns;
-  return fallback;
-}
-
-function normalizeLowCodeColumnsOrNull(value: unknown): 1 | 2 | 3 | null {
-  const columns = Number(value);
-  return columns === 1 || columns === 2 || columns === 3 ? columns : null;
-}
-
 function inferLowCodeLayoutColumns(nodes: NativeFormLayoutNode[]): 1 | 2 | 3 | null {
   const counts: Record<1 | 2 | 3, number> = { 1: 0, 2: 0, 3: 0 };
   const directFieldCount = (node: NativeFormLayoutNode) => {
@@ -2348,19 +2353,6 @@ function inferLowCodeLayoutColumns(nodes: NativeFormLayoutNode[]): 1 | 2 | 3 | n
     .filter(([, count]) => count > 0)
     .sort((left, right) => right[1] - left[1] || Number(right[0]) - Number(left[0]));
   return ranked.length ? normalizeLowCodeColumnsOrNull(ranked[0][0]) : null;
-}
-
-function normalizeLowCodeFieldSize(value: unknown): LowCodeFieldSize {
-  const normalized = String(value || '').trim().toLowerCase();
-  if (['wide', 'full', 'large'].includes(normalized)) return normalized as LowCodeFieldSize;
-  return 'normal';
-}
-
-function lowCodeFieldSizeClass(size: LowCodeFieldSize) {
-  if (size === 'wide') return 'field--wide';
-  if (size === 'full') return 'field--full';
-  if (size === 'large') return 'field--full field--large';
-  return '';
 }
 
 function effectiveGroupVisible(title: string) {
@@ -3753,22 +3745,6 @@ const contractMetaLine = computed(() => {
   return `配置模式：${modeLabel} · 承载界面：${surfaceLabel} · 视图类型：${viewTypeLabel} · 页面状态：${profileLabels[renderProfile.value] || renderProfile.value} · 筛选项：${filters} · 流转项：${transitions} · 操作权限：${permissionLabels.join('、') || '无可用权限'}`;
 });
 
-function viewTypeDisplayLabel(value: unknown) {
-  const normalized = String(value || '').trim().toLowerCase();
-  const labels: Record<string, string> = {
-    form: '表单',
-    tree: '列表',
-    list: '列表',
-    kanban: '看板',
-    search: '搜索',
-    calendar: '日历',
-    pivot: '透视',
-    graph: '图表',
-  };
-  if (!normalized || normalized === '-') return '未配置';
-  return labels[normalized] || normalized.replace(/[_-]+/g, ' ');
-}
-
 const showDebugActions = computed(() => renderProfile.value !== 'create');
 const showDebugActionsVisible = computed(() => showHud.value && showDebugActions.value);
 const runtimeRoleCode = computed(() => String(session.roleSurface?.role_code || '').trim().toLowerCase());
@@ -3818,32 +3794,7 @@ const warnings = computed(() => {
 
 const contractAccessPolicy = computed<ContractAccessPolicy>(() => {
   const raw = (contract.value as Record<string, unknown> | null)?.access_policy;
-  const row = raw && typeof raw === 'object' && !Array.isArray(raw)
-    ? (raw as Record<string, unknown>)
-    : {};
-  const modeRaw = String(row.mode || '').trim().toLowerCase();
-  const mode: 'allow' | 'degrade' | 'block' = modeRaw === 'block' || modeRaw === 'degrade' ? modeRaw : 'allow';
-  const normalizeRows = (value: unknown) => {
-    if (!Array.isArray(value)) return [];
-    return value
-      .map((item) => {
-        if (!item || typeof item !== 'object' || Array.isArray(item)) return null;
-        const v = item as Record<string, unknown>;
-        return {
-          field: String(v.field || '').trim(),
-          model: String(v.model || '').trim(),
-          reasonCode: String(v.reason_code || '').trim(),
-        };
-      })
-      .filter((item): item is { field: string; model: string; reasonCode: string } => Boolean(item));
-  };
-  return {
-    mode,
-    reasonCode: String(row.reason_code || '').trim(),
-    message: String(row.message || '').trim(),
-    blockedFields: normalizeRows(row.blocked_fields),
-    degradedFields: normalizeRows(row.degraded_fields),
-  };
+  return normalizeContractAccessPolicy(raw);
 });
 
 const workflowTransitions = computed(() => {
@@ -3903,43 +3854,8 @@ const showSearchFilters = computed(() => {
   return !contract.value.hide_filters_on_create;
 });
 
-function fieldType(descriptor?: FieldDescriptor | null) {
-  return String(descriptor?.ttype || descriptor?.type || '').trim().toLowerCase();
-}
-
-function toDateInputValue(value: unknown) {
-  const raw = String(value ?? '').trim();
-  if (!raw) return '';
-  if (raw.length >= 10) return raw.slice(0, 10);
-  return raw;
-}
-
-function toDatetimeInputValue(value: unknown) {
-  const raw = String(value ?? '').trim();
-  if (!raw) return '';
-  const normalized = raw.replace(' ', 'T');
-  return normalized.length >= 16 ? normalized.slice(0, 16) : normalized;
-}
-
-function fromDatetimeInputValue(value: unknown) {
-  const raw = String(value ?? '').trim();
-  if (!raw) return false;
-  const normalized = raw.replace('T', ' ');
-  return normalized.length === 16 ? `${normalized}:00` : normalized;
-}
-
-function normalizeRelationIds(value: unknown): number[] {
-  return extractX2ManyIds(value);
-}
-
 function relationIds(name: string): number[] {
   return normalizeRelationIds(formData[name]);
-}
-
-function cleanRelationDisplayLabel(value: unknown, id: number) {
-  const label = String(value || '').trim();
-  if (!label || label === 'display_name' || label === 'name') return `#${id}`;
-  return label;
 }
 
 function relationColorField(descriptor?: FieldDescriptor) {
@@ -4021,23 +3937,6 @@ function relationOptionsForField(name: string) {
   const ids = relationIds(name);
   if (!ids.length) return [];
   return ids.map((id) => ({ id, label: `#${id}` }));
-}
-
-function parseMany2oneDisplay(value: unknown): RelationOption | null {
-  if (Array.isArray(value)) {
-    const id = Number(value[0]);
-    if (!Number.isFinite(id) || id <= 0) return null;
-    const label = cleanRelationDisplayLabel(value[1], id);
-    return { id: Math.trunc(id), label };
-  }
-  if (value && typeof value === 'object') {
-    const row = value as Record<string, unknown>;
-    const id = Number(row.id);
-    if (!Number.isFinite(id) || id <= 0) return null;
-    const label = cleanRelationDisplayLabel(row.display_name || row.name, id);
-    return { id: Math.trunc(id), label };
-  }
-  return null;
 }
 
 function upsertRelationOption(fieldName: string, option: RelationOption | null) {
@@ -4811,31 +4710,6 @@ function relationModel(name: string) {
     ? descriptor.relation_entry as Record<string, unknown>
     : {};
   return String(descriptor?.relation || entry.model || '').trim();
-}
-
-function sanitizeUiErrorMessage(raw: unknown, fallback: string) {
-  const text = String(raw || '').trim();
-  if (!text) return fallback;
-  const lower = text.toLowerCase();
-  if (
-    lower.includes('duplicate key value')
-    || lower.includes('unique constraint')
-    || lower.includes('already exists')
-    || text.includes('唯一')
-    || text.includes('已存在')
-  ) {
-    return fallback || text;
-  }
-  if (lower.includes('psycopg2') || lower.includes('traceback') || lower.includes('sql')) {
-    return fallback;
-  }
-  // Do not expose raw success envelopes as UI errors.
-  if (text.startsWith('{') && text.includes('"ok"') && text.includes('"data"')) {
-    if (text.includes('"ok": true') || text.includes('"records"')) {
-      return fallback;
-    }
-  }
-  return text;
 }
 
 function relationEntry(descriptor?: FieldDescriptor) {
