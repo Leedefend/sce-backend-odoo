@@ -26,6 +26,7 @@ Extracted responsibilities:
 - The Web Contract V2 frontend architecture guard is now part of the local `make ci` gate through `verify.unified_page_contract.v2.web_architecture`.
 - High-risk split-plan file growth is now locked by `docs/engineering_convergence/complexity_baseline_lock.json` and `scripts/ci/enforce_complexity_baseline_lock.py`.
 - Frontend page contract boundary, orchestration-consumption, and consumer-intrusion guards are now part of `make ci.local.quick`.
+- This evidence document is checked by `scripts/ci/verify_contract_form_split_evidence.py` to keep line counts and remote-verification wording fresh.
 
 The route component remains the orchestration shell and still owns runtime state, navigation, persistence, and user interaction flow.
 
@@ -49,6 +50,7 @@ The route component remains the orchestration shell and still owns runtime state
 Local verification completed:
 
 - `make ci.local.quick`
+- `python3 scripts/ci/verify_contract_form_split_evidence.py`
 - `python3 scripts/verify/web_contract_v2_frontend_architecture_guard.py`
 - `python3 scripts/ci/enforce_complexity_baseline_lock.py`
 - `python3 scripts/verify/frontend_page_contract_boundary_guard.py`

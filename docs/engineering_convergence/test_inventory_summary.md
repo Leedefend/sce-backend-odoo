@@ -4,12 +4,12 @@ Generated from `test_inventory.csv`.
 
 ## Totals
 
-- Total assets: `1121`
+- Total assets: `1122`
 - Review queue: `4`
 - Unknown runtime: `3`
 - Long-running assets: `331`
 - Manual gate review: `4`
-- Aggregate-covered assets: `230`
+- Aggregate-covered assets: `231`
 - PR dedupe candidates: `560`
 
 ## By Layer
@@ -17,7 +17,7 @@ Generated from `test_inventory.csv`.
 | Layer | Count |
 | --- | ---: |
 | governance | 347 |
-| contract | 275 |
+| contract | 276 |
 | data_migration | 217 |
 | unit | 149 |
 | odoo_integration | 56 |
@@ -34,8 +34,8 @@ Generated from `test_inventory.csv`.
 | integration_candidate | 292 |
 | release_candidate | 36 |
 | manual_review | 4 |
+| local_iteration | 2 |
 | release_required | 2 |
-| local_iteration | 1 |
 | pr_required | 1 |
 | integration_required | 1 |
 
@@ -45,7 +45,7 @@ Generated from `test_inventory.csv`.
 | --- | ---: |
 | deduplicate_before_required | 560 |
 | keep_integration_or_release_only | 291 |
-| covered_by_aggregate | 225 |
+| covered_by_aggregate | 226 |
 | keep_release_only | 36 |
 | canonical_entry | 5 |
 | review_or_archive | 4 |
@@ -73,6 +73,7 @@ Generated from `test_inventory.csv`.
 | verify.release.v2_0_0.governance.guard | 3 |
 | verify.contract.scene_coverage.guard | 3 |
 | verify.smart_core.minimum_surface | 3 |
+| make ci.local.quick | 2 |
 | verify.business_config.config_workbench_operation_quick | 2 |
 | verify.backend.evidence.manifest.guard | 2 |
 | verify.business.capability_baseline.guard | 2 |
@@ -93,7 +94,6 @@ Generated from `test_inventory.csv`.
 | verify.e2e.scene_admin | 2 |
 | verify.e2e.subscription_smoke | 2 |
 | verify.formal_business.release_gate | 2 |
-| make ci.local.quick | 1 |
 | make ci | 1 |
 | make test.e2e | 1 |
 | make test.odoo.integration | 1 |
@@ -146,7 +146,7 @@ Generated from `test_inventory.csv`.
 
 | Runtime | Count |
 | --- | ---: |
-| <5m | 786 |
+| <5m | 787 |
 | 10-30m | 293 |
 | 30-60m | 38 |
 | unknown | 3 |
@@ -157,7 +157,7 @@ Generated from `test_inventory.csv`.
 | Owner | Count |
 | --- | ---: |
 | architecture owner | 347 |
-| platform owner | 275 |
+| platform owner | 276 |
 | data owner | 217 |
 | test owner | 150 |
 | backend owner | 56 |
@@ -173,7 +173,7 @@ Generated from `test_inventory.csv`.
 | scripts/migration | 215 |
 | scripts/ops | 37 |
 | frontend/apps/web/scripts | 22 |
-| scripts/ci | 7 |
+| scripts/ci | 8 |
 | make | 5 |
 | scripts/e2e | 5 |
 | scripts/audit | 4 |

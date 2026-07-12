@@ -19,6 +19,7 @@ architecture-boundary refactors. It includes:
 
 - P0/high-risk split-plan line-count lock.
 - Web Contract V2 frontend architecture boundary guard.
+- P4-P0-03 contract-form split evidence freshness guard.
 - Frontend page contract boundary guard.
 - Frontend page contract orchestration consumption guard.
 - Frontend contract consumer intrusion guard.
