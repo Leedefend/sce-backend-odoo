@@ -12,7 +12,7 @@ Generated from repository source files. This report is informational during the 
 
 | Lines | Category | File |
 | ---: | --- | --- |
-| 8766 | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
+| 8749 | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
 | 4820 | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 4491 | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 4400 | Python source | `addons/smart_construction_core/core_extension.py` |
@@ -102,6 +102,7 @@ Generated from repository source files. This report is informational during the 
 | 892 | Python source | `scripts/verify/release_capability_audit.py` |
 | 886 | Python source | `addons/smart_construction_scene/profiles/workspace_home_scene_content.py` |
 | 879 | Python source | `scripts/verify/business_oca_runtime_smoke.py` |
+| 874 | TypeScript source | `frontend/apps/web/src/pages/contractForm/formConfigHelpers.ts` |
 | 869 | Python source | `addons/smart_construction_core/handlers/my_work_summary.py` |
 | 867 | Python source | `addons/smart_construction_core/models/support/scene_orchestration.py` |
 | 860 | Python source | `addons/smart_core/core/view_orchestrator.py` |
@@ -113,7 +114,6 @@ Generated from repository source files. This report is informational during the 
 | 827 | Python source | `addons/smart_construction_core/models/support/partner_legacy.py` |
 | 813 | Vue source | `frontend/apps/web/src/components/page/PageRenderer.vue` |
 | 807 | Python source | `addons/smart_core/app_config_engine/services/dispatchers/nav_dispatcher.py` |
-| 807 | TypeScript source | `frontend/apps/web/src/pages/contractForm/formConfigHelpers.ts` |
 | 804 | Python source | `addons/smart_core/tests/test_delivery_menu_entry_target.py` |
 | 801 | Python source | `addons/smart_construction_core/models/core/financing_loan.py` |
 | 480 | Shell script | `scripts/migration/history_continuity_oneclick.sh` |
@@ -127,7 +127,7 @@ Generated from repository source files. This report is informational during the 
 
 | Lines | Status | Category | File |
 | ---: | --- | --- | --- |
-| 8766 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
+| 8749 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
 | 4820 | split_plan_required | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 4491 | split_plan_required | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 4400 | split_plan_required | Python source | `addons/smart_construction_core/core_extension.py` |

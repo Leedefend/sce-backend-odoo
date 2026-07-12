@@ -191,6 +191,22 @@ export function formatFormConfigAuditSummary(
   return `配置字段 ${result.businessConfigFormFields.length} / 系统补充配置 ${result.legacyPolicyFields.length}，${layoutText}，${conflictText}，${activeLegacyText}`;
 }
 
+export function normalizeFormConfigAuditResult(raw: Record<string, unknown>): FormConfigAuditResult {
+  const normalizeNames = (value: unknown) => (Array.isArray(value) ? value : [])
+    .map((item) => String(item || '').trim())
+    .filter(Boolean);
+  return {
+    businessConfigFormFields: normalizeNames(raw.business_config_form_fields),
+    businessConfigFormLayoutFields: normalizeNames(raw.business_config_form_layout_fields),
+    hasBusinessConfigFormLayout: Boolean(raw.has_business_config_form_layout),
+    layoutMatchesFields: Boolean(raw.layout_matches_fields),
+    legacyPolicyFields: normalizeNames(raw.legacy_policy_fields),
+    skippedLegacyPolicyFields: normalizeNames(raw.skipped_legacy_policy_fields),
+    activeLegacyPolicyFields: normalizeNames(raw.active_legacy_policy_fields),
+    hasConflict: Boolean(raw.has_conflict),
+  };
+}
+
 export function isSuggestedInternalFormField(fieldKey: string, label = '') {
   const name = String(fieldKey || '').trim();
   const text = `${name} ${String(label || '').trim()}`.toLowerCase();
@@ -220,6 +236,57 @@ export function isReadableFieldGroupTitle(value: unknown) {
   if (/^默认分组\s*\d*$/i.test(text)) return false;
   if (/^[a-z][a-z0-9_:. -]*$/i.test(text) && /[_:.]/.test(text)) return false;
   return true;
+}
+
+export function effectiveFieldGroupTitleFromDrafts(params: {
+  fieldKey: string;
+  draftGroups: Record<string, string>;
+  nativeBaseGroups: Record<string, string>;
+  savedBaseGroups: Record<string, string>;
+}) {
+  const key = String(params.fieldKey || '').trim();
+  if (!key) return '';
+  const draft = normalizeFieldGroupTitle(params.draftGroups[key]);
+  const nativeBase = normalizeFieldGroupTitle(params.nativeBaseGroups[key]);
+  const savedBase = normalizeFieldGroupTitle(params.savedBaseGroups[key]);
+  if (draft && draft !== nativeBase) return draft;
+  return savedBase || draft || nativeBase;
+}
+
+export function changedFieldVisibilityFromDrafts(params: {
+  fieldKeys: string[];
+  draft: Record<string, boolean>;
+  base: Record<string, boolean>;
+  dirtyKeys: Record<string, boolean>;
+}) {
+  return params.fieldKeys.reduce<Record<string, boolean>>((acc, fieldKey) => {
+    if (!Object.prototype.hasOwnProperty.call(params.draft, fieldKey)) return acc;
+    if (
+      params.dirtyKeys[fieldKey]
+      || (
+        Object.prototype.hasOwnProperty.call(params.base, fieldKey)
+        && params.draft[fieldKey] !== params.base[fieldKey]
+      )
+    ) {
+      acc[fieldKey] = params.draft[fieldKey];
+    }
+    return acc;
+  }, {});
+}
+
+export function changedFieldGroupFromDrafts(params: {
+  draftGroups: Record<string, string>;
+  nativeBaseGroups: Record<string, string>;
+  savedBaseGroups: Record<string, string>;
+  resolveDraftTitle: (fieldKey: string) => string;
+}) {
+  return Object.keys(params.draftGroups).reduce<Record<string, string>>((acc, fieldKey) => {
+    const key = String(fieldKey || '').trim();
+    const draft = params.resolveDraftTitle(key);
+    const base = normalizeFieldGroupTitle(params.savedBaseGroups[key] || params.nativeBaseGroups[key]);
+    if (key && draft && draft !== base) acc[key] = draft;
+    return acc;
+  }, {});
 }
 
 export function inferLowCodeLayoutColumns(nodes: NativeLayoutLikeNode[]): 1 | 2 | 3 | null {

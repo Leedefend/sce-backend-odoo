@@ -484,9 +484,12 @@ import {
   buildFormDesignerGroupNavigatorItems,
   buildFormDesignerSearchableFieldRows,
   buildLowCodeViewOrchestration as buildLowCodeViewOrchestrationFromDraft,
+  changedFieldGroupFromDrafts,
+  changedFieldVisibilityFromDrafts,
   collectLowCodeLayoutFromViewOrchestration,
   createFormConfigOperationLogEntry,
   collectNativeFieldStructureGroups,
+  effectiveFieldGroupTitleFromDrafts,
   extractLowCodeFormFieldDraftState,
   extractLowCodeLayoutDraftState,
   filterFormDesignerFieldRows,
@@ -510,6 +513,7 @@ import {
   mergeLowCodeLayoutWithRuntimeGroupShells,
   normalizeConfigPageLabel,
   normalizeFieldGroupTitle,
+  normalizeFormConfigAuditResult,
   normalizeFormConfigOperationLogEntries,
   normalizeLowCodeApplyParams,
   normalizeLowCodeContractListRows,
@@ -1828,39 +1832,30 @@ watch(hasCurrentFormFieldDraftChanges, (changed) => {
 });
 
 function changedFieldVisibilityDraft() {
-  return formVisibilityDraftFieldKeys.value.reduce<Record<string, boolean>>((acc, fieldKey) => {
-    if (!Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, fieldKey)) return acc;
-    if (
-      fieldVisibilityDirtyKeys[fieldKey]
-      || (
-        Object.prototype.hasOwnProperty.call(fieldVisibilityBase.value, fieldKey)
-        && fieldVisibilityDraft[fieldKey] !== fieldVisibilityBase.value[fieldKey]
-      )
-    ) {
-      acc[fieldKey] = fieldVisibilityDraft[fieldKey];
-    }
-    return acc;
-  }, {});
+  return changedFieldVisibilityFromDrafts({
+    fieldKeys: formVisibilityDraftFieldKeys.value,
+    draft: fieldVisibilityDraft,
+    base: fieldVisibilityBase.value,
+    dirtyKeys: fieldVisibilityDirtyKeys,
+  });
 }
 
 function changedFieldGroupDraft() {
-  return Object.keys(fieldGroupDraft).reduce<Record<string, string>>((acc, fieldKey) => {
-    const key = String(fieldKey || '').trim();
-    const draft = effectiveFieldGroupTitleForDraft(key);
-    const base = normalizeFieldGroupTitle(fieldGroupSavedBase.value[key] || fieldGroupBase.value[key]);
-    if (key && draft && draft !== base) acc[key] = draft;
-    return acc;
-  }, {});
+  return changedFieldGroupFromDrafts({
+    draftGroups: fieldGroupDraft,
+    nativeBaseGroups: fieldGroupBase.value,
+    savedBaseGroups: fieldGroupSavedBase.value,
+    resolveDraftTitle: effectiveFieldGroupTitleForDraft,
+  });
 }
 
 function effectiveFieldGroupTitleForDraft(fieldKey: string) {
-  const key = String(fieldKey || '').trim();
-  if (!key) return '';
-  const draft = normalizeFieldGroupTitle(fieldGroupDraft[key]);
-  const nativeBase = normalizeFieldGroupTitle(fieldGroupBase.value[key]);
-  const savedBase = normalizeFieldGroupTitle(fieldGroupSavedBase.value[key]);
-  if (draft && draft !== nativeBase) return draft;
-  return savedBase || draft || nativeBase;
+  return effectiveFieldGroupTitleFromDrafts({
+    fieldKey,
+    draftGroups: fieldGroupDraft,
+    nativeBaseGroups: fieldGroupBase.value,
+    savedBaseGroups: fieldGroupSavedBase.value,
+  });
 }
 
 async function auditCurrentFormConfiguration() {
@@ -1888,19 +1883,7 @@ async function auditCurrentFormConfiguration() {
       },
       context: { view: 'form' },
     });
-    const normalizeNames = (value: unknown[]) => value
-      .map((item) => String(item || '').trim())
-      .filter(Boolean);
-    formConfigAuditResult.value = {
-      businessConfigFormFields: normalizeNames(Array.isArray(result.business_config_form_fields) ? result.business_config_form_fields : []),
-      businessConfigFormLayoutFields: normalizeNames(Array.isArray(result.business_config_form_layout_fields) ? result.business_config_form_layout_fields : []),
-      hasBusinessConfigFormLayout: Boolean(result.has_business_config_form_layout),
-      layoutMatchesFields: Boolean(result.layout_matches_fields),
-      legacyPolicyFields: normalizeNames(Array.isArray(result.legacy_policy_fields) ? result.legacy_policy_fields : []),
-      skippedLegacyPolicyFields: normalizeNames(Array.isArray(result.skipped_legacy_policy_fields) ? result.skipped_legacy_policy_fields : []),
-      activeLegacyPolicyFields: normalizeNames(Array.isArray(result.active_legacy_policy_fields) ? result.active_legacy_policy_fields : []),
-      hasConflict: Boolean(result.has_conflict),
-    };
+    formConfigAuditResult.value = normalizeFormConfigAuditResult(result);
   } catch (err) {
     errorMessage.value = err instanceof Error ? err.message : '表单配置检查失败';
     status.value = 'error';
