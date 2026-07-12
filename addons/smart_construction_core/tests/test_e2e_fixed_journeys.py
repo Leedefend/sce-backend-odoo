@@ -11,12 +11,74 @@ class TestE2EFixedJourneys(TransactionCase):
         super().setUp()
         self.company = self.env.ref("base.main_company")
         self.uom_unit = self.env.ref("uom.product_uom_unit")
+        self.cost_user = self._role_user(
+            "e2e_cost_user",
+            [
+                "smart_construction_core.group_sc_cap_cost_user",
+            ],
+        )
+        self.project_manager = self._role_user(
+            "e2e_project_manager",
+            [
+                "smart_construction_core.group_sc_cap_project_manager",
+                "smart_construction_core.group_sc_cap_cost_user",
+            ],
+        )
+        self.settlement_user = self._role_user(
+            "e2e_settlement_user",
+            [
+                "smart_construction_core.group_sc_cap_project_read",
+                "smart_construction_core.group_sc_cap_contract_read",
+                "smart_construction_core.group_sc_cap_settlement_user",
+                "purchase.group_purchase_user",
+            ],
+        )
+        self.settlement_manager = self._role_user(
+            "e2e_settlement_manager",
+            [
+                "smart_construction_core.group_sc_cap_project_manager",
+                "smart_construction_core.group_sc_cap_contract_read",
+                "smart_construction_core.group_sc_cap_settlement_manager",
+                "purchase.group_purchase_user",
+            ],
+        )
 
-    def _project(self, name):
+    def _role_user(self, login, xmlids):
+        groups = self.env["res.groups"].browse([self.env.ref(xmlid).id for xmlid in xmlids])
+        return (
+            self.env["res.users"]
+            .with_context(no_reset_password=True)
+            .create(
+                {
+                    "name": login.replace("_", " ").title(),
+                    "login": "%s@example.com" % login,
+                    "email": "%s@example.com" % login,
+                    "groups_id": [(6, 0, groups.ids)],
+                }
+            )
+        )
+
+    def _project(self, name, manager=None, followers=None):
+        manager = manager or self.env.user
+        followers = followers or []
+        project = self.env["project.project"].create(
+            {
+                "name": name,
+                "user_id": manager.id,
+                "manager_id": manager.id,
+                "company_id": self.company.id,
+            }
+        )
+        if followers:
+            project.message_subscribe(partner_ids=[user.partner_id.id for user in followers])
+        return project
+
+    def _project_as_manager(self, name):
         return self.env["project.project"].create(
             {
                 "name": name,
-                "manager_id": self.env.user.id,
+                "user_id": self.project_manager.id,
+                "manager_id": self.project_manager.id,
                 "company_id": self.company.id,
             }
         )
@@ -81,15 +143,16 @@ class TestE2EFixedJourneys(TransactionCase):
             }
         )
 
-    def _import_fixed_boq(self, project):
+    def _import_fixed_boq(self, project, user=None):
+        env = self.env(user=user) if user else self.env
         csv_content = "\n".join(
             [
                 "清单编码,清单名称,单位,工程量,综合单价,合价",
-                "010101001001,土方开挖,m3,2,100,200",
-                "010101001002,土方回填,m3,3,80,240",
+                "010101001001,土方开挖,%s,2,100,200" % self.uom_unit.name,
+                "010101001002,土方回填,%s,3,80,240" % self.uom_unit.name,
             ]
         )
-        wizard = self.env["project.boq.import.wizard"].create(
+        wizard = env["project.boq.import.wizard"].create(
             {
                 "project_id": project.id,
                 "section_type": "building",
@@ -105,14 +168,20 @@ class TestE2EFixedJourneys(TransactionCase):
         )
         action = wizard.action_import()
         self.assertEqual(action["res_model"], "project.boq.line")
-        return self.env["project.boq.line"].search(
+        lines = env["project.boq.line"].search(
             [("project_id", "=", project.id), ("version", "=", "E2E-FIXED")]
         )
+        self.assertTrue(lines, "role user must be able to read imported BOQ lines")
+        return lines
 
     def test_e2e_02_boq_import_fixed_data(self):
-        project = self._project("E2E-02 BOQ Import")
+        project = self._project(
+            "E2E-02 BOQ Import",
+            manager=self.project_manager,
+            followers=[self.cost_user],
+        )
 
-        lines = self._import_fixed_boq(project)
+        lines = self._import_fixed_boq(project, user=self.cost_user)
 
         self.assertEqual(len(lines), 2)
         self.assertEqual(set(lines.mapped("code")), {"010101001001", "010101001002"})
@@ -121,12 +190,20 @@ class TestE2EFixedJourneys(TransactionCase):
         project.invalidate_recordset()
         self.assertTrue(project.boq_imported)
         self.assertEqual(project.boq_status, "imported")
+        self.assertTrue(
+            self.cost_user.has_group("smart_construction_core.group_sc_cap_cost_user")
+        )
 
     def test_e2e_03_boq_generates_wbs_and_tasks(self):
-        project = self._project("E2E-03 BOQ To Task")
-        lines = self._import_fixed_boq(project)
+        project = self._project(
+            "E2E-03 BOQ To Task",
+            manager=self.project_manager,
+            followers=[self.cost_user],
+        )
+        lines = self._import_fixed_boq(project, user=self.cost_user)
 
-        wizard = self.env["project.task.from.boq.wizard"].create(
+        manager_env = self.env(user=self.project_manager)
+        wizard = manager_env["project.task.from.boq.wizard"].create(
             {
                 "project_id": project.id,
                 "group_mode": "code6",
@@ -136,7 +213,7 @@ class TestE2EFixedJourneys(TransactionCase):
         action = wizard.action_generate_tasks()
 
         self.assertEqual(action["res_model"], "project.task")
-        tasks = self.env["project.task"].search(
+        tasks = manager_env["project.task"].search(
             [("project_id", "=", project.id), ("boq_generated", "=", True)]
         )
         self.assertEqual(len(tasks), 1)
@@ -148,13 +225,21 @@ class TestE2EFixedJourneys(TransactionCase):
         self.assertTrue(lines.mapped("structure_id"))
         project.invalidate_recordset()
         self.assertTrue(project.wbs_ready)
+        self.assertTrue(
+            self.project_manager.has_group("smart_construction_core.group_sc_cap_project_manager")
+        )
 
     def test_e2e_08_settlement_submit_approve_done_fixed_data(self):
-        project = self._project("E2E-08 Settlement Approval")
+        project = self._project(
+            "E2E-08 Settlement Approval",
+            manager=self.project_manager,
+            followers=[self.settlement_user],
+        )
         partner = self._partner("E2E Settlement Supplier")
         contract = self._contract(project, partner)
         purchase_order = self._purchase_order(partner, 1200.0)
-        settlement = self.env["sc.settlement.order"].create(
+        settlement_env = self.env(user=self.settlement_user)
+        settlement = settlement_env["sc.settlement.order"].create(
             {
                 "project_id": project.id,
                 "partner_id": partner.id,
@@ -187,10 +272,21 @@ class TestE2EFixedJourneys(TransactionCase):
             ("validated", settlement.id),
         )
         settlement.invalidate_recordset()
-        settlement.action_on_tier_approved()
-        settlement.invalidate_recordset()
-        self.assertEqual(settlement.state, "approve")
-        settlement.action_done()
-        settlement.invalidate_recordset()
-        self.assertEqual(settlement.state, "done")
-        self.assertAlmostEqual(settlement.amount_total, 1200.0)
+        manager_settlement = self.env(user=self.settlement_manager)["sc.settlement.order"].browse(
+            settlement.id
+        )
+        manager_settlement.action_on_tier_approved()
+        manager_settlement.invalidate_recordset()
+        self.assertEqual(manager_settlement.state, "approve")
+        manager_settlement.action_done()
+        manager_settlement.invalidate_recordset()
+        self.assertEqual(manager_settlement.state, "done")
+        self.assertAlmostEqual(manager_settlement.amount_total, 1200.0)
+        self.assertTrue(
+            self.settlement_user.has_group("smart_construction_core.group_sc_cap_settlement_user")
+        )
+        self.assertTrue(
+            self.settlement_manager.has_group(
+                "smart_construction_core.group_sc_cap_settlement_manager"
+            )
+        )

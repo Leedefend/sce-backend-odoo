@@ -697,8 +697,8 @@ class ProjectProject(models.Model):
     def is_boq_frozen(self):
         """BOQ is frozen once settlement/payment reaches key milestones."""
         self.ensure_one()
-        Settlement = self.env["project.settlement"]
-        Payment = self.env["payment.request"]
+        Settlement = self.env["project.settlement"].sudo()
+        Payment = self.env["payment.request"].sudo()
         settle = Settlement.search(
             [("project_id", "=", self.id), ("state", "in", ["confirmed", "done"])],
             limit=1,

@@ -535,9 +535,10 @@ class ScSettlementOrder(models.Model):
         hard_block = self._get_bool_param("sc.settlement.check_contract.hard_block", True)
         if not hard_block and not strict:
             return
-        if self.contract_id and self.payment_request_ids:
-            wrong = self.payment_request_ids.filtered(
-                lambda r: r.contract_id and r.contract_id.id != self.contract_id.id
+        settlement = self.sudo()
+        if settlement.contract_id and settlement.payment_request_ids:
+            wrong = settlement.payment_request_ids.filtered(
+                lambda r: r.contract_id and r.contract_id.id != settlement.contract_id.id
             )
             if wrong:
                 raise UserError(

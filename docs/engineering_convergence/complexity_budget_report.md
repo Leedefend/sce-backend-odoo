@@ -82,7 +82,7 @@ Generated from repository source files. This report is informational during the 
 | 1303 | Python source | `addons/smart_core/tests/test_contract_governance_project_form.py` |
 | 1284 | Vue source | `frontend/apps/web/src/components/template/FormSection.vue` |
 | 1256 | Python source | `addons/smart_construction_scene/tests/test_action_only_scene_semantic_supply.py` |
-| 1252 | Python source | `addons/smart_construction_core/models/core/settlement_order.py` |
+| 1253 | Python source | `addons/smart_construction_core/models/core/settlement_order.py` |
 | 1251 | Python source | `addons/smart_construction_core/models/core/expense_claim.py` |
 | 1153 | Python source | `addons/smart_construction_custom/models/user_formal_visible_fields.py` |
 | 1149 | Vue source | `frontend/apps/web/src/components/template/NativeFormTreeRenderer.vue` |
@@ -190,7 +190,7 @@ Generated from repository source files. This report is informational during the 
 | 1303 | warning | Python source | `addons/smart_core/tests/test_contract_governance_project_form.py` |
 | 1284 | warning | Vue source | `frontend/apps/web/src/components/template/FormSection.vue` |
 | 1256 | warning | Python source | `addons/smart_construction_scene/tests/test_action_only_scene_semantic_supply.py` |
-| 1252 | warning | Python source | `addons/smart_construction_core/models/core/settlement_order.py` |
+| 1253 | warning | Python source | `addons/smart_construction_core/models/core/settlement_order.py` |
 | 1251 | warning | Python source | `addons/smart_construction_core/models/core/expense_claim.py` |
 | 1153 | warning | Python source | `addons/smart_construction_custom/models/user_formal_visible_fields.py` |
 | 1149 | warning | Vue source | `frontend/apps/web/src/components/template/NativeFormTreeRenderer.vue` |
