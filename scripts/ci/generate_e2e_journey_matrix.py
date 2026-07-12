@@ -43,6 +43,9 @@ def match_assets(rows: list[dict[str, str]], keywords: tuple[str, ...]) -> list[
 def status_for(matches: list[dict[str, str]]) -> str:
     if not matches:
         return "gap"
+    has_fixed_odoo = any("test.e2e.fixed_data.odoo" in row["entrypoint"].lower() for row in matches)
+    if has_fixed_odoo:
+        return "strong"
     has_browser = any("browser" in row["entrypoint"].lower() for row in matches)
     if has_browser and len(matches) >= 2:
         return "partial_to_strong"
@@ -67,7 +70,7 @@ def render(rows: list[dict[str, str]]) -> str:
 
     gaps = [item for item in coverage if item[4] == "gap"]
     partial = [item for item in coverage if item[4] == "partial"]
-    strong = [item for item in coverage if item[4] == "partial_to_strong"]
+    strong = [item for item in coverage if item[4] in {"strong", "partial_to_strong"}]
     lines.extend(
         [
             f"- Strong or near-strong coverage: `{len(strong)}`",
@@ -90,6 +93,8 @@ def render(rows: list[dict[str, str]]) -> str:
             assets = "-"
         if status == "gap":
             gap = "Create fixed-data browser/API journey with screenshots, logs, request/response evidence."
+        elif status == "strong":
+            gap = "Keep Odoo fixed-data gate green; add role/browser evidence before release if this journey is user-facing."
         elif status == "partial":
             gap = "Confirm fixed data, role assertions, failure artifacts, and link to nightly/release gate."
         else:
@@ -102,7 +107,7 @@ def render(rows: list[dict[str, str]]) -> str:
             "## Required Next Actions",
             "",
             "1. Promote only mapped and repeatable scenarios into the release gate.",
-            "2. Add fixed test data for each journey before counting it as strong coverage.",
+            "2. Count a journey as strong only when fixed data and an executable gate are both present.",
             "3. Store screenshot, browser log, server log, and request/response evidence on failure.",
             "4. Keep PR smoke E2E small; run the full 12-journey matrix nightly and before release.",
         ]

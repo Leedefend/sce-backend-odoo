@@ -63,6 +63,19 @@ MANUAL_ENTRIES = [
         "status": "active",
         "notes": "Requires Docker/Odoo runtime.",
     },
+    {
+        "id": "T-E2E-ODOO-001",
+        "layer": "e2e",
+        "entrypoint": "make test.e2e.fixed_data.odoo",
+        "purpose": (
+            "Fixed-data Odoo post-test gate for BOQ import, BOQ-to-WBS/task generation, "
+            "and settlement approval journeys."
+        ),
+        "estimated_runtime": "10-30m",
+        "owner": "qa owner",
+        "status": "active",
+        "notes": "Runs TEST_TAGS=e2e_fixed_journey on a clean Odoo test database.",
+    },
 ]
 
 

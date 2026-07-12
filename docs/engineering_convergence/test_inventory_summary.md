@@ -4,10 +4,10 @@ Generated from `test_inventory.csv`.
 
 ## Totals
 
-- Total assets: `1119`
+- Total assets: `1120`
 - Review queue: `4`
 - Unknown runtime: `33`
-- Long-running assets: `144`
+- Long-running assets: `145`
 
 ## By Layer
 
@@ -18,7 +18,7 @@ Generated from `test_inventory.csv`.
 | unit | 149 |
 | odoo_integration | 56 |
 | data_migration | 51 |
-| e2e | 37 |
+| e2e | 38 |
 | security | 20 |
 | frontend_acceptance | 17 |
 | gate | 1 |
@@ -28,7 +28,7 @@ Generated from `test_inventory.csv`.
 | Runtime | Count |
 | --- | ---: |
 | <5m | 941 |
-| 10-30m | 106 |
+| 10-30m | 107 |
 | 30-60m | 38 |
 | unknown | 33 |
 | 10-15m | 1 |
@@ -42,7 +42,7 @@ Generated from `test_inventory.csv`.
 | test owner | 150 |
 | backend owner | 56 |
 | data owner | 51 |
-| qa owner | 37 |
+| qa owner | 38 |
 | security owner | 20 |
 | frontend owner | 17 |
 
@@ -56,9 +56,9 @@ Generated from `test_inventory.csv`.
 | frontend/apps/web/scripts | 22 |
 | scripts/ci | 7 |
 | scripts/e2e | 5 |
+| make | 4 |
 | scripts/audit | 4 |
 | scripts/diag | 4 |
-| make | 3 |
 | scripts/prod | 2 |
 
 ## Review Queue

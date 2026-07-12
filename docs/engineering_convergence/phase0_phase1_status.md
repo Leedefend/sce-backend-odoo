@@ -26,6 +26,7 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 | P4-07 Complexity budget baseline | Done | `complexity_budget_policy.md`, `complexity_budget_report.md` |
 | P3 E2E journey matrix | Done | `e2e_journey_matrix.md`, `scripts/ci/generate_e2e_journey_matrix.py` |
 | P3 fixed-data Odoo journey tests | Done | `addons/smart_construction_core/tests/test_e2e_fixed_journeys.py` |
+| P3 fixed-data Odoo journey gate | Done | `make test.e2e.fixed_data.odoo` |
 | P4 split-plan queue | Done | `split_plan_queue.md`, `scripts/ci/generate_split_plan_queue.py` |
 
 ## Verified
@@ -34,9 +35,10 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 | --- | --- |
 | `git diff --check` | Passed |
 | `make ci` | Passed |
-| `python3 scripts/ci/generate_test_inventory.py` | Passed, 1119 inventory entries |
-| `python3 scripts/ci/summarize_test_inventory.py` | Passed, 1119 inventory entries |
-| `python3 scripts/ci/generate_e2e_journey_matrix.py` | Passed, 37 E2E assets mapped to 12 journeys with 0 empty gaps |
+| `make test.e2e.fixed_data.odoo` | Passed, 3 Odoo post-tests for E2E-02, E2E-03, and E2E-08 |
+| `python3 scripts/ci/generate_test_inventory.py` | Passed, 1120 inventory entries |
+| `python3 scripts/ci/summarize_test_inventory.py` | Passed, 1120 inventory entries |
+| `python3 scripts/ci/generate_e2e_journey_matrix.py` | Passed, 38 E2E assets mapped to 12 journeys with 0 empty gaps |
 | `python3 scripts/ci/generate_module_dependency_map.py` | Passed, 14 modules and 0 circular dependencies |
 | `python3 scripts/ci/generate_complexity_budget_report.py` | Passed, 3785 files scanned |
 | `python3 scripts/ci/generate_split_plan_queue.py` | Passed, 45 split-plan files classified |
@@ -60,5 +62,6 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 3. Create seed issues from `github_issue_seed_v1.1.md`.
 4. Enable branch protection after the workflow is visible.
 5. Start Phase 2 cleanup: classify duplicated/stale validation assets and define mandatory versus release-only gates.
-6. Upgrade E2E-02 BOQ import, E2E-03 BOQ-to-WBS/task generation, and E2E-08 settlement approval from preflight coverage to fixed-data browser/API journeys.
-7. Assign concrete owner names and PR sequence for the P0 split-plan files in `split_plan_queue.md`.
+6. Add role/browser evidence for the fixed-data E2E-02, E2E-03, and E2E-08 journeys before release.
+7. Upgrade remaining partial journeys E2E-06 and E2E-10 to fixed-data executable gates.
+8. Assign concrete owner names and PR sequence for the P0 split-plan files in `split_plan_queue.md`.

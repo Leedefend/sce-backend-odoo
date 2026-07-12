@@ -196,6 +196,8 @@ ODOO_ADDONS_PATH := $(BASE_ADDONS_PATH)$(EXTRA_ADDONS_PATH)
 
 DOCS_MOUNT_HOST ?= $(ROOT_DIR)/docs
 DOCS_MOUNT_CONT ?= /mnt/docs
+CONFIG_MOUNT_HOST ?= $(ROOT_DIR)/config
+CONFIG_MOUNT_CONT ?= /mnt/config
 
 # ------------------ Test tags ------------------
 # 你写 sc_gate,sc_perm，脚本会自动变成 /smart_construction_core:sc_gate,/smart_construction_core:sc_perm
@@ -240,6 +242,8 @@ TEST_TAGS="$(TEST_TAGS)" \
 ADDONS_EXTERNAL_MOUNT="$(ADDONS_EXTERNAL_MOUNT)" \
 DOCS_MOUNT_HOST="$(DOCS_MOUNT_HOST)" \
 DOCS_MOUNT_CONT="$(DOCS_MOUNT_CONT)" \
+CONFIG_MOUNT_HOST="$(CONFIG_MOUNT_HOST)" \
+CONFIG_MOUNT_CONT="$(CONFIG_MOUNT_CONT)" \
 CI_LOG="$(CI_LOG)" \
 CI_ARTIFACT_DIR="$(CI_ARTIFACT_DIR)" \
 CI_PASS_SIG_RE='$(CI_PASS_SIG_RE)' \
@@ -5984,7 +5988,7 @@ verify.unified_page_contract.lite: guard.prod.forbid
 # ----------------------------------------------------------------------
 # v1.1 Engineering Convergence quality entries
 # ----------------------------------------------------------------------
-.PHONY: ci test.frontend test.unit test.odoo.integration test.contract test.e2e.preflight test.e2e test.all test.inventory test.inventory.summary test.e2e.matrix architecture.module_dependency_map architecture.complexity_report architecture.split_plan_queue security.secrets.scan
+.PHONY: ci test.frontend test.unit test.odoo.integration test.contract test.e2e.preflight test.e2e.fixed_data.odoo test.e2e test.all test.inventory test.inventory.summary test.e2e.matrix architecture.module_dependency_map architecture.complexity_report architecture.split_plan_queue security.secrets.scan
 
 ci: guard.prod.forbid security.secrets.scan test.inventory test.inventory.summary test.e2e.matrix architecture.module_dependency_map architecture.complexity_report architecture.split_plan_queue test.unit test.frontend test.contract test.e2e.preflight
 	@git diff --check
@@ -6013,6 +6017,9 @@ test.e2e.preflight: guard.prod.forbid
 	@python3 scripts/e2e/e2e_boq_to_wbs_task_preflight.py >/dev/null
 	@python3 scripts/e2e/e2e_settlement_approval_preflight.py >/dev/null
 	@echo "[OK] v1.1 E2E preflight passed"
+
+test.e2e.fixed_data.odoo: guard.prod.forbid
+	@$(RUN_ENV) DB_CI=sc_test_e2e_fixed TEST_TAGS=e2e_fixed_journey CI_LOG=test-e2e-fixed.log CI_ARTIFACT_PURGE=0 bash scripts/ci/run_ci.sh
 
 test.e2e: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.system_user_experience.full_browser
