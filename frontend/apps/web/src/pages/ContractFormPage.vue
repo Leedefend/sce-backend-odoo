@@ -1298,6 +1298,22 @@ import {
   relationUiLabels,
 } from './contractForm/relationDescriptor';
 import {
+  isWorkflowTransitionMethod,
+  normalizeWorkflowActionRows,
+  normalizeWorkflowEvidenceGateRows,
+  workflowActionMethodAliases,
+  workflowActionRowForMethod,
+} from './contractForm/workflowContract';
+import {
+  activityFieldLabel as resolveActivityFieldLabel,
+  formUiLabelFromLabels,
+  formUiLabelsFromFormView,
+  labelFromMap,
+  layoutContainsType,
+  nativeChatterActionLabel,
+  normalizeLabelMap,
+} from './contractForm/uiLabels';
+import {
   MANY2ONE_CREATE_OPTION,
   MANY2ONE_OPEN_RECORD_OPTION,
   MANY2ONE_SEARCH_MORE_OPTION,
@@ -4582,25 +4598,11 @@ function relationSearchDialogContract(name: string): Record<string, unknown> {
 }
 
 function formUiLabels(): Record<string, string> {
-  const formView = contract.value?.views?.form as (Record<string, unknown> | undefined);
-  const labels = formView?.ui_labels;
-  if (!labels || typeof labels !== 'object' || Array.isArray(labels)) return {};
-  return Object.entries(labels as Record<string, unknown>).reduce<Record<string, string>>((acc, [key, value]) => {
-    const label = String(value || '').trim();
-    if (key && label) acc[key] = label;
-    return acc;
-  }, {});
+  return formUiLabelsFromFormView(contract.value?.views?.form);
 }
 
 function formUiLabel(key: string) {
-  const fallbackLabels: Record<string, string> = {
-    save: '保存',
-    saving: '保存中...',
-    discard: '放弃',
-    reload: '刷新表单数据',
-    save_success: '保存成功，已同步最新表单内容。',
-  };
-  return formUiLabels()[key] || fallbackLabels[key] || key;
+  return formUiLabelFromLabels(formUiLabels(), key);
 }
 
 function relationCreateMode(_fieldName: string, descriptor?: FieldDescriptor): 'page' | 'quick' | 'none' {
@@ -5417,87 +5419,7 @@ function currentWorkflowContract(): Record<string, unknown> {
 
 function workflowContractActionRows(): Array<Record<string, unknown>> {
   if (!recordId.value) return [];
-  const workflow = currentWorkflowContract();
-  const rows = Array.isArray(workflow.availableActions) ? workflow.availableActions : [];
-  return rows
-    .map((raw) => (raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, unknown> : null))
-    .filter((row): row is Record<string, unknown> => Boolean(row))
-    .map((row) => {
-      const target = parseMaybeJsonRecord(row.target);
-      const method = String(row.method || target.method || '').trim();
-      const key = String(row.key || method || '').trim();
-      return {
-        key,
-        label: String(row.label || key).trim() || key,
-        kind: method ? 'object' : 'client',
-        level: 'header',
-        selection: 'none',
-        intent: String(row.intent || '').trim(),
-        allowed: row.enabled !== false,
-        blocked_message: String(row.blocked_message || row.message || '').trim(),
-        reason_code: String(row.reason_code || row.reasonCode || '').trim(),
-        target_model: String(target.model || row.model || model.value || '').trim(),
-        payload: {
-          method,
-          context_raw: target.context_raw,
-        },
-        target: {
-          ...target,
-          method,
-        },
-        visible_profiles: ['edit', 'readonly'],
-        source_widget_id: 'workflow.contract',
-        workflow_contract_action: true,
-      };
-    })
-    .filter((row) => String(row.key || '').trim());
-}
-
-function workflowActionMethodAliases(key: string): string[] {
-  const normalized = String(key || '').trim();
-  if (normalized === 'submit') return ['action_submit', 'action_submit_progress', 'action_confirm', 'button_confirm'];
-  if (normalized === 'approve') return ['action_approval_decision', 'validate_tier', 'action_approve', 'button_approve'];
-  if (normalized === 'reject') return ['action_reject', 'reject_tier', 'button_reject'];
-  if (normalized === 'activate') return ['action_set_running'];
-  if (normalized === 'complete') {
-    return [
-      'action_done',
-      'action_complete',
-      'action_close',
-      'action_paid',
-      'action_received',
-      'action_register',
-      'action_reconcile',
-      'button_done',
-    ];
-  }
-  if (normalized === 'cancel') return ['action_cancel', 'button_cancel'];
-  if (normalized === 'reopen') return ['action_reset_draft', 'button_draft'];
-  return [];
-}
-
-function workflowActionRowForMethod(methodName: string): Record<string, unknown> | null {
-  const method = String(methodName || '').trim();
-  if (!method) return null;
-  const workflow = currentWorkflowContract();
-  const rows = Array.isArray(workflow.availableActions) ? workflow.availableActions : [];
-  for (const raw of rows) {
-    const row = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, unknown> : null;
-    if (!row) continue;
-    const target = parseMaybeJsonRecord(row.target);
-    const rowMethod = String(row.method || target.method || '').trim();
-    const rowKey = String(row.key || '').trim();
-    const aliases = workflowActionMethodAliases(rowKey);
-    if (rowMethod === method || aliases.includes(method)) return row;
-  }
-  return null;
-}
-
-function isWorkflowTransitionMethod(methodName: string) {
-  const method = String(methodName || '').trim();
-  if (workflowActionRowForMethod(method)) return true;
-  return ['submit', 'approve', 'reject', 'activate', 'complete', 'cancel', 'reopen']
-    .some((key) => workflowActionMethodAliases(key).includes(method));
+  return normalizeWorkflowActionRows(currentWorkflowContract(), model.value);
 }
 
 function blockingWorkflowEvidenceMessage() {
@@ -5506,8 +5428,9 @@ function blockingWorkflowEvidenceMessage() {
 }
 
 function applyWorkflowContractToAction(action: ContractAction): ContractAction {
-  if (!recordId.value || !action.methodName || !isWorkflowTransitionMethod(action.methodName)) return action;
-  const workflowRow = workflowActionRowForMethod(action.methodName);
+  const workflow = currentWorkflowContract();
+  if (!recordId.value || !action.methodName || !isWorkflowTransitionMethod(workflow, action.methodName)) return action;
+  const workflowRow = workflowActionRowForMethod(workflow, action.methodName);
   const blockingMessage = blockingWorkflowEvidenceMessage();
   if (!workflowRow) {
     return {
@@ -5533,31 +5456,13 @@ function hasWorkflowContractActions() {
 
 function shouldShowWorkflowNativeAction(methodName: string) {
   const method = String(methodName || '').trim();
-  if (!recordId.value || !method || !hasWorkflowContractActions() || !isWorkflowTransitionMethod(method)) return true;
-  return Boolean(workflowActionRowForMethod(method));
+  const workflow = currentWorkflowContract();
+  if (!recordId.value || !method || !hasWorkflowContractActions() || !isWorkflowTransitionMethod(workflow, method)) return true;
+  return Boolean(workflowActionRowForMethod(workflow, method));
 }
 
 const workflowEvidenceGateRows = computed(() => {
-  const workflow = currentWorkflowContract();
-  const rows = Array.isArray(workflow.evidenceGate) ? workflow.evidenceGate : [];
-  const seen = new Set<string>();
-  return rows
-    .map((raw) => (raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, unknown> : null))
-    .filter((row): row is Record<string, unknown> => Boolean(row))
-    .map((row, index) => {
-      const reasonCode = String(row.reasonCode || row.reason_code || `workflow_gate_${index}`).trim();
-      return {
-        reasonCode,
-        message: String(row.message || reasonCode).trim(),
-        blocking: row.blocking !== false,
-        severity: String(row.severity || '').trim(),
-      };
-    })
-    .filter((row) => {
-      if (!row.message || seen.has(row.reasonCode)) return false;
-      seen.add(row.reasonCode);
-      return true;
-    });
+  return normalizeWorkflowEvidenceGateRows(currentWorkflowContract());
 });
 
 const contractActions = computed<ContractAction[]>(() => {
@@ -5874,13 +5779,6 @@ const nativeAttachmentContract = computed(() => {
   return dictOrEmpty(runtimeCollaborationContract.value.attachments);
 });
 
-function nativeChatterActionLabel(mode: string, row: Record<string, unknown>) {
-  if (mode === 'message') return '记录沟通';
-  if (mode === 'note') return '记录备注';
-  if (mode === 'activity') return '安排计划';
-  return String(row.label || row.key || '').trim();
-}
-
 const nativeChatterActions = computed<NativeChatterAction[]>(() => {
   const chatter = nativeChatterContract.value;
   if (!chatter || chatter.enabled !== true) return [];
@@ -5944,10 +5842,7 @@ const activeActivityAction = computed(() => (
 ));
 
 function activityFieldLabel(name: string, fallback: string) {
-  const fields = activeActivityAction.value?.payload?.fields;
-  if (!Array.isArray(fields)) return fallback;
-  const row = fields.find((item) => item && typeof item === 'object' && String((item as Record<string, unknown>).name || '') === name) as Record<string, unknown> | undefined;
-  return String(row?.label || fallback).trim();
+  return resolveActivityFieldLabel(activeActivityAction.value?.payload, name, fallback);
 }
 
 const activitySummaryLabel = computed(() => activityFieldLabel('summary', '摘要'));
@@ -5979,14 +5874,11 @@ const nativeAttachments = computed(() => {
 });
 
 const nativeAttachmentLabels = computed<Record<string, string>>(() => {
-  const labels = nativeAttachments.value?.ui_labels;
-  return labels && typeof labels === 'object' && !Array.isArray(labels)
-    ? labels as Record<string, string>
-    : {};
+  return normalizeLabelMap(nativeAttachments.value?.ui_labels);
 });
 
 function nativeAttachmentLabel(key: string, fallback: string) {
-  return String(nativeAttachmentLabels.value[key] || fallback).trim();
+  return labelFromMap(nativeAttachmentLabels.value, key, fallback);
 }
 
 const nativeAttachmentUploadLabel = computed(() => nativeAttachmentLabel('upload', '上传附件'));
@@ -6003,18 +5895,7 @@ const nativeAttachmentMaxBytes = computed(() => {
 const hasNativeChatterNode = computed(() => nativeLayoutContainsType(nativeFormLayoutNodes.value, 'chatter'));
 
 function nativeLayoutContainsType(nodes: NativeFormLayoutNode[], type: string): boolean {
-  const target = String(type || '').trim().toLowerCase();
-  for (const node of nodes || []) {
-    const current = String(node?.type || '').trim().toLowerCase();
-    if (current === target) return true;
-    const children: NativeFormLayoutNode[] = [];
-    for (const key of ['children', 'pages', 'tabs', 'nodes', 'items'] as const) {
-      const value = node?.[key];
-      if (Array.isArray(value)) children.push(...value);
-    }
-    if (children.length && nativeLayoutContainsType(children, target)) return true;
-  }
-  return false;
+  return layoutContainsType(nodes as Array<Record<string, unknown>>, type);
 }
 
 function contractActionFromNativeRow(row: Record<string, unknown>): ContractAction | null {
