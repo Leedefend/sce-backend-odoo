@@ -455,6 +455,13 @@ import {
 import {
   actionResponseNavQuery as actionResponseNavQueryFromResult,
   actionResponseRouteTarget as actionResponseRouteTargetFromResult,
+  buildActiveContractModeActions,
+  buildContractFieldActionsFromRules,
+  buildFormSettingsFieldActions as buildFormSettingsFieldActionsFromRules,
+  contractActionRuleClientMode,
+  contractActionRuleControl,
+  contractActionRuleKey,
+  contractPromptFieldsFromRule,
   normalizeActionSafety,
   normalizeActionLabel,
   normalizeRequiredParams,
@@ -1231,137 +1238,50 @@ function contractV2ActionRules() {
 }
 
 function ruleClientMode(rule: Record<string, unknown>) {
-  const target = parseMaybeJsonRecord(rule.target);
-  return String(target.mode || target.client_mode || rule.mode || rule.client_mode || '').trim();
+  return contractActionRuleClientMode(rule);
 }
 
 function ruleKey(rule: Record<string, unknown>) {
-  return String(rule.actionKey || rule.key || rule.actionId || '').trim();
+  return contractActionRuleKey(rule);
 }
 
 function ruleControl(rule: Record<string, unknown>) {
-  const target = parseMaybeJsonRecord(rule.target);
-  return parseMaybeJsonRecord(target.control || target.ui_control || rule.control || rule.ui_control);
+  return contractActionRuleControl(rule);
 }
 
 function rulePromptFields(rule: Record<string, unknown>): ContractPromptField[] {
-  const target = parseMaybeJsonRecord(rule.target);
-  const promptSchema = parseMaybeJsonRecord(target.prompt_schema || target.promptSchema || rule.prompt_schema || rule.promptSchema);
-  const fields = Array.isArray(promptSchema.fields) ? promptSchema.fields : [];
-  return fields
-    .map((raw) => {
-      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
-      const field = raw as Record<string, unknown>;
-      const name = String(field.name || '').trim();
-      if (!name) return null;
-      const options = Array.isArray(field.options)
-        ? field.options
-          .map((item) => parseMaybeJsonRecord(item))
-          .map((row) => ({
-            value: String(row.value || '').trim(),
-            label: String(row.label || row.value || '').trim(),
-          }))
-          .filter((row) => row.value)
-        : [];
-      return {
-        name,
-        label: String(field.label || name).trim(),
-        required: field.required !== false,
-        defaultValue: String(field.default || '').trim(),
-        options,
-      };
-    })
-    .filter((field): field is ContractPromptField => Boolean(field));
+  return contractPromptFieldsFromRule(rule);
 }
 
 function contractFieldActions(field: FormSectionFieldSchema) {
-  const mode = activeContractMode.value;
-  if (!mode) return [];
-  const fieldWidgetId = `field.${String(field.name || '').trim()}`;
-  const fieldKey = String(field.name || '').trim();
-  return contractV2ActionRules()
-    .filter((rule) => {
-      const triggerType = String(rule.triggerType || rule.trigger_type || '').trim();
-      if (triggerType && !['change', 'select', 'click'].includes(triggerType)) return false;
-      const sourceWidgetId = String(rule.sourceWidgetId || rule.source_widget_id || '').trim();
-      const targetIds = Array.isArray(rule.targetIds || rule.target_ids) ? (rule.targetIds || rule.target_ids) as unknown[] : [];
-      if (sourceWidgetId !== fieldWidgetId && !targetIds.map((item) => String(item)).includes(fieldWidgetId)) return false;
-      const expectedMode = ruleClientMode(rule);
-      return !expectedMode || expectedMode === mode;
-    })
-    .map((rule) => {
-      const control = ruleControl(rule);
-      return {
-        key: ruleKey(rule),
-        label: String(control.label || rule.label || ruleKey(rule)).trim(),
-        value: String(control.value || ruleKey(rule)).trim(),
-        checked: fieldKey && Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, fieldKey)
-          ? fieldVisibilityDraft[fieldKey] === (String(control.value || ruleKey(rule)).trim() === 'show')
-          : control.checked === true,
-        disabled: control.disabled === true || busy.value,
-        title: String(control.title || '').trim(),
-        raw: rule,
-      };
-    });
+  return buildContractFieldActionsFromRules({
+    rules: contractV2ActionRules(),
+    fieldName: field.name,
+    mode: activeContractMode.value,
+    visibilityDraft: fieldVisibilityDraft,
+    busy: busy.value,
+  });
 }
 
 function formSettingsFieldActions(field: FormSectionFieldSchema) {
   const fieldKey = String(field.name || '').trim();
-  if (!fieldKey) return [];
   const existingRow = activeContractModeFieldRows.value.find((row) => row.fieldKey === fieldKey);
-  if (existingRow?.actions.length) {
-    return existingRow.actions.map((action) => ({
-      ...action,
-      checked: Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, fieldKey)
-        ? fieldVisibilityDraft[fieldKey] === (action.value === 'show')
-        : Boolean(action.checked),
-      disabled: Boolean(action.disabled) || busy.value,
-    }));
-  }
-  const visible = Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, fieldKey)
-    ? fieldVisibilityDraft[fieldKey]
-    : true;
-  return [
-    {
-      key: `${fieldKey}:show`,
-      label: '显示',
-      value: 'show',
-      checked: visible,
-      disabled: busy.value,
-      title: '在当前页面显示这个字段',
-      raw: {},
-    },
-    {
-      key: `${fieldKey}:hide`,
-      label: '隐藏',
-      value: 'hide',
-      checked: !visible,
-      disabled: busy.value,
-      title: '在当前页面隐藏这个字段',
-      raw: {},
-    },
-  ];
+  return buildFormSettingsFieldActionsFromRules({
+    fieldName: fieldKey,
+    existingActions: existingRow?.actions,
+    visibilityDraft: fieldVisibilityDraft,
+    busy: busy.value,
+  });
 }
 
 const contractPromptFields = computed(() => (contractPromptRule.value ? rulePromptFields(contractPromptRule.value) : []));
 
 const activeContractModeActions = computed(() => {
-  const mode = activeContractMode.value;
-  if (!mode) return [];
-  const source = `mode.${mode}`;
-  return contractV2ActionRules()
-    .filter((rule) => {
-      if (ruleKey(rule) === BUSINESS_CONFIG_ACTION_KEYS.currentFormFieldOrderSave) return false;
-      const sourceWidgetId = String(rule.sourceWidgetId || rule.source_widget_id || '').trim();
-      if (sourceWidgetId !== source) return false;
-      const expectedMode = ruleClientMode(rule);
-      return !expectedMode || expectedMode === mode;
-    })
-    .map((rule) => ({
-      key: ruleKey(rule),
-      label: String(rule.label || ruleKey(rule)).trim(),
-      raw: rule,
-    }));
+  return buildActiveContractModeActions({
+    rules: contractV2ActionRules(),
+    mode: activeContractMode.value,
+    excludedKeys: [BUSINESS_CONFIG_ACTION_KEYS.currentFormFieldOrderSave],
+  });
 });
 
 

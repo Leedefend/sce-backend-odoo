@@ -1,6 +1,7 @@
 import type { ContractV2ButtonStatus } from '../../app/contracts/v2';
+import { parseMaybeJsonRecord } from '../../app/contractRuntime';
 import { pickContractNavQuery } from '../../app/navigationContext';
-import type { ContractAction } from './types';
+import type { ContractAction, ContractFieldGovernanceAction, ContractPromptField } from './types';
 
 export function normalizeActionSafety(value: unknown): ContractAction['actionSafety'] | undefined {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
@@ -30,6 +31,159 @@ export function normalizeActionLabel(raw: unknown, fallback = ''): string {
   const match = text.match(/['"]label['"]\s*:\s*['"]([^'"]+)['"]/);
   if (match?.[1]) return String(match[1]).trim();
   return text;
+}
+
+export function contractActionRuleClientMode(rule: Record<string, unknown>) {
+  const target = parseMaybeJsonRecord(rule.target);
+  return String(target.mode || target.client_mode || rule.mode || rule.client_mode || '').trim();
+}
+
+export function contractActionRuleKey(rule: Record<string, unknown>) {
+  return String(rule.actionKey || rule.key || rule.actionId || '').trim();
+}
+
+export function contractActionRuleControl(rule: Record<string, unknown>) {
+  const target = parseMaybeJsonRecord(rule.target);
+  return parseMaybeJsonRecord(target.control || target.ui_control || rule.control || rule.ui_control);
+}
+
+export function contractPromptFieldsFromRule(rule: Record<string, unknown>): ContractPromptField[] {
+  const target = parseMaybeJsonRecord(rule.target);
+  const promptSchema = parseMaybeJsonRecord(target.prompt_schema || target.promptSchema || rule.prompt_schema || rule.promptSchema);
+  const fields = Array.isArray(promptSchema.fields) ? promptSchema.fields : [];
+  return fields
+    .map((raw) => {
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
+      const field = raw as Record<string, unknown>;
+      const name = String(field.name || '').trim();
+      if (!name) return null;
+      const options = Array.isArray(field.options)
+        ? field.options
+          .map((item) => parseMaybeJsonRecord(item))
+          .map((row) => ({
+            value: String(row.value || '').trim(),
+            label: String(row.label || row.value || '').trim(),
+          }))
+          .filter((row) => row.value)
+        : [];
+      return {
+        name,
+        label: String(field.label || name).trim(),
+        required: field.required !== false,
+        defaultValue: String(field.default || '').trim(),
+        options,
+      };
+    })
+    .filter((field): field is ContractPromptField => Boolean(field));
+}
+
+export function buildContractFieldActionsFromRules(params: {
+  rules: Record<string, unknown>[];
+  fieldName: string;
+  mode: string;
+  visibilityDraft: Record<string, boolean>;
+  busy: boolean;
+}): ContractFieldGovernanceAction[] {
+  const mode = String(params.mode || '').trim();
+  if (!mode) return [];
+  const fieldKey = String(params.fieldName || '').trim();
+  const fieldWidgetId = `field.${fieldKey}`;
+  return params.rules
+    .filter((rule) => {
+      const triggerType = String(rule.triggerType || rule.trigger_type || '').trim();
+      if (triggerType && !['change', 'select', 'click'].includes(triggerType)) return false;
+      const sourceWidgetId = String(rule.sourceWidgetId || rule.source_widget_id || '').trim();
+      const targetIds = Array.isArray(rule.targetIds || rule.target_ids) ? (rule.targetIds || rule.target_ids) as unknown[] : [];
+      if (sourceWidgetId !== fieldWidgetId && !targetIds.map((item) => String(item)).includes(fieldWidgetId)) return false;
+      const expectedMode = contractActionRuleClientMode(rule);
+      return !expectedMode || expectedMode === mode;
+    })
+    .map((rule) => {
+      const control = contractActionRuleControl(rule);
+      const key = contractActionRuleKey(rule);
+      const value = String(control.value || key).trim();
+      return {
+        key,
+        label: String(control.label || rule.label || key).trim(),
+        value,
+        checked: fieldKey && Object.prototype.hasOwnProperty.call(params.visibilityDraft, fieldKey)
+          ? params.visibilityDraft[fieldKey] === (value === 'show')
+          : control.checked === true,
+        disabled: control.disabled === true || params.busy,
+        title: String(control.title || '').trim(),
+        raw: rule,
+      };
+    });
+}
+
+export function buildFormSettingsFieldActions(params: {
+  fieldName: string;
+  existingActions?: ContractFieldGovernanceAction[];
+  visibilityDraft: Record<string, boolean>;
+  busy: boolean;
+}): ContractFieldGovernanceAction[] {
+  const fieldKey = String(params.fieldName || '').trim();
+  if (!fieldKey) return [];
+  if (params.existingActions?.length) {
+    return params.existingActions.map((action) => ({
+      ...action,
+      checked: Object.prototype.hasOwnProperty.call(params.visibilityDraft, fieldKey)
+        ? params.visibilityDraft[fieldKey] === (action.value === 'show')
+        : Boolean(action.checked),
+      disabled: Boolean(action.disabled) || params.busy,
+    }));
+  }
+  const visible = Object.prototype.hasOwnProperty.call(params.visibilityDraft, fieldKey)
+    ? params.visibilityDraft[fieldKey]
+    : true;
+  return [
+    {
+      key: `${fieldKey}:show`,
+      label: '显示',
+      value: 'show',
+      checked: visible,
+      disabled: params.busy,
+      title: '在当前页面显示这个字段',
+      raw: {},
+    },
+    {
+      key: `${fieldKey}:hide`,
+      label: '隐藏',
+      value: 'hide',
+      checked: !visible,
+      disabled: params.busy,
+      title: '在当前页面隐藏这个字段',
+      raw: {},
+    },
+  ];
+}
+
+export function buildActiveContractModeActions(params: {
+  rules: Record<string, unknown>[];
+  mode: string;
+  excludedKeys?: string[];
+}) {
+  const mode = String(params.mode || '').trim();
+  if (!mode) return [];
+  const source = `mode.${mode}`;
+  const excluded = new Set((params.excludedKeys || []).map((key) => String(key || '').trim()).filter(Boolean));
+  return params.rules
+    .filter((rule) => {
+      const key = contractActionRuleKey(rule);
+      if (excluded.has(key)) return false;
+      const sourceWidgetId = String(rule.sourceWidgetId || rule.source_widget_id || '').trim();
+      if (sourceWidgetId !== source) return false;
+      const expectedMode = contractActionRuleClientMode(rule);
+      return !expectedMode || expectedMode === mode;
+    })
+    .map((rule) => {
+      const key = contractActionRuleKey(rule);
+      return {
+        key,
+        label: String(rule.label || key).trim(),
+        raw: rule,
+      };
+    });
 }
 
 export function stableContractId(value: unknown, fallback: string) {
