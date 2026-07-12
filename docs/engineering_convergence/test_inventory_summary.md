@@ -9,8 +9,8 @@ Generated from `test_inventory.csv`.
 - Unknown runtime: `3`
 - Long-running assets: `331`
 - Manual gate review: `4`
-- Aggregate-covered assets: `178`
-- PR dedupe candidates: `611`
+- Aggregate-covered assets: `229`
+- PR dedupe candidates: `560`
 
 ## By Layer
 
@@ -42,9 +42,9 @@ Generated from `test_inventory.csv`.
 
 | Disposition | Count |
 | --- | ---: |
-| deduplicate_before_required | 611 |
+| deduplicate_before_required | 560 |
 | keep_integration_or_release_only | 291 |
-| covered_by_aggregate | 174 |
+| covered_by_aggregate | 225 |
 | keep_release_only | 36 |
 | canonical_entry | 4 |
 | review_or_archive | 4 |
@@ -54,18 +54,20 @@ Generated from `test_inventory.csv`.
 | Aggregate Target | Count |
 | --- | ---: |
 | verify.unified_page_contract.lite | 54 |
-| verify.scene.runtime_boundary.gate | 12 |
+| verify.scene.runtime_boundary.gate | 17 |
 | verify.unified_page_contract.v2 | 11 |
 | verify.frontend.product.ready | 7 |
 | verify.system_user_experience.full_browser | 5 |
 | verify.backend.contract.closure.mainline | 5 |
 | verify.finance_interfund.position.all | 5 |
+| verify.form_structure.contract | 4 |
 | verify.lowcode_config.customer_module_asset.pipeline | 4 |
 | verify.backend.architecture.full.report.guard.schema.guard | 3 |
 | verify.boundary.import_guard.strict.guard | 3 |
 | verify.frontend.grouped_drift_summary.baseline.guard | 3 |
 | verify.frontend.grouped_governance_brief.baseline.guard | 3 |
 | verify.frontend.grouped_governance_trend_consistency.baseline.guard | 3 |
+| verify.business_capability.productization_p1 | 3 |
 | verify.portal.payment_request_approval_all_smoke.container | 3 |
 | verify.release.v2_0_0.governance.guard | 3 |
 | verify.contract.scene_coverage.guard | 3 |
@@ -75,7 +77,21 @@ Generated from `test_inventory.csv`.
 | verify.business.capability_baseline.guard | 2 |
 | verify.business_form.productization.audit | 2 |
 | verify.contract.assembler.semantic.schema.guard | 2 |
-| verify.form_structure.contract | 2 |
+| verify.frontend.quick.gate | 2 |
+| verify.grouped.governance.bundle | 2 |
+| verify.intent.canonical_alias.snapshot.guard | 2 |
+| verify.native_view.semantic_page | 2 |
+| verify.non_demo_data_contamination | 2 |
+| verify.e2e.ops_batch_smoke | 2 |
+| verify.portal.entry_registry_quality_guard | 2 |
+| verify.product.delivery.governance_truth | 2 |
+| verify.project.dashboard.contract | 2 |
+| verify.project.dashboard.snapshot | 2 |
+| verify.project.management.acceptance | 2 |
+| verify.release.capability.audit.schema.guard | 2 |
+| verify.e2e.scene_admin | 2 |
+| verify.e2e.subscription_smoke | 2 |
+| verify.formal_business.release_gate | 2 |
 | make ci | 1 |
 | make test.e2e | 1 |
 | make test.odoo.integration | 1 |
@@ -108,6 +124,17 @@ Generated from `test_inventory.csv`.
 | verify.frontend.page_block_visual_snapshot_guard | 1 |
 | verify.lowcode_config.customer_module_asset.release_hardening.guard | 1 |
 | verify.delivery.material.cross_document_progress | 1 |
+| verify.p1.daily_business_visible_contract.audit | 1 |
+| verify.page_contract.role_orchestration_variance.guard | 1 |
+| verify.page_contract.role_strategy_provider_split.guard | 1 |
+| verify.role.capability_floor.guard | 1 |
+| verify.role.capability_floor.prod_like.schema.guard | 1 |
+| migration.assets.user_acceptance_manifest_guard.evidence | 1 |
+| migration.assets.user_acceptance_online_probe | 1 |
+| migration.assets.scbsly_direct_project_menu_probe | 1 |
+| verify.scene.provider.registry.consumer.guard | 1 |
+| verify.scene.provider.registry.guard | 1 |
+| verify.scene.delivery.readiness | 1 |
 | verify.smart_core.boundary_guard | 1 |
 | verify.unified_page_contract.v2.harmony_h5_compile_acceptance.host | 1 |
 | verify.unified_page_contract.v2.regression_audit.host | 1 |
@@ -252,7 +279,7 @@ Generated from `test_inventory.csv`.
 | T-ASSET-377 | contract | `scripts/verify/contract_form_handling_policy_audit.py` | platform owner |
 | T-ASSET-378 | contract | `scripts/verify/contract_form_lowcode_orchestration_smoke.js` | platform owner |
 | T-ASSET-379 | contract | `scripts/verify/contract_form_view_orchestration_hud_smoke.js` | platform owner |
-| ... | ... | 531 more | ... |
+| ... | ... | 480 more | ... |
 
 ## Dedupe Hotspots
 
@@ -262,29 +289,29 @@ Generated from `test_inventory.csv`.
 | `scripts/verify/contract_business_category` | 2 |
 | `scripts/verify/form_m2_payment` | 2 |
 | `scripts/verify/form_m3_purchase` | 2 |
-| `scripts/verify/form_view_scope` | 2 |
-| `scripts/verify/frontend_scene_contract` | 2 |
-| `scripts/verify/grouped_pagination_semantic` | 2 |
-| `scripts/verify/intent_canonical_alias` | 2 |
 | `scripts/verify/intent_smoke_utils` | 2 |
 | `scripts/verify/material_business_category` | 2 |
 | `scripts/verify/material_settlement_payment` | 2 |
-| `scripts/verify/native_view_semantic` | 2 |
-| `scripts/verify/non_demo_data` | 2 |
-| `scripts/verify/ops_batch` | 2 |
-| `scripts/verify/p1_daily_business` | 2 |
-| `scripts/verify/p1_formal_relationship` | 2 |
-| `scripts/verify/page_contract_role` | 2 |
-| `scripts/verify/portal_entry_registry` | 2 |
-| `scripts/verify/product_delivery_governance` | 2 |
-| `scripts/verify/project_dashboard_block` | 2 |
-| `scripts/verify/project_dashboard_snapshot` | 2 |
-| `scripts/verify/project_management_productization` | 2 |
-| `scripts/verify/role_capability_floor` | 2 |
-| `scripts/verify/scbs55_user_acceptance` | 2 |
-| `scripts/verify/scbsly_direct_project` | 2 |
-| `scripts/verify/scene_admin` | 2 |
-| `scripts/verify/scene_governance_history` | 2 |
-| `scripts/verify/scene_provider_registry` | 2 |
-| `scripts/verify/scene_ready_strict` | 2 |
-| `scripts/verify/scene_sample_registry` | 2 |
+| `frontend/apps/web/scripts/business_form_all` | 1 |
+| `frontend/apps/web/scripts/business_form_frontend` | 1 |
+| `frontend/apps/web/scripts/handling_entry_catalog` | 1 |
+| `frontend/apps/web/scripts/list_selection_contract` | 1 |
+| `frontend/apps/web/scripts/low_code_business` | 1 |
+| `frontend/apps/web/scripts/low_code_form` | 1 |
+| `frontend/apps/web/scripts/low_code_global` | 1 |
+| `frontend/apps/web/scripts/low_code_menu` | 1 |
+| `frontend/apps/web/scripts/product_navigation_boundary` | 1 |
+| `frontend/apps/web/scripts/product_page_structure` | 1 |
+| `frontend/apps/web/scripts/user_visible_surface` | 1 |
+| `scripts/audit/boundary_audit_smart` | 1 |
+| `scripts/audit/scene_config` | 1 |
+| `scripts/ci/assert_audit_tp08` | 1 |
+| `scripts/ci/gate` | 1 |
+| `scripts/ci/gate_audit_tp08` | 1 |
+| `scripts/ci/generate_e2e_journey` | 1 |
+| `scripts/ci/generate_test_inventory` | 1 |
+| `scripts/ci/summarize_test_inventory` | 1 |
+| `scripts/ops/contract_product_acceptance` | 1 |
+| `scripts/ops/direct_general_contract` | 1 |
+| `scripts/ops/engineering_progress_income` | 1 |
+| `scripts/ops/formal_list_surface` | 1 |

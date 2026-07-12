@@ -36,6 +36,7 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 | P2-02 Secondary dedupe hotspot aggregate coverage | Done | Scene package, grouped governance, release v2.0, scene coverage/recovery, payment approval, smart core minimum, and selected material/form assets mapped to existing gates |
 | P2-02 User-experience and portal smoke aggregate coverage | Done | System user experience, backend evidence, boundary import, business capability, form productization, finance fact, and portal smoke assets mapped to existing gates |
 | P2-02 Dedupe hotspot closeout | Done | No remaining dedupe hotspot above 2 assets; grouped drift summary mapped to `verify.frontend.grouped_drift_summary.baseline.guard` |
+| P2-02 Secondary 2-asset hotspot reduction | Done | Existing Make gates mapped for frontend, project dashboard, non-demo data, scene, role, SCBS, P1, and formal release validation assets; remaining grouped hotspots are seven 2-asset families without a confirmed aggregate gate |
 | SEC-06 Secret scan gate | Done | `scripts/ci/secret_scan.py`, `make security.secrets.scan` |
 | P4-01 Module dependency map | Done | `module_dependency_map.md`, `scripts/ci/generate_module_dependency_map.py` |
 | P4-02 Domain boundary ADR | Done | `adr_0001_domain_boundaries.md` |
@@ -55,7 +56,7 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 | `make test.e2e.fixed_data.odoo` | Passed, 3 Odoo post-tests for E2E-02, E2E-03, and E2E-08 |
 | `make audit.boundary.smart_core.ci` | Passed, artifact-only output without rewriting tracked docs |
 | `python3 scripts/ci/generate_test_inventory.py` | Passed, 1120 inventory entries |
-| `python3 scripts/ci/summarize_test_inventory.py` | Passed, 1120 inventory entries, unknown runtime reduced to 3, aggregate-covered assets 178 |
+| `python3 scripts/ci/summarize_test_inventory.py` | Passed, 1120 inventory entries, unknown runtime reduced to 3, aggregate-covered assets 229 |
 | `python3 scripts/ci/generate_e2e_journey_matrix.py` | Passed, 38 E2E assets mapped to 12 journeys with 0 empty gaps |
 | `python3 scripts/ci/generate_module_dependency_map.py` | Passed, 14 modules and 0 circular dependencies |
 | `python3 scripts/ci/generate_complexity_budget_report.py` | Passed, 3785 files scanned |

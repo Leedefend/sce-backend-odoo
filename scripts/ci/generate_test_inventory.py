@@ -272,10 +272,20 @@ def aggregate_target_for(path: Path, runtime: str) -> str:
         return "verify.portal.view_contract_coverage_smoke.container"
     if name == "fe_view_contract_shape_smoke.js":
         return "verify.portal.view_contract_shape.container"
+    if name in {
+        "frontend_scene_contract_auto_render_guard.py",
+        "frontend_scene_contract_v1_consumption_guard.py",
+    }:
+        return "verify.frontend.quick.gate"
     if name == "formal_list_surface_no_test_placeholder_guard.py":
         return "verify.formal_list_surface.no_test_placeholder_guard"
     if name == "smart_core_boundary_guard.py":
         return "verify.smart_core.boundary_guard"
+    if name in {
+        "form_view_scope_action_projection_audit.py",
+        "form_view_scope_boundary_guard.py",
+    }:
+        return "verify.form_structure.contract"
     if name in {
         "form_structure_contract_runtime_audit.py",
         "form_structure_contract_standardizer_guard.py",
@@ -299,6 +309,51 @@ def aggregate_target_for(path: Path, runtime: str) -> str:
         return "verify.frontend.grouped_drift_summary.baseline.guard"
     if name.startswith("grouped_governance_trend_consistency_"):
         return "verify.frontend.grouped_governance_trend_consistency.baseline.guard"
+    if name.startswith("grouped_pagination_semantic_"):
+        return "verify.grouped.governance.bundle"
+    if name.startswith("intent_canonical_alias_snapshot_"):
+        return "verify.intent.canonical_alias.snapshot.guard"
+    if name in {
+        "native_view_semantic_page_schema_guard.py",
+        "native_view_semantic_page_shape_guard.py",
+    }:
+        return "verify.native_view.semantic_page"
+    if name.startswith("non_demo_data_contamination_guard"):
+        return "verify.non_demo_data_contamination"
+    if name in {
+        "ops_batch_smoke.py",
+        "ops_batch_smoke.sh",
+    }:
+        return "verify.e2e.ops_batch_smoke"
+    if name in {
+        "portal_entry_registry_guard.py",
+        "portal_entry_registry_quality_guard.py",
+    }:
+        return "verify.portal.entry_registry_quality_guard"
+    if name in {
+        "product_delivery_governance_truth_guard.py",
+        "product_delivery_governance_truth_schema_guard.py",
+    }:
+        return "verify.product.delivery.governance_truth"
+    if name in {
+        "project_dashboard_block_payload_guard.py",
+        "project_dashboard_block_schema_guard.py",
+    }:
+        return "verify.project.dashboard.contract"
+    if name in {
+        "project_dashboard_snapshot_freshness_guard.py",
+        "project_dashboard_snapshot_schema_guard.py",
+    }:
+        return "verify.project.dashboard.snapshot"
+    if name in {
+        "project_management_productization_acceptance_export.py",
+        "project_management_productization_flow_guard.py",
+    }:
+        return "verify.project.management.acceptance"
+    if name == "page_contract_role_orchestration_variance_guard.py":
+        return "verify.page_contract.role_orchestration_variance.guard"
+    if name == "page_contract_role_strategy_provider_split_guard.py":
+        return "verify.page_contract.role_strategy_provider_split.guard"
     if name in {
         "payment_request_approval_field_consumer_audit.py",
         "payment_request_approval_handoff_smoke.py",
@@ -308,18 +363,65 @@ def aggregate_target_for(path: Path, runtime: str) -> str:
     if name == "material_settlement_payment_execution_traceability_audit.py":
         return "verify.delivery.material.cross_document_progress"
     if name in {
+        "p1_daily_business_form_usability_audit.py",
+        "p1_formal_relationship_continuity_audit.py",
+        "p1_formal_relationship_scope_block_smoke.py",
+    }:
+        return "verify.business_capability.productization_p1"
+    if name == "p1_daily_business_visible_contract_audit.py":
+        return "verify.p1.daily_business_visible_contract.audit"
+    if name in {
         "finance_business_fact_projection_audit.py",
         "finance_business_fact_scope_audit.py",
     }:
         return "verify.finance_interfund.position.all"
     if name.startswith("release_v2_0_0_"):
         return "verify.release.v2_0_0.governance.guard"
+    if name.startswith("release_capability_audit"):
+        return "verify.release.capability.audit.schema.guard"
+    if name == "role_capability_floor_guard.py":
+        return "verify.role.capability_floor.guard"
+    if name == "role_capability_floor_prod_like_schema_guard.py":
+        return "verify.role.capability_floor.prod_like.schema.guard"
     if name.startswith("scene_contract_coverage_"):
         return "verify.contract.scene_coverage.guard"
+    if name.startswith("scene_governance_history_"):
+        return "verify.scene.runtime_boundary.gate"
+    if name == "scene_provider_registry_guard.py":
+        return "verify.scene.provider.registry.guard"
+    if name == "scene_provider_registry_consumer_guard.py":
+        return "verify.scene.provider.registry.consumer.guard"
+    if name == "scene_ready_strict_contract_guard.py":
+        return "verify.scene.runtime_boundary.gate"
+    if name == "scene_ready_strict_gap_full_audit.py":
+        return "verify.scene.delivery.readiness"
+    if name.startswith("scene_sample_registry_diff_"):
+        return "verify.scene.runtime_boundary.gate"
     if name.startswith("scene_validation_recovery_strategy_"):
         return "verify.scene.runtime_boundary.gate"
     if name.startswith("smart_core_minimum_"):
         return "verify.smart_core.minimum_surface"
+    if name == "scbs55_user_acceptance_asset_manifest_guard.py":
+        return "migration.assets.user_acceptance_manifest_guard.evidence"
+    if name == "scbs55_user_acceptance_online_probe.py":
+        return "migration.assets.user_acceptance_online_probe"
+    if name == "scbsly_direct_project_acceptance_menu_probe.py":
+        return "migration.assets.scbsly_direct_project_menu_probe"
+    if name in {
+        "scene_admin_smoke.py",
+        "scene_admin_smoke.sh",
+    }:
+        return "verify.e2e.scene_admin"
+    if name in {
+        "subscription_smoke.py",
+        "subscription_smoke.sh",
+    }:
+        return "verify.e2e.subscription_smoke"
+    if name in {
+        "user_confirmed_form_capability_audit.py",
+        "user_confirmed_form_data_alignment_audit.py",
+    }:
+        return "verify.formal_business.release_gate"
     if name == "unified_page_contract_v2_harmony_h5_compile_acceptance_guard.py":
         return "verify.unified_page_contract.v2.harmony_h5_compile_acceptance.host"
     if name == "unified_page_contract_v2_regression_audit.py":
