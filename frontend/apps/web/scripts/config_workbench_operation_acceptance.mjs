@@ -1392,6 +1392,10 @@ async function main() {
         topElementClass: topElement instanceof HTMLElement ? topElement.className : "",
       };
     });
+    await page.evaluate(() => {
+      document.querySelector(".content")?.scrollTo({ top: 0, left: 0 });
+    });
+    await page.waitForTimeout(100);
     checks.menuConfigVisibleTechnicalTerms = await visibleTechnicalTerms(page, ".menu-config-page");
     screenshots.menuConfig = await capture(page, "menuConfig");
     await page.getByRole("button", { name: "返回配置工作台" }).click();

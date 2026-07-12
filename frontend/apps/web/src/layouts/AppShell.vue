@@ -155,6 +155,7 @@
     </aside>
 
     <section
+      ref="contentRef"
       class="content"
       :class="{ 'content--scene-compact': sceneHeaderMinimal, 'content--with-activity-tabs': visibleActivityPages.length }"
     >
@@ -316,6 +317,7 @@ type PublishedApp = {
 const PROJECT_CONTEXT_CHANGED_EVENT = 'sc:project-context-changed';
 const BUSINESS_CONFIG_ROOT_MENU_XMLID = 'smart_construction_core.menu_sc_root';
 const SIDEBAR_HIDDEN_STORAGE_KEY = 'sc_shell_sidebar_hidden';
+const contentRef = ref<HTMLElement | null>(null);
 
 function asDict(value: unknown): UnknownDict | null {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -1289,6 +1291,16 @@ watch(
   () => [session.initStatus, session.token, session.projectContext?.selected?.id],
   () => {
     void loadPublishedApps();
+  },
+);
+
+watch(
+  () => route.fullPath,
+  () => {
+    if (typeof window === 'undefined') return;
+    window.requestAnimationFrame(() => {
+      contentRef.value?.scrollTo({ top: 0, left: 0 });
+    });
   },
 );
 
