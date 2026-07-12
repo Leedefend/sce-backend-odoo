@@ -26,14 +26,18 @@ Extracted files:
 | `frontend/apps/web/src/views/businessConfigSurface/useBusinessConfigApprovalEditor.ts` | Approval policy editor state machine, validation, persistence, and drag/drop step ordering. |
 | `frontend/apps/web/src/views/businessConfigSurface/useBusinessConfigVersions.ts` | Configuration version loading, version summary text, rollback confirmation, and post-rollback refresh orchestration. |
 | `frontend/apps/web/src/views/businessConfigSurface/useBusinessConfigSnapshots.ts` | Configuration snapshot export, snapshot comparison, and remediation-plan download workflow. |
+| `frontend/apps/web/src/views/businessConfigSurface/useBusinessConfigFieldEditors.ts` | List/search and analysis field-editor state, candidates, draft changes, tab routing, and chip drag/drop operations. |
+| `frontend/apps/web/src/views/businessConfigSurface/useBusinessConfigCoverage.ts` | Coverage list filtering, issue rows, bootstrap candidates, coverage scope text, remediation summary, and copied acceptance evidence. |
+| `frontend/apps/web/src/views/businessConfigSurface/useBusinessConfigWorkbenchMeta.ts` | Configuration-card coverage labels, impact text, delivery-readiness metadata, and delivery action dispatch. |
+| `frontend/apps/web/src/views/businessConfigSurface/workbenchUtils.ts` | Surface load timeout and browser query cleanup helpers. |
 
 ## Line Count Evidence
 
 | File | Before | After |
 | --- | ---: | ---: |
-| `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` | 5447 | 2047 |
+| `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` | 5447 | 1494 |
 
-The route component remains in the P0 split-plan queue after this pass because the Vue split-plan threshold is 1500 lines. The next pass should extract stateful composables for coverage workflows, list/search and analysis editors, approval policy editing, and version rollback orchestration.
+The route component has exited the generated P0 split-plan queue after this pass because the Vue split-plan threshold is 1500 lines and the file is now 1494 lines.
 
 ## Non-Scope
 

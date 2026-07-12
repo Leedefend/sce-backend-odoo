@@ -387,16 +387,13 @@ import { useSessionStore } from '../stores/session';
 import {
   analysisItemLabel,
   boundaryLabel,
-  cleanBusinessFieldLabel,
   deliveryReadinessItemStatusText,
-  fieldTypeLabel,
   namesToText,
   normalizeNamesText,
   overallStatusLabel,
   pageDesignStatus,
   pageViewModeText,
   parseNames,
-  remediationActionLabel,
   rowActionHintText,
   rowBootstrapMissingViewTypes,
   rowCoverageProgressText,
@@ -405,21 +402,23 @@ import {
   rowHasListSearchConfig,
   runtimeEvidenceText,
   runtimeReasonText,
-  runtimeRouteText,
   sectionDisplayLabel,
   sectionHelpLabel,
   sectionPrimaryActionLabel,
   sectionPrimaryCopy,
   sectionTaskKindLabel,
   severityLabel,
-  shortFieldNameHint,
   versionStatusLabel,
   visibleRowRemediationActions,
 } from './businessConfigSurface/formatters';
 import { findMenuConfigNavigationEntry } from './businessConfigSurface/navigation';
 import { useBusinessConfigApprovalEditor } from './businessConfigSurface/useBusinessConfigApprovalEditor';
+import { useBusinessConfigCoverage } from './businessConfigSurface/useBusinessConfigCoverage';
+import { useBusinessConfigFieldEditors } from './businessConfigSurface/useBusinessConfigFieldEditors';
 import { useBusinessConfigSnapshots } from './businessConfigSurface/useBusinessConfigSnapshots';
 import { useBusinessConfigVersions } from './businessConfigSurface/useBusinessConfigVersions';
+import { useBusinessConfigWorkbenchMeta } from './businessConfigSurface/useBusinessConfigWorkbenchMeta';
+import { clearConsumedOpenIntent, replaceWorkbenchQuerySilently, withSurfaceLoadTimeout } from './businessConfigSurface/workbenchUtils';
 
 const SURFACE_LOAD_TIMEOUT_MS = 20000;
 const ACTIVE_EDITOR_SCROLL_OPTIONS = { block: 'start', behavior: 'auto' } as const;
@@ -496,51 +495,13 @@ const message = ref({ text: '', detail: '' });
 const rollbackConfirm = useProductConfirmDialog();
 const surface = ref<BusinessConfigSurfacePayload | null>(null);
 const coverageScan = ref<BusinessConfigCoverageScanPayload | null>(null);
-const showOnlyIssues = ref(false);
-const pageSearch = ref('');
-const pageTypeFilter = ref<'all' | 'form' | 'list' | 'analysis'>('all');
 const listSearchAudit = ref<BusinessConfigListSearchAuditPayload | null>(null);
 const analysisAudit = ref<BusinessConfigAnalysisAuditPayload | null>(null);
 const listSearchPanelOpen = ref(false);
 const analysisPanelOpen = ref(false);
 const selectedRuntimeRoute = ref<BusinessConfigCoverageScanItem['runtime_route'] | null>(null);
 const advancedPanelOpen = ref(false);
-const listColumnsText = ref('');
-const searchFiltersText = ref('');
-const searchGroupByText = ref('');
-const pivotMeasuresText = ref('');
-const pivotDimensionsText = ref('');
-const graphMeasuresText = ref('');
-const graphDimensionsText = ref('');
-const graphType = ref('bar');
-const listSearchBase = ref({ list: '', filter: '', group: '' });
-const analysisBase = ref({ pivotMeasures: '', pivotDimensions: '', graphMeasures: '', graphDimensions: '', graphType: 'bar' });
 let surfaceLoadSeq = 0;
-const listColumnDraft = ref('');
-const searchFilterDraft = ref('');
-const searchGroupDraft = ref('');
-const pivotMeasureDraft = ref('');
-const pivotDimensionDraft = ref('');
-const graphMeasureDraft = ref('');
-const graphDimensionDraft = ref('');
-type ListSearchEditorKind = 'list' | 'filter' | 'group';
-type AnalysisEditorKind = 'pivotMeasure' | 'pivotDimension' | 'graphMeasure' | 'graphDimension';
-const activeListSearchEditor = ref<ListSearchEditorKind>('list');
-const activeAnalysisEditor = ref<AnalysisEditorKind>('pivotMeasure');
-const chipDrag = ref<{
-  area: 'list_search' | 'analysis';
-  kind: ListSearchEditorKind | AnalysisEditorKind;
-  name: string;
-} | null>(null);
-const chipDropTarget = ref<{
-  area: 'list_search' | 'analysis';
-  kind: ListSearchEditorKind | AnalysisEditorKind;
-  name: string;
-} | null>(null);
-const listFieldOptionSearch = ref('');
-const filterFieldOptionSearch = ref('');
-const groupFieldOptionSearch = ref('');
-const analysisFieldOptionSearch = ref('');
 const scopeModel = ref(String(route.query.model || '').trim());
 const scopeActionId = ref(numericQuery('action_id') || 0);
 const scopeViewId = ref(numericQuery('view_id') || 0);
@@ -551,15 +512,6 @@ const shouldOpenPageList = computed(() => String(route.query[BUSINESS_CONFIG_ROU
 const shouldOpenListSearch = computed(() => String(route.query.open_list_search || '').trim() === '1');
 const shouldOpenAnalysis = computed(() => String(route.query.open_analysis || '').trim() === '1');
 const shouldOpenFormConfig = computed(() => String(route.query.open_form_config || '').trim() === '1');
-const requestedListSearchTab = computed<ListSearchEditorKind>(() => {
-  const value = String(route.query.list_search_tab || '').trim();
-  return value === 'filter' || value === 'group' ? value : 'list';
-});
-const requestedAnalysisTab = computed<AnalysisEditorKind>(() => {
-  const value = String(route.query.analysis_tab || '').trim();
-  if (value === 'pivotDimension' || value === 'graphMeasure' || value === 'graphDimension') return value;
-  return 'pivotMeasure';
-});
 const designerTitle = computed(() => {
   const model = currentModel.value || scopeModel.value.trim();
   const pageLabel = selectedPageLabel.value.trim();
@@ -657,11 +609,43 @@ const {
     analysisPanelOpen.value = false;
   },
 });
+const {
+  sectionImpactText,
+  sectionStatusLabel,
+  sectionTaskCoverageText,
+  deliveryReadinessItemMetaText,
+  runDeliveryReadinessAction,
+} = useBusinessConfigWorkbenchMeta({
+  selectedCoverageRow,
+  selectedPageLabel,
+  advancedPanelOpen,
+  scanSystemRootCoverage,
+  openMenuConfig,
+  loadApprovalConfig,
+  loadListSearchConfig,
+  openFormConfig,
+});
 const canOpenDesigner = computed(() => Boolean(currentModel.value && scopeAction.value && !currentModelIsRuntimeConfig.value));
 const startScopeSummary = computed(() => {
   if (selectedPageLabel.value) return '当前页面配置，只影响这个业务页面';
   if (currentModel.value) return '已选择业务页面，可配置表单、列表、菜单和审批';
   return '先从业务页面目录选择配置对象';
+});
+const {
+  showOnlyIssues,
+  pageSearch,
+  pageTypeFilter,
+  pageTypeOptions,
+  coverageIssueRows,
+  coverageBatchBootstrapRows,
+  coverageScopeLabel,
+  visibleCoverageRows,
+  remediationSummaryItems,
+  copyCoverageSummary,
+} = useBusinessConfigCoverage({
+  coverageScan,
+  advancedPanelOpen,
+  setMessage,
 });
 const {
   snapshotCompareText,
@@ -702,108 +686,87 @@ const visibleDeliveryReadinessProgressText = computed(() => {
   const readyCount = items.filter((item) => item.status === 'ready').length;
   return `${readyCount}/${items.length} 项就绪`;
 });
-const pageTypeOptions = [
-  { key: 'all' as const, label: '全部页面' },
-  { key: 'form' as const, label: '表单页面' },
-  { key: 'list' as const, label: '列表页面' },
-  { key: 'analysis' as const, label: '分析页面' },
-];
-const listSearchEditorTabs: Array<{ key: ListSearchEditorKind; label: string }> = [
-  { key: 'list', label: '列表列' },
-  { key: 'filter', label: '搜索条件' },
-  { key: 'group', label: '默认分组' },
-];
-const analysisEditorTabs: Array<{ key: AnalysisEditorKind; label: string }> = [
-  { key: 'pivotMeasure', label: '透视指标' },
-  { key: 'pivotDimension', label: '透视维度' },
-  { key: 'graphMeasure', label: '图表指标' },
-  { key: 'graphDimension', label: '图表维度' },
-];
 const listSearchPanelDescription = computed(() => (
   advancedPanelOpen.value
     ? '这些配置写入正式业务配置，不写入个人列偏好。'
     : '保存为这个页面的默认列表、搜索和分组设置，不覆盖个人列宽和排序偏好。'
 ));
-function isCoverageIssue(row: BusinessConfigCoverageScanItem) {
-  return !row.is_complete || !row.is_runtime_complete || !row.has_menu;
-}
-
-const coverageIssueRows = computed(() => (
-  coverageScan.value?.items || []
-).filter(isCoverageIssue));
-const coverageBatchBootstrapRows = computed(() => (
-  coverageScan.value?.items || []
-).filter((row) => (
-  rowBootstrapMissingViewTypes(row, ['form', 'tree', 'search', 'pivot', 'graph']).length > 0
-)));
-const coverageScopeLabel = computed(() => {
-  const scan = coverageScan.value;
-  if (!scan) return '未扫描';
-  if (scan.include_all_root_menu_actions) {
-    return scan.root_menu_xmlid ? '扫描范围：系统根菜单' : '扫描范围：全部菜单';
-  }
-  if (scan.include_unreachable_actions) return '扫描范围：含无菜单动作';
-  return '扫描范围：当前用户可见';
+const {
+  listColumnsText,
+  searchFiltersText,
+  searchGroupByText,
+  pivotMeasuresText,
+  pivotDimensionsText,
+  graphMeasuresText,
+  graphDimensionsText,
+  graphType,
+  listSearchBase,
+  analysisBase,
+  listColumnDraft,
+  searchFilterDraft,
+  searchGroupDraft,
+  activeListSearchEditor,
+  activeAnalysisEditor,
+  listFieldOptionSearch,
+  filterFieldOptionSearch,
+  groupFieldOptionSearch,
+  analysisFieldOptionSearch,
+  requestedListSearchTab,
+  requestedAnalysisTab,
+  listSearchEditorTabs,
+  analysisEditorTabs,
+  availableListFieldOptions,
+  availableFilterFieldOptions,
+  availableGroupFieldOptions,
+  availableAnalysisFieldOptions,
+  hasListSearchDraftChanges,
+  hasAnalysisDraftChanges,
+  listSearchEditorCount,
+  updateListSearchFieldSearch,
+  updateListSearchDraft,
+  setActiveListSearchEditor,
+  setActiveAnalysisEditor,
+  resetListSearchDraft,
+  fieldOptionAvailableCount,
+  analysisEditorState,
+  analysisEditorLabel,
+  setAnalysisDraft,
+  analysisEditorCount,
+  fieldDisplayLabel,
+  fieldOptionHelpText,
+  fieldOptionLabel,
+  fieldHelpText,
+  addListSearchName,
+  addVisibleListSearchOptions,
+  removeListSearchName,
+  moveListSearchName,
+  clearChipDrag,
+  startListSearchChipDrag,
+  hoverListSearchChipDrop,
+  dropListSearchChip,
+  isListSearchChipDragging,
+  isListSearchChipDropTarget,
+  addAnalysisName,
+  addVisibleAnalysisOptions,
+  removeAnalysisName,
+  moveAnalysisName,
+  startAnalysisChipDrag,
+  hoverAnalysisChipDrop,
+  dropAnalysisChip,
+  isAnalysisChipDragging,
+  isAnalysisChipDropTarget,
+  resetAnalysisDraft,
+} = useBusinessConfigFieldEditors({
+  route,
+  router,
+  listSearchAudit,
+  analysisAudit,
+  listSearchPanelOpen,
+  analysisPanelOpen,
+  advancedPanelOpen,
+  setMessage,
+  clearMessage,
 });
-
-const pageSearchText = computed(() => pageSearch.value.trim().toLowerCase());
-const visibleCoverageRows = computed(() => {
-  const rows = showOnlyIssues.value ? coverageIssueRows.value : coverageScan.value?.items || [];
-  const keyword = pageSearchText.value;
-  const filtered = rows
-    .filter((row) => {
-      if (pageTypeFilter.value === 'form') return row.target_view_types.includes('form');
-      if (pageTypeFilter.value === 'list') return rowHasListSearchConfig(row);
-      if (pageTypeFilter.value === 'analysis') return rowHasAnalysisConfig(row);
-      return true;
-    })
-    .filter((row) => {
-      if (!keyword) return true;
-      const searchable = advancedPanelOpen.value
-        ? [row.name, row.model, row.view_mode, pageViewModeText(row)]
-        : [row.name, pageViewModeText(row)];
-      return searchable.some((text) => String(text || '').toLowerCase().includes(keyword));
-    });
-  return filtered.slice(0, 60);
-});
-const remediationSummaryItems = computed(() => {
-  const counts = coverageScan.value?.summary.remediation_action_counts || {};
-  return Object.entries(counts)
-    .map(([code, count]) => ({ code, count, label: remediationActionLabel(code) }))
-    .filter((item) => item.count > 0)
-    .sort((left, right) => left.label.localeCompare(right.label, 'zh-Hans-CN'));
-});
-const availableModelFields = computed(() => (listSearchAudit.value?.available_model_fields || [])
-  .concat(analysisAudit.value?.available_model_fields || [])
-  .map((field) => ({
-    name: String(field.name || '').trim(),
-    label: cleanBusinessFieldLabel(field.name, field.label || field.name),
-    type: String(field.type || '').trim(),
-  }))
-  .filter((field) => field.name)
-  .filter((field, index, rows) => rows.findIndex((row) => row.name === field.name) === index)
-);
-const configuredListColumnLabels = computed(() => {
-  const labels = listSearchAudit.value?.business_config_list_column_labels || {};
-  return Object.entries(labels).reduce<Record<string, string>>((acc, [name, label]) => {
-    const fieldName = String(name || '').trim();
-    const cleanLabel = cleanBusinessFieldLabel(fieldName, label);
-    if (fieldName && cleanLabel) acc[fieldName] = cleanLabel;
-    return acc;
-  }, {});
-});
-const duplicatedFieldLabels = computed(() => {
-  const counts = new Map<string, number>();
-  availableModelFields.value.forEach((field) => {
-    const label = field.label || field.name;
-    counts.set(label, (counts.get(label) || 0) + 1);
-  });
-  return new Set([...counts.entries()].filter(([, count]) => count > 1).map(([label]) => label));
-});
-const availableListFieldOptions = computed(() => fieldOptionsNotIn('list'));
-const availableFilterFieldOptions = computed(() => fieldOptionsNotIn('filter'));
-const availableGroupFieldOptions = computed(() => fieldOptionsNotIn('group'));
-const availableAnalysisFieldOptions = computed(() => analysisFieldOptionCandidates().slice(0, analysisFieldOptionSearch.value.trim() ? 80 : 24));
 const previewRouteTarget = computed(() => {
   const runtimeRoute = selectedRuntimeRoute.value || {};
   const runtimePath = String(runtimeRoute.path || '').trim();
@@ -816,18 +779,6 @@ const previewRouteTarget = computed(() => {
   }
   return { path: '', query: {} };
 });
-const hasListSearchDraftChanges = computed(() => (
-  normalizeNamesText(listColumnsText.value) !== listSearchBase.value.list
-  || normalizeNamesText(searchFiltersText.value) !== listSearchBase.value.filter
-  || normalizeNamesText(searchGroupByText.value) !== listSearchBase.value.group
-));
-const hasAnalysisDraftChanges = computed(() => (
-  normalizeNamesText(pivotMeasuresText.value) !== analysisBase.value.pivotMeasures
-  || normalizeNamesText(pivotDimensionsText.value) !== analysisBase.value.pivotDimensions
-  || normalizeNamesText(graphMeasuresText.value) !== analysisBase.value.graphMeasures
-  || normalizeNamesText(graphDimensionsText.value) !== analysisBase.value.graphDimensions
-  || String(graphType.value || 'bar') !== analysisBase.value.graphType
-));
 function numericQuery(name: string) {
   const parsed = Number(route.query[name] || 0);
   return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : undefined;
@@ -913,111 +864,6 @@ function setMessage(text: string, detail = '') {
   message.value = { text, detail };
 }
 
-function sectionImpactText(sectionKey: string) {
-  const page = selectedCoverageRow.value?.name || selectedPageLabel.value || '当前页面';
-  if (sectionKey === 'form') return `影响 ${page} 的表单填写体验`;
-  if (sectionKey === 'list_search') return `影响 ${page} 的列表和检索默认值`;
-  if (sectionKey === 'analysis') return `影响 ${page} 的统计分析视图`;
-  if (sectionKey === 'menu') return `影响 ${page} 的导航可见性`;
-  if (sectionKey === 'approval') return `影响 ${page} 的提交和审核判断`;
-  return `影响 ${page}`;
-}
-
-function selectedPageViewTypes() {
-  const row = selectedCoverageRow.value;
-  const fromTarget = (row?.target_view_types || []).map((item) => String(item || '').trim()).filter(Boolean);
-  const fromMode = String(row?.view_mode || '')
-    .split(',')
-    .map((item) => item.trim())
-    .filter(Boolean);
-  return new Set([...fromTarget, ...fromMode]);
-}
-
-function sectionExpectedContractCount(sectionKey: string) {
-  const viewTypes = selectedPageViewTypes();
-  if (sectionKey === 'list_search') {
-    const expected = [
-      viewTypes.has('tree') || viewTypes.has('list') ? 'tree' : '',
-      viewTypes.has('search') ? 'search' : '',
-    ].filter(Boolean).length;
-    return expected || 2;
-  }
-  if (sectionKey === 'analysis') {
-    const expected = ['pivot', 'graph', 'calendar', 'dashboard'].filter((viewType) => viewTypes.has(viewType)).length;
-    return expected || 1;
-  }
-  return 1;
-}
-
-function sectionStatusLabel(sectionKey: string, contractCount: number) {
-  const count = Number(contractCount || 0);
-  if (sectionKey === 'menu') return count > 0 ? '已配置' : '未调整';
-  const expected = sectionExpectedContractCount(sectionKey);
-  if (count <= 0) return '未配置';
-  if (count < expected) return '部分配置';
-  return '已配置';
-}
-
-function sectionConfigProgressText(sectionKey: string, contractCount: number) {
-  if (sectionKey === 'menu') return '';
-  const expected = sectionExpectedContractCount(sectionKey);
-  const count = Math.max(0, Math.min(Number(contractCount || 0), expected));
-  return `${count}/${expected}`;
-}
-
-function sectionTaskCoverageText(sectionKey: string, contractCount: number) {
-  if (sectionKey === 'menu') {
-    return Number(contractCount || 0) > 0 ? '已有菜单显示规则' : '使用默认菜单显示';
-  }
-  const progress = sectionConfigProgressText(sectionKey, contractCount);
-  return progress ? `覆盖 ${progress}` : '覆盖 0/1';
-}
-
-function deliveryReadinessItemMetaText(item: NonNullable<BusinessConfigSurfacePayload['delivery_readiness']>['items'][number]) {
-  const countText = item.contract_count ? `${item.contract_count} 项` : '未建立';
-  return advancedPanelOpen.value && item.boundary ? `${countText} · ${boundaryLabel(item.boundary)}` : countText;
-}
-
-function runDeliveryReadinessAction(item: NonNullable<BusinessConfigSurfacePayload['delivery_readiness']>['items'][number]) {
-  if (item.action === 'coverage_scan') {
-    scanSystemRootCoverage();
-    return;
-  }
-  if (item.action === 'snapshot_compare') {
-    advancedPanelOpen.value = true;
-    return;
-  }
-  if (item.section_key === 'menu') {
-    openMenuConfig();
-    return;
-  }
-  if (item.section_key === 'approval') {
-    loadApprovalConfig();
-    return;
-  }
-  if (item.section_key === 'list_search') {
-    loadListSearchConfig();
-    return;
-  }
-  if (item.section_key === 'form') {
-    openFormConfig();
-  }
-}
-
-function withSurfaceLoadTimeout<T>(request: Promise<T>) {
-  let timer: number | undefined;
-  const timeout = new Promise<T>((_, reject) => {
-    timer = window.setTimeout(() => {
-      reject(new Error('配置能力读取超时，请检查网络或稍后点击“读取配置对象”重试。'));
-    }, SURFACE_LOAD_TIMEOUT_MS);
-  });
-  return Promise.race([request, timeout]).finally(() => {
-    if (timer) {
-      window.clearTimeout(timer);
-    }
-  });
-}
-
 async function loadSurface() {
   const seq = ++surfaceLoadSeq;
   loading.value = true;
@@ -1031,6 +877,7 @@ async function loadSurface() {
         view_id: scopeView.value,
         role_key: scopeRole.value,
       }),
+      SURFACE_LOAD_TIMEOUT_MS,
     );
     if (seq !== surfaceLoadSeq) return;
     surface.value = nextSurface;
@@ -1118,45 +965,6 @@ async function rescanCoverageAfterBootstrap() {
     return;
   }
   await scanCoverage();
-}
-
-function buildCoverageSummaryText() {
-  const scan = coverageScan.value;
-  if (!scan) return '';
-  const summary = scan.summary;
-  const actions = remediationSummaryItems.value
-    .map((item) => `${item.label}${item.count}`)
-    .join('，') || '无';
-  const routeRows = (coverageIssueRows.value.length ? coverageIssueRows.value : scan.items || [])
-    .map((row) => ({
-      row,
-      route: runtimeRouteText(row),
-    }))
-    .filter((item) => item.route)
-    .slice(0, 10);
-  const routeEvidence = routeRows.length
-    ? routeRows.map((item) => `${item.row.name || item.row.model}：${item.route}`).join('\n')
-    : '无';
-  return [
-    `低代码配置覆盖验收：${overallStatusLabel(summary.overall_status)}`,
-    `${coverageScopeLabel.value}；范围：${scan.model || '全部业务对象'}，业务操作 ${summary.action_count}`,
-    `严重级别：阻断 ${summary.severity_counts.error || 0}，警告 ${summary.severity_counts.warning || 0}，提示 ${summary.severity_counts.notice || 0}`,
-    `未配置：配置 ${summary.missing_count}，办理页 ${summary.runtime_missing_count}，分析页 ${summary.runtime_missing_analysis_count || 0}，无菜单 ${summary.no_menu_count}，个人设置 ${summary.user_preference_count}`,
-    `原因：未发布 ${summary.not_published_gap_count}，作用域未命中 ${summary.not_runtime_applicable_gap_count}`,
-    `整改：${actions}`,
-    `运行页面证据：\n${routeEvidence}`,
-  ].join('\n');
-}
-
-async function copyCoverageSummary() {
-  const text = buildCoverageSummaryText();
-  if (!text) return;
-  try {
-    await navigator.clipboard.writeText(text);
-    setMessage('已复制验收摘要');
-  } catch {
-    setMessage('复制摘要失败', '浏览器未允许写入剪贴板，请稍后重试');
-  }
 }
 
 async function applyScopeAndLoad() {
@@ -1407,326 +1215,6 @@ async function bootstrapCoverageMissing() {
   }
 }
 
-function listSearchEditorState(kind: ListSearchEditorKind) {
-  if (kind === 'list') return { text: listColumnsText, draft: listColumnDraft };
-  if (kind === 'filter') return { text: searchFiltersText, draft: searchFilterDraft };
-  return { text: searchGroupByText, draft: searchGroupDraft };
-}
-
-function listSearchEditorCount(kind: ListSearchEditorKind) {
-  return parseNames(listSearchEditorState(kind).text.value).length;
-}
-
-function fieldOptionSearchState(kind: ListSearchEditorKind) {
-  if (kind === 'list') return listFieldOptionSearch;
-  if (kind === 'filter') return filterFieldOptionSearch;
-  return groupFieldOptionSearch;
-}
-
-function updateListSearchFieldSearch(kind: ListSearchEditorKind, value: string) {
-  fieldOptionSearchState(kind).value = value;
-}
-
-function updateListSearchDraft(kind: ListSearchEditorKind, value: string) {
-  listSearchEditorState(kind).draft.value = value;
-}
-
-async function setActiveListSearchEditor(kind: ListSearchEditorKind) {
-  activeListSearchEditor.value = kind;
-  if (!listSearchPanelOpen.value) return;
-  await router.replace({
-    path: route.path,
-    query: {
-      ...route.query,
-      list_search_tab: kind === 'list' ? undefined : kind,
-    },
-  });
-}
-
-async function setActiveAnalysisEditor(kind: AnalysisEditorKind) {
-  activeAnalysisEditor.value = kind;
-  if (!analysisPanelOpen.value) return;
-  await router.replace({
-    path: route.path,
-    query: {
-      ...route.query,
-      analysis_tab: kind === 'pivotMeasure' ? undefined : kind,
-    },
-  });
-}
-
-function setListSearchNames(kind: ListSearchEditorKind, names: string[]) {
-  const state = listSearchEditorState(kind);
-  state.text.value = namesToText(names);
-  clearMessage();
-}
-
-function resetListSearchDraft() {
-  listColumnsText.value = listSearchBase.value.list;
-  searchFiltersText.value = listSearchBase.value.filter;
-  searchGroupByText.value = listSearchBase.value.group;
-  listColumnDraft.value = '';
-  searchFilterDraft.value = '';
-  searchGroupDraft.value = '';
-  setMessage('已放弃列表与搜索调整');
-}
-
-function fieldOptionsNotIn(kind: ListSearchEditorKind) {
-  return fieldOptionCandidates(kind).slice(0, fieldOptionSearchState(kind).value.trim() ? 80 : 24);
-}
-
-function fieldOptionAvailableCount(kind: ListSearchEditorKind) {
-  return fieldOptionCandidates(kind).length;
-}
-
-function fieldOptionCandidates(kind: ListSearchEditorKind) {
-  const selected = new Set(parseNames(listSearchEditorState(kind).text.value));
-  const keyword = fieldOptionSearchState(kind).value.trim().toLowerCase();
-  return availableModelFields.value
-    .filter((field) => !selected.has(field.name))
-    .filter((field) => {
-      if (!keyword) return true;
-      return [field.name, field.label, field.type]
-        .some((text) => String(text || '').toLowerCase().includes(keyword));
-    });
-}
-
-function analysisEditorState(kind: AnalysisEditorKind) {
-  if (kind === 'pivotMeasure') return { text: pivotMeasuresText, draft: pivotMeasureDraft };
-  if (kind === 'pivotDimension') return { text: pivotDimensionsText, draft: pivotDimensionDraft };
-  if (kind === 'graphMeasure') return { text: graphMeasuresText, draft: graphMeasureDraft };
-  return { text: graphDimensionsText, draft: graphDimensionDraft };
-}
-
-function analysisEditorLabel(kind: AnalysisEditorKind) {
-  const tab = analysisEditorTabs.find((item) => item.key === kind);
-  return tab?.label || '分析字段';
-}
-
-function setAnalysisDraft(kind: AnalysisEditorKind, value: string) {
-  analysisEditorState(kind).draft.value = value;
-}
-
-function analysisEditorCount(kind: AnalysisEditorKind) {
-  return parseNames(analysisEditorState(kind).text.value).length;
-}
-
-function analysisFieldOptionCandidates() {
-  const selected = new Set(parseNames(analysisEditorState(activeAnalysisEditor.value).text.value));
-  const keyword = analysisFieldOptionSearch.value.trim().toLowerCase();
-  return availableModelFields.value
-    .filter((field) => !selected.has(field.name))
-    .filter((field) => {
-      if (!keyword) return true;
-      return [field.name, field.label, field.type]
-        .some((text) => String(text || '').toLowerCase().includes(keyword));
-    });
-}
-
-function fieldDisplayLabel(name: string) {
-  const fieldName = String(name || '').trim();
-  const configuredLabel = configuredListColumnLabels.value[fieldName];
-  if (configuredLabel) return configuredLabel;
-  const field = availableModelFields.value.find((item) => item.name === fieldName);
-  if (!field) return cleanBusinessFieldLabel(fieldName, fieldName);
-  return fieldOptionLabel(field);
-}
-
-function fieldOptionLabel(field: { name: string; label: string; type: string }) {
-  const label = field.label || field.name;
-  if (!duplicatedFieldLabels.value.has(label)) return label;
-  const type = fieldTypeLabel(field.type);
-  const hint = shortFieldNameHint(field.name);
-  return `${label}（${[type, advancedPanelOpen.value ? hint : ''].filter(Boolean).join(' · ')}）`;
-}
-
-function fieldOptionHelpText(field: { name: string; label: string; type: string }) {
-  return [field.label || field.name, field.name, field.type].filter(Boolean).join(' · ');
-}
-
-function fieldHelpText(name: string) {
-  const fieldName = String(name || '').trim();
-  const configuredLabel = configuredListColumnLabels.value[fieldName];
-  if (configuredLabel) return [configuredLabel, fieldName].filter(Boolean).join(' · ');
-  const field = availableModelFields.value.find((item) => item.name === fieldName);
-  return field ? fieldOptionHelpText(field) : cleanBusinessFieldLabel(fieldName, fieldName);
-}
-
-function addListSearchName(kind: ListSearchEditorKind, explicitName = '') {
-  const state = listSearchEditorState(kind);
-  const name = String(explicitName || state.draft.value || '').trim();
-  if (!name) return;
-  const names = parseNames(state.text.value);
-  if (!names.includes(name)) names.push(name);
-  setListSearchNames(kind, names);
-  if (!explicitName) state.draft.value = '';
-}
-
-function addVisibleListSearchOptions(kind: ListSearchEditorKind) {
-  const names = parseNames(listSearchEditorState(kind).text.value);
-  const existing = new Set(names);
-  let addedCount = 0;
-  fieldOptionsNotIn(kind).forEach((field) => {
-    if (!existing.has(field.name)) {
-      names.push(field.name);
-      existing.add(field.name);
-      addedCount += 1;
-    }
-  });
-  setListSearchNames(kind, names);
-  setMessage(addedCount ? `已添加 ${addedCount} 个字段` : '当前显示字段已全部添加');
-}
-
-function removeListSearchName(kind: ListSearchEditorKind, name: string) {
-  setListSearchNames(kind, parseNames(listSearchEditorState(kind).text.value).filter((item) => item !== name));
-}
-
-function moveListSearchName(kind: ListSearchEditorKind, name: string, delta: number) {
-  const names = parseNames(listSearchEditorState(kind).text.value);
-  const index = names.indexOf(name);
-  const nextIndex = index + delta;
-  if (index < 0 || nextIndex < 0 || nextIndex >= names.length) return;
-  const [moved] = names.splice(index, 1);
-  names.splice(nextIndex, 0, moved);
-  setListSearchNames(kind, names);
-}
-
-function reorderNamesByDrop(names: string[], sourceName: string, targetName: string) {
-  const sourceIndex = names.indexOf(sourceName);
-  const targetIndex = names.indexOf(targetName);
-  if (sourceIndex < 0 || targetIndex < 0 || sourceIndex === targetIndex) return names;
-  const next = [...names];
-  const [moved] = next.splice(sourceIndex, 1);
-  next.splice(targetIndex, 0, moved);
-  return next;
-}
-
-function startChipDrag(
-  area: 'list_search' | 'analysis',
-  kind: ListSearchEditorKind | AnalysisEditorKind,
-  name: string,
-  event: DragEvent,
-) {
-  chipDrag.value = { area, kind, name };
-  chipDropTarget.value = null;
-  event.dataTransfer?.setData('text/plain', name);
-  if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
-}
-
-function hoverChipDrop(
-  area: 'list_search' | 'analysis',
-  kind: ListSearchEditorKind | AnalysisEditorKind,
-  name: string,
-) {
-  const current = chipDrag.value;
-  if (!current || current.area !== area || current.kind !== kind || current.name === name) {
-    chipDropTarget.value = null;
-    return;
-  }
-  chipDropTarget.value = { area, kind, name };
-}
-
-function clearChipDrag() {
-  chipDrag.value = null;
-  chipDropTarget.value = null;
-}
-
-function startListSearchChipDrag(kind: ListSearchEditorKind, name: string, event: DragEvent) {
-  startChipDrag('list_search', kind, name, event);
-}
-
-function hoverListSearchChipDrop(kind: ListSearchEditorKind, name: string) {
-  hoverChipDrop('list_search', kind, name);
-}
-
-function dropListSearchChip(kind: ListSearchEditorKind, targetName: string) {
-  const current = chipDrag.value;
-  if (!current || current.area !== 'list_search' || current.kind !== kind) return;
-  const names = parseNames(listSearchEditorState(kind).text.value);
-  setListSearchNames(kind, reorderNamesByDrop(names, current.name, targetName));
-  clearChipDrag();
-}
-
-function isListSearchChipDragging(kind: ListSearchEditorKind, name: string) {
-  const current = chipDrag.value;
-  return current?.area === 'list_search' && current.kind === kind && current.name === name;
-}
-
-function isListSearchChipDropTarget(kind: ListSearchEditorKind, name: string) {
-  const current = chipDropTarget.value;
-  return current?.area === 'list_search' && current.kind === kind && current.name === name;
-}
-
-function setAnalysisNames(kind: AnalysisEditorKind, names: string[]) {
-  analysisEditorState(kind).text.value = namesToText(names);
-  clearMessage();
-}
-
-function addAnalysisName(kind: AnalysisEditorKind, explicitName = '') {
-  const state = analysisEditorState(kind);
-  const name = String(explicitName || state.draft.value || '').trim();
-  if (!name) return;
-  const names = parseNames(state.text.value);
-  if (!names.includes(name)) names.push(name);
-  setAnalysisNames(kind, names);
-  if (!explicitName) state.draft.value = '';
-}
-
-function addVisibleAnalysisOptions(kind: AnalysisEditorKind) {
-  const names = parseNames(analysisEditorState(kind).text.value);
-  const existing = new Set(names);
-  let addedCount = 0;
-  availableAnalysisFieldOptions.value.forEach((field) => {
-    if (!existing.has(field.name)) {
-      names.push(field.name);
-      existing.add(field.name);
-      addedCount += 1;
-    }
-  });
-  setAnalysisNames(kind, names);
-  setMessage(addedCount ? `已添加 ${addedCount} 个分析字段` : '当前显示字段已全部添加');
-}
-
-function removeAnalysisName(kind: AnalysisEditorKind, name: string) {
-  setAnalysisNames(kind, parseNames(analysisEditorState(kind).text.value).filter((item) => item !== name));
-}
-
-function moveAnalysisName(kind: AnalysisEditorKind, name: string, delta: number) {
-  const names = parseNames(analysisEditorState(kind).text.value);
-  const index = names.indexOf(name);
-  const nextIndex = index + delta;
-  if (index < 0 || nextIndex < 0 || nextIndex >= names.length) return;
-  const [moved] = names.splice(index, 1);
-  names.splice(nextIndex, 0, moved);
-  setAnalysisNames(kind, names);
-}
-
-function startAnalysisChipDrag(kind: AnalysisEditorKind, name: string, event: DragEvent) {
-  startChipDrag('analysis', kind, name, event);
-}
-
-function hoverAnalysisChipDrop(kind: AnalysisEditorKind, name: string) {
-  hoverChipDrop('analysis', kind, name);
-}
-
-function dropAnalysisChip(kind: AnalysisEditorKind, targetName: string) {
-  const current = chipDrag.value;
-  if (!current || current.area !== 'analysis' || current.kind !== kind) return;
-  const names = parseNames(analysisEditorState(kind).text.value);
-  setAnalysisNames(kind, reorderNamesByDrop(names, current.name, targetName));
-  clearChipDrag();
-}
-
-function isAnalysisChipDragging(kind: AnalysisEditorKind, name: string) {
-  const current = chipDrag.value;
-  return current?.area === 'analysis' && current.kind === kind && current.name === name;
-}
-
-function isAnalysisChipDropTarget(kind: AnalysisEditorKind, name: string) {
-  const current = chipDropTarget.value;
-  return current?.area === 'analysis' && current.kind === kind && current.name === name;
-}
-
 async function loadListSearchConfig() {
   if (!currentModel.value) return;
   listSearchBusy.value = true;
@@ -1767,19 +1255,6 @@ async function loadListSearchConfig() {
   } finally {
     listSearchBusy.value = false;
   }
-}
-
-function resetAnalysisDraft() {
-  pivotMeasuresText.value = analysisBase.value.pivotMeasures;
-  pivotDimensionsText.value = analysisBase.value.pivotDimensions;
-  graphMeasuresText.value = analysisBase.value.graphMeasures;
-  graphDimensionsText.value = analysisBase.value.graphDimensions;
-  graphType.value = analysisBase.value.graphType || 'bar';
-  pivotMeasureDraft.value = '';
-  pivotDimensionDraft.value = '';
-  graphMeasureDraft.value = '';
-  graphDimensionDraft.value = '';
-  setMessage('已放弃分析视图调整');
 }
 
 async function loadAnalysisConfig() {
@@ -1983,34 +1458,6 @@ function openFormConfig() {
       [BUSINESS_CONFIG_ROUTE_FLAGS.returnToBusinessConfig]: '1',
     },
   });
-}
-
-async function clearConsumedOpenIntent(keys: string[]) {
-  const params = new URLSearchParams(window.location.search);
-  let changed = false;
-  keys.forEach((key) => {
-    if (params.has(key)) {
-      params.delete(key);
-      changed = true;
-    }
-  });
-  if (!changed) return;
-  const query = params.toString();
-  window.history.replaceState(window.history.state, '', `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`);
-}
-
-function replaceWorkbenchQuerySilently(nextValues: Record<string, string | number | undefined>) {
-  const params = new URLSearchParams(window.location.search);
-  Object.entries(nextValues).forEach(([key, value]) => {
-    const text = String(value ?? '').trim();
-    if (text) {
-      params.set(key, text);
-    } else {
-      params.delete(key);
-    }
-  });
-  const query = params.toString();
-  window.history.replaceState(window.history.state, '', `${window.location.pathname}${query ? `?${query}` : ''}${window.location.hash}`);
 }
 
 onMounted(() => {
