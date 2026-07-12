@@ -567,6 +567,7 @@ import {
   buildLegacyLayoutNodes,
   buildNativeFieldSchemas,
   applyReadonlyFieldValues,
+  shouldShowRequiredMark as shouldShowRequiredMarkFromNativeLayout,
   type FieldSemanticMeta,
   type NativeLayoutLikeNode,
   type SemanticFieldGroup,
@@ -4791,16 +4792,14 @@ function v2FieldValue(name: string) {
 }
 
 function shouldShowRequiredMark(node: LayoutNode) {
-  if (node.kind !== 'field' || node.readonly) return false;
-  if (!node.required) return false;
-  if (showHud.value) return true;
-  if (renderProfile.value !== 'create') return true;
-  const policyRequired = policyRequiredFields.value;
-  const validationRequired = validationRequiredFields.value;
-  if (policyRequired.size || validationRequired.size) {
-    return policyRequired.has(node.name) || validationRequired.has(node.name);
-  }
-  return coreFieldNames.value.includes(node.name);
+  return shouldShowRequiredMarkFromNativeLayout({
+    node,
+    showHud: showHud.value,
+    renderProfile: renderProfile.value,
+    policyRequiredFields: policyRequiredFields.value,
+    validationRequiredFields: validationRequiredFields.value,
+    coreFieldNames: coreFieldNames.value,
+  });
 }
 
 function collectSceneValidationPrecheckErrors(fieldLabels: Record<string, string>): string[] {

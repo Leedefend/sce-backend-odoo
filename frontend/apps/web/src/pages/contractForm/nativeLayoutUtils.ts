@@ -104,6 +104,15 @@ export type NativeFieldSchemasInput = {
 
 export type ReadonlyFieldValueResolver = (fieldName: string) => { found: boolean; value: unknown };
 
+export type RequiredMarkInput = {
+  node: LayoutNode;
+  showHud: boolean;
+  renderProfile: string;
+  policyRequiredFields: Set<string>;
+  validationRequiredFields: Set<string>;
+  coreFieldNames: string[];
+};
+
 const CHILD_KEYS = ['children', 'pages', 'tabs', 'nodes', 'items'] as const;
 const CREATE_WORKFLOW_STATE_FIELD_NAMES = new Set([
   'state',
@@ -483,6 +492,18 @@ export function applyReadonlyFieldValues(
       inputValue: schemaInputValueFromRaw(String(field.type || ''), resolved.value),
     };
   });
+}
+
+export function shouldShowRequiredMark(input: RequiredMarkInput) {
+  const node = input.node;
+  if (node.kind !== 'field' || node.readonly) return false;
+  if (!node.required) return false;
+  if (input.showHud) return true;
+  if (input.renderProfile !== 'create') return true;
+  if (input.policyRequiredFields.size || input.validationRequiredFields.size) {
+    return input.policyRequiredFields.has(node.name) || input.validationRequiredFields.has(node.name);
+  }
+  return input.coreFieldNames.includes(node.name);
 }
 
 function stringList(value: unknown): string[] {
