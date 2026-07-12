@@ -23,6 +23,7 @@ Extracted responsibilities:
 - Native-layout node type detection, field-info extraction, field-descriptor merging, field/subview lookup, modifier evaluation, widget metadata, button labels, field/favorite collection, section-title collection, column normalization, node counting, and badge-field collection moved to `frontend/apps/web/src/pages/contractForm/nativeLayoutUtils.ts`.
 - Required-value checks, comparable-value normalization, numeric parsing, route-default normalization, and navigation URL normalization moved to `frontend/apps/web/src/pages/contractForm/valueUtils.ts`.
 - Workflow phase statusbar normalization moved to `frontend/apps/web/src/pages/contractForm/workflowContract.ts`.
+- The Web Contract V2 frontend architecture guard is now part of the local `make ci` gate through `verify.unified_page_contract.v2.web_architecture`.
 
 The route component remains the orchestration shell and still owns runtime state, navigation, persistence, and user interaction flow.
 
@@ -38,11 +39,13 @@ The route component remains the orchestration shell and still owns runtime state
 - The frontend extraction only names and consumes already-provided contract data.
 - No frontend fallback menu, permission, action, or form policy was introduced.
 - No data migration, backend endpoint change, or visual redesign is included in this slice.
+- Existing `groups_xmlids` usage in `ContractFormPage.vue` is locked at 3 occurrences by `scripts/verify/web_contract_v2_frontend_architecture_guard.py`; the next cleanup must reduce this count by moving the remaining entitlement decisions fully behind backend contracts.
 
 ## Verification
 
 Local verification completed:
 
+- `python3 scripts/verify/web_contract_v2_frontend_architecture_guard.py`
 - `scripts/dev/pnpm_exec.sh -C frontend/apps/web lint:src`
 - `scripts/dev/pnpm_exec.sh -C frontend/apps/web typecheck:strict`
 - `scripts/dev/pnpm_exec.sh -C frontend/apps/web build`
