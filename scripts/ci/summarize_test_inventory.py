@@ -73,6 +73,7 @@ def write_summary(rows: list[dict[str, str]]) -> None:
     unknown_runtime = [row for row in rows if row["estimated_runtime"] == "unknown"]
     long_runtime = [row for row in rows if row["estimated_runtime"] in {"10-30m", "30-60m"}]
     manual_review = [row for row in rows if row.get("decision_gate") == "manual_review"]
+    aggregate_covered = [row for row in rows if row.get("aggregate_target")]
     dedupe_candidates = [
         row for row in rows if row.get("disposition") == "deduplicate_before_required"
     ]
@@ -89,6 +90,7 @@ def write_summary(rows: list[dict[str, str]]) -> None:
         f"- Unknown runtime: `{len(unknown_runtime)}`",
         f"- Long-running assets: `{len(long_runtime)}`",
         f"- Manual gate review: `{len(manual_review)}`",
+        f"- Aggregate-covered assets: `{len(aggregate_covered)}`",
         f"- PR dedupe candidates: `{len(dedupe_candidates)}`",
         "",
         "## By Layer",
@@ -102,6 +104,13 @@ def write_summary(rows: list[dict[str, str]]) -> None:
         "## By Disposition",
         "",
         *table(Counter(row.get("disposition", "unknown") for row in rows), ("Disposition", "Count")),
+        "",
+        "## By Aggregate Target",
+        "",
+        *table(
+            Counter(row.get("aggregate_target", "") for row in rows if row.get("aggregate_target")),
+            ("Aggregate Target", "Count"),
+        ),
         "",
         "## By Runtime",
         "",
