@@ -312,7 +312,7 @@ export function useActionViewLoadPreflightRuntime() {
       viewOrderRaw: sanitizeOrderValue(viewsTree?.order, orderFields),
       metaOrderRaw: '',
       fallbackSortRaw: sanitizeOrderValue(fallbackSort, orderFields),
-    }), orderFields) || 'id desc';
+    }), orderFields);
     const contractLimit = options.resolveLoadPreflightContractLimit({ searchDefaultLimitRaw: v2PrimaryParams.limit || searchDefaults?.limit });
 
     const policy = options.evaluateCapabilityPolicy({

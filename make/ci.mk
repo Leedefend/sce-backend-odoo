@@ -679,6 +679,9 @@ ci: guard.prod.forbid security.secrets.scan test.inventory test.inventory.summar
 	@echo "[OK] v1.1 PR quality gate passed"
 
 ci.local.quick: guard.prod.forbid architecture.complexity_baseline_lock verify.unified_page_contract.v2.web_architecture
+	@python3 scripts/verify/frontend_page_contract_boundary_guard.py
+	@python3 scripts/verify/frontend_page_contract_orchestration_consumption_guard.py
+	@python3 scripts/verify/frontend_contract_consumer_intrusion_guard.py
 	@scripts/dev/pnpm_exec.sh -C frontend/apps/web lint:src
 	@scripts/dev/pnpm_exec.sh -C frontend/apps/web typecheck:strict
 	@git diff --check

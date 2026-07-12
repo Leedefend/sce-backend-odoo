@@ -19,6 +19,9 @@ architecture-boundary refactors. It includes:
 
 - P0/high-risk split-plan line-count lock.
 - Web Contract V2 frontend architecture boundary guard.
+- Frontend page contract boundary guard.
+- Frontend page contract orchestration consumption guard.
+- Frontend contract consumer intrusion guard.
 - Frontend lint.
 - Frontend strict typecheck.
 - `git diff --check`.

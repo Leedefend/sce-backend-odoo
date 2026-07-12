@@ -25,6 +25,7 @@ Extracted responsibilities:
 - Workflow phase statusbar normalization moved to `frontend/apps/web/src/pages/contractForm/workflowContract.ts`.
 - The Web Contract V2 frontend architecture guard is now part of the local `make ci` gate through `verify.unified_page_contract.v2.web_architecture`.
 - High-risk split-plan file growth is now locked by `docs/engineering_convergence/complexity_baseline_lock.json` and `scripts/ci/enforce_complexity_baseline_lock.py`.
+- Frontend page contract boundary, orchestration-consumption, and consumer-intrusion guards are now part of `make ci.local.quick`.
 
 The route component remains the orchestration shell and still owns runtime state, navigation, persistence, and user interaction flow.
 
@@ -50,6 +51,9 @@ Local verification completed:
 - `make ci.local.quick`
 - `python3 scripts/verify/web_contract_v2_frontend_architecture_guard.py`
 - `python3 scripts/ci/enforce_complexity_baseline_lock.py`
+- `python3 scripts/verify/frontend_page_contract_boundary_guard.py`
+- `python3 scripts/verify/frontend_page_contract_orchestration_consumption_guard.py`
+- `python3 scripts/verify/frontend_contract_consumer_intrusion_guard.py`
 - `scripts/dev/pnpm_exec.sh -C frontend/apps/web lint:src`
 - `scripts/dev/pnpm_exec.sh -C frontend/apps/web typecheck:strict`
 - `scripts/dev/pnpm_exec.sh -C frontend/apps/web build`
