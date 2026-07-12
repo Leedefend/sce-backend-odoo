@@ -16,7 +16,7 @@ Included:
 - Phase 1 GitHub templates, CODEOWNERS, quality workflow, and `make ci` entrypoint.
 - Phase 2 test inventory, summary, layering policy, and dedupe hotspot disposition.
 - Phase 3 E2E journey matrix, fixed-data Odoo journey gate, and role-level evidence for E2E-02, E2E-03, E2E-06, E2E-08, and E2E-10.
-- Phase 4 module dependency map, domain boundary ADR, complexity budget report, and split-plan queue.
+- Phase 4 module dependency map, domain boundary ADR, complexity budget report, split-plan queue, and P0 split execution sequence.
 - Secret scan and CI support scripts.
 - GitHub milestone, labels, seed issues, draft PR, branch protection, and dedicated self-hosted CI runner setup.
 
@@ -70,6 +70,7 @@ Revert this PR if the governance baseline must be removed. No production data or
 - `docs/engineering_convergence/module_dependency_map.md`
 - `docs/engineering_convergence/complexity_budget_report.md`
 - `docs/engineering_convergence/split_plan_queue.md`
+- `docs/engineering_convergence/p0_split_plan_execution.md`
 - `docs/engineering_convergence/backlog_scope_decision_v1.1.md`
 - `docs/engineering_convergence/github_governance_runbook.md`
 - GitHub milestone `v1.1 Engineering Convergence`
@@ -82,7 +83,7 @@ Revert this PR if the governance baseline must be removed. No production data or
 
 - Seven residual 2-asset dedupe hotspot families remain intentionally unmarked as aggregate-covered; their owner decisions, gate decisions, and dispositions are documented in `test_inventory_summary.md`.
 - Historical BOQ/model backlog `#2`, `#4`-`#9`, and `#64`-`#76` is labeled and explicitly deferred from v1.1 by `backlog_scope_decision_v1.1.md`.
-- Browser visual evidence, security audit, performance baseline, and disaster recovery rehearsal remain future phase work.
+- Browser visual evidence, executing the P0 split PR sequence, security audit, performance baseline, and disaster recovery rehearsal remain future phase work.
 
 ## Checklist
 

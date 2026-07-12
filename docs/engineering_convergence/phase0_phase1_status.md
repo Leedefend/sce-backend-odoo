@@ -61,6 +61,7 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 | P3 payment and isolation fixed-data E2E evidence | Done | `phase3_role_evidence.md`; E2E-06 and E2E-10 execute through finance, ordinary member, and project-isolated records |
 | CI boundary audit artifact output | Done | `audit.boundary.smart_core.ci` writes to `artifacts/ci/boundary_audit/*` |
 | P4 split-plan queue | Done | `split_plan_queue.md`, `scripts/ci/generate_split_plan_queue.py` |
+| P4 P0 split-plan execution order | Done | `p0_split_plan_execution.md`; P0 owners, PR sequence, dependencies, non-scope, and gates fixed |
 
 ## Verified
 
@@ -95,4 +96,4 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 
 ## Next Execution Focus
 
-1. `#1029`: Assign concrete owner names and PR sequence for the P0 split-plan files in `split_plan_queue.md`.
+1. Start P4-P0-01 from `p0_split_plan_execution.md`: split root `Makefile` into stable included fragments without changing public targets.
