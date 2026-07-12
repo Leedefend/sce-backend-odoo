@@ -111,13 +111,20 @@
                 <X2ManyRelationRenderer :field="field" :adapter="relationAdapter" />
               </template>
               <template v-else-if="isBaseFieldType(field.type)">
-                <input
+                <label
                   v-if="field.type === 'boolean'"
-                  :checked="Boolean(field.value)"
-                  class="input-checkbox"
-                  type="checkbox"
-                  @change="emitFieldChange(field, ($event.target as HTMLInputElement).checked)"
-                />
+                  class="boolean-control"
+                  :class="{ 'boolean-control--checked': Boolean(field.value) }"
+                >
+                  <input
+                    :checked="Boolean(field.value)"
+                    class="input-checkbox"
+                    type="checkbox"
+                    @change="emitFieldChange(field, ($event.target as HTMLInputElement).checked)"
+                  />
+                  <span class="boolean-control-box" aria-hidden="true"></span>
+                  <span class="boolean-control-text">{{ Boolean(field.value) ? '是' : '否' }}</span>
+                </label>
                 <select
                   v-else-if="field.type === 'selection'"
                   :value="String(field.inputValue ?? '')"
@@ -978,6 +985,78 @@ select.input {
 
 .native-radio-input:disabled + span {
   color: var(--sc-semantic-text-muted);
+}
+
+.boolean-control {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  min-height: 36px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: var(--sc-component-input-radius);
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-secondary);
+  padding: 7px 10px;
+  box-sizing: border-box;
+  cursor: pointer;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, background-color 0.18s ease;
+}
+
+.boolean-control:focus-within {
+  border-color: var(--sc-semantic-surface-interactive);
+  box-shadow: 0 0 0 3px var(--sc-app-focus-ring);
+}
+
+.boolean-control--checked {
+  color: var(--sc-app-text-primary);
+}
+
+.input-checkbox {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+}
+
+.boolean-control-box {
+  position: relative;
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--sc-app-border-strong);
+  border-radius: 4px;
+  background: var(--sc-app-panel);
+  box-sizing: border-box;
+}
+
+.boolean-control--checked .boolean-control-box {
+  border-color: var(--sc-semantic-surface-interactive);
+  background: var(--sc-semantic-surface-interactive);
+}
+
+.boolean-control--checked .boolean-control-box::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 5px;
+  height: 9px;
+  border: solid var(--sc-semantic-text-on-interactive);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+.boolean-control-text {
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .many2one-widget-shell {
