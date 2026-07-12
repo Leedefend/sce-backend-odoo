@@ -1303,8 +1303,12 @@ import {
   collectContractActionBadgeCountFieldNames,
   collectNativeLayoutBadgeCountFieldNames,
   countNativeNodesByType,
+  evaluateNativeModifierValue as evaluateNativeModifierValueWithResolver,
   isNativeFieldLayoutNode,
+  isStaticTruthyModifier,
+  nativeModifierValue,
   nativeLayoutNodeType,
+  nativeNodeFieldInfo,
   normalizeNativeLayoutColumns,
   type NativeLayoutLikeNode,
 } from './contractForm/nativeLayoutUtils';
@@ -3906,17 +3910,6 @@ function one2manyRelationFieldDescriptor(fieldName: string, column: string) {
   const map = relationFieldDescriptors.value[model] || {};
   const descriptor = map[column];
   return descriptor || null;
-}
-
-function nativeNodeFieldInfo(node?: Record<string, unknown> | NativeFormLayoutNode | null): Record<string, unknown> {
-  const row = node as Record<string, unknown> | undefined;
-  const fieldInfo = row?.fieldInfo && typeof row.fieldInfo === 'object' && !Array.isArray(row.fieldInfo)
-    ? row.fieldInfo as Record<string, unknown>
-    : {};
-  if (Object.keys(fieldInfo).length) return fieldInfo;
-  return row?.field_info && typeof row.field_info === 'object' && !Array.isArray(row.field_info)
-    ? row.field_info as Record<string, unknown>
-    : {};
 }
 
 function nativeNodeFieldDescriptor(nodeRaw: NativeFormLayoutNode, fallback?: FieldDescriptor): FieldDescriptor | undefined {
@@ -6950,74 +6943,8 @@ function setStatusbarValue(value: string) {
   markFieldChanged(field);
 }
 
-function nativeModifierValue(nodeRaw: NativeFormLayoutNode, key: 'invisible' | 'readonly' | 'required') {
-  const node = nodeRaw as Record<string, unknown>;
-  const attributes = node.attributes && typeof node.attributes === 'object'
-    ? node.attributes as Record<string, unknown>
-    : {};
-  const action = node.action && typeof node.action === 'object' && !Array.isArray(node.action)
-    ? node.action as Record<string, unknown>
-    : {};
-  const actionVisible = action.visible && typeof action.visible === 'object' && !Array.isArray(action.visible)
-    ? action.visible as Record<string, unknown>
-    : {};
-  const actionVisibleAttrs = actionVisible.attrs && typeof actionVisible.attrs === 'object' && !Array.isArray(actionVisible.attrs)
-    ? actionVisible.attrs as Record<string, unknown>
-    : {};
-  const fieldInfo = nativeNodeFieldInfo(node);
-  const attributeModifiers = attributes.modifiers && typeof attributes.modifiers === 'object'
-    ? attributes.modifiers as Record<string, unknown>
-    : {};
-  const fieldInfoModifiers = fieldInfo.modifiers && typeof fieldInfo.modifiers === 'object'
-    ? fieldInfo.modifiers as Record<string, unknown>
-    : {};
-  const modifiers = node.modifiers && typeof node.modifiers === 'object'
-    ? node.modifiers as Record<string, unknown>
-    : {};
-  if (key in modifiers) return modifiers[key];
-  if (key in attributeModifiers) return attributeModifiers[key];
-  if (key in actionVisibleAttrs) return actionVisibleAttrs[key];
-  if (key in fieldInfoModifiers) return fieldInfoModifiers[key];
-  if (key in fieldInfo) return fieldInfo[key];
-  if (key in attributes) return attributes[key];
-  if (key in node) return node[key];
-  return undefined;
-}
-
-function compareNativeModifierValue(actual: unknown, operator: string, expected: unknown) {
-  const left = Array.isArray(actual) && typeof actual[0] === 'number' ? actual[0] : actual;
-  const key = String(operator || '').trim();
-  if (key === '=' || key === '==') return String(left ?? '') === String(expected ?? '');
-  if (key === '!=' || key === '<>') return String(left ?? '') !== String(expected ?? '');
-  if (key === 'in') return Array.isArray(expected) && expected.map((item) => String(item)).includes(String(left ?? ''));
-  if (key === 'not in') return Array.isArray(expected) && !expected.map((item) => String(item)).includes(String(left ?? ''));
-  if (key === '>') return Number(left) > Number(expected);
-  if (key === '>=') return Number(left) >= Number(expected);
-  if (key === '<') return Number(left) < Number(expected);
-  if (key === '<=') return Number(left) <= Number(expected);
-  return false;
-}
-
 function evaluateNativeModifierValue(value: unknown) {
-  if (typeof value === 'boolean') return value;
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return isStaticTruthyModifier(value);
-  const row = value as Record<string, unknown>;
-  const kind = String(row.kind || '').trim();
-  if (kind === 'static') return Boolean(row.value);
-  if (kind === 'not') return !evaluateNativeModifierValue(row.expr);
-  if (kind === 'all') {
-    const exprs = Array.isArray(row.exprs) ? row.exprs : [];
-    return exprs.every((expr) => evaluateNativeModifierValue(expr));
-  }
-  if (kind === 'any') {
-    const exprs = Array.isArray(row.exprs) ? row.exprs : [];
-    return exprs.some((expr) => evaluateNativeModifierValue(expr));
-  }
-  const field = String(row.field || '').trim();
-  if (!field) return false;
-  if (kind === 'field_truthy') return Boolean(formData[field]);
-  if (kind === 'field_compare') return compareNativeModifierValue(formData[field], String(row.operator || ''), row.value);
-  return false;
+  return evaluateNativeModifierValueWithResolver(value, (field) => formData[field]);
 }
 
 function evaluateNativeActionVisibility(row: Record<string, unknown>) {
@@ -7135,12 +7062,6 @@ function nativeFieldLabel(nodeRaw: NativeFormLayoutNode, descriptor?: FieldDescr
     || nodeRaw.name
     || '',
   );
-}
-
-function isStaticTruthyModifier(value: unknown) {
-  if (value === true || value === 1) return true;
-  if (typeof value !== 'string') return false;
-  return ['1', 'true', 'True'].includes(value.trim());
 }
 
 function isNativeFieldVisible(name: string, nodeRaw?: NativeFormLayoutNode) {
