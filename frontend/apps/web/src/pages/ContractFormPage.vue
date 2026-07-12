@@ -473,7 +473,6 @@ import {
   fieldInputType,
   fieldType,
   fromDatetimeInputValue,
-  lowCodeFieldSizeClass,
   normalizeLowCodeColumns,
   normalizeLowCodeFieldSize,
   normalizeRelationIds,
@@ -551,9 +550,10 @@ import {
   isStaticTruthyModifier,
   nativeModifierValue,
   nativeFieldSubview as nativeFieldSubviewFromTree,
+  nativeFieldLabel,
+  nativeFieldPresentation,
   nativeLayoutNodeType,
   nativeNodeFieldDescriptor as nativeNodeFieldDescriptorFromNode,
-  nativeNodeFieldInfo,
   nativeNodeWidget,
   nativeNodeWidgetSemantics,
   normalizeContractFieldSemantics,
@@ -4696,21 +4696,6 @@ function isNativeFavoriteField(name: string) {
   return nativeFavoriteFieldNames.value.has(String(name || '').trim());
 }
 
-function nativeFieldLabel(nodeRaw: NativeFormLayoutNode, descriptor?: FieldDescriptor) {
-  const node = nodeRaw as Record<string, unknown>;
-  const fieldInfo = nativeNodeFieldInfo(node);
-  return String(
-    contractFieldLabel(String(nodeRaw.name || ''))
-    || descriptor?.string
-    || node.string
-    || node.label
-    || fieldInfo.string
-    || fieldInfo.label
-    || nodeRaw.name
-    || '',
-  );
-}
-
 function isNativeFieldVisible(name: string, nodeRaw?: NativeFormLayoutNode) {
   const normalized = String(name || '').trim();
   if (!normalized) return false;
@@ -4727,7 +4712,7 @@ function isNativeFieldVisible(name: string, nodeRaw?: NativeFormLayoutNode) {
     ? nativeNodeFieldDescriptor(nodeRaw, contract.value?.fields?.[normalized])
     : contract.value?.fields?.[normalized];
   if (!descriptor) return false;
-  if (isCreateWorkflowStateField(normalized, nativeFieldLabel(nodeRaw || {} as NativeFormLayoutNode, descriptor))) return false;
+  if (isCreateWorkflowStateField(normalized, nativeFieldLabel(nodeRaw || {} as NativeFormLayoutNode, descriptor, contractFieldLabel))) return false;
   const resolved = evaluateFieldPolicy(
     contract.value,
     normalized,
@@ -4779,17 +4764,14 @@ function nativeLayoutNodeToFieldNode(nodeRaw: NativeFormLayoutNode, index: numbe
   const state = runtimeState(name);
   const nativeReadonly = isStaticTruthyModifier(nativeModifierValue(nodeRaw, 'readonly'));
   const nativeRequired = isStaticTruthyModifier(nativeModifierValue(nodeRaw, 'required'));
-  const label = nativeFieldLabel(nodeRaw, descriptor);
-  const nodeClass = String((nodeRaw as Record<string, unknown>).class || (nodeRaw as Record<string, unknown>).className || '').trim();
-  const fieldSize = isContractFieldOrderEditable.value
-    ? effectiveFieldSize(name)
-    : normalizeLowCodeFieldSize(
-      (nodeRaw as Record<string, unknown>).field_size
-      || (nodeRaw as Record<string, unknown>).fieldSize
-      || (nodeClass.includes('field--large') ? 'large'
-        : (nodeClass.includes('field--full') ? 'full'
-          : (nodeClass.includes('field--wide') ? 'wide' : 'normal'))),
-    );
+  const presentation = nativeFieldPresentation({
+    node: nodeRaw,
+    descriptor,
+    resolveFieldLabel: contractFieldLabel,
+    editable: isContractFieldOrderEditable.value,
+    effectiveFieldSize,
+  });
+  const label = presentation.label;
   rememberFormConfigFieldLabel(name, label);
   return {
     key: `native_field_${name}_${index}`,
@@ -4800,7 +4782,7 @@ function nativeLayoutNodeToFieldNode(nodeRaw: NativeFormLayoutNode, index: numbe
     required: Boolean(nativeRequired || resolved.required || state.required || descriptor?.required),
     widget: nativeNodeWidget(nodeRaw),
     widgetSemantics: nativeNodeWidgetSemantics(nodeRaw),
-    spanClass: lowCodeFieldSizeClass(fieldSize) || nodeClass,
+    spanClass: presentation.spanClass,
     descriptor,
   };
 }
@@ -7193,7 +7175,7 @@ function fieldsInNativeGroup(groupTitle: string) {
       const name = String(node?.name || '').trim();
       if (type === 'field' && name && nextGroup === targetTitle) {
         const descriptor = contract.value?.fields?.[name];
-        out.set(name, nativeFieldLabel(node, descriptor));
+        out.set(name, nativeFieldLabel(node, descriptor, contractFieldLabel));
       }
       (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
         const children = node?.[key];

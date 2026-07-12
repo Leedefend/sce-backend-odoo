@@ -1,4 +1,6 @@
 import type { FieldDescriptor } from '@sc/schema';
+import { lowCodeFieldSizeClass, normalizeLowCodeFieldSize } from './fieldUtils';
+import type { LowCodeFieldSize } from './types';
 
 export type NativeLayoutLikeNode = Record<string, unknown> & {
   children?: unknown;
@@ -41,6 +43,20 @@ export type NativeActionVisibilityInput = {
   currentState?: string;
   evaluateModifier: (value: unknown) => boolean;
   resolveAction: (row: Record<string, unknown>) => unknown;
+};
+
+export type NativeFieldPresentationInput = {
+  node: NativeLayoutLikeNode;
+  descriptor?: FieldDescriptor;
+  resolveFieldLabel?: (name: string) => string;
+  editable: boolean;
+  effectiveFieldSize: (name: string) => LowCodeFieldSize;
+};
+
+export type NativeFieldPresentation = {
+  label: string;
+  nodeClass: string;
+  spanClass: string;
 };
 
 const CHILD_KEYS = ['children', 'pages', 'tabs', 'nodes', 'items'] as const;
@@ -228,6 +244,45 @@ export function isNativeActionVisible(input: NativeActionVisibilityInput): boole
     || Boolean(row.action || row.payload || row.name || row.method);
   if (hasNativeActionShape && !input.resolveAction(row)) return false;
   return true;
+}
+
+export function nativeFieldLabel(
+  nodeRaw: NativeLayoutLikeNode,
+  descriptor?: FieldDescriptor,
+  resolveFieldLabel?: (name: string) => string,
+) {
+  const node = nodeRaw as Record<string, unknown>;
+  const fieldInfo = nativeNodeFieldInfo(node);
+  const name = String(nodeRaw.name || '');
+  return String(
+    resolveFieldLabel?.(name)
+    || descriptor?.string
+    || node.string
+    || node.label
+    || fieldInfo.string
+    || fieldInfo.label
+    || nodeRaw.name
+    || '',
+  );
+}
+
+export function nativeFieldPresentation(input: NativeFieldPresentationInput): NativeFieldPresentation {
+  const name = String(input.node.name || '').trim();
+  const nodeClass = String((input.node as Record<string, unknown>).class || (input.node as Record<string, unknown>).className || '').trim();
+  const fieldSize = input.editable
+    ? input.effectiveFieldSize(name)
+    : normalizeLowCodeFieldSize(
+      (input.node as Record<string, unknown>).field_size
+      || (input.node as Record<string, unknown>).fieldSize
+      || (nodeClass.includes('field--large') ? 'large'
+        : (nodeClass.includes('field--full') ? 'full'
+          : (nodeClass.includes('field--wide') ? 'wide' : 'normal'))),
+    );
+  return {
+    label: nativeFieldLabel(input.node, input.descriptor, input.resolveFieldLabel),
+    nodeClass,
+    spanClass: lowCodeFieldSizeClass(fieldSize) || nodeClass,
+  };
 }
 
 function stringList(value: unknown): string[] {
