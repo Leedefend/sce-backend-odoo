@@ -55,5 +55,5 @@ All P0 split-plan work has one accountable owner:
 | File | Next Step | Owner | Status |
 | --- | --- | --- | --- |
 | `Makefile` | P4-P0-01 split completed: root Makefile reduced from 6062 to 272 lines, target bodies moved into stable `make/*.mk` fragments, and the file exited the generated P0 split-plan queue. | `@Leedefend` | Local and remote gates passed |
-| `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` | Continue P4-P0-02. First slice extracted formatters, snapshot remediation, navigation lookup, and scoped styles; route component reduced from 5447 to 3334 lines while keeping frontend gates green. | `@Leedefend` | In progress |
+| `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` | Continue P4-P0-02. Current slices extracted formatters, snapshot remediation, navigation lookup, scoped styles, start/coverage/audit/approval/version/editor panels, and shared field-chip editor; route component reduced from 5447 to 2567 lines while keeping frontend gates green. | `@Leedefend` | In progress; still above 1500-line split threshold |
 | `frontend/apps/web/src/pages/ContractFormPage.vue` | Open PR P4-P0-03 after P4-P0-02 and extract form shell responsibilities with targeted create/edit/save browser evidence. | `@Leedefend` | Ready after P4-P0-02 |

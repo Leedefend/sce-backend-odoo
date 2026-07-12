@@ -38,143 +38,45 @@
       <small v-if="advancedPanelOpen && message.detail">{{ message.detail }}</small>
     </div>
 
-    <section v-if="!coverageScan" class="workbench-start sc-product-main-surface" data-lowcode-workbench-ia="start">
-      <div class="workbench-start-main">
-        <div class="workbench-start-lead">
-          <div class="workbench-start-copy">
-            <span>当前范围</span>
-            <strong>{{ selectedPageLabel || currentModel || '未选择业务页面' }}</strong>
-            <em>{{ startScopeSummary }}</em>
-          </div>
-          <div class="workbench-start-actions">
-            <button type="button" class="ghost primary" :disabled="scanLoading" @click="scanSystemRootCoverage">
-              {{ scanLoading ? '读取中...' : '选择业务页面' }}
-            </button>
-            <button type="button" class="ghost" :disabled="!previewRouteTarget.path" @click="previewSelectedRuntimeRoute">预览页面</button>
-          </div>
-        </div>
-        <div v-if="currentModel && visibleConfigSections.length" class="workbench-start-config">
-          <div class="selected-page-overview">
-            <div>
-              <span>正在配置</span>
-              <strong>{{ selectedPageLabel || currentModel }}</strong>
-            </div>
-            <div class="selected-page-overview-side">
-              <div class="selected-page-overview-meta">
-                <span>页面配置</span>
-                <span>{{ startScopeSummary }}</span>
-              </div>
-            </div>
-          </div>
-          <div class="section-grid section-grid--start" data-lowcode-config-task-grid="v1">
-            <article v-for="section in visibleConfigSections" :key="`start-${section.key}`" class="config-card" data-lowcode-config-task-card="v1">
-              <div class="config-card-head">
-                <div>
-                  <span>{{ sectionTaskKindLabel(section.key) }}</span>
-                  <h2>{{ sectionDisplayLabel(section.key, section.label) }}</h2>
-                </div>
-                <strong class="config-status-badge" :class="{ 'config-status--empty': !section.contract_count }">{{ sectionStatusLabel(section.key, section.contract_count) }}</strong>
-              </div>
-              <div class="config-task-impact">
-                <span>{{ sectionPrimaryCopy(section.key) }}</span>
-                <em>{{ sectionImpactText(section.key) }}</em>
-              </div>
-              <div class="config-card-meta" data-lowcode-config-task-meta="v1">
-                <span>{{ advancedPanelOpen ? boundaryLabel(section.boundary) : sectionHelpLabel(section.key) }}</span>
-                <span>{{ sectionTaskCoverageText(section.key, section.contract_count) }}</span>
-              </div>
-              <div class="config-card-actions">
-                <button
-                  v-if="section.key === 'form' || section.key === 'list_search' || section.key === 'analysis'"
-                  type="button"
-                  class="ghost small"
-                  :disabled="!currentModel || versionsLoading"
-                  @click="loadVersions(section.key)"
-                >
-                  {{ versionsLoading ? '读取中...' : '版本记录' }}
-                </button>
-                <button
-                  v-if="section.key === 'list_search'"
-                  type="button"
-                  class="ghost small"
-                  :disabled="!currentModel || listSearchBusy"
-                  @click="loadListSearchConfig"
-                >
-                  {{ listSearchBusy ? '读取中...' : sectionPrimaryActionLabel(section.key) }}
-                </button>
-                <button
-                  v-else-if="section.key === 'form'"
-                  type="button"
-                  class="ghost small primary"
-                  :disabled="!canOpenDesigner"
-                  @click="openFormConfig"
-                >
-                  {{ sectionPrimaryActionLabel(section.key) }}
-                </button>
-                <button
-                  v-else-if="section.key === 'menu'"
-                  type="button"
-                  class="ghost small"
-                  @click="openMenuConfig"
-                >
-                  {{ sectionPrimaryActionLabel(section.key) }}
-                </button>
-                <button
-                  v-if="section.key === 'menu'"
-                  type="button"
-                  class="ghost small"
-                  @click="openCreateMenuConfig"
-                >
-                  新增菜单
-                </button>
-                <button
-                  v-else-if="section.key === 'analysis'"
-                  type="button"
-                  class="ghost small"
-                  :disabled="!currentModel || listSearchBusy"
-                  @click="loadAnalysisConfig"
-                >
-                  {{ listSearchBusy ? '读取中...' : sectionPrimaryActionLabel(section.key) }}
-                </button>
-                <button
-                  v-else-if="section.key === 'approval'"
-                  type="button"
-                  class="ghost small primary"
-                  :disabled="!currentModel || approvalLoading"
-                  @click="loadApprovalConfig"
-                >
-                  {{ approvalLoading ? '读取中...' : sectionPrimaryActionLabel(section.key) }}
-                </button>
-              </div>
-            </article>
-          </div>
-        </div>
-      </div>
-      <aside v-if="surface" class="workbench-start-status" data-lowcode-delivery-readiness="low_code_delivery_readiness.v1">
-        <div class="delivery-readiness-head">
-          <div>
-            <span>交付状态</span>
-            <strong>{{ deliveryReadinessStatusText }}</strong>
-          </div>
-          <em>{{ visibleDeliveryReadinessProgressText }}</em>
-        </div>
-        <div class="delivery-readiness-grid delivery-readiness-grid--compact">
-          <button
-            v-for="item in visibleDeliveryReadinessItems"
-            :key="item.id"
-            type="button"
-            class="delivery-readiness-item"
-            :class="{ 'delivery-readiness-item--pending': item.status !== 'ready' }"
-            @click="runDeliveryReadinessAction(item)"
-          >
-            <span>{{ item.label }}</span>
-            <strong>{{ deliveryReadinessItemStatusText(item) }}</strong>
-            <em>{{ deliveryReadinessItemMetaText(item) }}</em>
-          </button>
-        </div>
-        <div v-if="!visibleDeliveryReadinessItems.length" class="workbench-status-empty">状态读取中</div>
-      </aside>
-    </section>
+    <BusinessConfigStartPanel
+      v-if="!coverageScan"
+      :selected-page-label="selectedPageLabel"
+      :current-model="currentModel"
+      :start-scope-summary="startScopeSummary"
+      :scan-loading="scanLoading"
+      :preview-route-path="previewRouteTarget.path"
+      :sections="visibleConfigSections"
+      :advanced-panel-open="advancedPanelOpen"
+      :versions-loading="versionsLoading"
+      :list-search-busy="listSearchBusy"
+      :approval-loading="approvalLoading"
+      :can-open-designer="canOpenDesigner"
+      :show-status="Boolean(surface)"
+      :delivery-readiness-status-text="deliveryReadinessStatusText"
+      :visible-delivery-readiness-progress-text="visibleDeliveryReadinessProgressText"
+      :visible-delivery-readiness-items="visibleDeliveryReadinessItems"
+      :section-task-kind-label="sectionTaskKindLabel"
+      :section-display-label="sectionDisplayLabel"
+      :section-status-label="sectionStatusLabel"
+      :section-primary-copy="sectionPrimaryCopy"
+      :section-impact-text="sectionImpactText"
+      :boundary-label="boundaryLabel"
+      :section-help-label="sectionHelpLabel"
+      :section-task-coverage-text="sectionTaskCoverageText"
+      :section-primary-action-label="sectionPrimaryActionLabel"
+      :delivery-readiness-item-status-text="deliveryReadinessItemStatusText"
+      :delivery-readiness-item-meta-text="deliveryReadinessItemMetaText"
+      @scan-system-root-coverage="scanSystemRootCoverage"
+      @preview-selected-runtime-route="previewSelectedRuntimeRoute"
+      @load-versions="loadVersions"
+      @load-list-search-config="loadListSearchConfig"
+      @open-form-config="openFormConfig"
+      @open-menu-config="openMenuConfig"
+      @open-create-menu-config="openCreateMenuConfig"
+      @load-analysis-config="loadAnalysisConfig"
+      @load-approval-config="loadApprovalConfig"
+      @run-delivery-readiness-action="runDeliveryReadinessAction"
+    />
 
     <section v-if="advancedPanelOpen" class="scope-panel">
       <label>
@@ -197,925 +99,239 @@
     </section>
 
     <section v-if="loading" class="loading-state">正在读取配置能力...</section>
-    <section v-if="coverageScan" class="scan-panel">
-      <div class="scan-toolbar">
-        <label class="page-search">
-          <span>页面搜索</span>
-          <input v-model="pageSearch" type="search" placeholder="输入页面名称" />
-        </label>
-        <div class="page-type-tabs" role="group" aria-label="页面类型筛选">
-          <button
-            v-for="option in pageTypeOptions"
-            :key="option.key"
-            type="button"
-            :class="{ active: pageTypeFilter === option.key }"
-            @click="pageTypeFilter = option.key"
-          >
-            {{ option.label }}
-          </button>
-        </div>
-        <label v-if="advancedPanelOpen" class="scan-toggle">
-          <input v-model="showOnlyIssues" type="checkbox" />
-          <span>只看需处理</span>
-        </label>
-        <button v-if="advancedPanelOpen" type="button" class="ghost small" @click="copyCoverageSummary">
-          复制配置摘要
-        </button>
-        <button
-          v-if="advancedPanelOpen"
-          type="button"
-          class="ghost small"
-          :disabled="scanLoading || listSearchSaving || !coverageBatchBootstrapRows.length"
-          @click="bootstrapCoverageMissing"
-        >
-          {{ listSearchSaving ? '生成中...' : '批量补齐配置' }}
-        </button>
-      </div>
-      <div class="scan-summary">
-        <span>业务页面 {{ coverageScan.summary.action_count }}</span>
-        <span>当前显示 {{ visibleCoverageRows.length }}</span>
-        <span v-if="advancedPanelOpen">{{ coverageScopeLabel }}</span>
-        <span v-if="advancedPanelOpen && coverageScan.summary.user_preference_count">已有个人设置 {{ coverageScan.summary.user_preference_count }}</span>
-        <span v-if="advancedPanelOpen">配置状态 {{ overallStatusLabel(coverageScan.summary.overall_status) }}</span>
-        <span v-if="advancedPanelOpen">需处理 {{ coverageIssueRows.length }}</span>
-        <span v-for="item in advancedPanelOpen ? remediationSummaryItems : []" :key="item.code">
-          {{ item.label }} {{ item.count }}
-        </span>
-      </div>
-      <div class="config-workspace sc-product-workspace sc-product-main-surface sc-lowcode-workspace" data-lowcode-workbench-ia="three-column">
-        <aside class="page-picker-panel" aria-label="业务页面列表">
-          <div class="page-picker-head">
-            <div>
-              <span>业务页面目录</span>
-              <strong>{{ visibleCoverageRows.length }} 个匹配页面</strong>
-            </div>
-            <em>{{ selectedCoverageRow?.name || selectedPageLabel || '未选择' }}</em>
-          </div>
-          <div v-if="visibleCoverageRows.length" class="scan-list">
-            <div
-              v-for="row in visibleCoverageRows"
-              :key="coverageRowKey(row)"
-              class="scan-row"
-              :class="{ 'scan-row--selected': coverageRowMatchesScope(row), 'scan-row--clickable': !coverageRowMatchesScope(row) }"
-              role="button"
-              tabindex="0"
-              @click="focusScanRow(row)"
-              @keydown.enter.prevent="focusScanRow(row)"
-              @keydown.space.prevent="focusScanRow(row)"
-            >
-              <div class="scan-row-main">
-                <strong :title="row.name || row.model">{{ row.name || row.model }}</strong>
-                <span v-if="advancedPanelOpen">{{ row.model }}</span>
-              </div>
-              <div class="scan-row-meta">
-                <span>{{ pageViewModeText(row) }}</span>
-                <span>{{ rowCoverageProgressText(row) }}</span>
-                <span v-if="rowActionHintText(row)">{{ rowActionHintText(row) }}</span>
-                <span>{{ pageDesignStatus(row) }}</span>
-                <span v-if="advancedPanelOpen && row.user_preference_count">已有个人设置 {{ row.user_preference_count }}</span>
-                <span v-if="advancedPanelOpen">{{ runtimeEvidenceText(row) }}</span>
-                <span v-if="advancedPanelOpen && runtimeReasonText(row)">原因 {{ runtimeReasonText(row) }}</span>
-              </div>
-              <div v-if="advancedPanelOpen" class="scan-row-admin-actions">
-                <span>{{ severityLabel(row.severity) }}</span>
-                <span v-if="row.missing_view_types.length">待配置 {{ row.missing_view_types.map(viewTypeLabel).join('、') }}</span>
-                <span v-if="row.runtime_missing_view_types.length">办理页未生效 {{ row.runtime_missing_view_types.map(viewTypeLabel).join('、') }}</span>
-              </div>
-              <div class="scan-row-actions">
-                <button
-                  v-for="action in advancedPanelOpen ? visibleRowRemediationActions(row) : []"
-                  :key="`row-remediation-${coverageRowKey(row)}-${action.code}`"
-                  type="button"
-                  class="ghost small"
-                  :disabled="listSearchSaving || versionsLoading"
-                  @click.stop="runRemediationAction(row, action)"
-                >
-                  {{ action.label }}
-                </button>
-                <span v-if="coverageRowMatchesScope(row)" class="scan-row-current">当前配置</span>
-                <button v-else type="button" class="ghost small" @click.stop="focusScanRow(row)">选择</button>
-              </div>
-            </div>
-          </div>
-          <div v-else class="empty-state">当前没有匹配的业务页面，可调整搜索条件或取消“只看需处理”。</div>
-        </aside>
+    <BusinessConfigCoverageWorkspace
+      v-if="coverageScan"
+      v-model:page-search="pageSearch"
+      v-model:page-type-filter="pageTypeFilter"
+      v-model:show-only-issues="showOnlyIssues"
+      :coverage-scan="coverageScan"
+      :page-type-options="pageTypeOptions"
+      :advanced-panel-open="advancedPanelOpen"
+      :scan-loading="scanLoading"
+      :list-search-saving="listSearchSaving"
+      :versions-loading="versionsLoading"
+      :loading="loading"
+      :surface="surface"
+      :current-model="currentModel"
+      :selected-page-label="selectedPageLabel"
+      :selected-coverage-row="selectedCoverageRow"
+      :visible-coverage-rows="visibleCoverageRows"
+      :visible-config-sections="visibleConfigSections"
+      :coverage-scope-label="coverageScopeLabel"
+      :coverage-issue-rows="coverageIssueRows"
+      :coverage-batch-bootstrap-rows="coverageBatchBootstrapRows"
+      :remediation-summary-items="remediationSummaryItems"
+      :preview-route-target="previewRouteTarget"
+      :can-open-designer="canOpenDesigner"
+      :list-search-busy="listSearchBusy"
+      :approval-loading="approvalLoading"
+      :delivery-readiness-status-text="deliveryReadinessStatusText"
+      :visible-delivery-readiness-progress-text="visibleDeliveryReadinessProgressText"
+      :visible-delivery-readiness-items="visibleDeliveryReadinessItems"
+      :snapshot-summary="snapshotSummary"
+      :coverage-row-key="coverageRowKey"
+      :coverage-row-matches-scope="coverageRowMatchesScope"
+      :page-view-mode-text="pageViewModeText"
+      :row-coverage-progress-text="rowCoverageProgressText"
+      :row-action-hint-text="rowActionHintText"
+      :page-design-status="pageDesignStatus"
+      :runtime-evidence-text="runtimeEvidenceText"
+      :runtime-reason-text="runtimeReasonText"
+      :visible-row-remediation-actions="visibleRowRemediationActions"
+      :view-type-label="viewTypeLabel"
+      :severity-label="severityLabel"
+      :overall-status-label="overallStatusLabel"
+      :boundary-label="boundaryLabel"
+      :section-task-kind-label="sectionTaskKindLabel"
+      :section-display-label="sectionDisplayLabel"
+      :section-status-label="sectionStatusLabel"
+      :section-primary-copy="sectionPrimaryCopy"
+      :section-impact-text="sectionImpactText"
+      :section-help-label="sectionHelpLabel"
+      :section-task-coverage-text="sectionTaskCoverageText"
+      :section-primary-action-label="sectionPrimaryActionLabel"
+      :delivery-readiness-item-status-text="deliveryReadinessItemStatusText"
+      :delivery-readiness-item-meta-text="deliveryReadinessItemMetaText"
+      @copy-coverage-summary="copyCoverageSummary"
+      @bootstrap-coverage-missing="bootstrapCoverageMissing"
+      @focus-scan-row="focusScanRow"
+      @run-remediation-action="runRemediationAction"
+      @preview-selected-runtime-route="previewSelectedRuntimeRoute"
+      @load-versions="loadVersions"
+      @load-list-search-config="loadListSearchConfig"
+      @open-form-config="openFormConfig"
+      @open-menu-config="openMenuConfig"
+      @open-create-menu-config="openCreateMenuConfig"
+      @load-analysis-config="loadAnalysisConfig"
+      @load-approval-config="loadApprovalConfig"
+      @open-approval-config="openApprovalConfig"
+      @run-delivery-readiness-action="runDeliveryReadinessAction"
+    />
 
-        <section v-if="(!loading || surface) && (currentModel || visibleConfigSections.length)" class="page-config-panel" aria-label="已选页面配置">
-          <div class="selected-page-overview">
-            <div>
-              <span>正在配置</span>
-              <strong>{{ selectedCoverageRow?.name || selectedPageLabel || currentModel || '当前页面' }}</strong>
-            </div>
-            <div class="selected-page-overview-side">
-              <div class="selected-page-overview-meta">
-                <span>{{ selectedCoverageRow ? pageViewModeText(selectedCoverageRow) : '页面配置' }}</span>
-                <span v-if="selectedCoverageRow">{{ rowCoverageProgressText(selectedCoverageRow) }}</span>
-                <span v-if="selectedCoverageRow">{{ pageDesignStatus(selectedCoverageRow) }}</span>
-              </div>
-              <button
-                type="button"
-                class="ghost small"
-                :disabled="!previewRouteTarget.path"
-                @click="previewSelectedRuntimeRoute"
-              >
-                预览页面
-              </button>
-            </div>
-          </div>
-          <div class="section-grid" data-lowcode-config-task-grid="v1">
-            <article v-for="section in visibleConfigSections" :key="section.key" class="config-card" data-lowcode-config-task-card="v1">
-              <div class="config-card-head">
-                <div>
-                  <span>{{ sectionTaskKindLabel(section.key) }}</span>
-                  <h2>{{ sectionDisplayLabel(section.key, section.label) }}</h2>
-                </div>
-                <strong class="config-status-badge" :class="{ 'config-status--empty': !section.contract_count }">{{ sectionStatusLabel(section.key, section.contract_count) }}</strong>
-              </div>
-              <div class="config-task-impact">
-                <span>{{ sectionPrimaryCopy(section.key) }}</span>
-                <em>{{ sectionImpactText(section.key) }}</em>
-              </div>
-              <div class="config-card-meta" data-lowcode-config-task-meta="v1">
-                <span>{{ advancedPanelOpen ? boundaryLabel(section.boundary) : sectionHelpLabel(section.key) }}</span>
-                <span>{{ sectionTaskCoverageText(section.key, section.contract_count) }}</span>
-              </div>
-              <div class="config-card-actions">
-                <button
-                  v-if="section.key === 'form' || section.key === 'list_search' || section.key === 'analysis'"
-                  type="button"
-                  class="ghost small"
-                  :disabled="!currentModel || versionsLoading"
-                  @click="loadVersions(section.key)"
-                >
-                  {{ versionsLoading ? '读取中...' : '版本记录' }}
-                </button>
-                <button
-                  v-if="section.key === 'list_search'"
-                  type="button"
-                  class="ghost small"
-                  :disabled="!currentModel || listSearchBusy"
-                  @click="loadListSearchConfig"
-                >
-                  {{ listSearchBusy ? '读取中...' : sectionPrimaryActionLabel(section.key) }}
-                </button>
-                <button
-                  v-else-if="section.key === 'form'"
-                  type="button"
-                  class="ghost small primary"
-                  :disabled="!canOpenDesigner"
-                  @click="openFormConfig"
-                >
-                  {{ sectionPrimaryActionLabel(section.key) }}
-                </button>
-                <button
-                  v-else-if="section.key === 'menu'"
-                  type="button"
-                  class="ghost small"
-                  @click="openMenuConfig"
-                >
-                  {{ sectionPrimaryActionLabel(section.key) }}
-                </button>
-                <button
-                  v-if="section.key === 'menu'"
-                  type="button"
-                  class="ghost small"
-                  @click="openCreateMenuConfig"
-                >
-                  新增菜单
-                </button>
-                <button
-                  v-else-if="section.key === 'analysis'"
-                  type="button"
-                  class="ghost small"
-                  :disabled="!currentModel || listSearchBusy"
-                  @click="loadAnalysisConfig"
-                >
-                  {{ listSearchBusy ? '读取中...' : sectionPrimaryActionLabel(section.key) }}
-                </button>
-                <button
-                  v-else-if="section.key === 'approval'"
-                  type="button"
-                  class="ghost small primary"
-                  :disabled="!currentModel || approvalLoading"
-                  @click="loadApprovalConfig"
-                >
-                  {{ approvalLoading ? '读取中...' : sectionPrimaryActionLabel(section.key) }}
-                </button>
-                <button
-                  v-if="section.key === 'approval' && section.route?.path"
-                  type="button"
-                  class="ghost small"
-                  @click="openApprovalConfig(section)"
-                >
-                  打开完整规则
-                </button>
-              </div>
-            </article>
-          </div>
-        </section>
-        <aside v-if="surface" class="workbench-status-rail" aria-label="交付状态" data-lowcode-delivery-readiness="low_code_delivery_readiness.v1">
-          <div class="delivery-readiness-head">
-            <div>
-              <span>交付状态</span>
-              <strong>{{ deliveryReadinessStatusText }}</strong>
-            </div>
-            <em>{{ visibleDeliveryReadinessProgressText }}</em>
-          </div>
-          <div class="delivery-readiness-grid delivery-readiness-grid--rail">
-            <button
-              v-for="item in visibleDeliveryReadinessItems"
-              :key="`rail-${item.id}`"
-              type="button"
-              class="delivery-readiness-item"
-              :class="{ 'delivery-readiness-item--pending': item.status !== 'ready' }"
-              @click="runDeliveryReadinessAction(item)"
-            >
-              <span>{{ item.label }}</span>
-              <strong>{{ deliveryReadinessItemStatusText(item) }}</strong>
-              <em>{{ deliveryReadinessItemMetaText(item) }}</em>
-            </button>
-          </div>
-          <div v-if="!visibleDeliveryReadinessItems.length" class="workbench-status-empty">状态读取中</div>
-          <div v-if="advancedPanelOpen && snapshotSummary" class="workbench-status-snapshot">
-            <span>配置快照</span>
-            <strong>{{ snapshotSummary.contract_count }}</strong>
-            <em>已发布 {{ snapshotSummary.status_counts?.published || 0 }}</em>
-          </div>
-        </aside>
-      </div>
-    </section>
-    <section v-if="advancedPanelOpen && coverageScan" class="scan-panel scan-panel--admin">
-      <div class="scan-toolbar">
-        <strong>配置检查明细</strong>
-        <span v-if="snapshotSummary">{{ snapshotSummaryText }}</span>
-      </div>
-      <div class="scan-list">
-        <div v-for="row in visibleCoverageRows" :key="`admin-${coverageRowKey(row)}`" class="scan-row">
-          <strong>{{ row.name || row.model }}</strong>
-          <span>{{ severityLabel(row.severity) }}</span>
-          <span>{{ row.model }}</span>
-          <span>{{ row.view_mode || '-' }}</span>
-          <span>菜单 {{ row.menu_count }}</span>
-          <span v-if="row.user_preference_count">个人设置 {{ row.user_preference_count }} · {{ boundaryLabel(row.user_preference_boundary) }}</span>
-          <span v-if="row.missing_view_types.length">待配置 {{ row.missing_view_types.map(viewTypeLabel).join('、') }}</span>
-          <span v-else>配置完整</span>
-          <span v-if="row.runtime_missing_view_types.length">办理页未生效 {{ row.runtime_missing_view_types.map(viewTypeLabel).join('、') }}</span>
-          <span v-else>运行时完整</span>
-          <span>{{ runtimeEvidenceText(row) }}</span>
-          <span v-if="runtimeReasonText(row)">原因 {{ runtimeReasonText(row) }}</span>
-          <button
-            v-for="action in row.remediation_actions"
-            :key="`admin-${coverageRowKey(row)}-${action.code}`"
-            type="button"
-            class="link-button"
-            @click="runRemediationAction(row, action)"
-          >
-            {{ action.label }}
-          </button>
-          <button
-            type="button"
-            class="link-button"
-            :disabled="!row.runtime_route?.path"
-            @click="openRuntimeRoute(row)"
-          >
-            预览页面
-          </button>
-          <button type="button" class="link-button" @click="focusScanRow(row)">选择此页面</button>
-        </div>
-      </div>
-    </section>
-    <section v-if="advancedPanelOpen" class="scan-panel snapshot-compare-panel">
-      <div class="scan-toolbar">
-        <strong>跨环境快照对比</strong>
-        <span v-if="snapshotCompareResult">{{ snapshotCompareSummary }}</span>
-        <button type="button" class="ghost small" :disabled="snapshotExportLoading" @click="downloadSnapshot">
-          {{ snapshotExportLoading ? '导出中...' : '下载当前快照' }}
-        </button>
-        <button type="button" class="ghost small" :disabled="snapshotCompareLoading || !snapshotCompareText.trim()" @click="compareSnapshot">
-          {{ snapshotCompareLoading ? '对比中...' : '对比快照' }}
-        </button>
-        <button type="button" class="ghost small" :disabled="!snapshotCompareResult" @click="downloadSnapshotRemediationPlan">
-          下载整改清单
-        </button>
-      </div>
-      <textarea
-        v-model="snapshotCompareText"
-        class="snapshot-input"
-        rows="5"
-        placeholder="粘贴从目标环境导出的配置快照内容"
-      ></textarea>
-      <div v-if="snapshotCompareResult" class="snapshot-remediation-summary">
-        <span>{{ snapshotRemediationSummary }}</span>
-      </div>
-      <div v-if="snapshotCompareResult" class="snapshot-diff-list">
-        <div v-for="item in snapshotCompareChangedRows" :key="item.key" class="snapshot-diff-row">
-          <strong>{{ item.name || item.model }}</strong>
-          <span>{{ viewTypeLabel(item.view_type) }}</span>
-          <span>版本 {{ item.previous_version_no }} -> {{ item.current_version_no }}</span>
-          <span>{{ item.previous_status || '-' }} -> {{ item.current_status || '-' }}</span>
-        </div>
-        <div v-for="item in snapshotCompareAddedRows" :key="`added-${item.model}-${item.view_type}-${item.action_id}-${item.name}`" class="snapshot-diff-row">
-          <strong>{{ item.name || item.model }}</strong>
-          <span>新增</span>
-          <span>{{ viewTypeLabel(item.view_type) }}</span>
-          <span>版本 {{ item.version_no }}</span>
-        </div>
-        <div v-for="item in snapshotCompareRemovedRows" :key="`removed-${item.model}-${item.view_type}-${item.action_id}-${item.name}`" class="snapshot-diff-row">
-          <strong>{{ item.name || item.model }}</strong>
-          <span>移除</span>
-          <span>{{ viewTypeLabel(item.view_type) }}</span>
-          <span>版本 {{ item.version_no }}</span>
-        </div>
-      </div>
-    </section>
-    <section v-if="approvalPanelOpen" class="edit-panel config-editor-panel approval-panel">
-      <div class="edit-panel-head">
-        <div>
-          <h2>审批规则</h2>
-          <p>{{ approvalPolicyLabel }}</p>
-        </div>
-        <button type="button" class="ghost small" :disabled="approvalLoading" @click="approvalPanelOpen = false">
-          返回工作台
-        </button>
-      </div>
-      <aside class="approval-rule-panel" aria-label="审批规则设置">
-        <div class="approval-guide">
-          <strong>审批配置怎么生效</strong>
-          <span>{{ approvalEffectGuideText }}</span>
-        </div>
-        <div class="approval-rule-head">
-          <strong>规则开关</strong>
-          <span>{{ approvalRuntimeText }}</span>
-        </div>
-        <div class="approval-config-grid">
-          <label class="approval-toggle">
-            <input v-model="approvalForm.approval_required" type="checkbox" @change="onApprovalRequiredChange" />
-            <span>启用审批</span>
-          </label>
-          <label>
-            <span>审批方式</span>
-            <select v-model="approvalForm.mode" :disabled="!approvalForm.approval_required">
-              <option
-                v-for="option in approvalModeOptions"
-                :key="option.value"
-                :value="option.value"
-                :disabled="approvalForm.approval_required && option.value === 'none'"
-              >
-                {{ option.label }}
-              </option>
-            </select>
-          </label>
-          <label>
-            <span>默认审批岗位</span>
-            <select v-model="approvalForm.manager_scope_key" :disabled="!approvalForm.approval_required">
-              <option value="">暂不指定</option>
-              <option v-for="option in approvalScopeOptions" :key="option.value" :value="option.value">
-                {{ option.label }}
-              </option>
-            </select>
-          </label>
-        </div>
-        <div class="edit-meta approval-rule-summary">
-          <span>当前步骤：{{ activeApprovalStepCount }} 个</span>
-          <span>保存状态：{{ hasApprovalDraftChanges ? '有未保存调整' : '已同步' }}</span>
-          <span v-if="advancedPanelOpen">生效来源：{{ boundaryLabel(approvalAudit?.boundary || 'industry_policy_runtime') }}</span>
-          <span v-if="hasApprovalDraftChanges" class="edit-dirty">配置已调整，可保存</span>
-        </div>
-        <div class="approval-impact-summary">
-          <strong>{{ hasApprovalDraftChanges ? '本次调整' : '当前规则' }}</strong>
-          <span>{{ approvalImpactSummaryText }}</span>
-        </div>
-      </aside>
-      <section class="approval-steps" :class="{ 'approval-steps--disabled': !approvalForm.approval_required }">
-        <header>
-          <div>
-            <strong>审批步骤编排</strong>
-            <span>{{ approvalForm.approval_required ? `${activeApprovalStepCount} 个启用步骤，拖动整行调整顺序` : '启用审批后配置办理节点' }}</span>
-            <em v-if="approvalForm.approval_required" class="approval-step-action-hint">也可以用上移、下移精确调整步骤顺序。</em>
-          </div>
-          <button type="button" class="ghost small" :disabled="approvalLoading || !approvalForm.approval_required" @click="addApprovalStep">
-            添加步骤
-          </button>
-        </header>
-        <div v-if="approvalSteps.length" class="approval-step-table" role="table" aria-label="审批步骤">
-          <div class="approval-step-table-head" role="row">
-            <span>序号</span>
-            <span>步骤名称</span>
-            <span>审批岗位</span>
-            <span>金额下限</span>
-            <span>金额上限</span>
-            <span>操作</span>
-          </div>
-          <div
-            v-for="(step, index) in approvalSteps"
-            :key="step.key"
-            class="approval-step-row"
-            :class="{
-              'approval-step-row--dragging': approvalStepDragIndex === index,
-              'approval-step-row--drop-target': approvalStepDropIndex === index && approvalStepDragIndex !== index,
-            }"
-            role="row"
-            :draggable="approvalForm.approval_required"
-            :aria-label="`拖动第${index + 1}步调整顺序`"
-            @dragstart="startApprovalStepDrag(index, $event)"
-            @dragover.prevent
-            @dragenter.prevent="approvalStepDropIndex = index"
-            @drop.prevent="dropApprovalStep(index)"
-            @dragend="clearApprovalStepDrag"
-          >
-            <span class="approval-step-seq">{{ index + 1 }}</span>
-            <div class="approval-step-cell">
-              <input v-model="step.name" type="text" placeholder="例如：合同中心审核" :disabled="!approvalForm.approval_required" :aria-label="`第${index + 1}步名称`" />
-            </div>
-            <div class="approval-step-cell">
-              <select v-model="step.approval_scope_key" :disabled="!approvalForm.approval_required" :aria-label="`第${index + 1}步审批岗位`">
-                <option value="">请选择</option>
-                <option v-for="option in approvalScopeOptions" :key="option.value" :value="option.value">
-                  {{ option.label }}
-                </option>
-              </select>
-            </div>
-            <div class="approval-step-cell">
-              <input v-model="step.amount_min" type="number" min="0" step="0.01" placeholder="不限制" :disabled="!approvalForm.approval_required" :aria-label="`第${index + 1}步金额下限`" />
-            </div>
-            <div class="approval-step-cell">
-              <input v-model="step.amount_max" type="number" min="0" step="0.01" placeholder="不限制" :disabled="!approvalForm.approval_required" :aria-label="`第${index + 1}步金额上限`" />
-            </div>
-            <div class="approval-step-actions">
-              <button type="button" title="上移" :aria-label="`上移第${index + 1}步`" :disabled="approvalLoading || !approvalForm.approval_required || index === 0" @click="moveApprovalStep(index, -1)">↑</button>
-              <button type="button" title="下移" :aria-label="`下移第${index + 1}步`" :disabled="approvalLoading || !approvalForm.approval_required || index === approvalSteps.length - 1" @click="moveApprovalStep(index, 1)">↓</button>
-              <button type="button" title="移除" :aria-label="`移除第${index + 1}步`" :disabled="approvalLoading || !approvalForm.approval_required" @click="removeApprovalStep(index)">×</button>
-            </div>
-          </div>
-        </div>
-        <div v-else class="approval-step-empty">
-          当前没有审批步骤，启用审批后可添加办理节点。
-          <button type="button" class="ghost small" :disabled="approvalLoading" @click="enableApprovalWithDefaultStep">启用并添加步骤</button>
-        </div>
-        <div v-if="approvalValidationMessage" class="approval-validation">{{ approvalValidationMessage }}</div>
-      </section>
-      <div class="edit-panel-actions">
-        <button type="button" class="ghost small primary" :disabled="approvalLoading || !canSaveApprovalDraft" @click="saveApprovalConfig">
-          {{ approvalLoading ? '保存中...' : '保存审批设置' }}
-        </button>
-        <button type="button" class="ghost small" :disabled="approvalLoading || !hasApprovalDraftChanges" @click="resetApprovalDraft">
-          放弃调整
-        </button>
-        <button type="button" class="ghost small" :disabled="!approvalSection?.route?.path" @click="approvalSection && openApprovalConfig(approvalSection)">
-          打开完整规则
-        </button>
-      </div>
-    </section>
+    <BusinessConfigAdvancedAuditPanels
+      v-if="advancedPanelOpen"
+      v-model:snapshot-compare-text="snapshotCompareText"
+      :coverage-scan="coverageScan"
+      :visible-coverage-rows="visibleCoverageRows"
+      :snapshot-summary-text="snapshotSummaryText"
+      :snapshot-compare-loading="snapshotCompareLoading"
+      :snapshot-export-loading="snapshotExportLoading"
+      :snapshot-compare-result="snapshotCompareResult"
+      :snapshot-compare-summary="snapshotCompareSummary"
+      :snapshot-remediation-summary="snapshotRemediationSummary"
+      :snapshot-compare-changed-rows="snapshotCompareChangedRows"
+      :snapshot-compare-added-rows="snapshotCompareAddedRows"
+      :snapshot-compare-removed-rows="snapshotCompareRemovedRows"
+      :coverage-row-key="coverageRowKey"
+      :severity-label="severityLabel"
+      :boundary-label="boundaryLabel"
+      :view-type-label="viewTypeLabel"
+      :runtime-evidence-text="runtimeEvidenceText"
+      :runtime-reason-text="runtimeReasonText"
+      @run-remediation-action="runRemediationAction"
+      @open-runtime-route="openRuntimeRoute"
+      @focus-scan-row="focusScanRow"
+      @download-snapshot="downloadSnapshot"
+      @compare-snapshot="compareSnapshot"
+      @download-snapshot-remediation-plan="downloadSnapshotRemediationPlan"
+    />
 
-    <section v-if="versionsPanelOpen" class="version-panel">
-      <div class="edit-panel-head">
-        <div>
-          <h2>{{ versionTitle }}</h2>
-          <p>{{ versionPanelDescription }}</p>
-        </div>
-        <button type="button" class="ghost small" :disabled="versionsLoading" @click="versionsPanelOpen = false">
-          收起版本记录
-        </button>
-      </div>
-      <div class="version-guide">
-        <strong>{{ versionPanelGuide.title }}</strong>
-        <span>{{ versionPanelGuide.body }}</span>
-      </div>
-      <div v-if="!versionContracts.length" class="empty-state">{{ versionEmptyText }}</div>
-      <div v-else class="version-list">
-        <article v-for="contract in versionContracts" :key="contract.id" class="version-card">
-          <div class="version-card-head">
-            <div class="version-card-title">
-              <strong>{{ viewTypeLabel(contract.view_type) }}</strong>
-              <span>{{ versionContractDisplayName(contract) }}</span>
-              <em>{{ versionContractImpactText(contract) }}</em>
-            </div>
-            <div class="version-card-actions">
-              <span class="version-current-badge">当前生效 v{{ contract.version_no }}</span>
-              <button
-                type="button"
-                class="ghost small"
-                :disabled="versionsLoading || listSearchSaving || contract.versions.length < 2"
-                @click="rollbackContractFromWorkbench(contract)"
-              >
-                {{ versionRollbackButtonLabel(contract) }}
-              </button>
-            </div>
-          </div>
-          <div class="version-summary">
-            <span>表单字段 {{ contract.summary.form_field_count }}</span>
-            <span>列表列 {{ contract.summary.list_column_count }}</span>
-            <span>筛选 {{ contract.summary.search_filter_count }}</span>
-            <span>分组 {{ contract.summary.search_group_by_count }}</span>
-            <span v-if="contract.summary.analysis_item_count">分析项 {{ contract.summary.analysis_item_count }}</span>
-          </div>
-          <div class="version-decision-note">
-            <span>{{ versionContractDecisionText(contract) }}</span>
-          </div>
-          <div v-if="contract.summary.analysis_items?.length" class="analysis-summary-list">
-            <span v-for="item in contract.summary.analysis_items.slice(0, 12)" :key="item">{{ analysisItemLabel(item) }}</span>
-          </div>
-          <div class="version-rows">
-            <div
-              v-for="version in contract.versions"
-              :key="version.id"
-              class="version-row"
-              :class="{ 'version-row--current': version.version_no === contract.version_no }"
-            >
-              <span class="version-row-no">v{{ version.version_no }}</span>
-              <span>{{ version.version_no === contract.version_no ? '当前生效' : versionStatusLabel(version.status) }}</span>
-              <span>保存人 {{ version.created_by || '-' }}</span>
-              <span>{{ versionSummaryText(version.summary) }}</span>
-              <span class="version-row-delta">{{ versionDeltaText(contract.summary, version.summary, version.version_no === contract.version_no) }}</span>
-              <button
-                type="button"
-                class="link-button"
-                :disabled="versionsLoading || listSearchSaving || version.version_no === contract.version_no"
-                @click="rollbackContractFromWorkbench(contract, version.version_no)"
-              >
-                {{ version.version_no === contract.version_no ? '当前生效版本' : '恢复到此版本配置' }}
-              </button>
-            </div>
-          </div>
-        </article>
-      </div>
-    </section>
+    <BusinessConfigApprovalPanel
+      v-if="approvalPanelOpen"
+      :policy-label="approvalPolicyLabel"
+      :effect-guide-text="approvalEffectGuideText"
+      :runtime-text="approvalRuntimeText"
+      :impact-summary-text="approvalImpactSummaryText"
+      :boundary-text="boundaryLabel(approvalAudit?.boundary || 'industry_policy_runtime')"
+      :form="approvalForm"
+      :steps="approvalSteps"
+      :mode-options="approvalModeOptions"
+      :scope-options="approvalScopeOptions"
+      :active-step-count="activeApprovalStepCount"
+      :has-draft-changes="hasApprovalDraftChanges"
+      :can-save-draft="canSaveApprovalDraft"
+      :can-open-full-rule="Boolean(approvalSection?.route?.path)"
+      :validation-message="approvalValidationMessage"
+      :loading="approvalLoading"
+      :advanced-panel-open="advancedPanelOpen"
+      :drag-index="approvalStepDragIndex"
+      :drop-index="approvalStepDropIndex"
+      @close="approvalPanelOpen = false"
+      @update-form-field="updateApprovalFormField"
+      @approval-required-change="onApprovalRequiredChange"
+      @add-step="addApprovalStep"
+      @enable-with-default-step="enableApprovalWithDefaultStep"
+      @remove-step="removeApprovalStep"
+      @move-step="moveApprovalStep"
+      @start-step-drag="startApprovalStepDrag"
+      @set-step-drop-index="approvalStepDropIndex = $event"
+      @drop-step="dropApprovalStep"
+      @clear-step-drag="clearApprovalStepDrag"
+      @save="saveApprovalConfig"
+      @reset="resetApprovalDraft"
+      @open-full-rule="approvalSection && openApprovalConfig(approvalSection)"
+    />
 
-    <section v-if="analysisPanelOpen" class="edit-panel config-editor-panel">
-      <div class="edit-panel-head">
-        <div>
-          <h2>分析视图设置</h2>
-          <p>选择这个页面默认用于统计分析的指标和维度。</p>
-        </div>
-        <div class="edit-panel-actions">
-          <button type="button" class="ghost small primary" :disabled="listSearchSaving || !previewRouteTarget.path" @click="previewAnalysisConfig">
-            {{ hasAnalysisDraftChanges ? (listSearchSaving ? '保存中...' : '保存并预览') : '预览页面' }}
-          </button>
-          <button type="button" class="ghost small" :disabled="listSearchSaving || !hasAnalysisDraftChanges" @click="saveAnalysisConfig">
-            {{ listSearchSaving ? '保存中...' : '保存分析视图' }}
-          </button>
-          <button type="button" class="ghost small" :disabled="listSearchSaving || !hasAnalysisDraftChanges" @click="resetAnalysisDraft">
-            放弃调整
-          </button>
-        </div>
-      </div>
-      <div class="list-search-tabs" role="group" aria-label="分析视图配置类型">
-        <button
-          v-for="tab in analysisEditorTabs"
-          :key="tab.key"
-          type="button"
-          :class="{ active: activeAnalysisEditor === tab.key }"
-          @click="setActiveAnalysisEditor(tab.key)"
-        >
-          <span>{{ tab.label }}</span>
-          <em>{{ analysisEditorCount(tab.key) }}</em>
-        </button>
-      </div>
-      <div class="edit-grid edit-grid--single">
-        <section class="field-chip-editor">
-          <header>
-            <strong>{{ analysisEditorLabel(activeAnalysisEditor) }}</strong>
-            <span>{{ analysisEditorCount(activeAnalysisEditor) }} 项</span>
-          </header>
-          <p class="field-chip-action-hint">拖动手柄或使用上移、下移调整顺序，移除会从当前配置中取消显示。</p>
-          <label v-if="activeAnalysisEditor === 'graphMeasure' || activeAnalysisEditor === 'graphDimension'" class="inline-select">
-            图表类型
-            <select v-model="graphType">
-              <option value="bar">柱状图</option>
-              <option value="line">折线图</option>
-              <option value="pie">饼图</option>
-            </select>
-          </label>
-          <div class="field-chip-list">
-            <span
-              v-for="(name, index) in parseNames(analysisEditorState(activeAnalysisEditor).text.value)"
-              :key="`analysis-${activeAnalysisEditor}-${name}`"
-              class="field-chip"
-              :class="{
-                'field-chip--dragging': isAnalysisChipDragging(activeAnalysisEditor, name),
-                'field-chip--drop-target': isAnalysisChipDropTarget(activeAnalysisEditor, name),
-              }"
-              :title="fieldHelpText(name)"
-              @dragover.prevent="hoverAnalysisChipDrop(activeAnalysisEditor, name)"
-              @drop.prevent="dropAnalysisChip(activeAnalysisEditor, name)"
-              @dragend="clearChipDrag"
-            >
-              <span
-                class="field-chip-handle"
-                draggable="true"
-                role="button"
-                tabindex="0"
-                :aria-label="`拖动${fieldDisplayLabel(name)}调整顺序`"
-                @dragstart.stop="startAnalysisChipDrag(activeAnalysisEditor, name, $event)"
-                @dragend.stop="clearChipDrag"
-              >⋮⋮</span>
-              {{ fieldDisplayLabel(name) }}
-              <button type="button" title="上移" :aria-label="`上移${fieldDisplayLabel(name)}`" :disabled="index === 0" @click="moveAnalysisName(activeAnalysisEditor, name, -1)">↑</button>
-              <button type="button" title="下移" :aria-label="`下移${fieldDisplayLabel(name)}`" :disabled="index === parseNames(analysisEditorState(activeAnalysisEditor).text.value).length - 1" @click="moveAnalysisName(activeAnalysisEditor, name, 1)">↓</button>
-              <button type="button" title="移除" :aria-label="`移除${fieldDisplayLabel(name)}`" @click="removeAnalysisName(activeAnalysisEditor, name)">×</button>
-            </span>
-          </div>
-          <input
-            v-model="analysisFieldOptionSearch"
-            class="field-option-search"
-            type="search"
-            placeholder="搜索可选字段"
-          />
-          <div class="field-option-summary">
-            <span>可添加字段 {{ analysisFieldOptionCandidates().length }}，当前显示 {{ availableAnalysisFieldOptions.length }}</span>
-            <button
-              type="button"
-              class="link-button"
-              :disabled="!availableAnalysisFieldOptions.length"
-              @click="addVisibleAnalysisOptions(activeAnalysisEditor)"
-            >
-              添加当前显示字段
-            </button>
-          </div>
-          <div v-if="availableAnalysisFieldOptions.length" class="field-option-pool">
-            <button
-              v-for="field in availableAnalysisFieldOptions"
-              :key="`analysis-option-${activeAnalysisEditor}-${field.name}`"
-              type="button"
-              :title="fieldOptionHelpText(field)"
-              @click="addAnalysisName(activeAnalysisEditor, field.name)"
-            >
-              {{ fieldOptionLabel(field) }}
-            </button>
-          </div>
-          <form v-if="advancedPanelOpen" class="field-chip-add" @submit.prevent="addAnalysisName(activeAnalysisEditor)">
-            <input
-              :value="analysisEditorState(activeAnalysisEditor).draft.value"
-              type="text"
-              placeholder="输入字段名"
-              @input="setAnalysisDraftFromEvent(activeAnalysisEditor, $event)"
-            />
-            <button type="submit" class="ghost small">添加</button>
-          </form>
-        </section>
-      </div>
-      <div class="edit-meta">
-        <span v-if="hasAnalysisDraftChanges" class="edit-dirty">配置已调整，可保存并预览效果</span>
-        <span v-if="advancedPanelOpen">生效来源：{{ boundaryLabel(analysisAudit?.business_config_boundary || 'business_contract') }}</span>
-      </div>
-    </section>
+    <BusinessConfigVersionPanel
+      v-if="versionsPanelOpen"
+      :title="versionTitle"
+      :description="versionPanelDescription"
+      :guide="versionPanelGuide"
+      :empty-text="versionEmptyText"
+      :contracts="versionContracts"
+      :loading="versionsLoading"
+      :saving="listSearchSaving"
+      :view-type-label="viewTypeLabel"
+      :contract-display-name="versionContractDisplayName"
+      :contract-impact-text="versionContractImpactText"
+      :rollback-button-label="versionRollbackButtonLabel"
+      :contract-decision-text="versionContractDecisionText"
+      :analysis-item-label="analysisItemLabel"
+      :version-status-label="versionStatusLabel"
+      :version-summary-text="versionSummaryText"
+      :version-delta-text="versionDeltaText"
+      @close="versionsPanelOpen = false"
+      @rollback="rollbackContractFromWorkbench"
+    />
 
-    <section v-if="listSearchPanelOpen" class="edit-panel config-editor-panel">
-      <div class="edit-panel-head">
-        <div>
-          <h2>列表与搜索设置</h2>
-          <p>{{ listSearchPanelDescription }}</p>
-        </div>
-        <div class="edit-panel-actions">
-          <button type="button" class="ghost small" :disabled="listSearchSaving" @click="listSearchPanelOpen = false">
-            返回工作台
-          </button>
-          <button type="button" class="ghost small primary" :disabled="listSearchSaving || !previewRouteTarget.path" @click="previewListSearchConfig">
-            {{ hasListSearchDraftChanges ? (listSearchSaving ? '保存中...' : '保存并预览') : '预览页面' }}
-          </button>
-          <button type="button" class="ghost small" :disabled="listSearchSaving || !hasListSearchDraftChanges" @click="saveListSearchConfig">
-            {{ listSearchSaving ? '保存中...' : '保存列表与搜索' }}
-          </button>
-          <button type="button" class="ghost small" :disabled="listSearchSaving || !hasListSearchDraftChanges" @click="resetListSearchDraft">
-            放弃调整
-          </button>
-        </div>
-      </div>
-      <div class="list-search-tabs" role="group" aria-label="列表搜索配置类型">
-        <button
-          v-for="tab in listSearchEditorTabs"
-          :key="tab.key"
-          type="button"
-          :class="{ active: activeListSearchEditor === tab.key }"
-          @click="setActiveListSearchEditor(tab.key)"
-        >
-          <span>{{ tab.label }}</span>
-          <em>{{ listSearchEditorCount(tab.key) }}</em>
-        </button>
-      </div>
-      <div class="edit-grid edit-grid--single">
-        <section v-if="activeListSearchEditor === 'list'" class="field-chip-editor">
-          <header>
-            <strong>默认列表列</strong>
-            <span>{{ parseNames(listColumnsText).length }} 项</span>
-          </header>
-          <p class="field-chip-action-hint">拖动手柄或使用上移、下移调整顺序，移除会从当前配置中取消显示。</p>
-          <div class="field-chip-list">
-            <span
-              v-for="(name, index) in parseNames(listColumnsText)"
-              :key="`list-${name}`"
-              class="field-chip"
-              :class="{
-                'field-chip--dragging': isListSearchChipDragging('list', name),
-                'field-chip--drop-target': isListSearchChipDropTarget('list', name),
-              }"
-              :title="fieldHelpText(name)"
-              @dragover.prevent="hoverListSearchChipDrop('list', name)"
-              @drop.prevent="dropListSearchChip('list', name)"
-              @dragend="clearChipDrag"
-            >
-              <span
-                class="field-chip-handle"
-                draggable="true"
-                role="button"
-                tabindex="0"
-                :aria-label="`拖动${fieldDisplayLabel(name)}调整顺序`"
-                @dragstart.stop="startListSearchChipDrag('list', name, $event)"
-                @dragend.stop="clearChipDrag"
-              >⋮⋮</span>
-              {{ fieldDisplayLabel(name) }}
-              <button type="button" title="上移" :aria-label="`上移${fieldDisplayLabel(name)}`" :disabled="index === 0" @click="moveListSearchName('list', name, -1)">↑</button>
-              <button type="button" title="下移" :aria-label="`下移${fieldDisplayLabel(name)}`" :disabled="index === parseNames(listColumnsText).length - 1" @click="moveListSearchName('list', name, 1)">↓</button>
-              <button type="button" title="移除" :aria-label="`移除${fieldDisplayLabel(name)}`" @click="removeListSearchName('list', name)">×</button>
-            </span>
-          </div>
-          <form v-if="advancedPanelOpen" class="field-chip-add" @submit.prevent="addListSearchName('list')">
-            <input v-model="listColumnDraft" type="text" placeholder="输入字段名" />
-            <button type="submit" class="ghost small">添加</button>
-          </form>
-          <input
-            v-if="availableListFieldOptions.length || listFieldOptionSearch"
-            v-model="listFieldOptionSearch"
-            class="field-option-search"
-            type="search"
-            placeholder="搜索可选字段"
-          />
-          <div class="field-option-summary">
-            <span>可添加字段 {{ fieldOptionAvailableCount('list') }}，当前显示 {{ availableListFieldOptions.length }}</span>
-            <button
-              type="button"
-              class="link-button"
-              :disabled="!availableListFieldOptions.length"
-              @click="addVisibleListSearchOptions('list')"
-            >
-              添加当前显示字段
-            </button>
-          </div>
-          <div v-if="availableListFieldOptions.length" class="field-option-pool">
-            <button
-              v-for="field in availableListFieldOptions"
-              :key="`list-option-${field.name}`"
-              type="button"
-              :title="fieldOptionHelpText(field)"
-              @click="addListSearchName('list', field.name)"
-            >
-              {{ fieldOptionLabel(field) }}
-            </button>
-          </div>
-        </section>
-        <section v-if="activeListSearchEditor === 'filter'" class="field-chip-editor">
-          <header>
-            <strong>搜索筛选字段</strong>
-            <span>{{ parseNames(searchFiltersText).length }} 项</span>
-          </header>
-          <p class="field-chip-action-hint">拖动手柄或使用上移、下移调整顺序，移除会从当前配置中取消显示。</p>
-          <div class="field-chip-list">
-            <span
-              v-for="(name, index) in parseNames(searchFiltersText)"
-              :key="`filter-${name}`"
-              class="field-chip"
-              :class="{
-                'field-chip--dragging': isListSearchChipDragging('filter', name),
-                'field-chip--drop-target': isListSearchChipDropTarget('filter', name),
-              }"
-              :title="fieldHelpText(name)"
-              @dragover.prevent="hoverListSearchChipDrop('filter', name)"
-              @drop.prevent="dropListSearchChip('filter', name)"
-              @dragend="clearChipDrag"
-            >
-              <span
-                class="field-chip-handle"
-                draggable="true"
-                role="button"
-                tabindex="0"
-                :aria-label="`拖动${fieldDisplayLabel(name)}调整顺序`"
-                @dragstart.stop="startListSearchChipDrag('filter', name, $event)"
-                @dragend.stop="clearChipDrag"
-              >⋮⋮</span>
-              {{ fieldDisplayLabel(name) }}
-              <button type="button" title="上移" :aria-label="`上移${fieldDisplayLabel(name)}`" :disabled="index === 0" @click="moveListSearchName('filter', name, -1)">↑</button>
-              <button type="button" title="下移" :aria-label="`下移${fieldDisplayLabel(name)}`" :disabled="index === parseNames(searchFiltersText).length - 1" @click="moveListSearchName('filter', name, 1)">↓</button>
-              <button type="button" title="移除" :aria-label="`移除${fieldDisplayLabel(name)}`" @click="removeListSearchName('filter', name)">×</button>
-            </span>
-          </div>
-          <form v-if="advancedPanelOpen" class="field-chip-add" @submit.prevent="addListSearchName('filter')">
-            <input v-model="searchFilterDraft" type="text" placeholder="输入字段名" />
-            <button type="submit" class="ghost small">添加</button>
-          </form>
-          <input
-            v-if="availableFilterFieldOptions.length || filterFieldOptionSearch"
-            v-model="filterFieldOptionSearch"
-            class="field-option-search"
-            type="search"
-            placeholder="搜索可选字段"
-          />
-          <div class="field-option-summary">
-            <span>可添加字段 {{ fieldOptionAvailableCount('filter') }}，当前显示 {{ availableFilterFieldOptions.length }}</span>
-            <button
-              type="button"
-              class="link-button"
-              :disabled="!availableFilterFieldOptions.length"
-              @click="addVisibleListSearchOptions('filter')"
-            >
-              添加当前显示字段
-            </button>
-          </div>
-          <div v-if="availableFilterFieldOptions.length" class="field-option-pool">
-            <button
-              v-for="field in availableFilterFieldOptions"
-              :key="`filter-option-${field.name}`"
-              type="button"
-              :title="fieldOptionHelpText(field)"
-              @click="addListSearchName('filter', field.name)"
-            >
-              {{ fieldOptionLabel(field) }}
-            </button>
-          </div>
-        </section>
-        <section v-if="activeListSearchEditor === 'group'" class="field-chip-editor">
-          <header>
-            <strong>搜索分组字段</strong>
-            <span>{{ parseNames(searchGroupByText).length }} 项</span>
-          </header>
-          <p class="field-chip-action-hint">拖动手柄或使用上移、下移调整顺序，移除会从当前配置中取消显示。</p>
-          <div class="field-chip-list">
-            <span
-              v-for="(name, index) in parseNames(searchGroupByText)"
-              :key="`group-${name}`"
-              class="field-chip"
-              :class="{
-                'field-chip--dragging': isListSearchChipDragging('group', name),
-                'field-chip--drop-target': isListSearchChipDropTarget('group', name),
-              }"
-              :title="fieldHelpText(name)"
-              @dragover.prevent="hoverListSearchChipDrop('group', name)"
-              @drop.prevent="dropListSearchChip('group', name)"
-              @dragend="clearChipDrag"
-            >
-              <span
-                class="field-chip-handle"
-                draggable="true"
-                role="button"
-                tabindex="0"
-                :aria-label="`拖动${fieldDisplayLabel(name)}调整顺序`"
-                @dragstart.stop="startListSearchChipDrag('group', name, $event)"
-                @dragend.stop="clearChipDrag"
-              >⋮⋮</span>
-              {{ fieldDisplayLabel(name) }}
-              <button type="button" title="上移" :aria-label="`上移${fieldDisplayLabel(name)}`" :disabled="index === 0" @click="moveListSearchName('group', name, -1)">↑</button>
-              <button type="button" title="下移" :aria-label="`下移${fieldDisplayLabel(name)}`" :disabled="index === parseNames(searchGroupByText).length - 1" @click="moveListSearchName('group', name, 1)">↓</button>
-              <button type="button" title="移除" :aria-label="`移除${fieldDisplayLabel(name)}`" @click="removeListSearchName('group', name)">×</button>
-            </span>
-          </div>
-          <form v-if="advancedPanelOpen" class="field-chip-add" @submit.prevent="addListSearchName('group')">
-            <input v-model="searchGroupDraft" type="text" placeholder="输入字段名" />
-            <button type="submit" class="ghost small">添加</button>
-          </form>
-          <input
-            v-if="availableGroupFieldOptions.length || groupFieldOptionSearch"
-            v-model="groupFieldOptionSearch"
-            class="field-option-search"
-            type="search"
-            placeholder="搜索可选字段"
-          />
-          <div class="field-option-summary">
-            <span>可添加字段 {{ fieldOptionAvailableCount('group') }}，当前显示 {{ availableGroupFieldOptions.length }}</span>
-            <button
-              type="button"
-              class="link-button"
-              :disabled="!availableGroupFieldOptions.length"
-              @click="addVisibleListSearchOptions('group')"
-            >
-              添加当前显示字段
-            </button>
-          </div>
-          <div v-if="availableGroupFieldOptions.length" class="field-option-pool">
-            <button
-              v-for="field in availableGroupFieldOptions"
-              :key="`group-option-${field.name}`"
-              type="button"
-              :title="fieldOptionHelpText(field)"
-              @click="addListSearchName('group', field.name)"
-            >
-              {{ fieldOptionLabel(field) }}
-            </button>
-          </div>
-        </section>
-      </div>
-      <div class="edit-meta">
-        <span v-if="hasListSearchDraftChanges" class="edit-dirty">配置已调整，可保存并预览效果</span>
-        <span v-if="advancedPanelOpen">个人设置记录：{{ listSearchAudit?.user_preference_count ?? 0 }}</span>
-        <span v-if="advancedPanelOpen">生效来源：{{ boundaryLabel(listSearchAudit?.user_preference_boundary || 'ui_only') }}</span>
-      </div>
-      <div v-if="advancedPanelOpen && listSearchAudit?.user_preferences?.length" class="preference-list">
-        <span
-          v-for="item in listSearchAudit.user_preferences.slice(0, 6)"
-          :key="item.id || item.scope_key"
-        >
-          {{ item.user_name || '用户' }} · {{ viewTypeLabel(item.view_type || 'list') }} · {{ item.column_count }}列
-        </span>
-      </div>
-    </section>
+    <BusinessConfigEditorPanels
+      :analysis-panel-open="analysisPanelOpen"
+      :list-search-panel-open="listSearchPanelOpen"
+      :list-search-saving="listSearchSaving"
+      :preview-route-target="previewRouteTarget"
+      :has-analysis-draft-changes="hasAnalysisDraftChanges"
+      :has-list-search-draft-changes="hasListSearchDraftChanges"
+      :analysis-editor-tabs="analysisEditorTabs"
+      :list-search-editor-tabs="listSearchEditorTabs"
+      :active-analysis-editor="activeAnalysisEditor"
+      :active-list-search-editor="activeListSearchEditor"
+      :graph-type="graphType"
+      :analysis-field-option-search="analysisFieldOptionSearch"
+      :list-field-option-search="listFieldOptionSearch"
+      :filter-field-option-search="filterFieldOptionSearch"
+      :group-field-option-search="groupFieldOptionSearch"
+      :list-column-draft="listColumnDraft"
+      :search-filter-draft="searchFilterDraft"
+      :search-group-draft="searchGroupDraft"
+      :advanced-panel-open="advancedPanelOpen"
+      :available-analysis-field-options="availableAnalysisFieldOptions"
+      :available-list-field-options="availableListFieldOptions"
+      :available-filter-field-options="availableFilterFieldOptions"
+      :available-group-field-options="availableGroupFieldOptions"
+      :list-columns-text="listColumnsText"
+      :search-filters-text="searchFiltersText"
+      :search-group-by-text="searchGroupByText"
+      :list-search-panel-description="listSearchPanelDescription"
+      :list-search-audit="listSearchAudit"
+      :analysis-audit="analysisAudit"
+      :parse-names="parseNames"
+      :analysis-editor-state="analysisEditorState"
+      :analysis-editor-label="analysisEditorLabel"
+      :analysis-editor-count="analysisEditorCount"
+      :analysis-field-option-candidates="analysisFieldOptionCandidates"
+      :list-search-editor-count="listSearchEditorCount"
+      :field-option-available-count="fieldOptionAvailableCount"
+      :field-display-label="fieldDisplayLabel"
+      :field-help-text="fieldHelpText"
+      :field-option-help-text="fieldOptionHelpText"
+      :field-option-label="fieldOptionLabel"
+      :is-analysis-chip-dragging="isAnalysisChipDragging"
+      :is-analysis-chip-drop-target="isAnalysisChipDropTarget"
+      :is-list-search-chip-dragging="isListSearchChipDragging"
+      :is-list-search-chip-drop-target="isListSearchChipDropTarget"
+      :boundary-label="boundaryLabel"
+      :view-type-label="viewTypeLabel"
+      @preview-analysis-config="previewAnalysisConfig"
+      @save-analysis-config="saveAnalysisConfig"
+      @reset-analysis-draft="resetAnalysisDraft"
+      @set-active-analysis-editor="setActiveAnalysisEditor"
+      @update-analysis-search="analysisFieldOptionSearch = $event"
+      @set-analysis-draft="setAnalysisDraft"
+      @update-graph-type="graphType = $event"
+      @add-analysis-name="addAnalysisName"
+      @add-visible-analysis-options="addVisibleAnalysisOptions"
+      @remove-analysis-name="removeAnalysisName"
+      @move-analysis-name="moveAnalysisName"
+      @start-analysis-chip-drag="startAnalysisChipDrag"
+      @hover-analysis-chip-drop="hoverAnalysisChipDrop"
+      @drop-analysis-chip="dropAnalysisChip"
+      @clear-chip-drag="clearChipDrag"
+      @close-list-search="listSearchPanelOpen = false"
+      @preview-list-search-config="previewListSearchConfig"
+      @save-list-search-config="saveListSearchConfig"
+      @reset-list-search-draft="resetListSearchDraft"
+      @set-active-list-search-editor="setActiveListSearchEditor"
+      @update-list-search-search="updateListSearchFieldSearch"
+      @update-list-search-draft="updateListSearchDraft"
+      @add-list-search-name="addListSearchName"
+      @add-visible-list-search-options="addVisibleListSearchOptions"
+      @remove-list-search-name="removeListSearchName"
+      @move-list-search-name="moveListSearchName"
+      @start-list-search-chip-drag="startListSearchChipDrag"
+      @hover-list-search-chip-drop="hoverListSearchChipDrop"
+      @drop-list-search-chip="dropListSearchChip"
+    />
+
     <ProductConfirmDialog
       :open="rollbackConfirm.state.open"
       :title="rollbackConfirm.state.title"
@@ -1133,6 +349,12 @@
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import ProductConfirmDialog from '../components/ProductConfirmDialog.vue';
+import BusinessConfigAdvancedAuditPanels from './businessConfigSurface/BusinessConfigAdvancedAuditPanels.vue';
+import BusinessConfigApprovalPanel from './businessConfigSurface/BusinessConfigApprovalPanel.vue';
+import BusinessConfigCoverageWorkspace from './businessConfigSurface/BusinessConfigCoverageWorkspace.vue';
+import BusinessConfigEditorPanels from './businessConfigSurface/BusinessConfigEditorPanels.vue';
+import BusinessConfigStartPanel from './businessConfigSurface/BusinessConfigStartPanel.vue';
+import BusinessConfigVersionPanel from './businessConfigSurface/BusinessConfigVersionPanel.vue';
 import {
   auditBusinessAnalysisConfig,
   auditBusinessListSearchConfig,
@@ -2426,6 +1648,14 @@ function fieldOptionSearchState(kind: ListSearchEditorKind) {
   return groupFieldOptionSearch;
 }
 
+function updateListSearchFieldSearch(kind: ListSearchEditorKind, value: string) {
+  fieldOptionSearchState(kind).value = value;
+}
+
+function updateListSearchDraft(kind: ListSearchEditorKind, value: string) {
+  listSearchEditorState(kind).draft.value = value;
+}
+
 async function setActiveListSearchEditor(kind: ListSearchEditorKind) {
   activeListSearchEditor.value = kind;
   if (!listSearchPanelOpen.value) return;
@@ -2500,11 +1730,6 @@ function analysisEditorLabel(kind: AnalysisEditorKind) {
 
 function setAnalysisDraft(kind: AnalysisEditorKind, value: string) {
   analysisEditorState(kind).draft.value = value;
-}
-
-function setAnalysisDraftFromEvent(kind: AnalysisEditorKind, event: Event) {
-  const target = event.target as HTMLInputElement | null;
-  setAnalysisDraft(kind, target?.value || '');
 }
 
 function analysisEditorCount(kind: AnalysisEditorKind) {
@@ -2856,6 +2081,14 @@ function resetApprovalDraft() {
   approvalSteps.value = steps.filter((step) => step.active !== false).map((step) => approvalStepFromPayload(step));
   approvalStepsBaseJson.value = approvalStepsJson.value;
   setMessage('已放弃审批设置调整');
+}
+
+function updateApprovalFormField(field: keyof typeof approvalForm.value, value: string | boolean) {
+  if (field === 'approval_required') {
+    approvalForm.value.approval_required = Boolean(value);
+    return;
+  }
+  approvalForm.value[field] = String(value || '');
 }
 
 function onApprovalRequiredChange() {

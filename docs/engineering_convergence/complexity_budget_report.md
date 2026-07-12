@@ -4,7 +4,7 @@ Generated from repository source files. This report is informational during the 
 
 ## Summary
 
-- Scanned files: `3793`
+- Scanned files: `3800`
 - Files requiring split plan: `44`
 - Files above warning threshold: `60`
 
@@ -20,7 +20,6 @@ Generated from repository source files. This report is informational during the 
 | 3747 | Vue source | `frontend/apps/web/src/views/MenuConfigView.vue` |
 | 3633 | Python source | `addons/smart_core/handlers/form_field_configuration.py` |
 | 3525 | Vue source | `frontend/apps/web/src/views/HomeView.vue` |
-| 3334 | Vue source | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` |
 | 3323 | Python source | `addons/smart_construction_core/tests/test_p0_state_closure.py` |
 | 3317 | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
 | 3202 | Python source | `addons/smart_core/tests/test_form_field_configuration_params.py` |
@@ -31,6 +30,7 @@ Generated from repository source files. This report is informational during the 
 | 2830 | Python source | `addons/smart_construction_core/models/core/material_acceptance.py` |
 | 2594 | Vue source | `frontend/apps/web/src/views/MyWorkView.vue` |
 | 2585 | Python source | `addons/smart_construction_core/tests/test_user_feedback_business_views.py` |
+| 2567 | Vue source | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` |
 | 2529 | XML data/view | `addons/smart_construction_core/views/menu_business_taxonomy.xml` |
 | 2452 | Python source | `addons/smart_core/core/unified_page_contract_v2_assembler.py` |
 | 2385 | Vue source | `frontend/apps/web/src/layouts/AppShell.vue` |
@@ -134,7 +134,6 @@ Generated from repository source files. This report is informational during the 
 | 3747 | split_plan_required | Vue source | `frontend/apps/web/src/views/MenuConfigView.vue` |
 | 3633 | split_plan_required | Python source | `addons/smart_core/handlers/form_field_configuration.py` |
 | 3525 | split_plan_required | Vue source | `frontend/apps/web/src/views/HomeView.vue` |
-| 3334 | split_plan_required | Vue source | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` |
 | 3323 | split_plan_required | Python source | `addons/smart_construction_core/tests/test_p0_state_closure.py` |
 | 3317 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
 | 3202 | split_plan_required | Python source | `addons/smart_core/tests/test_form_field_configuration_params.py` |
@@ -145,6 +144,7 @@ Generated from repository source files. This report is informational during the 
 | 2830 | split_plan_required | Python source | `addons/smart_construction_core/models/core/material_acceptance.py` |
 | 2594 | split_plan_required | Vue source | `frontend/apps/web/src/views/MyWorkView.vue` |
 | 2585 | split_plan_required | Python source | `addons/smart_construction_core/tests/test_user_feedback_business_views.py` |
+| 2567 | split_plan_required | Vue source | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` |
 | 2529 | split_plan_required | XML data/view | `addons/smart_construction_core/views/menu_business_taxonomy.xml` |
 | 2452 | split_plan_required | Python source | `addons/smart_core/core/unified_page_contract_v2_assembler.py` |
 | 2385 | split_plan_required | Vue source | `frontend/apps/web/src/layouts/AppShell.vue` |
