@@ -347,7 +347,7 @@ import NativeCollaborationPanel, {
   type NativeCollaborationPanelProps,
 } from './contractForm/NativeCollaborationPanel.vue';
 import ContractFormNativeCanvas from './contractForm/ContractFormNativeCanvas.vue';
-import RelationSearchDialog, { type RelationSearchDialogState } from './contractForm/RelationSearchDialog.vue';
+import RelationSearchDialog from './contractForm/RelationSearchDialog.vue';
 import ContractModeSupportPanel from './contractForm/ContractModeSupportPanel.vue';
 import { type LowCodeFieldCreateDialogState } from './contractForm/LowCodeFieldCreateDialog.vue';
 import CurrentFormFieldSettingsPanel from './contractForm/CurrentFormFieldSettingsPanel.vue';
@@ -582,7 +582,6 @@ import {
   one2manySubviewPolicies,
 } from './contractForm/one2manyUtils';
 import {
-  closedRelationSearchDialogState,
   dynamicRelationDomainFromDescriptor,
   relationEntry,
   dynamicDomainDependencyFields,
@@ -591,7 +590,6 @@ import {
   buildRelationDomainFromParts,
   isBlockAllDomain,
   mergeRelationDomains,
-  mergeRelationOptionRows,
   normalizeRelationSearchColumns,
   normalizeRouteQueryValues,
   openRelationSearchDialogState,
@@ -599,7 +597,6 @@ import {
   relationInlineCreate,
   relationModel as relationModelFromDescriptor,
   relationOptionFromRow,
-  relationOptionsWithSelectedFallback,
   relationOrder,
   relationReadFields,
   relationSearchColumnsFromContract,
@@ -612,9 +609,8 @@ import {
   relationUiLabels,
   resolveRelationQuickFillOption,
   singleContainingRelationOption,
-  selectedRelationOptionsFromValue,
-  upsertRelationOptionRows,
 } from './contractForm/relationDescriptor';
+import { useRelationRuntime } from './contractForm/useRelationRuntime';
 import {
   isWorkflowTransitionMethod,
   normalizeWorkflowActionRows,
@@ -790,28 +786,23 @@ const recordVersionToken = ref('');
 const formData = reactive<Record<string, unknown>>({});
 const nativeLayoutVisibilityRevision = ref(0);
 const advancedExpanded = ref(false);
-const relationOptions = ref<Record<string, RelationOption[]>>({});
-const relationFieldDescriptors = ref<Record<string, Record<string, FieldDescriptor>>>({});
-const relationKeywords = reactive<Record<string, string>>({});
-const invalidatedRelationKeywords = reactive<Record<string, string>>({});
-const clearedDynamicRelationFields = reactive<Record<string, boolean>>({});
-const relationSearchDialog = reactive<RelationSearchDialogState>({
-  open: false,
-  fieldName: '',
-  title: '',
-  keyword: '',
-  loading: false,
-  error: '',
-  options: [],
-  rows: [],
-  columns: [],
-  selectedId: null,
-  createMode: 'none',
-  labels: {},
-});
-const deniedRelationModels = new Set<string>();
+const {
+  relationOptions,
+  relationFieldDescriptors,
+  relationKeywords,
+  invalidatedRelationKeywords,
+  clearedDynamicRelationFields,
+  relationSearchDialog,
+  deniedRelationModels,
+  relationQueryTimers,
+  relationKeyword,
+  relationOptionsForField: relationOptionsForFieldFromRuntime,
+  selectedRelationOptions: selectedRelationOptionsFromRuntime,
+  upsertRelationOption,
+  mergeRelationOptions,
+  closeRelationSearchDialog,
+} = useRelationRuntime();
 const one2manyRows = reactive<Record<string, One2ManyInlineRow[]>>({});
-const relationQueryTimers: Record<string, ReturnType<typeof setTimeout>> = {};
 const onchangeModifiersPatch = ref<Record<string, Record<string, unknown>>>({});
 const onchangeWarnings = ref<Array<{ title?: string; message?: string; reason_code?: string }>>([]);
 const onchangeLinePatches = ref<OnchangeLinePatch[]>([]);
@@ -2359,7 +2350,7 @@ function relationIds(name: string): number[] {
 }
 
 function selectedRelationOptions(name: string): RelationOption[] {
-  return selectedRelationOptionsFromValue(relationOptions.value[name], formData[name]);
+  return selectedRelationOptionsFromRuntime(name, formData[name]);
 }
 
 function many2oneValue(name: string) {
@@ -2368,24 +2359,7 @@ function many2oneValue(name: string) {
 }
 
 function relationOptionsForField(name: string) {
-  return relationOptionsWithSelectedFallback(relationOptions.value[name], formData[name]);
-}
-
-function upsertRelationOption(fieldName: string, option: RelationOption | null) {
-  const merged = upsertRelationOptionRows(relationOptions.value[fieldName], option);
-  if (merged === relationOptions.value[fieldName]) return;
-  relationOptions.value = {
-    ...relationOptions.value,
-    [fieldName]: merged,
-  };
-}
-
-function mergeRelationOptions(fieldName: string, options: RelationOption[]) {
-  const merged = mergeRelationOptionRows(relationOptions.value[fieldName], options);
-  relationOptions.value = {
-    ...relationOptions.value,
-    [fieldName]: merged,
-  };
+  return relationOptionsForFieldFromRuntime(name, formData[name]);
 }
 
 async function hydrateSelectedRelationOptions() {
@@ -2418,10 +2392,6 @@ async function hydrateSelectedRelationOptions() {
       }
     }
   }));
-}
-
-function relationKeyword(name: string) {
-  return String(relationKeywords[name] || '');
 }
 
 function one2manyFieldRows(name: string) {
@@ -2928,10 +2898,6 @@ async function fetchRelationSearchRows(name: string, keyword: string, limit = 12
   });
   const records = Array.isArray(listed?.records) ? listed.records : [];
   return relationSearchRowsFromRecords(records, columns);
-}
-
-function closeRelationSearchDialog() {
-  Object.assign(relationSearchDialog, closedRelationSearchDialogState());
 }
 
 function onRelationDialogDocumentKeydown(event: KeyboardEvent) {
