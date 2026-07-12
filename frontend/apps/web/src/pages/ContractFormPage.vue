@@ -646,7 +646,6 @@ import {
   type ContractAction,
   type ContractFieldGovernanceAction,
   type ContractFieldGovernanceRow,
-  type ContractPromptField,
   type FormConfigAuditResult,
   type FormConfigOperationLogEntry,
   type LayoutNode,
@@ -1237,22 +1236,6 @@ function contractV2ActionRules() {
     : [];
 }
 
-function ruleClientMode(rule: Record<string, unknown>) {
-  return contractActionRuleClientMode(rule);
-}
-
-function ruleKey(rule: Record<string, unknown>) {
-  return contractActionRuleKey(rule);
-}
-
-function ruleControl(rule: Record<string, unknown>) {
-  return contractActionRuleControl(rule);
-}
-
-function rulePromptFields(rule: Record<string, unknown>): ContractPromptField[] {
-  return contractPromptFieldsFromRule(rule);
-}
-
 function contractFieldActions(field: FormSectionFieldSchema) {
   return buildContractFieldActionsFromRules({
     rules: contractV2ActionRules(),
@@ -1274,7 +1257,7 @@ function formSettingsFieldActions(field: FormSectionFieldSchema) {
   });
 }
 
-const contractPromptFields = computed(() => (contractPromptRule.value ? rulePromptFields(contractPromptRule.value) : []));
+const contractPromptFields = computed(() => (contractPromptRule.value ? contractPromptFieldsFromRule(contractPromptRule.value) : []));
 
 const activeContractModeActions = computed(() => {
   return buildActiveContractModeActions({
@@ -1360,18 +1343,18 @@ const contractModeBaseFieldRows = computed<ContractFieldGovernanceRow[]>(() => {
   contractV2ActionRules().forEach((rule) => {
     const sourceWidgetId = String(rule.sourceWidgetId || rule.source_widget_id || '').trim();
     if (!sourceWidgetId.startsWith('field.')) return;
-    const expectedMode = ruleClientMode(rule);
+    const expectedMode = contractActionRuleClientMode(rule);
     if (expectedMode && expectedMode !== mode) return;
     const fieldKey = sourceWidgetId.slice('field.'.length);
     if (!fieldKey) return;
-    const control = ruleControl(rule);
+    const control = contractActionRuleControl(rule);
     const target = parseMaybeJsonRecord(rule.target);
     const params = parseMaybeJsonRecord(target.params || rule.params);
     const fieldLabel = String(params.label || fieldKey).trim();
     const action: ContractFieldGovernanceAction = {
-      key: ruleKey(rule),
-      label: String(control.label || rule.label || ruleKey(rule)).trim(),
-      value: String(control.value || ruleKey(rule)).trim(),
+      key: contractActionRuleKey(rule),
+      label: String(control.label || rule.label || contractActionRuleKey(rule)).trim(),
+      value: String(control.value || contractActionRuleKey(rule)).trim(),
       checked: control.checked === true,
       disabled: control.disabled === true || busy.value,
       title: String(control.title || '').trim(),
@@ -7076,7 +7059,7 @@ function promptContractActionParams(rule: Record<string, unknown>, providedValue
 }
 
 function openContractModeAction(rule: Record<string, unknown>) {
-  const promptFields = rulePromptFields(rule);
+  const promptFields = contractPromptFieldsFromRule(rule);
   if (!promptFields.length) {
     void runContractRuleAction(rule);
     return;
@@ -7109,14 +7092,14 @@ async function submitContractPromptAction() {
 
 async function runContractRuleAction(rule: Record<string, unknown>, providedParams?: Record<string, unknown>) {
   const target = parseMaybeJsonRecord(rule.target);
-  const mode = ruleClientMode(rule);
+  const mode = contractActionRuleClientMode(rule);
   const intent = String(rule.intent || target.intent || '').trim();
   if (intent === 'ui.local_mode' || intent === 'ui.mode' || (!intent && mode)) {
     applyClientMode(mode, target.toggle !== false);
     return;
   }
   if (!intent) return;
-  if (!providedParams && rulePromptFields(rule).length) {
+  if (!providedParams && contractPromptFieldsFromRule(rule).length) {
     openContractModeAction(rule);
     return;
   }
@@ -7477,7 +7460,7 @@ function onContractInlineFieldOrderDragEnd() {
 }
 
 function lowCodeApplyBaseParams() {
-  const configAction = contractV2ActionRules().find((rule) => ruleKey(rule) === BUSINESS_CONFIG_ACTION_KEYS.currentFormFieldOrderSave);
+  const configAction = contractV2ActionRules().find((rule) => contractActionRuleKey(rule) === BUSINESS_CONFIG_ACTION_KEYS.currentFormFieldOrderSave);
   const target = parseMaybeJsonRecord(configAction?.target);
   return normalizeLowCodeApplyParams({
     action_id: Number(actionId.value || route.query.action_id || 0) || 0,
@@ -7908,7 +7891,7 @@ function formConfigSaveOperationSummary(changedVisibility: Record<string, boolea
 
 async function saveContractFieldOrder() {
   if (!hasCurrentFormFieldDraftChanges.value) return true;
-  const configAction = contractV2ActionRules().find((rule) => ruleKey(rule) === BUSINESS_CONFIG_ACTION_KEYS.currentFormFieldOrderSave);
+  const configAction = contractV2ActionRules().find((rule) => contractActionRuleKey(rule) === BUSINESS_CONFIG_ACTION_KEYS.currentFormFieldOrderSave);
   const target = parseMaybeJsonRecord(configAction?.target);
   const baseParams = normalizeLowCodeApplyParams(parseMaybeJsonRecord(target.params));
   const changedVisibility = changedFieldVisibilityDraft();
