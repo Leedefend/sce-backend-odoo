@@ -5984,9 +5984,9 @@ verify.unified_page_contract.lite: guard.prod.forbid
 # ----------------------------------------------------------------------
 # v1.1 Engineering Convergence quality entries
 # ----------------------------------------------------------------------
-.PHONY: ci test.frontend test.unit test.odoo.integration test.contract test.e2e test.all test.inventory test.inventory.summary architecture.module_dependency_map security.secrets.scan
+.PHONY: ci test.frontend test.unit test.odoo.integration test.contract test.e2e test.all test.inventory test.inventory.summary architecture.module_dependency_map architecture.complexity_report security.secrets.scan
 
-ci: guard.prod.forbid security.secrets.scan test.inventory test.inventory.summary architecture.module_dependency_map test.unit test.frontend test.contract
+ci: guard.prod.forbid security.secrets.scan test.inventory test.inventory.summary architecture.module_dependency_map architecture.complexity_report test.unit test.frontend test.contract
 	@git diff --check
 	@echo "[OK] v1.1 PR quality gate passed"
 
@@ -6022,6 +6022,9 @@ test.inventory.summary:
 
 architecture.module_dependency_map:
 	@python3 scripts/ci/generate_module_dependency_map.py
+
+architecture.complexity_report:
+	@python3 scripts/ci/generate_complexity_budget_report.py
 
 security.secrets.scan:
 	@python3 scripts/ci/secret_scan.py
