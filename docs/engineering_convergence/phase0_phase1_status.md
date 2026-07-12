@@ -38,6 +38,7 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 | P2-02 Dedupe hotspot closeout | Done | No remaining dedupe hotspot above 2 assets; grouped drift summary mapped to `verify.frontend.grouped_drift_summary.baseline.guard` |
 | P2-02 Secondary 2-asset hotspot reduction | Done | Existing Make gates mapped for frontend, project dashboard, non-demo data, scene, role, SCBS, P1, and formal release validation assets; remaining grouped hotspots are seven 2-asset families without a confirmed aggregate gate |
 | P2-02 Residual hotspot disposition | Done | `test_inventory_summary.md` records the seven retained 2-asset families and why they are not marked aggregate-covered |
+| PR evidence package | Done | `pr_v1_1_engineering_convergence.md` is ready for the GitHub PR body |
 | SEC-06 Secret scan gate | Done | `scripts/ci/secret_scan.py`, `make security.secrets.scan` |
 | P4-01 Module dependency map | Done | `module_dependency_map.md`, `scripts/ci/generate_module_dependency_map.py` |
 | P4-02 Domain boundary ADR | Done | `adr_0001_domain_boundaries.md` |
@@ -70,14 +71,14 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 
 | Item | Status | Next Action |
 | --- | --- | --- |
-| P0-02 Milestone creation | Blocked locally | Run `github_governance_runbook.md` after `gh auth login` or through GitHub UI |
-| P0-03 Existing issue cleanup | Blocked locally | Create seed issues, classify existing issues, merge duplicates |
-| P1-02 Branch protection | Blocked locally | Enable `main` protection and required checks in GitHub settings |
+| P0-02 Milestone creation | Blocked locally | `gh auth status` reports no authenticated GitHub host; run `github_governance_runbook.md` after `gh auth login` or through GitHub UI |
+| P0-03 Existing issue cleanup | Blocked locally | Create seed issues from `github_issue_seed_v1.1.md`, classify existing issues, merge duplicates |
+| P1-02 Branch protection | Blocked locally | Enable `main` protection and required checks in GitHub settings with repository admin permission |
 | Required CI check enforcement | Blocked locally | After first workflow run, mark `v1.1 quality gate / quality-gate` as required |
 
 ## Next Execution Focus
 
-1. Open PR from `topic/v1.1-engineering-convergence` to `main`.
+1. Open PR from `topic/v1.1-engineering-convergence` to `main` using `pr_v1_1_engineering_convergence.md`.
 2. Create milestone and labels.
 3. Create seed issues from `github_issue_seed_v1.1.md`.
 4. Enable branch protection after the workflow is visible.
