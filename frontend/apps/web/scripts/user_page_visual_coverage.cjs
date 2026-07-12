@@ -118,9 +118,13 @@ async function main() {
         return !Array.from(node.children || []).some((child) => child instanceof HTMLElement && visible(child) && loadingPattern.test(child.textContent || ''));
       });
       const visibleFormControls = Array.from(document.querySelectorAll('input, textarea, select')).some((node) => visible(node));
+      const visibleEmptyState = Array.from(document.querySelectorAll('.list-empty-state, .empty-next, .sc-empty')).some((node) => {
+        if (!(node instanceof HTMLElement)) return false;
+        return visible(node) && (node.innerText || '').trim().length > 20;
+      });
       const productSurface = document.querySelector('.sc-product-main-surface');
       const visibleProductSurface = productSurface instanceof HTMLElement && visible(productSurface) && (productSurface.innerText || '').trim().length > 40;
-      return hasError || (!visibleLoading && (hasTableHeaders || visibleFormControls || visibleProductSurface || text.trim().length > 80));
+      return hasError || (!visibleLoading && (hasTableHeaders || visibleFormControls || visibleEmptyState || visibleProductSurface || text.trim().length > 80));
     }, null, { timeout: 30000 }).catch(() => {});
     let stableReadyCount = 0;
     let lastUrl = '';
@@ -173,6 +177,11 @@ async function main() {
         return true;
       }
       if (Array.from(document.querySelectorAll('th')).some((node) => visible(node))) return true;
+      const visibleEmptyState = Array.from(document.querySelectorAll('.list-empty-state, .empty-next, .sc-empty')).some((node) => {
+        if (!(node instanceof HTMLElement)) return false;
+        return visible(node) && (node.innerText || '').trim().length > 20;
+      });
+      if (visibleEmptyState) return true;
       const productSurface = document.querySelector('.sc-product-main-surface');
       if (productSurface instanceof HTMLElement && visible(productSurface)) {
         const surfaceText = productSurface.innerText || '';
