@@ -25,6 +25,9 @@ Duration: 6 weeks
 - CI workflow calling the unified quality entries.
 - Initial `test_inventory.csv`.
 - `commit_convention.md`
+- `adr_0001_domain_boundaries.md`
+- `module_dependency_map.md`
+- `complexity_budget_policy.md`
 
 ## Issue Labels
 
