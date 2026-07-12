@@ -1281,6 +1281,23 @@ import {
 } from './contractForm/fieldUtils';
 import { dictOrEmpty, mergeFieldLabelsFromSource } from './contractForm/recordUtils';
 import {
+  formRuntimeCommandHintLabel,
+  formRuntimeReasonLabel,
+  formRuntimeRowStateLabel,
+  isOne2manyEmptyValue,
+  normalizeOne2manyColumnValue,
+  one2manyColumnDisplayValue,
+  one2manyColumnInputType,
+} from './contractForm/one2manyUtils';
+import {
+  relationEntry,
+  relationOptionFromRow,
+  relationReadFields,
+  relationSearchReadFields,
+  relationUiLabel,
+  relationUiLabels,
+} from './contractForm/relationDescriptor';
+import {
   MANY2ONE_CREATE_OPTION,
   MANY2ONE_OPEN_RECORD_OPTION,
   MANY2ONE_SEARCH_MORE_OPTION,
@@ -3858,68 +3875,6 @@ function relationIds(name: string): number[] {
   return normalizeRelationIds(formData[name]);
 }
 
-function relationColorField(descriptor?: FieldDescriptor) {
-  const row = descriptor && typeof descriptor === 'object' ? descriptor as Record<string, unknown> : {};
-  const options = row.widget_options && typeof row.widget_options === 'object' && !Array.isArray(row.widget_options)
-    ? row.widget_options as Record<string, unknown>
-    : row.options && typeof row.options === 'object' && !Array.isArray(row.options)
-      ? row.options as Record<string, unknown>
-      : {};
-  const colorField = String(options.color_field || '').trim();
-  return colorField || '';
-}
-
-function relationReadFields(descriptor?: FieldDescriptor) {
-  const fields = new Set(['id', 'name', 'display_name']);
-  const entry = relationEntry(descriptor);
-  if (entry?.displayField) fields.add(entry.displayField);
-  if (entry?.switchContext?.enabled) {
-    if (entry.switchContext.codeField) fields.add(entry.switchContext.codeField);
-    if (entry.switchContext.labelField) fields.add(entry.switchContext.labelField);
-    if (entry.switchContext.defaultValuesField) fields.add(entry.switchContext.defaultValuesField);
-  }
-  const colorField = relationColorField(descriptor);
-  if (colorField) fields.add(colorField);
-  return Array.from(fields);
-}
-
-function parseRelationDefaultValues(value: unknown): Record<string, unknown> {
-  if (value && typeof value === 'object' && !Array.isArray(value)) return value as Record<string, unknown>;
-  const raw = String(value || '').trim();
-  if (!raw) return {};
-  try {
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
-      ? parsed as Record<string, unknown>
-      : {};
-  } catch {
-    return {};
-  }
-}
-
-function relationOptionFromRow(row: Record<string, unknown>, descriptor?: FieldDescriptor): RelationOption | null {
-  const id = Number(row.id);
-  if (!Number.isFinite(id) || id <= 0) return null;
-  const entry = relationEntry(descriptor);
-  const displayField = String(entry?.displayField || '').trim();
-  const displayValue = displayField ? row[displayField] : '';
-  const label = String(displayValue || row.display_name || row.name || `#${id}`).trim();
-  const colorField = relationColorField(descriptor);
-  const colorValue = colorField ? Number(row[colorField]) : NaN;
-  const switchContract = entry?.switchContext?.enabled ? entry.switchContext : null;
-  const switchCode = switchContract?.codeField ? String(row[switchContract.codeField] || '').trim() : '';
-  const switchLabel = switchContract?.labelField ? String(row[switchContract.labelField] || '').trim() : '';
-  const defaultValues = switchContract?.defaultValuesField
-    ? parseRelationDefaultValues(row[switchContract.defaultValuesField])
-    : {};
-  return {
-    id: Math.trunc(id),
-    label: cleanRelationDisplayLabel(label, id),
-    ...(switchCode ? { switchContext: { code: switchCode, label: switchLabel || label, defaultValues } } : {}),
-    ...(Number.isFinite(colorValue) ? { color: Math.trunc(colorValue) } : {}),
-  };
-}
-
 function selectedRelationOptions(name: string): RelationOption[] {
   const options = relationOptionsForField(name);
   const byId = new Map(options.map((option) => [option.id, option]));
@@ -4340,23 +4295,6 @@ function addOne2manyRow(name: string) {
   markFieldChanged(name);
 }
 
-function normalizeOne2manyColumnValue(column: One2ManyColumn, value: unknown) {
-  const ttype = String(column.ttype || '').trim().toLowerCase();
-  if (ttype === 'boolean') return Boolean(value);
-  if (ttype === 'integer') {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? Math.trunc(parsed) : false;
-  }
-  if (ttype === 'float' || ttype === 'monetary') {
-    const parsed = Number(value);
-    return Number.isFinite(parsed) ? parsed : false;
-  }
-  if (ttype === 'date') return toDateInputValue(value) || false;
-  if (ttype === 'datetime') return fromDatetimeInputValue(value);
-  if (ttype === 'selection') return String(value ?? '').trim() || false;
-  return String(value ?? '');
-}
-
 function setOne2manyRowField(fieldName: string, rowKey: string, column: One2ManyColumn, value: unknown) {
   if (column.readonly) return;
   const rows = ensureOne2manyRows(fieldName);
@@ -4372,22 +4310,6 @@ function setOne2manyRowField(fieldName: string, rowKey: string, column: One2Many
     row.dirtyFields = [...row.dirtyFields, column.name];
   }
   markFieldChanged(fieldName);
-}
-
-function one2manyColumnInputType(column: One2ManyColumn) {
-  const ttype = String(column.ttype || '').trim().toLowerCase();
-  if (ttype === 'integer' || ttype === 'float' || ttype === 'monetary') return 'number';
-  if (ttype === 'date') return 'date';
-  if (ttype === 'datetime') return 'datetime-local';
-  return 'text';
-}
-
-function one2manyColumnDisplayValue(column: One2ManyColumn, value: unknown) {
-  const ttype = String(column.ttype || '').trim().toLowerCase();
-  if (value === false || value === null || value === undefined) return '';
-  if (ttype === 'date') return toDateInputValue(value);
-  if (ttype === 'datetime') return toDatetimeInputValue(value);
-  return String(value ?? '');
 }
 
 function removeOne2manyRow(fieldName: string, rowKey: string) {
@@ -4536,18 +4458,6 @@ function collectOne2manyDraftValidation() {
   return { issues, rowErrors };
 }
 
-function isOne2manyEmptyValue(column: One2ManyColumn, value: unknown) {
-  const ttype = String(column.ttype || '').trim().toLowerCase();
-  if (ttype === 'boolean') return value === false || value === null || value === undefined;
-  if (ttype === 'integer' || ttype === 'float' || ttype === 'monetary') {
-    return value === false || value === null || value === undefined || Number.isNaN(Number(value));
-  }
-  if (ttype === 'date' || ttype === 'datetime' || ttype === 'selection') {
-    return !String(value ?? '').trim() || value === false;
-  }
-  return !String(value ?? '').trim();
-}
-
 function one2manyRowErrors(fieldName: string, rowKey: string) {
   return one2manyValidation.value.rowErrors[`${fieldName}:${rowKey}`] || [];
 }
@@ -4576,56 +4486,6 @@ function one2manyRowHints(fieldName: string, row: One2ManyInlineRow) {
     }
   });
   return Array.from(new Set(messages));
-}
-
-function formRuntimeReasonLabel(reason: unknown): string {
-  const raw = String(reason || '').trim();
-  const key = raw.toUpperCase();
-  const mapping: Record<string, string> = {
-    ACTION_UNSUPPORTED: '当前操作暂不可用',
-    BUSINESS_RULE_FAILED: '业务规则限制',
-    CONFLICT: '数据已变化',
-    FIELD_CREATE_DISABLED: '当前字段暂不支持新增',
-    INLINE_CREATE_READY: '可在明细中新增',
-    MISSING_PARAMS: '参数不完整',
-    NETWORK_ERROR: '网络连接问题',
-    NOT_FOUND: '记录不存在',
-    PERMISSION_DENIED: '权限不足',
-    RELATION_CREATE_FORBIDDEN: '关联数据暂不允许新增',
-    RELATION_READ_FORBIDDEN: '关联数据暂不可查看',
-    SYSTEM_ERROR: '系统处理问题',
-    VALIDATION_ERROR: '校验未通过',
-    WRITE_FAILED: '保存失败',
-  };
-  if (!raw) return '待确认';
-  return mapping[key] || raw.replace(/[_-]+/g, ' ').toLowerCase().replace(/(^|\s)\S/g, (s) => s.toUpperCase());
-}
-
-function formRuntimeRowStateLabel(state: unknown): string {
-  const raw = String(state || '').trim().toLowerCase();
-  const mapping: Record<string, string> = {
-    create: '新增明细',
-    update: '已更新明细',
-    remove: '已移除明细',
-    keep: '保持当前明细',
-  };
-  return mapping[raw] || '已同步明细变化';
-}
-
-function formRuntimeCommandHintLabel(commands: unknown[]): string {
-  const values = commands.map((item) => Number(item)).filter((item) => Number.isFinite(item));
-  if (!values.length) return '请检查明细变化';
-  const labels = values.map((item) => {
-    if (item === 0) return '新增';
-    if (item === 1) return '更新';
-    if (item === 2) return '删除';
-    if (item === 3) return '解除关联';
-    if (item === 4) return '关联已有';
-    if (item === 5) return '清空';
-    if (item === 6) return '替换为指定明细';
-    return '同步明细';
-  });
-  return Array.from(new Set(labels)).join('、');
 }
 
 function applyOnchangeLinePatches(linePatches: OnchangeLinePatch[]) {
@@ -4712,59 +4572,6 @@ function relationModel(name: string) {
   return String(descriptor?.relation || entry.model || '').trim();
 }
 
-function relationEntry(descriptor?: FieldDescriptor) {
-  const entry = (descriptor as Record<string, unknown> | undefined)?.relation_entry;
-  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return null;
-  const row = entry as Record<string, unknown>;
-  const actionId = toPositiveInt(row.action_id);
-  const menuId = toPositiveInt(row.menu_id);
-  const createModeRaw = String(row.create_mode || '').trim().toLowerCase();
-  const createMode = createModeRaw === 'page' || createModeRaw === 'quick' ? createModeRaw : 'disabled';
-  const defaultVals = row.default_vals && typeof row.default_vals === 'object' && !Array.isArray(row.default_vals)
-    ? (row.default_vals as Record<string, unknown>)
-    : {};
-  const defaultFromFields = row.default_from_fields && typeof row.default_from_fields === 'object' && !Array.isArray(row.default_from_fields)
-    ? (row.default_from_fields as Record<string, unknown>)
-    : {};
-  const domain = Array.isArray(row.domain) ? row.domain as unknown[] : [];
-  const inlineRaw = row.inline_create && typeof row.inline_create === 'object' && !Array.isArray(row.inline_create)
-    ? row.inline_create as Record<string, unknown>
-    : {};
-  const switchRaw = row.switch_context && typeof row.switch_context === 'object' && !Array.isArray(row.switch_context)
-    ? row.switch_context as Record<string, unknown>
-    : {};
-  return {
-    model: String(row.model || '').trim(),
-    actionId,
-    menuId,
-    canRead: row.can_read !== false,
-    canOpen: row.can_open !== false,
-    canCreate: Boolean(row.can_create),
-    createMode,
-    defaultVals,
-    defaultFromFields,
-    domain,
-    order: String(row.order || '').trim(),
-    displayField: String(row.display_field || row.displayField || '').trim(),
-    switchContext: {
-      enabled: switchRaw.enabled === true,
-      codeField: String(switchRaw.code_field || switchRaw.codeField || '').trim(),
-      labelField: String(switchRaw.label_field || switchRaw.labelField || '').trim(),
-      defaultValuesField: String(switchRaw.default_values_field || switchRaw.defaultValuesField || '').trim(),
-      defaultClearFields: Array.isArray(switchRaw.default_clear_fields)
-        ? switchRaw.default_clear_fields.map((item) => String(item || '').trim()).filter(Boolean)
-        : [],
-    },
-    reasonCode: String(row.reason_code || '').trim(),
-    inlineCreate: {
-      enabled: inlineRaw.enabled === true,
-      createOnNoMatch: inlineRaw.create_on_no_match === true,
-      nameField: String(inlineRaw.name_field || 'name').trim() || 'name',
-      match: String(inlineRaw.match || '').trim() || 'exact_label',
-    },
-  };
-}
-
 function relationSearchDialogContract(name: string): Record<string, unknown> {
   const descriptor = contract.value?.fields?.[name] as Record<string, unknown> | undefined;
   const entry = descriptor?.relation_entry;
@@ -4772,23 +4579,6 @@ function relationSearchDialogContract(name: string): Record<string, unknown> {
   const dialog = (entry as Record<string, unknown>).search_dialog;
   if (!dialog || typeof dialog !== 'object' || Array.isArray(dialog)) return {};
   return dialog as Record<string, unknown>;
-}
-
-function relationUiLabels(descriptor?: FieldDescriptor): RelationUiLabels {
-  const entry = (descriptor as Record<string, unknown> | undefined)?.relation_entry;
-  const labels = entry && typeof entry === 'object' && !Array.isArray(entry)
-    ? (entry as Record<string, unknown>).ui_labels
-    : null;
-  if (!labels || typeof labels !== 'object' || Array.isArray(labels)) return {};
-  return Object.entries(labels as Record<string, unknown>).reduce<RelationUiLabels>((acc, [key, value]) => {
-    const label = String(value || '').trim();
-    if (key && label) acc[key] = label;
-    return acc;
-  }, {});
-}
-
-function relationUiLabel(descriptor: FieldDescriptor | undefined, key: string, fallback = '') {
-  return relationUiLabels(descriptor)[key] || fallback || key;
 }
 
 function formUiLabels(): Record<string, string> {
@@ -5142,19 +4932,6 @@ async function loadRelationSearchColumns(fieldName: string): Promise<RelationSea
   } catch {
     return fallbackRelationSearchColumns(fieldName);
   }
-}
-
-function relationSearchReadFields(columns: RelationSearchColumn[], dialog: Record<string, unknown> = {}) {
-  const out = new Set<string>(['id', 'display_name', 'name']);
-  const contractFields = Array.isArray(dialog.read_fields) ? dialog.read_fields : [];
-  for (const field of contractFields) {
-    const name = String(field || '').trim();
-    if (name) out.add(name);
-  }
-  for (const column of columns) {
-    if (column.name) out.add(column.name);
-  }
-  return Array.from(out);
 }
 
 async function fetchRelationSearchRows(name: string, keyword: string, limit = 120): Promise<RelationSearchRow[]> {

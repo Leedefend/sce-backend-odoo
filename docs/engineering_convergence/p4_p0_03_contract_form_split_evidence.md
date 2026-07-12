@@ -15,6 +15,8 @@ Extracted responsibilities:
 - Generic contract record helpers moved to `frontend/apps/web/src/pages/contractForm/recordUtils.ts`.
 - Field, relation-display, date-input, view-label, and UI-error helpers moved to `frontend/apps/web/src/pages/contractForm/fieldUtils.ts`.
 - Access-policy normalization moved to `frontend/apps/web/src/pages/contractForm/accessPolicy.ts`.
+- Relation descriptor parsing and relation search read-field assembly moved to `frontend/apps/web/src/pages/contractForm/relationDescriptor.ts`.
+- One2many column value normalization, input/display helpers, required-value checks, and runtime line-patch labels moved to `frontend/apps/web/src/pages/contractForm/one2manyUtils.ts`.
 
 The route component remains the orchestration shell and still owns runtime state, navigation, persistence, and user interaction flow.
 
@@ -22,7 +24,7 @@ The route component remains the orchestration shell and still owns runtime state
 
 | File | Before | After |
 | --- | ---: | ---: |
-| `frontend/apps/web/src/pages/ContractFormPage.vue` | 13762 | 13393 |
+| `frontend/apps/web/src/pages/ContractFormPage.vue` | 13762 | 13170 |
 
 ## Boundary Decision
 
