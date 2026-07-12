@@ -310,6 +310,69 @@ export function collectNativeLayoutGroupTitles(nodes: NativeLayoutLikeNode[]) {
   return titles;
 }
 
+export function collectNativeFieldStructureGroups(nodes: NativeLayoutLikeNode[]) {
+  const groups = new Map<string, { key: string; title: string; fieldKeys: string[] }>();
+  const fieldSeen = new Set<string>();
+  let anonymousGroupIndex = 0;
+  const addField = (title: string, fieldKey: string) => {
+    const normalizedField = String(fieldKey || '').trim();
+    if (!normalizedField || fieldSeen.has(normalizedField)) return;
+    fieldSeen.add(normalizedField);
+    const groupTitle = title || '主表区域';
+    const groupKey = groupTitle;
+    if (!groups.has(groupKey)) groups.set(groupKey, { key: groupKey, title: groupTitle, fieldKeys: [] });
+    groups.get(groupKey)?.fieldKeys.push(normalizedField);
+  };
+  const rawChildren = (node: NativeLayoutLikeNode) => {
+    const rows: NativeLayoutLikeNode[] = [];
+    (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+      const children = node?.[key];
+      if (Array.isArray(children)) rows.push(...children as NativeLayoutLikeNode[]);
+    });
+    return rows;
+  };
+  const directVisibleFieldNames = (node: NativeLayoutLikeNode) => rawChildren(node)
+    .filter((child) => nativeLayoutNodeType(child) === 'field')
+    .map((child) => String(child?.name || '').trim())
+    .filter(Boolean);
+  const groupTitleForNode = (node: NativeLayoutLikeNode, pageTitle: string, groupTitle: string) => {
+    const type = nativeLayoutNodeType(node);
+    const title = String(node?.string || node?.label || '').trim();
+    if (type === 'page' && isReadableFieldGroupTitle(title)) return title;
+    if (type === 'group' && isReadableFieldGroupTitle(title)) return fieldStructureTitle(pageTitle, title);
+    if (type === 'group' && directVisibleFieldNames(node).length) {
+      anonymousGroupIndex += 1;
+      return fieldStructureTitle(pageTitle, `默认分组 ${anonymousGroupIndex}`);
+    }
+    return groupTitle;
+  };
+  const walk = (rows: NativeLayoutLikeNode[], pageTitle = '', groupTitle = '') => {
+    rows.forEach((node) => {
+      const type = nativeLayoutNodeType(node);
+      const title = String(node?.string || node?.label || '').trim();
+      const nextPage = type === 'page' && title ? title : pageTitle;
+      const nextGroup = groupTitleForNode(node, nextPage, groupTitle);
+      const name = String(node?.name || '').trim();
+      if (type === 'field' && name) addField(fieldStructureTitle(nextPage, nextGroup), name);
+      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+        const children = node?.[key];
+        if (Array.isArray(children)) walk(children as NativeLayoutLikeNode[], nextPage, nextGroup);
+      });
+    });
+  };
+  walk(Array.isArray(nodes) ? nodes : []);
+  return Array.from(groups.values());
+}
+
+export function fieldGroupTitleMatches(value: unknown, target: string) {
+  const current = normalizeFieldGroupTitle(value);
+  const normalizedTarget = normalizeFieldGroupTitle(target);
+  if (!current || !normalizedTarget) return false;
+  return current === normalizedTarget
+    || current.endsWith(` / ${normalizedTarget}`)
+    || normalizedTarget.endsWith(` / ${current}`);
+}
+
 export function mergeLowCodeLayoutWithRuntimeGroupShells<T extends NativeLayoutLikeNode>(base: T[], runtime: NativeLayoutLikeNode[]): T[] {
   if (!Array.isArray(base) || !base.length) return base;
   const existing = new Set(

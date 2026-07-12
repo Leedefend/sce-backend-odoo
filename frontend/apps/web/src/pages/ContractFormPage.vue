@@ -1287,7 +1287,9 @@ import {
   buildFormFieldConfigScope,
   buildFormConfigOperationLogStorageKey,
   createFormConfigOperationLogEntry,
+  collectNativeFieldStructureGroups,
   formConfigOperationStatusLabel,
+  fieldGroupTitleMatches,
   formatFormConfigAuditSummary,
   formatFormConfigOperationSummary as formatFormConfigOperationSummaryText,
   formatFormConfigOperationTime,
@@ -2749,55 +2751,6 @@ const selectedFormSettingsFieldRow = computed(() => {
 });
 
 const nativeFieldStructureGroups = computed<Array<{ key: string; title: string; fieldKeys: string[] }>>(() => {
-  const groups = new Map<string, { key: string; title: string; fieldKeys: string[] }>();
-  const fieldSeen = new Set<string>();
-  let anonymousGroupIndex = 0;
-  const addField = (title: string, fieldKey: string) => {
-    const normalizedField = String(fieldKey || '').trim();
-    if (!normalizedField || fieldSeen.has(normalizedField)) return;
-    fieldSeen.add(normalizedField);
-    const groupTitle = title || '主表区域';
-    const groupKey = groupTitle;
-    if (!groups.has(groupKey)) groups.set(groupKey, { key: groupKey, title: groupTitle, fieldKeys: [] });
-    groups.get(groupKey)?.fieldKeys.push(normalizedField);
-  };
-  const rawChildren = (node: NativeFormLayoutNode) => {
-    const rows: NativeFormLayoutNode[] = [];
-    (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
-      const children = node?.[key];
-      if (Array.isArray(children)) rows.push(...children as NativeFormLayoutNode[]);
-    });
-    return rows;
-  };
-  const directVisibleFieldNames = (node: NativeFormLayoutNode) => rawChildren(node)
-    .filter((child) => nativeLayoutNodeType(child) === 'field')
-    .map((child) => String(child?.name || '').trim())
-    .filter(Boolean);
-  const groupTitleForNode = (node: NativeFormLayoutNode, pageTitle: string, groupTitle: string) => {
-    const type = nativeLayoutNodeType(node);
-    const title = String(node?.string || node?.label || '').trim();
-    if (type === 'page' && isReadableFieldGroupTitle(title)) return title;
-    if (type === 'group' && isReadableFieldGroupTitle(title)) return fieldStructureTitle(pageTitle, title);
-    if (type === 'group' && directVisibleFieldNames(node).length) {
-      anonymousGroupIndex += 1;
-      return fieldStructureTitle(pageTitle, `默认分组 ${anonymousGroupIndex}`);
-    }
-    return groupTitle;
-  };
-  const walk = (nodes: NativeFormLayoutNode[], pageTitle = '', groupTitle = '') => {
-    nodes.forEach((node) => {
-      const type = nativeLayoutNodeType(node);
-      const title = String(node?.string || node?.label || '').trim();
-      const nextPage = type === 'page' && title ? title : pageTitle;
-      const nextGroup = groupTitleForNode(node, nextPage, groupTitle);
-      const name = String(node?.name || '').trim();
-      if (type === 'field' && name) addField(fieldStructureTitle(nextPage, nextGroup), name);
-      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
-        const children = node?.[key];
-        if (Array.isArray(children)) walk(children as NativeFormLayoutNode[], nextPage, nextGroup);
-      });
-    });
-  };
   const lowCodeLayout = lowCodeFormLayoutBase.value;
   const useLowCodeLayout = isContractFieldOrderEditable.value && layoutHasReadableFieldGroups(lowCodeLayout);
   const legacyLayout = Array.isArray(contract.value?.views?.form?.layout)
@@ -2815,8 +2768,7 @@ const nativeFieldStructureGroups = computed<Array<{ key: string; title: string; 
       : (containers.length
         ? normalizeContractV2ContainersForNativeForm(containers as unknown as ContractV2Container[])
         : legacyLayout));
-  walk(baseLayout);
-  return Array.from(groups.values());
+  return collectNativeFieldStructureGroups(baseLayout as NativeLayoutLikeNode[]);
 });
 
 watch(nativeFieldStructureGroups, (groups) => {
@@ -9191,15 +9143,6 @@ function onFieldOrderDrop(targetFieldKey: string, targetGroupTitle = '', request
   selectedFormSettingsFieldLabel.value = draggingFieldLabel.value || formDesignFieldLabel(sourceFieldKey);
   dropTargetFieldKey.value = '';
   dropTargetPlacement.value = 'before';
-}
-
-function fieldGroupTitleMatches(value: unknown, target: string) {
-  const current = normalizeFieldGroupTitle(value);
-  const normalizedTarget = normalizeFieldGroupTitle(target);
-  if (!current || !normalizedTarget) return false;
-  return current === normalizedTarget
-    || current.endsWith(` / ${normalizedTarget}`)
-    || normalizedTarget.endsWith(` / ${current}`);
 }
 
 function fieldGroupTitleForDraft(fieldKey: string) {
