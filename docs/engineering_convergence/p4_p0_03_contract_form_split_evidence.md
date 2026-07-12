@@ -16,7 +16,7 @@ Extracted responsibilities:
 - Field, relation-display, date-input, input-type, view-label, and UI-error helpers moved to `frontend/apps/web/src/pages/contractForm/fieldUtils.ts`.
 - Access-policy normalization moved to `frontend/apps/web/src/pages/contractForm/accessPolicy.ts`.
 - Relation descriptor parsing, model/order lookup, create/inline-create rules, option-match rules, dynamic-domain dependency detection, blocked-domain checks, relation-search dialog/column normalization, and relation search read-field assembly moved to `frontend/apps/web/src/pages/contractForm/relationDescriptor.ts`.
-- One2many subview policy helpers, create-label rules, primary/row label helpers, draft summary, column value normalization, input/display helpers, required-value checks, and runtime line-patch labels moved to `frontend/apps/web/src/pages/contractForm/one2manyUtils.ts`.
+- One2many subview policy helpers, create-label rules, primary/row label helpers, row-state labels, draft summary, inline command building, column value normalization, input/display helpers, required-value checks, and runtime line-patch labels moved to `frontend/apps/web/src/pages/contractForm/one2manyUtils.ts`.
 - Workflow action-row normalization, transition aliases, and evidence-gate row parsing moved to `frontend/apps/web/src/pages/contractForm/workflowContract.ts`.
 - Form UI labels, native chatter labels, activity field labels, attachment labels, and native-layout type lookup moved to `frontend/apps/web/src/pages/contractForm/uiLabels.ts`.
 - Form-configuration operation-log formatting, internal-field detection, and field-group title normalization moved to `frontend/apps/web/src/pages/contractForm/formConfigHelpers.ts`.
@@ -30,7 +30,7 @@ The route component remains the orchestration shell and still owns runtime state
 
 | File | Before | After |
 | --- | ---: | ---: |
-| `frontend/apps/web/src/pages/ContractFormPage.vue` | 13762 | 12470 |
+| `frontend/apps/web/src/pages/ContractFormPage.vue` | 13762 | 12452 |
 
 ## Boundary Decision
 

@@ -1205,7 +1205,7 @@ import { buildCanonicalSceneRouteTarget, buildEntryTargetRouteTarget } from '../
 import { readWorkspaceContext } from '../app/workspaceContext';
 import { collectPolicyValidationErrors, evaluateActionPolicy, evaluateFieldPolicy } from '../app/contractPolicies';
 import { buildRuntimeFieldStates } from '../app/modifierEngine';
-import { buildOne2ManyInlineCommands, buildX2ManyCommands } from '../app/x2manyCommands';
+import { buildX2ManyCommands } from '../app/x2manyCommands';
 import { resolveSceneValidationSuggestedAction } from '../app/sceneValidationRecoveryStrategy';
 import { findSceneReadyEntry, resolveFormSceneReady } from '../app/resolvers/sceneReadyResolver';
 import { normalizeSceneActionProtocol } from '../app/sceneActionProtocol';
@@ -1325,6 +1325,7 @@ import {
   formRuntimeCommandHintLabel,
   formRuntimeReasonLabel,
   formRuntimeRowStateLabel,
+  buildOne2manyCommandValue as buildOne2manyCommandValueFromRows,
   isOne2manyEmptyValue,
   normalizeOne2manyColumnValue,
   one2manyCanCreateFromPolicies,
@@ -1334,6 +1335,7 @@ import {
   one2manyDraftSummary,
   one2manyPrimaryColumnFromColumns,
   one2manyRowLabelFromPrimary,
+  one2manyRowStateLabel,
   one2manySubviewPolicies,
   subviewColumnCount,
 } from './contractForm/one2manyUtils';
@@ -4160,13 +4162,6 @@ function one2manyRowLabel(fieldName: string, row: One2ManyInlineRow) {
   return one2manyRowLabelFromPrimary(one2manyPrimaryColumn(fieldName), row);
 }
 
-function one2manyRowStateLabel(row: One2ManyInlineRow) {
-  if (row.removed) return '待删除';
-  if (row.isNew) return '新增';
-  if (row.dirty) return '已修改';
-  return '未变更';
-}
-
 function one2manySummary(name: string) {
   return one2manyDraftSummary(one2manyFieldRows(name));
 }
@@ -4317,20 +4312,7 @@ async function hydrateVisibleOne2manyRows() {
 }
 
 function buildOne2manyCommandValue(name: string, mode: 'onchange' | 'write') {
-  const rows = one2manyFieldRows(name);
-  return buildOne2ManyInlineCommands({
-    original: originalValues.value[name],
-    draftRows: rows.map((row) => ({
-      id: row.id,
-      isNew: row.isNew,
-      removed: row.removed,
-      dirty: row.dirty,
-      values: row.isNew
-        ? row.values || {}
-        : Object.fromEntries((row.dirtyFields || []).map((key) => [key, row.values?.[key]])),
-    })),
-    mode,
-  });
+  return buildOne2manyCommandValueFromRows(originalValues.value[name], one2manyFieldRows(name), mode);
 }
 
 function collectOne2manyDraftValidation() {

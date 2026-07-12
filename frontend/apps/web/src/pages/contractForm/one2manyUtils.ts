@@ -1,3 +1,4 @@
+import { buildOne2ManyInlineCommands } from '../../app/x2manyCommands';
 import { fromDatetimeInputValue, toDateInputValue, toDatetimeInputValue } from './fieldUtils';
 import type { One2ManyColumn, One2ManyInlineRow } from './types';
 
@@ -47,6 +48,13 @@ export function one2manyRowLabelFromPrimary(primary: string, row: One2ManyInline
   return '未命名';
 }
 
+export function one2manyRowStateLabel(row: One2ManyInlineRow) {
+  if (row.removed) return '待删除';
+  if (row.isNew) return '新增';
+  if (row.dirty) return '已修改';
+  return '未变更';
+}
+
 export function one2manyDraftSummary(rows: One2ManyInlineRow[]) {
   if (!rows.length) return '';
   let created = 0;
@@ -68,6 +76,26 @@ export function one2manyDraftSummary(rows: One2ManyInlineRow[]) {
   if (updated) parts.push(`修改 ${updated}`);
   if (removed) parts.push(`删除 ${removed}`);
   return parts.length ? `待提交：${parts.join(' / ')}` : '待提交：无变更';
+}
+
+export function buildOne2manyCommandValue(
+  original: unknown,
+  rows: One2ManyInlineRow[],
+  mode: 'onchange' | 'write',
+) {
+  return buildOne2ManyInlineCommands({
+    original,
+    draftRows: rows.map((row) => ({
+      id: row.id,
+      isNew: row.isNew,
+      removed: row.removed,
+      dirty: row.dirty,
+      values: row.isNew
+        ? row.values || {}
+        : Object.fromEntries((row.dirtyFields || []).map((key) => [key, row.values?.[key]])),
+    })),
+    mode,
+  });
 }
 
 export function normalizeOne2manyColumnValue(column: One2ManyColumn, value: unknown) {
