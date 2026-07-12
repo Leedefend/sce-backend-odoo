@@ -373,6 +373,104 @@ export function fieldGroupTitleMatches(value: unknown, target: string) {
     || normalizedTarget.endsWith(` / ${current}`);
 }
 
+export function buildCurrentFormGroupOptions(params: {
+  nativeGroups: Array<{ title: string }>;
+  runtimeGroupTitles: string[];
+  fieldKeys: string[];
+  resolveDraftGroupTitle: (fieldKey: string) => string;
+}) {
+  const groupTitles = params.nativeGroups
+    .map((group) => normalizeFieldGroupTitle(group.title))
+    .filter(Boolean);
+  params.runtimeGroupTitles.forEach((title) => {
+    const normalized = normalizeFieldGroupTitle(title);
+    if (normalized) groupTitles.push(normalized);
+  });
+  params.fieldKeys.forEach((fieldKey) => {
+    const title = params.resolveDraftGroupTitle(fieldKey);
+    if (title) groupTitles.push(title);
+  });
+  const businessGroupTitles = groupTitles.filter((title) => title !== '主表区域');
+  return Array.from(new Set(businessGroupTitles.length ? businessGroupTitles : groupTitles));
+}
+
+export function buildFormDesignerGroupNavigatorItems(params: {
+  nativeGroups: Array<{ title: string; fieldKeys: string[] }>;
+  fieldKeys: string[];
+  selectedGroupTitle: string;
+  resolveDraftGroupTitle: (fieldKey: string) => string;
+}) {
+  const configurableFields = new Set(params.fieldKeys);
+  const byTitle = new Map<string, { title: string; fieldKeys: string[] }>();
+  params.nativeGroups.forEach((group) => {
+    const title = normalizeFieldGroupTitle(group.title);
+    if (!title || title === '主表区域') return;
+    const fieldKeys = group.fieldKeys.filter((fieldKey) => configurableFields.has(fieldKey));
+    if (!fieldKeys.length) return;
+    if (!byTitle.has(title)) byTitle.set(title, { title, fieldKeys: [] });
+    byTitle.get(title)?.fieldKeys.push(...fieldKeys);
+  });
+  params.fieldKeys.forEach((fieldKey) => {
+    const title = params.resolveDraftGroupTitle(fieldKey);
+    if (!title || title === '主表区域') return;
+    if (!byTitle.has(title)) byTitle.set(title, { title, fieldKeys: [] });
+    const entry = byTitle.get(title);
+    if (entry && !entry.fieldKeys.includes(fieldKey)) entry.fieldKeys.push(fieldKey);
+  });
+  return Array.from(byTitle.values()).map((item) => ({
+    ...item,
+    count: item.fieldKeys.length,
+    active: Boolean(params.selectedGroupTitle && fieldGroupTitleMatches(item.title, params.selectedGroupTitle)),
+  }));
+}
+
+export function buildFormDesignerSearchableFieldRows(params: {
+  orderedFieldKeys: string[];
+  fallbackFieldKeys: string[];
+  nativeGroups: Array<{ title: string; fieldKeys: string[] }>;
+  resolveDraftGroupTitle: (fieldKey: string) => string;
+  resolveFieldLabel: (fieldKey: string) => string;
+}) {
+  const keys = params.orderedFieldKeys.length ? params.orderedFieldKeys : params.fallbackFieldKeys;
+  return keys.map((fieldKey) => {
+    const groupTitle = normalizeFieldGroupTitle(params.resolveDraftGroupTitle(fieldKey))
+      || params.nativeGroups.find((group) => group.fieldKeys.includes(fieldKey))?.title
+      || '业务配置字段';
+    return {
+      fieldKey,
+      label: params.resolveFieldLabel(fieldKey),
+      groupTitle,
+    };
+  });
+}
+
+export function filterFormDesignerFieldRows(
+  rows: Array<{ fieldKey: string; label: string; groupTitle: string }>,
+  queryText: string,
+  defaultLimit = 8,
+) {
+  const query = String(queryText || '').trim().toLowerCase();
+  if (!query) return rows.slice(0, defaultLimit);
+  return rows.filter((row) => (
+    row.label.toLowerCase().includes(query)
+    || row.fieldKey.toLowerCase().includes(query)
+    || row.groupTitle.toLowerCase().includes(query)
+  ));
+}
+
+export function resolveSelectedFormSettingsFieldGroupTitle(params: {
+  fieldKey: string;
+  draftGroupTitle: string;
+  nativeGroups: Array<{ title: string; fieldKeys: string[] }>;
+  fallbackDraftTitle: string;
+}) {
+  const fieldKey = String(params.fieldKey || '').trim();
+  if (!fieldKey) return '';
+  if (params.draftGroupTitle) return params.draftGroupTitle;
+  const nativeGroup = params.nativeGroups.find((group) => group.fieldKeys.includes(fieldKey));
+  return nativeGroup?.title || params.fallbackDraftTitle || '业务配置字段';
+}
+
 export function mergeLowCodeLayoutWithRuntimeGroupShells<T extends NativeLayoutLikeNode>(base: T[], runtime: NativeLayoutLikeNode[]): T[] {
   if (!Array.isArray(base) || !base.length) return base;
   const existing = new Set(

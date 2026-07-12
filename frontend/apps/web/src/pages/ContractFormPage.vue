@@ -1286,8 +1286,12 @@ import {
   appendFormConfigOperationLogEntry,
   buildFormFieldConfigScope,
   buildFormConfigOperationLogStorageKey,
+  buildCurrentFormGroupOptions,
+  buildFormDesignerGroupNavigatorItems,
+  buildFormDesignerSearchableFieldRows,
   createFormConfigOperationLogEntry,
   collectNativeFieldStructureGroups,
+  filterFormDesignerFieldRows,
   formConfigOperationStatusLabel,
   fieldGroupTitleMatches,
   formatFormConfigAuditSummary,
@@ -1305,6 +1309,7 @@ import {
   normalizeFieldGroupTitle,
   normalizeFormConfigOperationLogEntries,
   readableFallbackFieldLabel,
+  resolveSelectedFormSettingsFieldGroupTitle,
 } from './contractForm/formConfigHelpers';
 import {
   isMissingRequiredValue,
@@ -2801,81 +2806,46 @@ const currentFormDesignFieldCount = computed(() => {
 });
 
 const currentFormGroupOptions = computed(() => {
-  const groupTitles = nativeFieldStructureGroups.value
-    .map((group) => normalizeFieldGroupTitle(group.title))
-    .filter(Boolean);
-  collectNativeLayoutGroupTitles(runtimeNativeFormLayoutNodes()).forEach((title) => {
-    const normalized = normalizeFieldGroupTitle(title);
-    if (normalized) groupTitles.push(normalized);
+  return buildCurrentFormGroupOptions({
+    nativeGroups: nativeFieldStructureGroups.value,
+    runtimeGroupTitles: collectNativeLayoutGroupTitles(runtimeNativeFormLayoutNodes()),
+    fieldKeys: currentFormDesignFieldKeys.value,
+    resolveDraftGroupTitle: effectiveFieldGroupTitleForDraft,
   });
-  currentFormDesignFieldKeys.value.forEach((fieldKey) => {
-    const title = effectiveFieldGroupTitleForDraft(fieldKey);
-    if (title) groupTitles.push(title);
-  });
-  const businessGroupTitles = groupTitles.filter((title) => title !== '主表区域');
-  return Array.from(new Set(businessGroupTitles.length ? businessGroupTitles : groupTitles));
 });
 
 const formDesignerGroupNavigatorItems = computed(() => {
-  const configurableFields = new Set(currentFormDesignFieldKeys.value);
-  const selectedGroupTitle = selectedFormSettingsFieldGroupTitle.value;
-  const byTitle = new Map<string, { title: string; fieldKeys: string[] }>();
-  nativeFieldStructureGroups.value.forEach((group) => {
-    const title = normalizeFieldGroupTitle(group.title);
-    if (!title || title === '主表区域') return;
-    const fieldKeys = group.fieldKeys.filter((fieldKey) => configurableFields.has(fieldKey));
-    if (!fieldKeys.length) return;
-    if (!byTitle.has(title)) byTitle.set(title, { title, fieldKeys: [] });
-    byTitle.get(title)?.fieldKeys.push(...fieldKeys);
+  return buildFormDesignerGroupNavigatorItems({
+    nativeGroups: nativeFieldStructureGroups.value,
+    fieldKeys: currentFormDesignFieldKeys.value,
+    selectedGroupTitle: selectedFormSettingsFieldGroupTitle.value,
+    resolveDraftGroupTitle: effectiveFieldGroupTitleForDraft,
   });
-  currentFormDesignFieldKeys.value.forEach((fieldKey) => {
-    const title = effectiveFieldGroupTitleForDraft(fieldKey);
-    if (!title || title === '主表区域') return;
-    if (!byTitle.has(title)) byTitle.set(title, { title, fieldKeys: [] });
-    const entry = byTitle.get(title);
-    if (entry && !entry.fieldKeys.includes(fieldKey)) entry.fieldKeys.push(fieldKey);
-  });
-  return Array.from(byTitle.values()).map((item) => ({
-    ...item,
-    count: item.fieldKeys.length,
-    active: Boolean(selectedGroupTitle && fieldGroupTitleMatches(item.title, selectedGroupTitle)),
-  }));
 });
 
 const formDesignerFieldSearchQuery = computed(() => String(formDesignerFieldSearchText.value || '').trim().toLowerCase());
 
 const formDesignerSearchableFieldRows = computed(() => {
-  const keys = currentFormOrderedFieldKeys.value.length ? currentFormOrderedFieldKeys.value : currentFormDesignFieldKeys.value;
-  return keys.map((fieldKey) => {
-    const groupTitle = normalizeFieldGroupTitle(effectiveFieldGroupTitleForDraft(fieldKey))
-      || nativeFieldStructureGroups.value.find((group) => group.fieldKeys.includes(fieldKey))?.title
-      || '业务配置字段';
-    return {
-      fieldKey,
-      label: formDesignFieldLabel(fieldKey),
-      groupTitle,
-    };
+  return buildFormDesignerSearchableFieldRows({
+    orderedFieldKeys: currentFormOrderedFieldKeys.value,
+    fallbackFieldKeys: currentFormDesignFieldKeys.value,
+    nativeGroups: nativeFieldStructureGroups.value,
+    resolveDraftGroupTitle: effectiveFieldGroupTitleForDraft,
+    resolveFieldLabel: formDesignFieldLabel,
   });
 });
 
 const formDesignerFilteredFieldRows = computed(() => {
-  const query = formDesignerFieldSearchQuery.value;
-  const rows = formDesignerSearchableFieldRows.value;
-  if (!query) return rows.slice(0, 8);
-  return rows.filter((row) => (
-    row.label.toLowerCase().includes(query)
-    || row.fieldKey.toLowerCase().includes(query)
-    || row.groupTitle.toLowerCase().includes(query)
-  ));
+  return filterFormDesignerFieldRows(formDesignerSearchableFieldRows.value, formDesignerFieldSearchQuery.value);
 });
 
 const selectedFormSettingsFieldGroupTitle = computed(() => {
-  const fieldKey = selectedFormSettingsFieldKey.value;
-  if (!fieldKey) return '';
-  const draftTitle = effectiveFieldGroupTitleForDraft(fieldKey);
-  if (draftTitle) return draftTitle;
-  const nativeGroup = nativeFieldStructureGroups.value.find((group) => group.fieldKeys.includes(fieldKey));
-  return nativeGroup?.title || selectedFormSettingsFieldGroupTitleDraft.value || '业务配置字段';
+  return resolveSelectedFormSettingsFieldGroupTitle({
+    fieldKey: selectedFormSettingsFieldKey.value,
+    draftGroupTitle: effectiveFieldGroupTitleForDraft(selectedFormSettingsFieldKey.value),
+    nativeGroups: nativeFieldStructureGroups.value,
+    fallbackDraftTitle: selectedFormSettingsFieldGroupTitleDraft.value,
+  });
 });
 
 const selectedFormSettingsGroupVisible = computed(() => effectiveGroupVisible(selectedFormSettingsFieldGroupTitle.value));
