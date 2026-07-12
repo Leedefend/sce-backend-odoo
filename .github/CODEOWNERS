@@ -1,38 +1,38 @@
 # v1.1 Engineering Convergence code ownership
 
 # Default owner for any unmatched path.
-* @Leedefend
+* @Leedefend @hehm-action
 
 # GitHub governance and release process.
-/.github/ @Leedefend
-/docs/engineering_convergence/ @Leedefend
+/.github/ @Leedefend @hehm-action
+/docs/engineering_convergence/ @Leedefend @hehm-action
 
 # CI, local quality gates, deployment, and operations.
-/Makefile @Leedefend
-/docker-compose*.yml @Leedefend
-/Dockerfile @Leedefend
-/scripts/ci/ @Leedefend
-/scripts/deploy/ @Leedefend
-/scripts/dev/ @Leedefend
-/scripts/common/ @Leedefend
+/Makefile @Leedefend @hehm-action
+/docker-compose*.yml @Leedefend @hehm-action
+/Dockerfile @Leedefend @hehm-action
+/scripts/ci/ @Leedefend @hehm-action
+/scripts/deploy/ @Leedefend @hehm-action
+/scripts/dev/ @Leedefend @hehm-action
+/scripts/common/ @Leedefend @hehm-action
 
 # Platform core and low-code configuration engine.
-/addons/smart_core/ @Leedefend
-/addons/smart_core/app_config_engine/ @Leedefend
+/addons/smart_core/ @Leedefend @hehm-action
+/addons/smart_core/app_config_engine/ @Leedefend @hehm-action
 
 # Construction business domains.
-/addons/smart_construction_core/ @Leedefend
-/addons/smart_construction_portal/ @Leedefend
-/addons/smart_construction_scene/ @Leedefend
-/addons/smart_construction_bundle/ @Leedefend
+/addons/smart_construction_core/ @Leedefend @hehm-action
+/addons/smart_construction_portal/ @Leedefend @hehm-action
+/addons/smart_construction_scene/ @Leedefend @hehm-action
+/addons/smart_construction_bundle/ @Leedefend @hehm-action
 
 # Demo and seed data must not influence production release decisions.
-/addons/smart_construction_demo/ @Leedefend
-/addons/smart_construction_seed/ @Leedefend
+/addons/smart_construction_demo/ @Leedefend @hehm-action
+/addons/smart_construction_seed/ @Leedefend @hehm-action
 
 # Frontend application.
-/frontend/ @Leedefend
+/frontend/ @Leedefend @hehm-action
 
 # Migration and generated data tooling.
-/migration_assets/ @Leedefend
-/scripts/migration/ @Leedefend
+/migration_assets/ @Leedefend @hehm-action
+/scripts/migration/ @Leedefend @hehm-action
