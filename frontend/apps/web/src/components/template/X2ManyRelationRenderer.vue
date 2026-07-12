@@ -137,7 +137,10 @@
                   {{ String(option[1]) }}
                 </option>
               </select>
-              <span v-else-if="isDateLikeColumn(column.ttype)" class="relation-date-input-shell">
+              <span
+                v-else-if="isDateLikeColumn(column.ttype)"
+                :class="['relation-date-input-shell', { 'relation-date-input-shell--has-value': Boolean(adapter.one2manyColumnDisplayValue(column, row.values[column.name])) }]"
+              >
                 <input
                   :class="['input', 'relation-date-input', { 'relation-date-input--empty': !adapter.one2manyColumnDisplayValue(column, row.values[column.name]) }]"
                   :type="adapter.one2manyColumnInputType(column)"
@@ -146,6 +149,12 @@
                   :placeholder="column.label"
                   @input="adapter.setOne2manyRowField(field.name, row.key, column, ($event.target as HTMLInputElement).value)"
                 />
+                <span
+                  v-if="adapter.one2manyColumnDisplayValue(column, row.values[column.name])"
+                  class="relation-date-display"
+                >
+                  {{ formatRelationDateDisplay(adapter.one2manyColumnDisplayValue(column, row.values[column.name]), column.ttype) }}
+                </span>
                 <span
                   v-if="!adapter.one2manyColumnDisplayValue(column, row.values[column.name])"
                   class="relation-date-placeholder"
@@ -274,6 +283,18 @@ function isDateLikeColumn(type: unknown) {
 
 function localizedDateColumnPlaceholder(type: unknown) {
   return String(type || '').trim().toLowerCase() === 'datetime' ? '请选择日期时间' : '请选择日期';
+}
+
+function formatRelationDateDisplay(value: unknown, type: unknown) {
+  const text = String(value ?? '').trim();
+  if (!text) return '';
+  const match = text.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?/);
+  if (!match) return text;
+  const [, year, month, day, hour = '', minute = ''] = match;
+  if (String(type || '').trim().toLowerCase() === 'datetime' && hour) {
+    return `${year}-${month}-${day} ${minute ? `${hour}:${minute}` : `${hour}:00`}`;
+  }
+  return `${year}-${month}-${day}`;
 }
 </script>
 
@@ -636,6 +657,39 @@ function localizedDateColumnPlaceholder(type: unknown) {
   position: relative;
   display: grid;
   min-width: 0;
+}
+
+.relation-date-input-shell--has-value .relation-date-input {
+  color: transparent;
+}
+
+.relation-date-input-shell--has-value:focus-within .relation-date-input {
+  color: var(--sc-app-text-primary);
+}
+
+.relation-date-input[type='date'],
+.relation-date-input[type='datetime-local'] {
+  padding-right: 34px;
+}
+
+.relation-date-display {
+  position: absolute;
+  left: 10px;
+  right: 34px;
+  top: 50%;
+  z-index: 1;
+  overflow: hidden;
+  color: var(--sc-app-text-primary);
+  font-size: 13px;
+  line-height: 1.35;
+  pointer-events: none;
+  text-overflow: ellipsis;
+  transform: translateY(-50%);
+  white-space: nowrap;
+}
+
+.relation-date-input-shell--has-value:focus-within .relation-date-display {
+  opacity: 0;
 }
 
 .relation-date-input--empty::-webkit-datetime-edit {
