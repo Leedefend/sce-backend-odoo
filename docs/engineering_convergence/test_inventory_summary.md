@@ -9,8 +9,8 @@ Generated from `test_inventory.csv`.
 - Unknown runtime: `3`
 - Long-running assets: `331`
 - Manual gate review: `4`
-- Aggregate-covered assets: `81`
-- PR dedupe candidates: `707`
+- Aggregate-covered assets: `86`
+- PR dedupe candidates: `702`
 
 ## By Layer
 
@@ -42,9 +42,9 @@ Generated from `test_inventory.csv`.
 
 | Disposition | Count |
 | --- | ---: |
-| deduplicate_before_required | 707 |
+| deduplicate_before_required | 702 |
 | keep_integration_or_release_only | 292 |
-| covered_by_aggregate | 77 |
+| covered_by_aggregate | 82 |
 | keep_release_only | 36 |
 | canonical_entry | 4 |
 | review_or_archive | 4 |
@@ -57,6 +57,7 @@ Generated from `test_inventory.csv`.
 | verify.unified_page_contract.v2 | 11 |
 | verify.frontend.product.ready | 7 |
 | verify.backend.contract.closure.mainline | 5 |
+| verify.scene.runtime_boundary.gate | 5 |
 | make ci | 1 |
 | make test.e2e | 1 |
 | make test.odoo.integration | 1 |
@@ -201,13 +202,12 @@ Generated from `test_inventory.csv`.
 | T-ASSET-350 | governance | `scripts/verify/capability_dormant_explain_guard.py` | architecture owner |
 | T-ASSET-351 | governance | `scripts/verify/capability_provider_guard.py` | architecture owner |
 | T-ASSET-352 | unit | `scripts/verify/capability_registry_smoke.py` | test owner |
-| ... | ... | 627 more | ... |
+| ... | ... | 622 more | ... |
 
 ## Dedupe Hotspots
 
 | Family | Count |
 | --- | ---: |
-| `scripts/verify/scene_action_surface` | 5 |
 | `scripts/verify/company_contractor_responsibility` | 4 |
 | `scripts/verify/lowcode_customer_config` | 4 |
 | `scripts/verify/scene_base_contract` | 4 |
@@ -237,3 +237,4 @@ Generated from `test_inventory.csv`.
 | `scripts/verify/contract_business_category` | 2 |
 | `scripts/verify/fe_ar_ap` | 2 |
 | `scripts/verify/fe_list_shell` | 2 |
+| `scripts/verify/fe_menu_scene` | 2 |
