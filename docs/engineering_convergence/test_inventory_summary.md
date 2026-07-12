@@ -9,8 +9,8 @@ Generated from `test_inventory.csv`.
 - Unknown runtime: `3`
 - Long-running assets: `331`
 - Manual gate review: `4`
-- Aggregate-covered assets: `76`
-- PR dedupe candidates: `712`
+- Aggregate-covered assets: `81`
+- PR dedupe candidates: `707`
 
 ## By Layer
 
@@ -42,9 +42,9 @@ Generated from `test_inventory.csv`.
 
 | Disposition | Count |
 | --- | ---: |
-| deduplicate_before_required | 712 |
+| deduplicate_before_required | 707 |
 | keep_integration_or_release_only | 292 |
-| covered_by_aggregate | 72 |
+| covered_by_aggregate | 77 |
 | keep_release_only | 36 |
 | canonical_entry | 4 |
 | review_or_archive | 4 |
@@ -56,6 +56,7 @@ Generated from `test_inventory.csv`.
 | verify.unified_page_contract.lite | 54 |
 | verify.unified_page_contract.v2 | 11 |
 | verify.frontend.product.ready | 7 |
+| verify.backend.contract.closure.mainline | 5 |
 | make ci | 1 |
 | make test.e2e | 1 |
 | make test.odoo.integration | 1 |
@@ -168,11 +169,6 @@ Generated from `test_inventory.csv`.
 | T-ASSET-308 | governance | `scripts/verify/backend_boundary_guard.py` | architecture owner |
 | T-ASSET-309 | governance | `scripts/verify/backend_business_fact_model_audit.py` | architecture owner |
 | T-ASSET-310 | contract | `scripts/verify/backend_contract_boundary_guard.py` | platform owner |
-| T-ASSET-311 | contract | `scripts/verify/backend_contract_closure_guard.py` | platform owner |
-| T-ASSET-312 | contract | `scripts/verify/backend_contract_closure_mainline_summary.py` | platform owner |
-| T-ASSET-313 | contract | `scripts/verify/backend_contract_closure_mainline_summary_schema_guard.py` | platform owner |
-| T-ASSET-314 | contract | `scripts/verify/backend_contract_closure_snapshot_guard.py` | platform owner |
-| T-ASSET-315 | contract | `scripts/verify/backend_contract_closure_snapshot_schema_guard.py` | platform owner |
 | T-ASSET-316 | governance | `scripts/verify/backend_evidence_manifest_guard.py` | architecture owner |
 | T-ASSET-317 | contract | `scripts/verify/backend_evidence_manifest_schema_guard.py` | platform owner |
 | T-ASSET-318 | governance | `scripts/verify/baseline_freeze_guard.py` | architecture owner |
@@ -200,13 +196,17 @@ Generated from `test_inventory.csv`.
 | T-ASSET-344 | governance | `scripts/verify/business_form_productization_standard_guard.py` | architecture owner |
 | T-ASSET-345 | unit | `scripts/verify/business_form_user_perspective_acceptance.py` | test owner |
 | T-ASSET-346 | governance | `scripts/verify/business_list_config_boundary_audit.py` | architecture owner |
-| ... | ... | 632 more | ... |
+| T-ASSET-348 | governance | `scripts/verify/business_shape_assembly_guard.py` | architecture owner |
+| T-ASSET-349 | contract | `scripts/verify/capability_core_health_report_schema_guard.py` | platform owner |
+| T-ASSET-350 | governance | `scripts/verify/capability_dormant_explain_guard.py` | architecture owner |
+| T-ASSET-351 | governance | `scripts/verify/capability_provider_guard.py` | architecture owner |
+| T-ASSET-352 | unit | `scripts/verify/capability_registry_smoke.py` | test owner |
+| ... | ... | 627 more | ... |
 
 ## Dedupe Hotspots
 
 | Family | Count |
 | --- | ---: |
-| `scripts/verify/backend_contract_closure` | 5 |
 | `scripts/verify/scene_action_surface` | 5 |
 | `scripts/verify/company_contractor_responsibility` | 4 |
 | `scripts/verify/lowcode_customer_config` | 4 |
@@ -236,3 +236,4 @@ Generated from `test_inventory.csv`.
 | `scripts/verify/contract_assembler_semantic` | 2 |
 | `scripts/verify/contract_business_category` | 2 |
 | `scripts/verify/fe_ar_ap` | 2 |
+| `scripts/verify/fe_list_shell` | 2 |
