@@ -32,6 +32,17 @@ export function useRelationRuntime() {
     return selectedRelationOptionsFromValue(relationOptions.value[name], value);
   }
 
+  function setRelationKeywordValue(name: string, keyword: string) {
+    relationKeywords[name] = keyword;
+  }
+
+  function filteredRelationOptions(name: string, value: unknown) {
+    const rows = relationOptionsForField(name, value);
+    const kw = relationKeyword(name).trim().toLowerCase();
+    if (!kw) return rows;
+    return rows.filter((row) => row.label.toLowerCase().includes(kw) || String(row.id).includes(kw));
+  }
+
   function upsertRelationOption(fieldName: string, option: RelationOption | null) {
     const merged = upsertRelationOptionRows(relationOptions.value[fieldName], option);
     if (merged === relationOptions.value[fieldName]) return;
@@ -72,6 +83,14 @@ export function useRelationRuntime() {
     Object.assign(relationSearchDialog, closedRelationSearchDialogState());
   }
 
+  function setRelationSearchKeyword(keyword: string) {
+    relationSearchDialog.keyword = keyword;
+  }
+
+  function selectRelationSearchRow(row: { id: number }) {
+    relationSearchDialog.selectedId = row.id;
+  }
+
   return {
     relationOptions,
     relationFieldDescriptors,
@@ -84,9 +103,13 @@ export function useRelationRuntime() {
     relationKeyword,
     relationOptionsForField,
     selectedRelationOptions,
+    setRelationKeywordValue,
+    filteredRelationOptions,
     upsertRelationOption,
     mergeRelationOptions,
     closeRelationSearchDialog,
+    setRelationSearchKeyword,
+    selectRelationSearchRow,
     clearRelationRuntime,
   };
 }

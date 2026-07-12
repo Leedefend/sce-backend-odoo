@@ -798,9 +798,13 @@ const {
   relationKeyword,
   relationOptionsForField: relationOptionsForFieldFromRuntime,
   selectedRelationOptions: selectedRelationOptionsFromRuntime,
+  setRelationKeywordValue,
+  filteredRelationOptions: filteredRelationOptionsFromRuntime,
   upsertRelationOption,
   mergeRelationOptions,
   closeRelationSearchDialog,
+  setRelationSearchKeyword,
+  selectRelationSearchRow,
 } = useRelationRuntime();
 const one2manyRows = reactive<Record<string, One2ManyInlineRow[]>>({});
 const onchangeModifiersPatch = ref<Record<string, Record<string, unknown>>>({});
@@ -2668,7 +2672,7 @@ function applyOnchangeLinePatches(linePatches: OnchangeLinePatch[]) {
 }
 
 function setRelationKeyword(name: string, keyword: string) {
-  relationKeywords[name] = keyword;
+  setRelationKeywordValue(name, keyword);
   const descriptor = effectiveFieldDescriptor(name);
   const widget = String((descriptor as Record<string, unknown> | undefined)?.widget || '').trim().toLowerCase();
   if (fieldType(descriptor) === 'many2many' && widget === 'many2many_tags') {
@@ -2684,10 +2688,7 @@ function setRelationKeyword(name: string, keyword: string) {
 }
 
 function filteredRelationOptions(name: string) {
-  const rows = relationOptionsForField(name);
-  const kw = relationKeyword(name).trim().toLowerCase();
-  if (!kw) return rows;
-  return rows.filter((row) => row.label.toLowerCase().includes(kw) || String(row.id).includes(kw));
+  return filteredRelationOptionsFromRuntime(name, formData[name]);
 }
 
 function relationModel(name: string) {
@@ -2923,10 +2924,6 @@ async function openRelationSearchDialog(fieldName: string, descriptor?: FieldDes
   await runRelationSearch();
 }
 
-function setRelationSearchKeyword(keyword: string) {
-  relationSearchDialog.keyword = keyword;
-}
-
 async function runRelationSearch() {
   const fieldName = relationSearchDialog.fieldName;
   if (!fieldName) return;
@@ -2949,10 +2946,6 @@ async function runRelationSearch() {
   } finally {
     relationSearchDialog.loading = false;
   }
-}
-
-function selectRelationSearchRow(row: RelationSearchRow) {
-  relationSearchDialog.selectedId = row.id;
 }
 
 function confirmRelationSearchSelection(rowArg?: RelationSearchRow) {
