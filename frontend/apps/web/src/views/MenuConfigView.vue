@@ -2536,6 +2536,24 @@ h1 {
   opacity: 0.55;
 }
 
+.link-button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--sc-app-accent);
+  cursor: pointer;
+  font: inherit;
+}
+
+.link-button:hover:not(:disabled) {
+  text-decoration: underline;
+}
+
+.link-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .status {
   margin: 0;
   padding: 10px 12px;
