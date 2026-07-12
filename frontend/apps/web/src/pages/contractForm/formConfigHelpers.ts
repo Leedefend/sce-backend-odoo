@@ -530,6 +530,31 @@ export function extractLowCodeLayoutDraftState(
   };
 }
 
+export function extractLowCodeFormFieldDraftState(formSpec: Record<string, unknown>) {
+  const fields = Array.isArray(formSpec.fields) ? formSpec.fields as Array<Record<string, unknown>> : [];
+  const orderedFieldNames = fields
+    .map((row) => ({ name: String(row?.name || row?.field || '').trim(), sequence: Number(row?.sequence || row?.order || 0) }))
+    .filter((row) => row.name)
+    .sort((a, b) => a.sequence - b.sequence)
+    .map((row) => row.name);
+  const visibility: Record<string, boolean> = {};
+  const groups: Record<string, string> = {};
+  fields.forEach((row) => {
+    const key = String(row?.name || row?.field || '').trim();
+    if (!key) return;
+    visibility[key] = row?.visible !== false;
+    const rawGroupTitle = row?.group_title || row?.groupTitle || row?.section_title || row?.sectionTitle;
+    const groupTitle = isReadableFieldGroupTitle(rawGroupTitle) ? normalizeFieldGroupTitle(rawGroupTitle) : '';
+    if (groupTitle) groups[key] = groupTitle;
+  });
+  return {
+    fields,
+    orderedFieldNames,
+    visibility,
+    groups,
+  };
+}
+
 export function mergeLowCodeLayoutWithRuntimeGroupShells<T extends NativeLayoutLikeNode>(base: T[], runtime: NativeLayoutLikeNode[]): T[] {
   if (!Array.isArray(base) || !base.length) return base;
   const existing = new Set(

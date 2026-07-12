@@ -1290,6 +1290,7 @@ import {
   buildFormDesignerSearchableFieldRows,
   createFormConfigOperationLogEntry,
   collectNativeFieldStructureGroups,
+  extractLowCodeFormFieldDraftState,
   extractLowCodeLayoutDraftState,
   filterFormDesignerFieldRows,
   formConfigOperationStatusLabel,
@@ -2887,6 +2888,31 @@ function syncLayoutDraftFromFormSpec(formSpec: Record<string, unknown>) {
   }
 }
 
+function syncFieldDraftFromFormSpec(
+  formSpec: Record<string, unknown>,
+  options: { overwriteDraftGroups?: boolean; syncOrder?: boolean; syncVisibility?: boolean } = {},
+) {
+  const state = extractLowCodeFormFieldDraftState(formSpec);
+  if (options.syncOrder !== false && state.orderedFieldNames.length) fieldOrderDraft.value = state.orderedFieldNames;
+  if (options.syncVisibility !== false) {
+    Object.entries(state.visibility).forEach(([key, visible]) => {
+      fieldVisibilityBase.value = { ...fieldVisibilityBase.value, [key]: visible };
+      fieldVisibilityDraft[key] = visible;
+    });
+  }
+  Object.entries(state.groups).forEach(([key, groupTitle]) => {
+    const previousDraft = normalizeFieldGroupTitle(fieldGroupDraft[key]);
+    const previousBase = normalizeFieldGroupTitle(fieldGroupBase.value[key]);
+    const shouldSyncDraft = options.overwriteDraftGroups
+      || !previousDraft
+      || previousDraft === previousBase
+      || previousDraft.startsWith('默认分组');
+    fieldGroupSavedBase.value = { ...fieldGroupSavedBase.value, [key]: groupTitle };
+    fieldGroupBase.value = { ...fieldGroupBase.value, [key]: groupTitle };
+    if (shouldSyncDraft) fieldGroupDraft[key] = groupTitle;
+  });
+}
+
 function applyRuntimeInferredFormColumns() {
   if (!isContractFieldOrderEditable.value || formLayoutColumnsConfigured.value || formLayoutDirty.value) return;
   const runtimeColumns = inferLowCodeLayoutColumns(runtimeNativeFormLayoutNodes());
@@ -2935,33 +2961,11 @@ async function hydrateLowCodeDraftFromContract() {
     const formSpec = orchestrationViews.form && typeof orchestrationViews.form === 'object' && !Array.isArray(orchestrationViews.form)
       ? orchestrationViews.form as Record<string, unknown>
       : {};
-    const formFields = Array.isArray(formSpec.fields) ? formSpec.fields as Array<Record<string, unknown>> : [];
     lowCodeFormLayoutBase.value = Array.isArray(formSpec.layout)
       ? formSpec.layout as unknown as NativeFormLayoutNode[]
       : [];
     syncLayoutDraftFromFormSpec(formSpec);
-    if (formFields.length) {
-      const orderNames = formFields
-        .map((row) => ({ name: String(row?.name || row?.field || '').trim(), sequence: Number(row?.sequence || row?.order || 0) }))
-        .filter((row) => row.name)
-        .sort((a, b) => a.sequence - b.sequence)
-        .map((row) => row.name);
-      if (orderNames.length) fieldOrderDraft.value = orderNames;
-      formFields.forEach((row) => {
-        const key = String(row?.name || row?.field || '').trim();
-        if (!key) return;
-        const visible = row?.visible !== false;
-        const rawGroupTitle = row?.group_title || row?.groupTitle || row?.section_title || row?.sectionTitle;
-        const groupTitle = isReadableFieldGroupTitle(rawGroupTitle) ? normalizeFieldGroupTitle(rawGroupTitle) : '';
-        fieldVisibilityBase.value = { ...fieldVisibilityBase.value, [key]: visible };
-        fieldVisibilityDraft[key] = visible;
-        if (groupTitle) {
-          fieldGroupSavedBase.value = { ...fieldGroupSavedBase.value, [key]: groupTitle };
-          fieldGroupBase.value = { ...fieldGroupBase.value, [key]: groupTitle };
-          fieldGroupDraft[key] = groupTitle;
-        }
-      });
-    }
+    syncFieldDraftFromFormSpec(formSpec, { overwriteDraftGroups: true });
     lowCodeLayoutDraft.value = collectLowCodeLayoutFromViewOrchestration(orchestrationViews, modelName);
     hydrated = true;
   } catch {
@@ -2998,24 +3002,7 @@ async function refreshLowCodeFormLayoutBase() {
       ? formSpec.layout as unknown as NativeFormLayoutNode[]
       : [];
     syncLayoutDraftFromFormSpec(formSpec);
-    const formFields = Array.isArray(formSpec.fields) ? formSpec.fields as Array<Record<string, unknown>> : [];
-    formFields.forEach((row) => {
-      const key = String(row?.name || row?.field || '').trim();
-      if (!key) return;
-      const rawGroupTitle = row?.group_title || row?.groupTitle || row?.section_title || row?.sectionTitle;
-      const groupTitle = isReadableFieldGroupTitle(rawGroupTitle) ? normalizeFieldGroupTitle(rawGroupTitle) : '';
-      if (!groupTitle) return;
-      const previousDraft = normalizeFieldGroupTitle(fieldGroupDraft[key]);
-      const previousBase = normalizeFieldGroupTitle(fieldGroupBase.value[key]);
-      const shouldSyncDraft = !previousDraft
-        || previousDraft === previousBase
-        || previousDraft.startsWith('默认分组');
-      fieldGroupSavedBase.value = { ...fieldGroupSavedBase.value, [key]: groupTitle };
-      fieldGroupBase.value = { ...fieldGroupBase.value, [key]: groupTitle };
-      if (shouldSyncDraft) {
-        fieldGroupDraft[key] = groupTitle;
-      }
-    });
+    syncFieldDraftFromFormSpec(formSpec, { syncOrder: false, syncVisibility: false });
   } catch {
     // Form config still works from runtime layout if the saved contract cannot be read.
   }
@@ -3076,33 +3063,11 @@ async function switchLowCodeContractByName() {
     const formSpec = orchestrationViews.form && typeof orchestrationViews.form === 'object' && !Array.isArray(orchestrationViews.form)
       ? orchestrationViews.form as Record<string, unknown>
       : {};
-    const formFields = Array.isArray(formSpec.fields) ? formSpec.fields as Array<Record<string, unknown>> : [];
     lowCodeFormLayoutBase.value = Array.isArray(formSpec.layout)
       ? formSpec.layout as unknown as NativeFormLayoutNode[]
       : [];
     syncLayoutDraftFromFormSpec(formSpec);
-    if (formFields.length) {
-      const orderNames = formFields
-        .map((row) => ({ name: String(row?.name || row?.field || '').trim(), sequence: Number(row?.sequence || row?.order || 0) }))
-        .filter((row) => row.name)
-        .sort((a, b) => a.sequence - b.sequence)
-        .map((row) => row.name);
-      if (orderNames.length) fieldOrderDraft.value = orderNames;
-      formFields.forEach((row) => {
-        const key = String(row?.name || row?.field || '').trim();
-        if (!key) return;
-        const visible = row?.visible !== false;
-        const rawGroupTitle = row?.group_title || row?.groupTitle || row?.section_title || row?.sectionTitle;
-        const groupTitle = isReadableFieldGroupTitle(rawGroupTitle) ? normalizeFieldGroupTitle(rawGroupTitle) : '';
-        fieldVisibilityBase.value = { ...fieldVisibilityBase.value, [key]: visible };
-        fieldVisibilityDraft[key] = visible;
-        if (groupTitle) {
-          fieldGroupSavedBase.value = { ...fieldGroupSavedBase.value, [key]: groupTitle };
-          fieldGroupBase.value = { ...fieldGroupBase.value, [key]: groupTitle };
-          fieldGroupDraft[key] = groupTitle;
-        }
-      });
-    }
+    syncFieldDraftFromFormSpec(formSpec, { overwriteDraftGroups: true });
     lowCodeLayoutDraft.value = collectLowCodeLayoutFromViewOrchestration(orchestrationViews, modelName);
   } catch {
     // ignore
