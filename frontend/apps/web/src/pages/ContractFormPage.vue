@@ -1437,6 +1437,11 @@ import {
   type StatusbarState,
   type UiStatus,
 } from './contractForm/types';
+import {
+  clearIntakeAutosavePayload,
+  persistIntakeAutosavePayload,
+  restoreIntakeAutosavePayload,
+} from './contractForm/intakeAutosave';
 
 async function collectActionParams(action: ContractAction): Promise<Record<string, unknown> | null> {
   const requiredParams = new Set((action.requiredParams || []).map((item) => item.toLowerCase()));
@@ -3202,64 +3207,21 @@ const isIntakeCreateDisabled = computed(() => {
 function persistIntakeAutosave() {
   const key = intakeAutosaveKey.value;
   if (!key || recordId.value) return;
-  try {
-    const payload = {
-      saved_at: Date.now(),
-      values: {
-        name: formData.name ?? '',
-        manager_id: formData.manager_id ?? false,
-        owner_id: formData.owner_id ?? false,
-        project_type_id: formData.project_type_id ?? false,
-        project_category_id: formData.project_category_id ?? false,
-        location: formData.location ?? '',
-        start_date: formData.start_date ?? '',
-        end_date: formData.end_date ?? '',
-      },
-    };
-    window.localStorage.setItem(key, JSON.stringify(payload));
-  } catch {
-    // ignore storage exceptions
-  }
+  persistIntakeAutosavePayload(key, formData as Record<string, unknown>);
 }
 
 function restoreIntakeAutosave() {
   const key = intakeAutosaveKey.value;
   if (!key || recordId.value) return;
-  try {
-    const raw = window.localStorage.getItem(key);
-    if (!raw) return;
-    const parsed = JSON.parse(raw) as { values?: Record<string, unknown> };
-    const values = parsed?.values;
-    if (!values || typeof values !== 'object') return;
-    const fields = [
-      'name',
-      'manager_id',
-      'owner_id',
-      'project_type_id',
-      'project_category_id',
-      'location',
-      'start_date',
-      'end_date',
-    ];
-    fields.forEach((field) => {
-      if (!(field in values)) return;
-      const nextValue = values[field];
-      if (nextValue === null || nextValue === undefined || nextValue === '') return;
-      formData[field] = nextValue as never;
-    });
-  } catch {
-    // ignore malformed storage payload
-  }
+  Object.entries(restoreIntakeAutosavePayload(key)).forEach(([field, value]) => {
+    formData[field] = value as never;
+  });
 }
 
 function clearIntakeAutosave() {
   const key = intakeAutosaveKey.value;
   if (!key) return;
-  try {
-    window.localStorage.removeItem(key);
-  } catch {
-    // ignore storage exceptions
-  }
+  clearIntakeAutosavePayload(key);
 }
 
 const contractMetaLine = computed(() => {
