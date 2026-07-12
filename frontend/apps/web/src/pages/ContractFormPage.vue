@@ -1330,8 +1330,12 @@ import {
 } from './contractForm/one2manyUtils';
 import {
   relationEntry,
+  dynamicDomainDependencyFields,
   fallbackRelationSearchColumns,
+  isBlockAllDomain,
   normalizeRelationSearchColumns,
+  relationCreateMode,
+  relationInlineCreate,
   relationOptionFromRow,
   relationReadFields,
   relationSearchColumnsFromContract,
@@ -1695,7 +1699,7 @@ function hasPendingInlineRelationChange() {
     if (node.kind !== 'field' || node.readonly) return false;
     const descriptor = contract.value?.fields?.[node.name];
     if (fieldType(descriptor) !== 'many2one') return false;
-    const inline = relationInlineCreate(node.name, descriptor);
+    const inline = relationInlineCreate(descriptor);
     if (!inline.enabled || !inline.createOnNoMatch) return false;
     const currentId = Number(formData[node.name] || 0);
     if (Number.isFinite(currentId) && currentId > 0) return false;
@@ -1709,7 +1713,7 @@ function hasPendingMany2manyTagCreate() {
     if (!isFieldWritable(name)) return false;
     if (!Array.isArray(formData[name])) return false;
     const descriptor = contract.value?.fields?.[name];
-    const inline = relationInlineCreate(name, descriptor);
+    const inline = relationInlineCreate(descriptor);
     if (!inline.enabled || !inline.createOnNoMatch) return false;
     return Boolean(relationModel(name));
   });
@@ -4522,35 +4526,6 @@ function formUiLabel(key: string) {
   return formUiLabelFromLabels(formUiLabels(), key);
 }
 
-function relationCreateMode(_fieldName: string, descriptor?: FieldDescriptor): 'page' | 'quick' | 'none' {
-  const entry = relationEntry(descriptor);
-  if (!entry) return 'none';
-  if (entry.createMode === 'page' && entry.actionId) return 'page';
-  if (entry.createMode === 'quick' && entry.canCreate) return 'quick';
-  if (entry.model === 'sc.dictionary' && entry.canCreate && Object.keys(entry.defaultVals || {}).length) {
-    return 'quick';
-  }
-  return 'none';
-}
-
-function relationInlineCreate(_fieldName: string, descriptor?: FieldDescriptor) {
-  const entry = relationEntry(descriptor);
-  if (!entry?.inlineCreate?.enabled) {
-    return {
-      enabled: false,
-      createOnNoMatch: false,
-      nameField: '',
-      match: entry?.inlineCreate?.match || 'exact_label',
-    };
-  }
-  return {
-    enabled: true,
-    createOnNoMatch: entry.inlineCreate.createOnNoMatch,
-    nameField: entry.inlineCreate.nameField,
-    match: entry.inlineCreate.match,
-  };
-}
-
 function dynamicDomainFromDescriptor(descriptor?: FieldDescriptor) {
   const raw = (descriptor as Record<string, unknown> | undefined)?.domain;
   if (typeof raw !== 'string' || !raw.trim()) return [];
@@ -4603,28 +4578,6 @@ function resolveDynamicDomainDependencyValue(valueField: string) {
     return label === keyword || label.includes(keyword) || keyword.includes(label);
   });
   return option?.id || direct;
-}
-
-function dynamicDomainDependencyFields(descriptor?: FieldDescriptor) {
-  const raw = (descriptor as Record<string, unknown> | undefined)?.domain;
-  if (typeof raw !== 'string' || !raw.trim()) return [];
-  const deps = new Set<string>();
-  const tuplePattern = /\(['"]([\w.]+)['"]\s*,\s*['"]([=!<>]{1,2}|in|not in|ilike|like)['"]\s*,\s*([A-Za-z_]\w*)\)/g;
-  let match: RegExpExecArray | null;
-  while ((match = tuplePattern.exec(raw.trim()))) {
-    const valueField = match[3];
-    if (valueField) deps.add(valueField);
-  }
-  return Array.from(deps);
-}
-
-function isBlockAllDomain(domain: unknown) {
-  return Array.isArray(domain)
-    && domain.length === 1
-    && Array.isArray(domain[0])
-    && String(domain[0][0] || '') === 'id'
-    && String(domain[0][1] || '') === '='
-    && Number(domain[0][2]) === -1;
 }
 
 function clearDynamicRelationDependents(changedName: string) {
@@ -4866,7 +4819,7 @@ async function openRelationSearchDialog(fieldName: string, descriptor?: FieldDes
   const resolvedDescriptor = effectiveFieldDescriptor(fieldName);
   relationSearchDialog.columns = relationSearchColumnsFromContract(relationSearchDialogContract(resolvedDescriptor));
   relationSearchDialog.selectedId = null;
-  relationSearchDialog.createMode = relationCreateMode(fieldName, resolvedDescriptor);
+  relationSearchDialog.createMode = relationCreateMode(resolvedDescriptor);
   relationSearchDialog.columns = await loadRelationSearchColumns(fieldName);
   await runRelationSearch();
   await nextTick();
@@ -4986,7 +4939,7 @@ async function createRelationFromSearchDialog() {
   if (!fieldName) return;
   const descriptor = contract.value?.fields?.[fieldName];
   const label = relationSearchDialog.keyword.trim();
-  const mode = relationCreateMode(fieldName, descriptor);
+  const mode = relationCreateMode(descriptor);
   const exact = label
     ? relationSearchDialog.options.find((item) => item.label.trim().toLowerCase() === label.toLowerCase())
     : null;
@@ -5037,7 +4990,7 @@ async function ensureRelationFieldDescriptors(name: string) {
 async function openRelationCreateForm(fieldName: string, descriptor?: FieldDescriptor) {
   const relation = String((descriptor as Record<string, unknown> | undefined)?.relation || '').trim();
   if (!relation) return;
-  const mode = relationCreateMode(fieldName, descriptor);
+  const mode = relationCreateMode(descriptor);
   if (mode === 'none') {
     validationErrors.value = [relationUiLabel(descriptor, 'missing_create_entry')];
     return;
@@ -5169,7 +5122,7 @@ async function quickCreateRelation(
       setMany2oneOption(fieldName, exact);
       return;
     }
-    const inline = relationInlineCreate(fieldName, descriptor);
+    const inline = relationInlineCreate(descriptor);
     const nameField = inline.nameField || 'name';
     const vals: Record<string, unknown> = { ...(entry?.defaultVals || {}), [nameField]: label };
     if (relation === 'sc.dictionary' && typeof vals.type === 'string' && String(vals.type || '').trim()) {
@@ -7225,9 +7178,9 @@ const buildSectionFieldSchemas = createFormSectionFieldSchemaBuilder({
   resolveInputPlaceholder: (label) => resolveInputPlaceholder(label),
   resolveSelectionOptions: (descriptor) => mapDescriptorSelectionOptions(descriptor),
   resolveRelationOptions: (fieldName) => mapRelationOptions(relationOptionsForField(fieldName)),
-  resolveRelationCreateMode: (fieldName, descriptor) => relationCreateMode(fieldName, descriptor),
+  resolveRelationCreateMode: (_fieldName, descriptor) => relationCreateMode(descriptor),
   resolveRelationInlineCreate: (fieldName, descriptor) => {
-    const inline = relationInlineCreate(fieldName, descriptor);
+    const inline = relationInlineCreate(descriptor);
     return {
       enabled: inline.enabled,
       createOnNoMatch: inline.createOnNoMatch,
@@ -7240,7 +7193,7 @@ const buildSectionFieldSchemas = createFormSectionFieldSchemaBuilder({
   resolveRelationRecordOpenLabel: (_fieldName, descriptor) => relationUiLabel(descriptor, 'open_existing', '维护当前项'),
   resolveRelationSearchLabel: (_fieldName, descriptor) => relationUiLabel(descriptor, 'search_more'),
   resolveRelationCreateLabel: (_fieldName, descriptor) => {
-    const mode = relationCreateMode(_fieldName, descriptor);
+    const mode = relationCreateMode(descriptor);
     if (mode === 'page') return relationUiLabel(descriptor, 'create_and_edit');
     if (mode === 'quick') return relationUiLabel(descriptor, 'quick_create');
     return '';
@@ -7282,10 +7235,10 @@ const relationFieldAdapter = computed<RelationFieldAdapter>(() => ({
   filteredRelationOptions,
   setRelationMultiField,
   setRelationIds,
-  relationCreateMode: (fieldName: string) => relationCreateMode(fieldName, contract.value?.fields?.[fieldName]),
+  relationCreateMode: (fieldName: string) => relationCreateMode(contract.value?.fields?.[fieldName]),
   relationCreateLabel: (fieldName: string) => {
     const descriptor = contract.value?.fields?.[fieldName];
-    const mode = relationCreateMode(fieldName, descriptor);
+    const mode = relationCreateMode(descriptor);
     if (mode === 'page') return relationUiLabel(descriptor, 'create_and_edit');
     if (mode === 'quick') return relationUiLabel(descriptor, 'quick_create');
     return '';
@@ -7298,7 +7251,7 @@ const relationFieldAdapter = computed<RelationFieldAdapter>(() => ({
   },
   canInlineCreateRelation: (fieldName: string) => {
     const descriptor = contract.value?.fields?.[fieldName];
-    const inline = relationInlineCreate(fieldName, descriptor);
+    const inline = relationInlineCreate(descriptor);
     const keyword = relationKeyword(fieldName).trim();
     if (!keyword || !inline.enabled || !inline.createOnNoMatch) return false;
     return !relationOptionsForField(fieldName).some((option) => option.label.trim().toLowerCase() === keyword.toLowerCase());
@@ -7536,7 +7489,7 @@ async function commitMany2oneInline(name: string, descriptor: FieldDescriptor | 
       return;
     }
   }
-  const inline = relationInlineCreate(name, descriptor);
+  const inline = relationInlineCreate(descriptor);
   const localQuickFill = resolveRelationQuickFillOption(relationOptionsForField(name), keyword, inline.match);
   if (localQuickFill) {
     setMany2oneOption(name, localQuickFill);
@@ -7576,7 +7529,7 @@ async function resolvePendingInlineRelationCreates() {
     if (node.kind !== 'field' || node.readonly) continue;
     const descriptor = contract.value?.fields?.[node.name];
     if (fieldType(descriptor) !== 'many2one') continue;
-    const inline = relationInlineCreate(node.name, descriptor);
+    const inline = relationInlineCreate(descriptor);
     if (!inline.enabled || !inline.createOnNoMatch) continue;
     const currentId = Number(formData[node.name] || 0);
     if (Number.isFinite(currentId) && currentId > 0) continue;
@@ -7622,7 +7575,7 @@ async function resolvePendingMany2manyTagCreates() {
     if (!Array.isArray(formData[name])) continue;
     const descriptor = contract.value?.fields?.[name];
     if (!relationModel(name)) continue;
-    const inline = relationInlineCreate(name, descriptor);
+    const inline = relationInlineCreate(descriptor);
     if (!inline.enabled || !inline.createOnNoMatch) continue;
     const fieldLabel = layoutNodes.value.find((node) => node.kind === 'field' && node.name === name)?.label
       || descriptor?.string
@@ -7689,7 +7642,7 @@ async function quickCreateMany2manyTag(name: string) {
   const relation = relationModel(name);
   const label = relationKeyword(name).trim();
   if (!relation || !label) return;
-  const inline = relationInlineCreate(name, descriptor);
+  const inline = relationInlineCreate(descriptor);
   if (!inline.enabled || !inline.createOnNoMatch) return;
   const existing = resolveRelationQuickFillOption(relationOptionsForField(name), label, inline.match);
   if (existing) {

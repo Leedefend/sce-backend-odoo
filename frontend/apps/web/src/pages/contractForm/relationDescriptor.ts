@@ -135,6 +135,57 @@ export function relationUiLabel(descriptor: FieldDescriptor | undefined, key: st
   return relationUiLabels(descriptor)[key] || fallback || key;
 }
 
+export function relationCreateMode(descriptor?: FieldDescriptor): 'page' | 'quick' | 'none' {
+  const entry = relationEntry(descriptor);
+  if (!entry) return 'none';
+  if (entry.createMode === 'page' && entry.actionId) return 'page';
+  if (entry.createMode === 'quick' && entry.canCreate) return 'quick';
+  if (entry.model === 'sc.dictionary' && entry.canCreate && Object.keys(entry.defaultVals || {}).length) {
+    return 'quick';
+  }
+  return 'none';
+}
+
+export function relationInlineCreate(descriptor?: FieldDescriptor) {
+  const entry = relationEntry(descriptor);
+  if (!entry?.inlineCreate?.enabled) {
+    return {
+      enabled: false,
+      createOnNoMatch: false,
+      nameField: '',
+      match: entry?.inlineCreate?.match || 'exact_label',
+    };
+  }
+  return {
+    enabled: true,
+    createOnNoMatch: entry.inlineCreate.createOnNoMatch,
+    nameField: entry.inlineCreate.nameField,
+    match: entry.inlineCreate.match,
+  };
+}
+
+export function dynamicDomainDependencyFields(descriptor?: FieldDescriptor) {
+  const raw = (descriptor as Record<string, unknown> | undefined)?.domain;
+  if (typeof raw !== 'string' || !raw.trim()) return [];
+  const deps = new Set<string>();
+  const tuplePattern = /\(['"]([\w.]+)['"]\s*,\s*['"]([=!<>]{1,2}|in|not in|ilike|like)['"]\s*,\s*([A-Za-z_]\w*)\)/g;
+  let match: RegExpExecArray | null;
+  while ((match = tuplePattern.exec(raw.trim()))) {
+    const valueField = match[3];
+    if (valueField) deps.add(valueField);
+  }
+  return Array.from(deps);
+}
+
+export function isBlockAllDomain(domain: unknown) {
+  return Array.isArray(domain)
+    && domain.length === 1
+    && Array.isArray(domain[0])
+    && String(domain[0][0] || '') === 'id'
+    && String(domain[0][1] || '') === '='
+    && Number(domain[0][2]) === -1;
+}
+
 export function relationSearchDialogContract(descriptor?: FieldDescriptor): Record<string, unknown> {
   const entry = (descriptor as Record<string, unknown> | undefined)?.relation_entry;
   if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return {};
