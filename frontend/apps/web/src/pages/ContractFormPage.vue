@@ -1293,7 +1293,9 @@ import {
   isReadableFieldGroupTitle,
   isSuggestedInternalFormField,
   layoutHasReadableFieldGroups,
+  lowCodeFieldSizeLabel,
   mergeLowCodeLayoutWithRuntimeGroupShells,
+  normalizeConfigPageLabel,
   normalizeFieldGroupTitle,
   normalizeFormConfigOperationLogEntries,
   readableFallbackFieldLabel,
@@ -8878,13 +8880,6 @@ function onSelectedFormSettingsGroupColumnsChange(event: Event) {
   appendFormConfigOperation('调整分组列数', `${key} 调整为 ${columns} 栏`);
 }
 
-function lowCodeFieldSizeLabel(size: LowCodeFieldSize) {
-  if (size === 'wide') return '加宽';
-  if (size === 'full') return '整行';
-  if (size === 'large') return '大输入框';
-  return '标准';
-}
-
 function onSelectedFormSettingsFieldSizeChange(event: Event) {
   const fieldKey = selectedFormSettingsFieldKey.value;
   if (!fieldKey) return;
@@ -9383,14 +9378,6 @@ function routeQueryText(key: string) {
   const value = route.query[key];
   if (Array.isArray(value)) return String(value[0] || '').trim();
   return String(value || '').trim();
-}
-
-function normalizeConfigPageLabel(value: string) {
-  return String(value || '')
-    .trim()
-    .replace(/^新建\s*/, '')
-    .replace(/\s*这个页面$/, '')
-    .trim();
 }
 
 function lowCodeReturnQuery() {

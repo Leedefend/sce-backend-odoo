@@ -1,4 +1,4 @@
-import type { FormConfigOperationLogEntry } from './types';
+import type { FormConfigOperationLogEntry, LowCodeFieldSize } from './types';
 import { normalizeLowCodeColumnsOrNull } from './fieldUtils';
 import { nativeLayoutNodeType, type NativeLayoutLikeNode } from './nativeLayoutUtils';
 
@@ -79,6 +79,21 @@ export function readableFallbackFieldLabel(fieldKey: string) {
   return key
     .replace(/[_-]+/g, ' ')
     .replace(/\s+/g, ' ')
+    .trim();
+}
+
+export function lowCodeFieldSizeLabel(size: LowCodeFieldSize) {
+  if (size === 'wide') return '加宽';
+  if (size === 'full') return '整行';
+  if (size === 'large') return '大输入框';
+  return '标准';
+}
+
+export function normalizeConfigPageLabel(value: string) {
+  return String(value || '')
+    .trim()
+    .replace(/^新建\s*/, '')
+    .replace(/\s*这个页面$/, '')
     .trim();
 }
 
