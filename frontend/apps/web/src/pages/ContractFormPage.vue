@@ -304,54 +304,8 @@
             <template #chatter>
               <NativeCollaborationPanel
                 v-if="(nativeChatterActions.length || nativeAttachments) && !isProjectIntakeCreateMode"
-                v-model:activity-deadline="activityDeadline"
-                v-model:activity-note="activityNote"
-                v-model:activity-summary="activitySummary"
-                v-model:chatter-draft="chatterDraft"
-                v-model:collaboration-user-query="collaborationUserQuery"
-                :actions="nativeChatterActions"
-                :activity-assignee-id="activityAssigneeId"
-                :activity-assignee-label="activityAssigneeLabel"
-                :activity-assignee-options="activityAssigneeOptions"
-                :activity-deadline-label="activityDeadlineLabel"
-                :activity-note-label="activityNoteLabel"
-                :activity-note-placeholder="activityNotePlaceholder"
-                :activity-summary-label="activitySummaryLabel"
-                :activity-summary-placeholder="activitySummaryPlaceholder"
-                :active-is-activity="activeChatterIsActivity"
-                :active-mode="activeChatterMode"
-                :active-placeholder="activeChatterPlaceholder"
-                :active-posting-label="activeChatterPostingLabel"
-                :active-submit-label="activeChatterSubmitLabel"
-                :activity-updating-ids="activityUpdatingIds"
-                :attachment-error="attachmentError"
-                :attachment-upload-label="nativeAttachmentUploadLabel"
-                :attachment-uploading="attachmentUploading"
-                :attachment-uploading-label="nativeAttachmentUploadingLabel"
-                :attachment-view-label="nativeAttachmentViewLabel"
-                :busy="busy"
-                :chatter-error="chatterError"
-                :collaboration-user-choices="collaborationUserChoices"
-                :has-attachments="Boolean(nativeAttachments)"
-                :pending-attachments="pendingNativeAttachments"
-                :posting="chatterPosting"
-                :selected-mention-users="selectedMentionUsers"
-                :submit-disabled="isNativeChatterSubmitDisabled"
-                :timeline="chatterTimeline"
-                :title="nativeCollaborationTitle"
-                :unavailable-message="nativeCollaborationUnavailableMessage"
-                :users-loading="collaborationUsersLoading"
-                @attachment-selected="onNativeAttachmentSelected"
-                @close-composer="closeNativeChatterComposer"
-                @load-users="loadCollaborationUsers"
-                @open-action="openNativeChatterAction"
-                @open-attachment="openNativeAttachment"
-                @remove-mention-user="removeMentionUser"
-                @remove-pending-attachment="removePendingNativeAttachment"
-                @select-activity-assignee="activityAssigneeId = $event"
-                @select-mention-user="selectMentionUser"
-                @send-chatter="sendNativeChatter"
-                @update-activity="updateNativeActivity"
+                v-bind="nativeCollaborationPanelProps"
+                v-on="nativeCollaborationPanelListeners"
               />
             </template>
           </NativeFormTreeRenderer>
@@ -424,54 +378,8 @@
 
       <NativeCollaborationPanel
         v-if="(nativeChatterActions.length || nativeAttachments) && !isProjectIntakeCreateMode && !hasNativeChatterNode"
-        v-model:activity-deadline="activityDeadline"
-        v-model:activity-note="activityNote"
-        v-model:activity-summary="activitySummary"
-        v-model:chatter-draft="chatterDraft"
-        v-model:collaboration-user-query="collaborationUserQuery"
-        :actions="nativeChatterActions"
-        :activity-assignee-id="activityAssigneeId"
-        :activity-assignee-label="activityAssigneeLabel"
-        :activity-assignee-options="activityAssigneeOptions"
-        :activity-deadline-label="activityDeadlineLabel"
-        :activity-note-label="activityNoteLabel"
-        :activity-note-placeholder="activityNotePlaceholder"
-        :activity-summary-label="activitySummaryLabel"
-        :activity-summary-placeholder="activitySummaryPlaceholder"
-        :active-is-activity="activeChatterIsActivity"
-        :active-mode="activeChatterMode"
-        :active-placeholder="activeChatterPlaceholder"
-        :active-posting-label="activeChatterPostingLabel"
-        :active-submit-label="activeChatterSubmitLabel"
-        :activity-updating-ids="activityUpdatingIds"
-        :attachment-error="attachmentError"
-        :attachment-upload-label="nativeAttachmentUploadLabel"
-        :attachment-uploading="attachmentUploading"
-        :attachment-uploading-label="nativeAttachmentUploadingLabel"
-        :attachment-view-label="nativeAttachmentViewLabel"
-        :busy="busy"
-        :chatter-error="chatterError"
-        :collaboration-user-choices="collaborationUserChoices"
-        :has-attachments="Boolean(nativeAttachments)"
-        :pending-attachments="pendingNativeAttachments"
-        :posting="chatterPosting"
-        :selected-mention-users="selectedMentionUsers"
-        :submit-disabled="isNativeChatterSubmitDisabled"
-        :timeline="chatterTimeline"
-        :title="nativeCollaborationTitle"
-        :unavailable-message="nativeCollaborationUnavailableMessage"
-        :users-loading="collaborationUsersLoading"
-        @attachment-selected="onNativeAttachmentSelected"
-        @close-composer="closeNativeChatterComposer"
-        @load-users="loadCollaborationUsers"
-        @open-action="openNativeChatterAction"
-        @open-attachment="openNativeAttachment"
-        @remove-mention-user="removeMentionUser"
-        @remove-pending-attachment="removePendingNativeAttachment"
-        @select-activity-assignee="activityAssigneeId = $event"
-        @select-mention-user="selectMentionUser"
-        @send-chatter="sendNativeChatter"
-        @update-activity="updateNativeActivity"
+        v-bind="nativeCollaborationPanelProps"
+        v-on="nativeCollaborationPanelListeners"
       />
     </section>
 
@@ -4230,6 +4138,77 @@ const nativeAttachmentUploadLabel = computed(() => resolveNativeAttachmentLabel(
 const nativeAttachmentUploadingLabel = computed(() => resolveNativeAttachmentLabel('uploading', '上传中...'));
 const nativeAttachmentViewLabel = computed(() => resolveNativeAttachmentLabel('view', '查看'));
 const nativeAttachmentMaxBytes = computed(() => nativeAttachmentMaxBytesFromContract(nativeAttachments.value));
+
+const nativeCollaborationPanelProps = computed(() => ({
+  actions: nativeChatterActions.value,
+  activityAssigneeId: activityAssigneeId.value,
+  activityAssigneeLabel: activityAssigneeLabel.value,
+  activityAssigneeOptions: activityAssigneeOptions.value,
+  activityDeadline: activityDeadline.value,
+  activityDeadlineLabel: activityDeadlineLabel.value,
+  activityNote: activityNote.value,
+  activityNoteLabel: activityNoteLabel.value,
+  activityNotePlaceholder: activityNotePlaceholder.value,
+  activitySummary: activitySummary.value,
+  activitySummaryLabel: activitySummaryLabel.value,
+  activitySummaryPlaceholder: activitySummaryPlaceholder.value,
+  activeIsActivity: activeChatterIsActivity.value,
+  activeMode: activeChatterMode.value,
+  activePlaceholder: activeChatterPlaceholder.value,
+  activePostingLabel: activeChatterPostingLabel.value,
+  activeSubmitLabel: activeChatterSubmitLabel.value,
+  activityUpdatingIds: activityUpdatingIds.value,
+  attachmentError: attachmentError.value,
+  attachmentUploadLabel: nativeAttachmentUploadLabel.value,
+  attachmentUploading: attachmentUploading.value,
+  attachmentUploadingLabel: nativeAttachmentUploadingLabel.value,
+  attachmentViewLabel: nativeAttachmentViewLabel.value,
+  busy: busy.value,
+  chatterDraft: chatterDraft.value,
+  chatterError: chatterError.value,
+  collaborationUserChoices: collaborationUserChoices.value,
+  collaborationUserQuery: collaborationUserQuery.value,
+  hasAttachments: Boolean(nativeAttachments.value),
+  pendingAttachments: pendingNativeAttachments.value,
+  posting: chatterPosting.value,
+  selectedMentionUsers: selectedMentionUsers.value,
+  submitDisabled: isNativeChatterSubmitDisabled.value,
+  timeline: chatterTimeline.value,
+  title: nativeCollaborationTitle.value,
+  unavailableMessage: nativeCollaborationUnavailableMessage.value,
+  usersLoading: collaborationUsersLoading.value,
+}));
+
+const nativeCollaborationPanelListeners = {
+  'attachment-selected': onNativeAttachmentSelected,
+  'close-composer': closeNativeChatterComposer,
+  'load-users': loadCollaborationUsers,
+  'open-action': openNativeChatterAction,
+  'open-attachment': openNativeAttachment,
+  'remove-mention-user': removeMentionUser,
+  'remove-pending-attachment': removePendingNativeAttachment,
+  'select-activity-assignee': (id: number) => {
+    activityAssigneeId.value = id;
+  },
+  'select-mention-user': selectMentionUser,
+  'send-chatter': sendNativeChatter,
+  'update-activity': updateNativeActivity,
+  'update:activityDeadline': (value: string) => {
+    activityDeadline.value = value;
+  },
+  'update:activityNote': (value: string) => {
+    activityNote.value = value;
+  },
+  'update:activitySummary': (value: string) => {
+    activitySummary.value = value;
+  },
+  'update:chatterDraft': (value: string) => {
+    chatterDraft.value = value;
+  },
+  'update:collaborationUserQuery': (value: string) => {
+    collaborationUserQuery.value = value;
+  },
+};
 
 const hasNativeChatterNode = computed(() => nativeLayoutContainsType(nativeFormLayoutNodes.value, 'chatter'));
 
