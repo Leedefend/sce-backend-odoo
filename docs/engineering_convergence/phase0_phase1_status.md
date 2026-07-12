@@ -25,6 +25,7 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 | P4-02 Domain boundary ADR | Done | `adr_0001_domain_boundaries.md` |
 | P4-07 Complexity budget baseline | Done | `complexity_budget_policy.md`, `complexity_budget_report.md` |
 | P3 E2E journey matrix | Done | `e2e_journey_matrix.md`, `scripts/ci/generate_e2e_journey_matrix.py` |
+| P3 fixed-data Odoo journey tests | Done | `addons/smart_construction_core/tests/test_e2e_fixed_journeys.py` |
 | P4 split-plan queue | Done | `split_plan_queue.md`, `scripts/ci/generate_split_plan_queue.py` |
 
 ## Verified
@@ -40,6 +41,7 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 | `python3 scripts/ci/generate_complexity_budget_report.py` | Passed, 3785 files scanned |
 | `python3 scripts/ci/generate_split_plan_queue.py` | Passed, 45 split-plan files classified |
 | `make test.e2e.preflight` | Passed, BOQ import, BOQ-to-WBS/task generation, and settlement approval preflight |
+| `python3 scripts/ci/python_syntax_check.py addons/smart_construction_core/tests/test_e2e_fixed_journeys.py scripts/e2e` | Passed |
 | `git push -u origin topic/v1.1-engineering-convergence` | Passed |
 
 ## Requires GitHub Admin or Authenticated Remote Execution
