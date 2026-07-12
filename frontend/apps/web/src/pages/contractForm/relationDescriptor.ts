@@ -229,6 +229,41 @@ export function isBlockAllDomain(domain: unknown) {
     && Number(domain[0][2]) === -1;
 }
 
+export function buildRelationDomainFromParts(params: {
+  descriptor?: FieldDescriptor;
+  entryDomain: unknown[];
+  dynamicDomain: unknown[];
+  entryModel: string;
+  entryDefaultType: string;
+  routeDefaultType: string;
+}) {
+  const out: unknown[] = [];
+  const dynamicResolved = params.dynamicDomain.length > 0 && !isBlockAllDomain(params.dynamicDomain);
+  const entryBlocksAll = isBlockAllDomain(params.entryDomain);
+  const dynamicBlocksAll = isBlockAllDomain(params.dynamicDomain);
+  if (params.entryDomain.length && !(entryBlocksAll && (dynamicResolved || dynamicBlocksAll))) {
+    out.push(...params.entryDomain);
+  }
+  out.push(...params.dynamicDomain);
+  const descriptorRecord = params.descriptor as Record<string, unknown> | undefined;
+  const fieldName = String(descriptorRecord?.name || descriptorRecord?.field || '').trim();
+  const relation = String(descriptorRecord?.relation || params.entryModel || '').trim();
+  if (!out.length && fieldName === 'original_contract_id' && relation === 'construction.contract' && ['out', 'in'].includes(params.routeDefaultType)) {
+    out.push(['type', '=', params.routeDefaultType]);
+  }
+  if (params.entryDefaultType) out.push(['type', '=', params.entryDefaultType]);
+  return out.length ? out : undefined;
+}
+
+export function mergeRelationDomains(base: unknown, runtime: unknown) {
+  const out: unknown[] = [];
+  const runtimeHasDomain = Array.isArray(runtime) && runtime.length > 0;
+  const baseOnlyBlocksAll = isBlockAllDomain(base);
+  if (Array.isArray(base) && !(runtimeHasDomain && baseOnlyBlocksAll)) out.push(...base);
+  if (Array.isArray(runtime)) out.push(...runtime);
+  return out.length ? out : undefined;
+}
+
 export function relationSearchDialogContract(descriptor?: FieldDescriptor): Record<string, unknown> {
   const entry = (descriptor as Record<string, unknown> | undefined)?.relation_entry;
   if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return {};

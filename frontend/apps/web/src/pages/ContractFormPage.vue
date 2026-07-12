@@ -1374,7 +1374,9 @@ import {
   dynamicDomainDependencyFields,
   fallbackRelationSearchColumns,
   hasAmbiguousRelationMatches,
+  buildRelationDomainFromParts,
   isBlockAllDomain,
+  mergeRelationDomains,
   normalizeRelationSearchColumns,
   relationCreateMode,
   relationInlineCreate,
@@ -3839,26 +3841,16 @@ function clearDynamicRelationDependents(changedName: string) {
 
 function relationDomain(descriptor?: FieldDescriptor) {
   const entry = relationEntry(descriptor);
-  const out: unknown[] = [];
   const entryDomain = Array.isArray(entry?.domain) ? entry.domain : [];
   const dynamicDomain = dynamicDomainFromDescriptor(descriptor);
-  const dynamicResolved = Array.isArray(dynamicDomain)
-    && dynamicDomain.length > 0
-    && !isBlockAllDomain(dynamicDomain);
-  const entryBlocksAll = isBlockAllDomain(entryDomain);
-  const dynamicBlocksAll = isBlockAllDomain(dynamicDomain);
-  if (entryDomain.length && !(entryBlocksAll && (dynamicResolved || dynamicBlocksAll))) out.push(...entryDomain);
-  out.push(...dynamicDomain);
-  const descriptorRecord = descriptor as Record<string, unknown> | undefined;
-  const fieldName = String(descriptorRecord?.name || descriptorRecord?.field || '').trim();
-  const relation = String(descriptorRecord?.relation || entry?.model || '').trim();
-  const routeDefaultType = String(route.query.default_type || '').trim();
-  if (!out.length && fieldName === 'original_contract_id' && relation === 'construction.contract' && ['out', 'in'].includes(routeDefaultType)) {
-    out.push(['type', '=', routeDefaultType]);
-  }
-  const type = String(entry?.defaultVals?.type || '').trim();
-  if (type) out.push(['type', '=', type]);
-  return out.length ? out : undefined;
+  return buildRelationDomainFromParts({
+    descriptor,
+    entryDomain,
+    dynamicDomain,
+    entryModel: String(entry?.model || '').trim(),
+    entryDefaultType: String(entry?.defaultVals?.type || '').trim(),
+    routeDefaultType: String(route.query.default_type || '').trim(),
+  });
 }
 
 function runtimeRelationDomain(name: string) {
@@ -3871,14 +3863,7 @@ function runtimeRelationDomain(name: string) {
 }
 
 function mergedRelationDomain(name: string, descriptor?: FieldDescriptor) {
-  const base = relationDomain(descriptor);
-  const runtime = runtimeRelationDomain(name);
-  const out: unknown[] = [];
-  const runtimeHasDomain = Array.isArray(runtime) && runtime.length > 0;
-  const baseOnlyBlocksAll = isBlockAllDomain(base);
-  if (Array.isArray(base) && !(runtimeHasDomain && baseOnlyBlocksAll)) out.push(...base);
-  if (Array.isArray(runtime)) out.push(...runtime);
-  return out.length ? out : undefined;
+  return mergeRelationDomains(relationDomain(descriptor), runtimeRelationDomain(name));
 }
 
 async function queryRelationOptions(name: string, keyword: string): Promise<RelationOption[]> {
