@@ -2063,7 +2063,7 @@ const headerBusinessActionsVisible = computed(() => {
   if (showCurrentFormFieldConfigScope.value) return [];
   return headerActionsVisible.value.filter((action) => !isHeaderConfigAction(action));
 });
-const headerConfigActionsVisible = computed(() => headerActionsVisible.value.filter((action) => isHeaderConfigAction(action)));
+const headerConfigActionsVisible = computed(() => headerActionsVisible.value.filter((action) => isHeaderConfigAction(action) && action.enabled));
 
 function headerActionButtonClass(action: ContractAction) {
   return ['sc-btn', 'sc-btn-sm', action.semantic === 'primary_action' && !isHeaderConfigAction(action) ? 'sc-btn-primary' : 'sc-btn-ghost'];
