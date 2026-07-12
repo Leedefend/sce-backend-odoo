@@ -192,354 +192,57 @@
           :blocks="sceneReadyFormSurface.sceneBlocks"
           @action="handleSceneBlockAction"
         />
-        <section v-if="showCurrentFormFieldConfigScope" class="contract-form-settings">
-          <header class="contract-form-settings-head">
-            <div>
-              <h4>当前页面字段配置</h4>
-              <p>{{ formFieldConfigScope.summary }}</p>
-            </div>
-            <span class="contract-form-settings-field-count">字段 {{ currentFormDesignFieldCount }}</span>
-          </header>
-          <div class="contract-form-design-strip" aria-label="页面设计步骤">
-            <div>
-              <span>当前页面</span>
-              <strong>{{ formFieldConfigScope.scope }}</strong>
-            </div>
-            <div>
-              <span>可配置项</span>
-              <strong>字段名称、顺序、显示隐藏、新增字段</strong>
-            </div>
-            <div>
-              <span>影响范围</span>
-              <strong>{{ formFieldConfigScope.saveTarget }}</strong>
-            </div>
-          </div>
-          <section v-if="formSettingsActiveTab === 'fields'" class="contract-form-settings-fields">
-            <header class="contract-form-settings-section-head">
-              <div>
-                <strong>字段配置</strong>
-                <span>按旧表单分区点选字段，或按住字段拖拽调整顺序和分组。</span>
-              </div>
-              <div class="contract-form-settings-section-actions">
-                <button
-                  class="ghost small contract-field-central-create"
-                  type="button"
-                  :disabled="busy"
-                  @click="openCentralCustomFieldCreate"
-                >
-                  新增字段
-                </button>
-                <button
-                  v-if="suggestedHiddenFieldRows.length"
-                  class="ghost small"
-                  type="button"
-                  :disabled="busy"
-                  @click="hideSuggestedInternalFields"
-                >
-                  隐藏系统字段 {{ suggestedHiddenFieldRows.length }}
-                </button>
-              </div>
-            </header>
-            <div class="contract-form-designer-control-grid">
-              <aside class="contract-form-designer-sidebar" aria-label="表单设计器导航">
-                <header class="contract-form-designer-sidebar-head">
-                  <div>
-                    <span>字段目录</span>
-                    <strong>{{ currentFormDesignFieldCount }} 个字段</strong>
-                  </div>
-                  <em>{{ formDesignerGroupNavigatorItems.length }} 个分组</em>
-                </header>
-                <section class="contract-form-field-search" aria-label="字段快速查找">
-                  <label>
-                    <span>查找字段</span>
-                    <input
-                      v-model="formDesignerFieldSearchText"
-                      type="search"
-                      placeholder="搜索字段名称"
-                      :disabled="busy"
-                    />
-                  </label>
-                  <div class="contract-form-field-search-summary">
-                    <span>匹配 {{ formDesignerFilteredFieldRows.length }} / {{ currentFormDesignFieldCount }}</span>
-                    <button
-                      v-if="formDesignerFieldSearchText"
-                      class="link-button"
-                      type="button"
-                      :disabled="busy"
-                      @click="formDesignerFieldSearchText = ''"
-                    >
-                      清空
-                    </button>
-                  </div>
-                  <div v-if="formDesignerFilteredFieldRows.length" class="contract-form-field-search-results">
-                    <button
-                      v-for="item in formDesignerFilteredFieldRows.slice(0, 8)"
-                      :key="`form-field-search-${item.fieldKey}`"
-                      type="button"
-                      class="contract-form-field-search-item"
-                      :class="{ 'contract-form-field-search-item--active': item.fieldKey === selectedFormSettingsFieldKey }"
-                      :disabled="busy"
-                      @click="selectFormDesignerField(item.fieldKey)"
-                    >
-                      <span>{{ item.label }}</span>
-                      <em>{{ item.groupTitle }}</em>
-                    </button>
-                  </div>
-                  <p v-else class="contract-form-field-search-empty">没有匹配字段</p>
-                </section>
-                <section class="contract-form-field-navigator" aria-label="字段分组导航">
-                  <header>
-                    <strong>分组导航</strong>
-                    <span>点选分组定位画布</span>
-                  </header>
-                  <button
-                    v-for="item in formDesignerGroupNavigatorItems"
-                    :key="item.title"
-                    type="button"
-                    class="contract-form-field-nav-item"
-                    :class="{ 'contract-form-field-nav-item--active': item.active }"
-                    @click="selectFormDesignerGroup(item.title)"
-                  >
-                    <span>{{ item.title }}</span>
-                    <em>{{ item.count }}</em>
-                  </button>
-                </section>
-                <section class="contract-form-layout-tools" aria-label="表单布局配置">
-                  <header>
-                    <strong>页面布局</strong>
-                    <span>控制当前表单画布的整体列数。</span>
-                  </header>
-                  <label>
-                    <span>页面列数</span>
-                    <select :value="formLayoutColumnsDraft" :disabled="busy" @change="onFormLayoutColumnsChange">
-                      <option :value="1">1 栏</option>
-                      <option :value="2">2 栏</option>
-                      <option :value="3">3 栏</option>
-                    </select>
-                  </label>
-                </section>
-              </aside>
-              <aside class="contract-form-inspector" aria-label="字段属性检查器">
-                <section class="contract-field-selection-panel">
-                  <div v-if="selectedFormSettingsFieldRow" class="contract-field-selection-card">
-                    <div class="contract-field-selection-main">
-                      <span>已选字段</span>
-                      <strong>{{ selectedFormSettingsFieldRow.label }}</strong>
-                      <small>{{ selectedFormSettingsFieldGroupTitle }}</small>
-                    </div>
-                    <div class="contract-field-selection-tools">
-                      <section class="contract-field-inspector-section">
-                        <header>
-                          <strong>基础属性</strong>
-                        </header>
-                        <label class="contract-field-label-edit">
-                          <span>字段显示名称</span>
-                          <input
-                            type="text"
-                            :value="selectedFormSettingsFieldRow.label"
-                            :disabled="busy"
-                            @change="onSelectedFormSettingsFieldLabelChange"
-                            @keydown.enter.prevent="onSelectedFormSettingsFieldLabelChange"
-                          />
-                        </label>
-                        <div class="contract-field-governance-actions" role="radiogroup" :aria-label="`${selectedFormSettingsFieldRow.label}字段显示`">
-                          <label
-                            v-for="action in selectedFormSettingsFieldRow.actions"
-                            :key="`${selectedFormSettingsFieldRow.fieldKey}-${action.key}`"
-                            class="contract-field-governance-action"
-                            :title="action.title"
-                          >
-                            <input
-                              type="radio"
-                              :name="`contract-field-governance-selected-${selectedFormSettingsFieldRow.fieldKey}`"
-                              :value="action.value"
-                              :checked="Boolean(action.checked)"
-                              :disabled="Boolean(action.disabled)"
-                              @change="onSelectedFormSettingsFieldVisibilityChange(action.value)"
-                            />
-                            <span>{{ action.label }}</span>
-                          </label>
-                        </div>
-                      </section>
-                      <section class="contract-field-inspector-section">
-                        <header>
-                          <strong>布局与分组</strong>
-                        </header>
-                        <label class="contract-field-group-move">
-                          <span>移动到分组</span>
-                          <select
-                            :value="selectedFormSettingsFieldGroupTitle"
-                            :disabled="busy || currentFormGroupOptions.length < 2"
-                            @change="onSelectedFormSettingsFieldGroupMoveChange"
-                          >
-                            <option
-                              v-for="groupTitle in currentFormGroupOptions"
-                              :key="`selected-field-group-${groupTitle}`"
-                              :value="groupTitle"
-                            >
-                              {{ groupTitle }}
-                            </option>
-                          </select>
-                        </label>
-                        <label class="contract-field-group-rename">
-                          <span>分组名称</span>
-                          <input
-                            v-model="selectedFormSettingsFieldGroupTitleEdit"
-                            type="text"
-                            :disabled="busy || !selectedFormSettingsFieldGroupTitle"
-                            @change="onSelectedFormSettingsGroupTitleChange"
-                            @keydown.enter.prevent="onSelectedFormSettingsGroupTitleChange"
-                          />
-                        </label>
-                        <div class="contract-field-group-visibility" role="radiogroup" :aria-label="`${selectedFormSettingsFieldGroupTitle}分组显示`">
-                          <span>分组显示</span>
-                          <label>
-                            <input
-                              type="radio"
-                              :name="`contract-field-group-visible-${selectedFormSettingsFieldGroupTitle}`"
-                              value="show"
-                              :checked="selectedFormSettingsGroupVisible"
-                              :disabled="busy || !selectedFormSettingsFieldGroupTitle"
-                              @change="onSelectedFormSettingsGroupVisibilityChange('show')"
-                            />
-                            <span>显示</span>
-                          </label>
-                          <label>
-                            <input
-                              type="radio"
-                              :name="`contract-field-group-visible-${selectedFormSettingsFieldGroupTitle}`"
-                              value="hide"
-                              :checked="!selectedFormSettingsGroupVisible"
-                              :disabled="busy || !selectedFormSettingsFieldGroupTitle"
-                              @change="onSelectedFormSettingsGroupVisibilityChange('hide')"
-                            />
-                            <span>隐藏</span>
-                          </label>
-                        </div>
-                        <label class="contract-field-group-columns">
-                          <span>分组列数</span>
-                          <select
-                            :value="selectedFormSettingsGroupColumns"
-                            :disabled="busy || !selectedFormSettingsFieldGroupTitle"
-                            @change="onSelectedFormSettingsGroupColumnsChange"
-                          >
-                            <option :value="1">1 栏</option>
-                            <option :value="2">2 栏</option>
-                            <option :value="3">3 栏</option>
-                          </select>
-                        </label>
-                        <label class="contract-field-size-control">
-                          <span>字段尺寸</span>
-                          <select
-                            :value="selectedFormSettingsFieldSize"
-                            :disabled="busy || !selectedFormSettingsFieldKey"
-                            @change="onSelectedFormSettingsFieldSizeChange"
-                          >
-                            <option value="normal">标准</option>
-                            <option value="wide">加宽</option>
-                            <option value="full">整行</option>
-                            <option value="large">大输入框</option>
-                          </select>
-                        </label>
-                      </section>
-                      <section class="contract-field-inspector-section">
-                        <header>
-                          <strong>位置调整</strong>
-                        </header>
-                        <div class="contract-field-position-move">
-                          <label>
-                            <span>移动位置</span>
-                            <select
-                              v-model="selectedFormSettingsOrderTargetKey"
-                              :disabled="busy || selectedFormSettingsOrderTargetOptions.length === 0"
-                            >
-                              <option
-                                v-for="option in selectedFormSettingsOrderTargetOptions"
-                                :key="`selected-field-order-target-${option.fieldKey}`"
-                                :value="option.fieldKey"
-                              >
-                                {{ option.label }}
-                              </option>
-                            </select>
-                          </label>
-                          <label>
-                            <span>放置方式</span>
-                            <select
-                              v-model="selectedFormSettingsOrderPlacement"
-                              :disabled="busy || selectedFormSettingsOrderTargetOptions.length === 0"
-                            >
-                              <option value="before">移到其前</option>
-                              <option value="after">移到其后</option>
-                            </select>
-                          </label>
-                          <button
-                            class="ghost small"
-                            type="button"
-                            :disabled="busy || !selectedFormSettingsOrderTargetKey"
-                            @click="moveSelectedFormSettingsFieldToOrderTarget"
-                          >
-                            移动
-                          </button>
-                        </div>
-                      </section>
-                    </div>
-                  </div>
-                  <div v-else class="contract-field-selection-empty">
-                    <strong>选择字段后开始配置</strong>
-                    <span>在下方表单点选字段后，可在这里调整显示、隐藏、顺序和分组。</span>
-                  </div>
-                </section>
-                <section class="contract-form-operation-log" aria-label="本次操作记录">
-                  <header>
-                    <div>
-                      <strong>本次操作记录</strong>
-                      <span>{{ formConfigOperatorName }}</span>
-                    </div>
-                    <button
-                      class="ghost small"
-                      type="button"
-                      :disabled="!formConfigOperationLog.length"
-                      @click="clearFormConfigOperationLog"
-                    >
-                      清空记录
-                    </button>
-                  </header>
-                  <ol v-if="formConfigOperationLog.length" class="contract-form-operation-log-list">
-                    <li v-for="entry in formConfigOperationLog.slice(0, 8)" :key="entry.id">
-                      <time>{{ formatFormConfigOperationTime(entry.at) }}</time>
-                      <strong>{{ entry.action }}</strong>
-                      <span
-                        class="contract-form-operation-log-status"
-                        :class="`contract-form-operation-log-status--${entry.status}`"
-                      >
-                        {{ formConfigOperationStatusLabel(entry.status) }}
-                      </span>
-                      <span>{{ formatFormConfigOperationSummary(entry.summary) }}</span>
-                    </li>
-                  </ol>
-                  <p v-else class="contract-form-operation-log-empty">暂无操作记录</p>
-                </section>
-              </aside>
-            </div>
-          </section>
-          <div class="contract-field-governance-footer">
-            <span v-if="hasCurrentFormFieldDraftChanges" class="contract-field-governance-dirty">表单设置已调整，保存后生效</span>
-            <span
-              v-if="formConfigAuditSummary"
-              class="contract-field-governance-audit"
-              :class="{ 'contract-field-governance-audit--warning': formConfigAuditResult?.hasConflict }"
-            >{{ formConfigAuditSummary }}</span>
-            <button class="ghost" type="button" :disabled="busy || formConfigAuditBusy" @click="auditCurrentFormConfiguration">
-              {{ formConfigAuditBusy ? '检查中...' : (formConfigAuditResult ? '重新检查' : '检查效果') }}
-            </button>
-            <button class="chip-btn" type="button" :disabled="busy" @click="previewCurrentFormConfiguration">
-              {{ hasCurrentFormFieldDraftChanges ? '保存并预览' : '预览当前页面' }}
-            </button>
-            <button class="ghost" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="saveContractFieldOrder">保存表单设置</button>
-            <button class="ghost" type="button" :disabled="busy" @click="returnToBusinessConfigDesigner">返回工作台</button>
-            <button class="ghost" type="button" :disabled="busy || !hasCurrentFormFieldDraftChanges" @click="resetContractFieldOrder">放弃调整</button>
-          </div>
-        </section>
+        <CurrentFormFieldSettingsPanel
+          v-if="showCurrentFormFieldConfigScope"
+          v-model:field-search-text="formDesignerFieldSearchText"
+          v-model:order-placement="selectedFormSettingsOrderPlacement"
+          v-model:order-target-key="selectedFormSettingsOrderTargetKey"
+          v-model:selected-field-group-title-edit="selectedFormSettingsFieldGroupTitleEdit"
+          :active-tab="formSettingsActiveTab"
+          :audit-busy="formConfigAuditBusy"
+          :audit-result="formConfigAuditResult"
+          :audit-summary="formConfigAuditSummary"
+          :busy="busy"
+          :field-count="currentFormDesignFieldCount"
+          :filtered-field-rows="formDesignerFilteredFieldRows"
+          :format-operation-summary="formatFormConfigOperationSummary"
+          :format-operation-time="formatFormConfigOperationTime"
+          :group-navigator-items="formDesignerGroupNavigatorItems"
+          :group-options="currentFormGroupOptions"
+          :has-draft-changes="hasCurrentFormFieldDraftChanges"
+          :layout-columns="formLayoutColumnsDraft"
+          :operation-log="formConfigOperationLog"
+          :operation-status-label="formConfigOperationStatusLabel"
+          :operator-name="formConfigOperatorName"
+          :order-target-options="selectedFormSettingsOrderTargetOptions"
+          :scope="formFieldConfigScope"
+          :selected-field-group-title="selectedFormSettingsFieldGroupTitle"
+          :selected-field-key="selectedFormSettingsFieldKey"
+          :selected-field-row="selectedFormSettingsFieldRow"
+          :selected-field-size="selectedFormSettingsFieldSize"
+          :selected-group-columns="selectedFormSettingsGroupColumns"
+          :selected-group-visible="selectedFormSettingsGroupVisible"
+          :suggested-hidden-count="suggestedHiddenFieldRows.length"
+          @audit="auditCurrentFormConfiguration"
+          @clear-operation-log="clearFormConfigOperationLog"
+          @hide-suggested-internal-fields="hideSuggestedInternalFields"
+          @layout-columns-change="onFormLayoutColumnsChange"
+          @move-selected-field="moveSelectedFormSettingsFieldToOrderTarget"
+          @open-custom-field-create="openCentralCustomFieldCreate"
+          @preview="previewCurrentFormConfiguration"
+          @reset="resetContractFieldOrder"
+          @return-to-workbench="returnToBusinessConfigDesigner"
+          @save="saveContractFieldOrder"
+          @select-field="selectFormDesignerField"
+          @select-group="selectFormDesignerGroup"
+          @selected-field-group-move-change="onSelectedFormSettingsFieldGroupMoveChange"
+          @selected-field-label-change="onSelectedFormSettingsFieldLabelChange"
+          @selected-field-size-change="onSelectedFormSettingsFieldSizeChange"
+          @selected-field-visibility-change="onSelectedFormSettingsFieldVisibilityChange"
+          @selected-group-columns-change="onSelectedFormSettingsGroupColumnsChange"
+          @selected-group-title-change="onSelectedFormSettingsGroupTitleChange"
+          @selected-group-visibility-change="onSelectedFormSettingsGroupVisibilityChange"
+        />
         <section v-if="showNativeDefaultSectionTitle" class="native-default-section-head">
           <h3>基本信息</h3>
         </section>
@@ -832,6 +535,7 @@ import NativeCollaborationPanel from './contractForm/NativeCollaborationPanel.vu
 import RelationSearchDialog, { type RelationSearchDialogState } from './contractForm/RelationSearchDialog.vue';
 import ContractPromptActionForm from './contractForm/ContractPromptActionForm.vue';
 import LowCodeFieldCreateDialog, { type LowCodeFieldCreateDialogState } from './contractForm/LowCodeFieldCreateDialog.vue';
+import CurrentFormFieldSettingsPanel from './contractForm/CurrentFormFieldSettingsPanel.vue';
 import type {
   FormSectionFieldActionPayload,
   FormSectionFieldSchema,
