@@ -36,6 +36,11 @@ Local verification completed:
 - `scripts/dev/pnpm_exec.sh -C frontend/apps/web lint:src`
 - `scripts/dev/pnpm_exec.sh -C frontend/apps/web typecheck:strict`
 - `scripts/dev/pnpm_exec.sh -C frontend/apps/web build`
+- `make ci`
+
+Remote verification completed:
+
+- GitHub Actions `v1.1 quality gate`: run `29192606652`, passed on commit `bc4f270bc`.
 
 ## Rollback
 
