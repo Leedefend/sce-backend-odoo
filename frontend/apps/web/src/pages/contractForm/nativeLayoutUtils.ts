@@ -1,4 +1,5 @@
 import type { FieldDescriptor } from '@sc/schema';
+import type { FormSectionFieldSchema } from '../../components/template/formSection.types';
 import { lowCodeFieldSizeClass, normalizeLowCodeFieldSize } from './fieldUtils';
 import type { LayoutNode, LowCodeFieldSize } from './types';
 
@@ -82,6 +83,17 @@ export type LegacyLayoutNodeInput = {
   resolveFieldLabel: (name: string) => string;
   evaluatePolicy: (name: string, descriptor: FieldDescriptor) => FieldPolicyLike;
   runtimeState: (name: string) => RuntimeFieldStateLike;
+};
+
+export type NativeFieldSchemasInput = {
+  nodes: NativeLayoutLikeNode[];
+  mapNode: (node: NativeLayoutLikeNode, index: number) => LayoutNode | null;
+  buildSchemas: (fields: LayoutNode[]) => FormSectionFieldSchema[];
+  applyReadonlyValues: (schemas: FormSectionFieldSchema[]) => FormSectionFieldSchema[];
+  orderActive: boolean;
+  fieldOrder: string[];
+  favoriteActive: (fieldName: string) => boolean;
+  favoriteReadonly: (field: LayoutNode) => boolean;
 };
 
 const CHILD_KEYS = ['children', 'pages', 'tabs', 'nodes', 'items'] as const;
@@ -401,6 +413,39 @@ export function buildLegacyLayoutNodes(input: LegacyLayoutNodeInput): LayoutNode
     fallbackFields.forEach((name) => pushField(name));
   }
   return nodes;
+}
+
+export function buildNativeFieldSchemas(input: NativeFieldSchemasInput): FormSectionFieldSchema[] {
+  const mappedNodes = input.nodes
+    .map((node, index) => ({ raw: node, field: input.mapNode(node, index) }))
+    .filter((item): item is { raw: NativeLayoutLikeNode; field: LayoutNode } => Boolean(item.field));
+  const favoriteNode = mappedNodes.find((item) => item.field.widget === 'boolean_favorite' || item.field.name === 'is_favorite');
+  const fieldNodes = mappedNodes
+    .filter((item) => item !== favoriteNode)
+    .map((item) => item.field);
+  if (input.orderActive && input.fieldOrder.length) {
+    const rank = new Map(input.fieldOrder.map((fieldName, order) => [fieldName, order]));
+    fieldNodes.sort((left, right) => {
+      const leftRank = rank.get(left.name) ?? Number.MAX_SAFE_INTEGER;
+      const rightRank = rank.get(right.name) ?? Number.MAX_SAFE_INTEGER;
+      return leftRank - rightRank;
+    });
+  }
+  const schemas = input.applyReadonlyValues(input.buildSchemas(fieldNodes));
+  if (!favoriteNode || !schemas.length) return schemas;
+  const target = schemas.find((field) => field.name === 'name')
+    || schemas.find((field) => ['char', 'text'].includes(String(field.type || '').trim().toLowerCase()))
+    || schemas[0];
+  if (target) {
+    target.favoriteToggle = {
+      name: favoriteNode.field.name,
+      label: favoriteNode.field.label || favoriteNode.field.name,
+      active: input.favoriteActive(favoriteNode.field.name),
+      readonly: input.favoriteReadonly(favoriteNode.field),
+      descriptor: favoriteNode.field.descriptor,
+    };
+  }
+  return schemas;
 }
 
 function stringList(value: unknown): string[] {

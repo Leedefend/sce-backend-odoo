@@ -565,6 +565,7 @@ import {
   resolveNativeFormRootColumns,
   semanticFieldNamesBySurfaceRole,
   buildLegacyLayoutNodes,
+  buildNativeFieldSchemas,
   type FieldSemanticMeta,
   type NativeLayoutLikeNode,
   type SemanticFieldGroup,
@@ -4764,36 +4765,16 @@ function nativeLayoutNodeToFieldNode(nodeRaw: NativeFormLayoutNode, index: numbe
 }
 
 function nativeFieldSchemasForNodes(nodes: NativeFormLayoutNode[]): FormSectionFieldSchema[] {
-  const mappedNodes = nodes
-    .map((node, index) => ({ raw: node, field: nativeLayoutNodeToFieldNode(node, index) }))
-    .filter((item): item is { raw: NativeFormLayoutNode; field: LayoutNode } => Boolean(item.field));
-  const favoriteNode = mappedNodes.find((item) => item.field.widget === 'boolean_favorite' || item.field.name === 'is_favorite');
-  const fieldNodes = mappedNodes
-    .filter((item) => item !== favoriteNode)
-    .map((item) => item.field);
-  if (isContractFieldOrderEditable.value && fieldOrderPreviewActive.value && fieldOrderDraft.value.length) {
-    const rank = new Map(fieldOrderDraft.value.map((fieldName, order) => [fieldName, order]));
-    fieldNodes.sort((left, right) => {
-      const leftRank = rank.get(left.name) ?? Number.MAX_SAFE_INTEGER;
-      const rightRank = rank.get(right.name) ?? Number.MAX_SAFE_INTEGER;
-      return leftRank - rightRank;
-    });
-  }
-  const schemas = applyV2ReadonlyFieldValues(buildSectionFieldSchemas(fieldNodes));
-  if (!favoriteNode || !schemas.length) return schemas;
-  const target = schemas.find((field) => field.name === 'name')
-    || schemas.find((field) => ['char', 'text'].includes(String(field.type || '').trim().toLowerCase()))
-    || schemas[0];
-  if (target) {
-    target.favoriteToggle = {
-      name: favoriteNode.field.name,
-      label: favoriteNode.field.label || favoriteNode.field.name,
-      active: Boolean(formData[favoriteNode.field.name]),
-      readonly: Boolean(favoriteNode.field.readonly || busy.value),
-      descriptor: favoriteNode.field.descriptor,
-    };
-  }
-  return schemas;
+  return buildNativeFieldSchemas({
+    nodes: nodes as NativeLayoutLikeNode[],
+    mapNode: (node, index) => nativeLayoutNodeToFieldNode(node as NativeFormLayoutNode, index),
+    buildSchemas: buildSectionFieldSchemas,
+    applyReadonlyValues: applyV2ReadonlyFieldValues,
+    orderActive: isContractFieldOrderEditable.value && fieldOrderPreviewActive.value,
+    fieldOrder: fieldOrderDraft.value,
+    favoriteActive: (fieldName) => Boolean(formData[fieldName]),
+    favoriteReadonly: (field) => Boolean(field.readonly || busy.value),
+  });
 }
 
 function v2FieldValue(name: string) {
