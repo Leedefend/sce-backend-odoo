@@ -14,15 +14,19 @@ Protect `main` with these rules:
 - Require at least one approving review.
 - Require CODEOWNERS review when owned files change.
 - Require status checks to pass before merging.
-- Require the `v1.1 quality gate / quality_gate` workflow check.
+- Require the `local make ci / verified` status while GitHub Actions is locked
+  by account billing.
+- After billing is restored, switch the required check to
+  `v1.1 quality gate / quality_gate`.
 - Require branches to be up to date before merging.
 - Block force pushes.
 - Block branch deletion.
 - Restrict direct pushes to release administrators only, preferably nobody.
 
-Heavy Docker/Odoo stage workflows that require `[self-hosted, huawei, ubuntu22]`
-runners are manual gates until a matching runner is registered. They must not
-block normal PR checks while the repository has no self-hosted runner.
+GitHub Actions workflows are manual gates until account billing is unlocked.
+Heavy Docker/Odoo stage workflows also require a matching
+`[self-hosted, huawei, ubuntu22]` runner. They must not block normal PR checks
+while the repository has no usable runner.
 
 ### Milestone
 

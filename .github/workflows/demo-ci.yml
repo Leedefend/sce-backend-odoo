@@ -1,22 +1,6 @@
 name: demo.ci
 
 on:
-  pull_request:
-    branches: [ main ]
-    paths:
-      - "addons/smart_construction_demo/**"
-      - "addons/smart_construction_seed/**"
-      - "Makefile"
-      - "docker-compose*.yml"
-      - ".github/workflows/demo-ci.yml"
-  push:
-    branches: [ main ]
-    paths:
-      - "addons/smart_construction_demo/**"
-      - "addons/smart_construction_seed/**"
-      - "Makefile"
-      - "docker-compose*.yml"
-      - ".github/workflows/demo-ci.yml"
   workflow_dispatch:
     inputs:
       scenario:

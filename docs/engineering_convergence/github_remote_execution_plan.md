@@ -95,7 +95,8 @@ Configure `main` in GitHub settings according to `github_governance_runbook.md`:
 - Require pull requests before merging.
 - Require at least one approving review.
 - Require CODEOWNERS review.
-- Require status checks and `v1.1 quality gate / quality_gate`.
+- Require status checks and `local make ci / verified` while GitHub Actions billing is locked.
+- Switch the required check to `v1.1 quality gate / quality_gate` after billing is restored.
 - Require branches to be up to date.
 - Block force pushes and branch deletion.
 
