@@ -6,12 +6,22 @@ This policy defines which validation assets run at each decision point during v1
 
 | Gate | Purpose | Required Entry |
 | --- | --- | --- |
-| PR gate | Fast confidence for every code review. | `make ci` |
+| Local quick gate | Fast confidence for small frontend or architecture-boundary iterations. | `make ci.local.quick` |
+| PR gate | Full local confidence before code review and remote CI. | `make ci` |
 | Integration gate | Prove Odoo/runtime compatibility before merging risky backend work. | `make test.odoo.integration` |
 | Release gate | Prove productization and browser flows before release or deployment. | `make test.all` |
 | Nightly gate | Run long browser and business-chain checks without slowing every PR. | `make test.e2e` plus approved long-running suites |
 
 ## Mandatory PR Gate
+
+`make ci.local.quick` is the normal inner-loop gate for low-risk frontend and
+architecture-boundary refactors. It includes:
+
+- P0/high-risk split-plan line-count lock.
+- Web Contract V2 frontend architecture boundary guard.
+- Frontend lint.
+- Frontend strict typecheck.
+- `git diff --check`.
 
 `make ci` is intentionally bounded. It must stay fast enough for regular PR use and currently includes:
 

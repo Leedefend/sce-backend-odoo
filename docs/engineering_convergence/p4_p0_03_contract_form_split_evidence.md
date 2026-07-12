@@ -47,6 +47,7 @@ The route component remains the orchestration shell and still owns runtime state
 
 Local verification completed:
 
+- `make ci.local.quick`
 - `python3 scripts/verify/web_contract_v2_frontend_architecture_guard.py`
 - `python3 scripts/ci/enforce_complexity_baseline_lock.py`
 - `scripts/dev/pnpm_exec.sh -C frontend/apps/web lint:src`

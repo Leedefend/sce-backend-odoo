@@ -81,6 +81,14 @@ Every PR must link one or more issues and include:
 - Rollback notes.
 - Screenshots or traces when user-visible behavior changes.
 
+## Local Iteration Gates
+
+Use `make ci.local.quick` during small local frontend or architecture-boundary
+iterations. It is the inner-loop gate and does not replace `make ci`.
+
+Use `make ci` before committing a stage, opening a PR, or asking the remote
+GitHub quality gate to run.
+
 ## Review Identity Rule
 
 `Leedefend` is the repository CODEOWNER for this convergence baseline. A CODEOWNER
