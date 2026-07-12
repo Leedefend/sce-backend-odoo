@@ -1444,6 +1444,12 @@ import {
   persistIntakeAutosavePayload,
   restoreIntakeAutosavePayload,
 } from './contractForm/intakeAutosave';
+import {
+  collectRuntimeCapabilities,
+  collectRuntimeUserGroups,
+  normalizeContractWarnings,
+  normalizeSearchFilters,
+} from './contractForm/contractRuntimeVm';
 
 async function collectActionParams(action: ContractAction): Promise<Record<string, unknown> | null> {
   const requiredParams = new Set((action.requiredParams || []).map((item) => item.toLowerCase()));
@@ -3261,29 +3267,8 @@ const contractMetaLine = computed(() => {
 const showDebugActions = computed(() => renderProfile.value !== 'create');
 const showDebugActionsVisible = computed(() => showHud.value && showDebugActions.value);
 const runtimeRoleCode = computed(() => String(session.roleSurface?.role_code || '').trim().toLowerCase());
-const runtimeCapabilities = computed(() => {
-  const out = new Set<string>();
-  (session.capabilities || []).forEach((key) => {
-    const normalized = String(key || '').trim();
-    if (normalized) out.add(normalized);
-  });
-  const catalog = session.capabilityCatalog || {};
-  Object.values(catalog).forEach((meta) => {
-    const key = String(meta?.key || '').trim();
-    if (!key) return;
-    const state = String(meta?.state || '').trim().toUpperCase();
-    const capState = String(meta?.capability_state || '').trim().toLowerCase();
-    if (state === 'LOCKED' || capState === 'deny') return;
-    out.add(key);
-  });
-  return out;
-});
-const runtimeUserGroups = computed(() => {
-  const user = session.user as { groups_xmlids?: unknown } | null;
-  return Array.isArray(user?.groups_xmlids)
-    ? user.groups_xmlids.map((item) => String(item || '').trim()).filter(Boolean)
-    : [];
-});
+const runtimeCapabilities = computed(() => collectRuntimeCapabilities(session));
+const runtimeUserGroups = computed(() => collectRuntimeUserGroups(session.user as { groups_xmlids?: unknown } | null));
 const policyContext = computed(() => ({
   profile: renderProfile.value,
   formData: formData as Record<string, unknown>,
@@ -3292,18 +3277,7 @@ const policyContext = computed(() => ({
   roleCode: runtimeRoleCode.value,
 }));
 
-const warnings = computed(() => {
-  const rows = contract.value?.warnings;
-  if (!Array.isArray(rows)) return [];
-  return rows
-    .map((row) => {
-      if (typeof row === 'string') return row;
-      if (row && typeof row === 'object') return String((row as Record<string, unknown>).message || (row as Record<string, unknown>).code || '');
-      return '';
-    })
-    .map((x) => x.trim())
-    .filter((item) => Boolean(item) && !item.startsWith('access_policy:'));
-});
+const warnings = computed(() => normalizeContractWarnings(contract.value?.warnings));
 
 const contractAccessPolicy = computed<ContractAccessPolicy>(() => {
   const raw = (contract.value as Record<string, unknown> | null)?.access_policy;
@@ -3347,18 +3321,7 @@ const workflowTransitions = computed(() => {
   });
 });
 
-const searchFilters = computed(() => {
-  const rows = contract.value?.search?.filters;
-  if (!Array.isArray(rows)) return [];
-  return rows
-    .map((row) => ({
-      key: String(row.key || '').trim(),
-      label: String(row.label || row.key || '').trim(),
-      domainRaw: String(row.domain_raw || '').trim(),
-      contextRaw: String(row.context_raw || '').trim(),
-    }))
-    .filter((row) => row.key && row.label);
-});
+const searchFilters = computed(() => normalizeSearchFilters(contract.value?.search?.filters));
 
 const showSearchFilters = computed(() => {
   if (useNativeFormTree.value) return false;

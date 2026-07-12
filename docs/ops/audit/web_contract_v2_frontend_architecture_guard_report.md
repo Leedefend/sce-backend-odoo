@@ -6,4 +6,4 @@
 
 ## Findings
 
-- [P1] contract_form_groups_usage `frontend/apps/web/src/pages/ContractFormPage.vue` count=3/3
+- [P1] contract_form_groups_usage `frontend/apps/web/src/pages/ContractFormPage.vue` count=1/1
