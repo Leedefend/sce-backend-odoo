@@ -36,6 +36,13 @@ export type FormDataFieldNameInput = {
   mainData?: Record<string, unknown>;
 };
 
+export type NativeActionVisibilityInput = {
+  row: Record<string, unknown>;
+  currentState?: string;
+  evaluateModifier: (value: unknown) => boolean;
+  resolveAction: (row: Record<string, unknown>) => unknown;
+};
+
 const CHILD_KEYS = ['children', 'pages', 'tabs', 'nodes', 'items'] as const;
 
 export function nativeLayoutNodeType(node: NativeLayoutLikeNode) {
@@ -190,6 +197,37 @@ export function collectFormDataFieldNames(input: FormDataFieldNameInput): string
     Object.keys(fieldMap).slice(0, 40).forEach((name) => names.add(name));
   }
   return Array.from(names);
+}
+
+export function isNativeActionVisible(input: NativeActionVisibilityInput): boolean {
+  const row = input.row;
+  const nativeAction = row.action && typeof row.action === 'object' && !Array.isArray(row.action)
+    ? row.action as Record<string, unknown>
+    : {};
+  const visibleRaw = nativeAction.visible || row.visible;
+  const visible = visibleRaw && typeof visibleRaw === 'object' && !Array.isArray(visibleRaw)
+    ? visibleRaw as Record<string, unknown>
+    : {};
+  const states = Array.isArray(visible.states)
+    ? visible.states.map((item) => String(item || '').trim()).filter(Boolean)
+    : [];
+  const currentState = String(input.currentState || '').trim();
+  if (states.length && currentState && !states.includes(currentState)) return false;
+  const attrs = visible.attrs && typeof visible.attrs === 'object' && !Array.isArray(visible.attrs)
+    ? visible.attrs as Record<string, unknown>
+    : {};
+  const modifiers = row.modifiers && typeof row.modifiers === 'object' && !Array.isArray(row.modifiers)
+    ? row.modifiers as Record<string, unknown>
+    : {};
+  const invisible = attrs.invisible ?? modifiers.invisible ?? row.invisible;
+  if (input.evaluateModifier(invisible)) return false;
+  const nativeType = String(row.type || row.buttonType || '').trim().toLowerCase();
+  const hasNativeActionShape = nativeType === 'button'
+    || nativeType === 'object'
+    || nativeType === 'server'
+    || Boolean(row.action || row.payload || row.name || row.method);
+  if (hasNativeActionShape && !input.resolveAction(row)) return false;
+  return true;
 }
 
 function stringList(value: unknown): string[] {

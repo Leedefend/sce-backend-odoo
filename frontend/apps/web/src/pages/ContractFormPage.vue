@@ -558,6 +558,7 @@ import {
   nativeNodeWidgetSemantics,
   normalizeContractFieldSemantics,
   normalizeSemanticFieldGroups,
+  isNativeActionVisible,
   resolveNativeButtonLabel as resolveNativeButtonLabelFromNode,
   resolveFieldSemanticMeta,
   resolveNativeFormRootColumns,
@@ -4658,38 +4659,12 @@ function evaluateNativeModifierValue(value: unknown) {
 }
 
 function evaluateNativeActionVisibility(row: Record<string, unknown>) {
-  const nativeAction = row.action && typeof row.action === 'object' && !Array.isArray(row.action)
-    ? row.action as Record<string, unknown>
-    : {};
-  const visibleRaw = nativeAction.visible || row.visible;
-  const visible = visibleRaw && typeof visibleRaw === 'object' && !Array.isArray(visibleRaw)
-    ? visibleRaw as Record<string, unknown>
-    : {};
-  const states = Array.isArray(visible.states)
-    ? visible.states.map((item) => String(item || '').trim()).filter(Boolean)
-    : [];
-  if (states.length) {
-    const currentState = String(formData.state || '').trim();
-    if (currentState && !states.includes(currentState)) return false;
-  }
-  const attrs = visible.attrs && typeof visible.attrs === 'object' && !Array.isArray(visible.attrs)
-    ? visible.attrs as Record<string, unknown>
-    : {};
-  const modifiers = row.modifiers && typeof row.modifiers === 'object' && !Array.isArray(row.modifiers)
-    ? row.modifiers as Record<string, unknown>
-    : {};
-  const invisible = attrs.invisible ?? modifiers.invisible ?? row.invisible;
-  if (evaluateNativeModifierValue(invisible)) return false;
-  const nativeType = String(row.type || row.buttonType || '').trim().toLowerCase();
-  const hasNativeActionShape = nativeType === 'button'
-    || nativeType === 'object'
-    || nativeType === 'server'
-    || Boolean(row.action || row.payload || row.name || row.method);
-  if (hasNativeActionShape) {
-    const action = contractActionFromNativeRow(row);
-    if (!action) return false;
-  }
-  return true;
+  return isNativeActionVisible({
+    row,
+    currentState: String(formData.state || '').trim(),
+    evaluateModifier: evaluateNativeModifierValue,
+    resolveAction: contractActionFromNativeRow,
+  });
 }
 
 function isNativeLayoutNodeVisible(nodeRaw: NativeFormLayoutNode) {
