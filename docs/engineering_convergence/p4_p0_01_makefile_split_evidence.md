@@ -60,3 +60,12 @@ split plan queue: current
 frontend lint/typecheck/build: passed
 v1.1 E2E preflight: passed
 ```
+
+Latest remote result:
+
+```text
+GitHub Actions v1.1 quality gate: passed
+Run: 29189232441
+Duration: 2m31s
+Head: a4f54ac43
+```
