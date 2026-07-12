@@ -103,3 +103,11 @@ Configure `main` in GitHub settings according to `github_governance_runbook.md`:
 ```bash
 gh pr create --draft --base main --head topic/v1.1-engineering-convergence --title 'v1.1 Engineering Convergence' --body-file docs/engineering_convergence/pr_v1_1_engineering_convergence.md
 ```
+
+## One-command Execution
+
+After GitHub authentication is restored, run:
+
+```bash
+bash docs/engineering_convergence/github_remote_execute.sh
+```

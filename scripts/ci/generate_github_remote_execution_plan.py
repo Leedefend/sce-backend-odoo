@@ -11,6 +11,7 @@ DOC_ROOT = ROOT / "docs" / "engineering_convergence"
 SEED = DOC_ROOT / "github_issue_seed_v1.1.md"
 LABELS = DOC_ROOT / "github_labels.tsv"
 OUTPUT = DOC_ROOT / "github_remote_execution_plan.md"
+SCRIPT_OUTPUT = DOC_ROOT / "github_remote_execute.sh"
 BODY_DIR = DOC_ROOT / "github_issue_bodies"
 
 
@@ -62,22 +63,102 @@ def issue_body_path(title: str) -> Path:
     return BODY_DIR / f"{slugify(title)}.md"
 
 
-def render() -> str:
-    milestone, issues = parse_seed()
-    labels = parse_labels()
-    BODY_DIR.mkdir(parents=True, exist_ok=True)
+def issue_create_command(issue: dict[str, object], milestone: str) -> str:
+    title = str(issue["title"])
+    labels_arg = ",".join(issue["labels"])
+    cmd = [
+        "gh",
+        "issue",
+        "create",
+        "--title",
+        title,
+        "--milestone",
+        milestone,
+        "--body-file",
+        issue_body_path(title).relative_to(ROOT).as_posix(),
+    ]
+    if labels_arg:
+        cmd.extend(["--label", labels_arg])
+    return " ".join(shlex.quote(part) for part in cmd)
 
-    for issue in issues:
-        title = str(issue["title"])
-        body = str(issue["body"]).strip()
-        path = issue_body_path(title)
-        path.write_text(
-            body
-            + "\n\n---\n"
-            + f"Source: `docs/engineering_convergence/github_issue_seed_v1.1.md`\n",
-            encoding="utf-8",
+
+def render_shell(milestone: str, issues: list[dict[str, object]], labels: list[tuple[str, str, str]]) -> str:
+    lines = [
+        "#!/usr/bin/env bash",
+        "set -euo pipefail",
+        "",
+        "MILESTONE=" + shlex.quote(milestone),
+        "",
+        'echo "[github-remote] preflight"',
+        "gh auth status",
+        "gh repo view --json nameWithOwner,viewerPermission",
+        "",
+        'echo "[github-remote] milestone"',
+        "if gh milestone list --state all --json title --jq '.[].title' | grep -Fxq \"$MILESTONE\"; then",
+        '  echo "[github-remote] milestone exists: $MILESTONE"',
+        "else",
+        "  gh milestone create \"$MILESTONE\" --description '6-week engineering convergence, production validation, and pilot-readiness milestone.'",
+        "fi",
+        "",
+        'echo "[github-remote] labels"',
+    ]
+    for label, color, description in labels:
+        lines.append(
+            "gh label create "
+            + shlex.quote(label)
+            + " --color "
+            + shlex.quote(color)
+            + " --description "
+            + shlex.quote(description)
+            + " --force"
         )
 
+    lines.extend(["", 'echo "[github-remote] seed issues"'])
+    for issue in issues:
+        title = str(issue["title"])
+        lines.extend(
+            [
+                "if gh issue list --state all --search "
+                + shlex.quote(f"{title} in:title")
+                + " --json title --jq '.[].title' | grep -Fxq "
+                + shlex.quote(title)
+                + "; then",
+                "  echo "
+                + shlex.quote(f"[github-remote] issue exists: {title}"),
+                "else",
+                "  " + issue_create_command(issue, milestone),
+                "fi",
+            ]
+        )
+
+    pr_title = "v1.1 Engineering Convergence"
+    head_branch = "topic/v1.1-engineering-convergence"
+    lines.extend(
+        [
+            "",
+            'echo "[github-remote] draft PR"',
+            "if gh pr list --head "
+            + shlex.quote(head_branch)
+            + " --state all --json title --jq '.[].title' | grep -Fxq "
+            + shlex.quote(pr_title)
+            + "; then",
+            "  echo "
+            + shlex.quote(f"[github-remote] PR exists: {pr_title}"),
+            "else",
+            "  gh pr create --draft --base main --head "
+            + shlex.quote(head_branch)
+            + " --title "
+            + shlex.quote(pr_title)
+            + " --body-file docs/engineering_convergence/pr_v1_1_engineering_convergence.md",
+            "fi",
+            "",
+            'echo "[github-remote] branch protection remains a GitHub settings/admin step; see github_governance_runbook.md"',
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def render_markdown(milestone: str, issues: list[dict[str, object]], labels: list[tuple[str, str, str]]) -> str:
     lines = [
         "# GitHub Remote Execution Plan",
         "",
@@ -126,22 +207,7 @@ def render() -> str:
 
     lines.extend(["", "## Issue Creation Commands", "", "```bash"])
     for issue in issues:
-        title = str(issue["title"])
-        labels_arg = ",".join(issue["labels"])
-        cmd = [
-            "gh",
-            "issue",
-            "create",
-            "--title",
-            title,
-            "--milestone",
-            milestone,
-            "--body-file",
-            issue_body_path(title).relative_to(ROOT).as_posix(),
-        ]
-        if labels_arg:
-            cmd.extend(["--label", labels_arg])
-        lines.append(" ".join(shlex.quote(part) for part in cmd))
+        lines.append(issue_create_command(issue, milestone))
     lines.extend(
         [
             "```",
@@ -164,17 +230,48 @@ def render() -> str:
             "--title 'v1.1 Engineering Convergence' "
             "--body-file docs/engineering_convergence/pr_v1_1_engineering_convergence.md",
             "```",
+            "",
+            "## One-command Execution",
+            "",
+            "After GitHub authentication is restored, run:",
+            "",
+            "```bash",
+            "bash docs/engineering_convergence/github_remote_execute.sh",
+            "```",
         ]
     )
     return "\n".join(lines) + "\n"
 
 
-def check_current(expected: str) -> int:
+def render() -> tuple[str, str]:
+    milestone, issues = parse_seed()
+    labels = parse_labels()
+    BODY_DIR.mkdir(parents=True, exist_ok=True)
+
+    for issue in issues:
+        title = str(issue["title"])
+        body = str(issue["body"]).strip()
+        path = issue_body_path(title)
+        path.write_text(
+            body
+            + "\n\n---\n"
+            + f"Source: `docs/engineering_convergence/github_issue_seed_v1.1.md`\n",
+            encoding="utf-8",
+        )
+
+    return render_markdown(milestone, issues, labels), render_shell(milestone, issues, labels)
+
+
+def check_current(expected_plan: str, expected_script: str) -> int:
     if not OUTPUT.exists():
         print(f"[ERROR] missing plan: {OUTPUT.relative_to(ROOT)}", file=sys.stderr)
         return 1
-    current = OUTPUT.read_text(encoding="utf-8")
-    if current != expected:
+    if not SCRIPT_OUTPUT.exists():
+        print(f"[ERROR] missing script: {SCRIPT_OUTPUT.relative_to(ROOT)}", file=sys.stderr)
+        return 1
+    current_plan = OUTPUT.read_text(encoding="utf-8")
+    current_script = SCRIPT_OUTPUT.read_text(encoding="utf-8")
+    if current_plan != expected_plan or current_script != expected_script:
         print(
             "[ERROR] GitHub remote execution plan is stale. Run: "
             "python3 scripts/ci/generate_github_remote_execution_plan.py --write",
@@ -186,12 +283,14 @@ def check_current(expected: str) -> int:
 
 
 def main(argv: list[str]) -> int:
-    expected = render()
+    expected_plan, expected_script = render()
     if "--write" in argv:
-        OUTPUT.write_text(expected, encoding="utf-8")
+        OUTPUT.write_text(expected_plan, encoding="utf-8")
+        SCRIPT_OUTPUT.write_text(expected_script, encoding="utf-8")
         print(f"[OK] wrote {OUTPUT.relative_to(ROOT)}")
+        print(f"[OK] wrote {SCRIPT_OUTPUT.relative_to(ROOT)}")
         return 0
-    return check_current(expected)
+    return check_current(expected_plan, expected_script)
 
 
 if __name__ == "__main__":
