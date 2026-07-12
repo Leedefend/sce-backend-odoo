@@ -1228,7 +1228,6 @@ import {
   resolveContractV2MainData,
   resolveContractV2SourceContext,
   resolveContractV2ValueSource,
-  type ContractV2ButtonStatus,
   type ContractV2Container,
   type ContractV2NormalizedStore,
   type ContractV2Widget,
@@ -1258,103 +1257,40 @@ import {
   resolveUnifiedPageContractV2SourceContext,
   resolveUnifiedPageContractV2VisibleFields,
 } from '../app/contracts/unifiedPageContractV2';
-
-type UiStatus = 'loading' | 'ok' | 'error';
-type BusyKind = 'save' | 'action' | null;
-const MANY2ONE_CREATE_OPTION = '__create__';
-const MANY2ONE_SEARCH_MORE_OPTION = '__search_more__';
-const MANY2ONE_OPEN_RECORD_OPTION = '__open_record__';
-
-type ContractAction = {
-  key: string;
-  label: string;
-  kind: string;
-  level: string;
-  selection: 'none' | 'single' | 'multi';
-  actionId: number | null;
-  methodName: string;
-  targetModel: string;
-  context: Record<string, unknown>;
-  domainRaw: string;
-  target: string;
-  url: string;
-  enabled: boolean;
-  hint: string;
-  intent: string;
-  semantic: string;
-  sourceWidgetId: string;
-  clientMode: string;
-  visibleProfiles: Array<'create' | 'edit' | 'readonly'>;
-  requiredParams: string[];
-  requiresReason: boolean;
-  actionSafety?: {
-    classification: 'safe' | 'danger';
-    requiresConfirm: boolean;
-    confirmMessage: string;
-    reasonCode: string;
-  };
-  mutation?: {
-    type: string;
-    model: string;
-    operation: string;
-    payload_schema?: Record<string, unknown>;
-  };
-  refreshPolicy?: {
-    on_success: string[];
-    on_failure?: string[];
-    mode?: string;
-    scope?: string;
-    debounce_ms?: number;
-  };
-};
-
-function normalizeActionSafety(value: unknown): ContractAction['actionSafety'] | undefined {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
-  const row = value as Record<string, unknown>;
-  const classificationRaw = String(row.classification || '').trim().toLowerCase();
-  const classification = classificationRaw === 'danger' ? 'danger' : classificationRaw === 'safe' ? 'safe' : '';
-  if (!classification) return undefined;
-  return {
-    classification,
-    requiresConfirm: row.requires_confirm === true,
-    confirmMessage: String(row.confirm_message || '').trim(),
-    reasonCode: String(row.reason_code || '').trim(),
-  };
-}
-
-function normalizeRequiredParams(value: unknown): string[] {
-  if (!Array.isArray(value)) return [];
-  return value
-    .map((item) => String(item || '').trim())
-    .filter(Boolean);
-}
-
-function stableContractId(value: unknown, fallback: string) {
-  const raw = String(value || fallback || '').trim();
-  const normalized = raw
-    .split('')
-    .map((char) => {
-      if (/^[A-Za-z0-9_.:-]$/.test(char)) return char;
-      if (char === ' ' || char === '/') return '.';
-      return '';
-    })
-    .join('')
-    .replace(/^\.+|\.+$/g, '');
-  const safe = normalized || fallback || 'action';
-  return /^[A-Za-z]/.test(safe) ? safe : `id.${safe}`;
-}
-
-function resolveV2ButtonStatus(
-  key: string,
-  statusById: Record<string, ContractV2ButtonStatus>,
-): ContractV2ButtonStatus | null {
-  const stableKey = stableContractId(key, 'action');
-  const candidates = [`btn.${stableKey}`, key, stableKey].filter(Boolean);
-  for (const candidate of candidates) {
-    if (statusById[candidate]) return statusById[candidate];
-  }
-  return null;
-}
+import {
+  normalizeActionSafety,
+  normalizeActionLabel,
+  normalizeRequiredParams,
+  resolveV2ButtonStatus,
+} from './contractForm/actionContract';
+import { dictOrEmpty, mergeFieldLabelsFromSource } from './contractForm/recordUtils';
+import {
+  MANY2ONE_CREATE_OPTION,
+  MANY2ONE_OPEN_RECORD_OPTION,
+  MANY2ONE_SEARCH_MORE_OPTION,
+  PROJECT_CONTEXT_CHANGED_EVENT,
+  ContractAccessPolicyError,
+  type BusyKind,
+  type ContractAccessPolicy,
+  type ContractAction,
+  type ContractFieldGovernanceAction,
+  type ContractFieldGovernanceRow,
+  type ContractPromptField,
+  type FormConfigAuditResult,
+  type FormConfigOperationLogEntry,
+  type LayoutNode,
+  type LowCodeFieldSize,
+  type NativeChatterAction,
+  type NativeStatusbarVm,
+  type One2ManyColumn,
+  type One2ManyInlineRow,
+  type RelationOption,
+  type RelationSearchColumn,
+  type RelationSearchRow,
+  type RelationUiLabels,
+  type StatusbarState,
+  type UiStatus,
+} from './contractForm/types';
 
 async function collectActionParams(action: ContractAction): Promise<Record<string, unknown> | null> {
   const requiredParams = new Set((action.requiredParams || []).map((item) => item.toLowerCase()));
@@ -1375,154 +1311,9 @@ async function collectActionParams(action: ContractAction): Promise<Record<strin
   return { reason };
 }
 
-type NativeChatterAction = {
-  key: string;
-  label: string;
-  intent: string;
-  mode: string;
-  payload: Record<string, unknown>;
-  enabled: boolean;
-  hint: string;
-};
-
-type LayoutNode = {
-  key: string;
-  kind: 'header' | 'sheet' | 'group' | 'notebook' | 'page' | 'field';
-  name: string;
-  label: string;
-  readonly: boolean;
-  required: boolean;
-  widget?: string;
-  widgetSemantics?: Record<string, unknown>;
-  spanClass?: string;
-  descriptor?: FieldDescriptor;
-};
-
-type LowCodeFieldSize = 'normal' | 'wide' | 'full' | 'large';
-
-type RelationOption = {
-  id: number;
-  label: string;
-  color?: number | null;
-  switchContext?: {
-    code: string;
-    label: string;
-    defaultValues: Record<string, unknown>;
-  };
-};
-
-type RelationSearchColumn = {
-  name: string;
-  label: string;
-};
-
-type RelationSearchRow = {
-  id: number;
-  label: string;
-  values: Record<string, unknown>;
-};
-
-type RelationUiLabels = Record<string, string>;
-
-type StatusbarState = {
-  value: string | number;
-  label: string;
-};
-
-type NativeStatusbarVm = {
-  visible: boolean;
-  field: string;
-  current: string;
-  states: StatusbarState[];
-  reachedValues: string[];
-  readonly: boolean;
-};
-
-type One2ManyInlineRow = {
-  key: string;
-  id: number | null;
-  isNew: boolean;
-  removed: boolean;
-  dirty: boolean;
-  dirtyFields: string[];
-  values: Record<string, unknown>;
-};
-
-type One2ManyColumn = {
-  name: string;
-  label: string;
-  ttype: string;
-  required: boolean;
-  readonly?: boolean;
-  selection?: Array<[string, string]>;
-};
-
-type ContractAccessPolicy = {
-  mode: 'allow' | 'degrade' | 'block';
-  reasonCode: string;
-  message: string;
-  blockedFields: Array<{ field: string; model: string; reasonCode: string }>;
-  degradedFields: Array<{ field: string; model: string; reasonCode: string }>;
-};
-
-type ContractPromptField = {
-  name: string;
-  label: string;
-  required: boolean;
-  defaultValue: string;
-  options: Array<{ value: string; label: string }>;
-};
-
-type ContractFieldGovernanceAction = {
-  key: string;
-  label: string;
-  value: string;
-  checked: boolean;
-  disabled: boolean;
-  title: string;
-  raw: Record<string, unknown>;
-};
-
-type ContractFieldGovernanceRow = {
-  fieldKey: string;
-  label: string;
-  actions: ContractFieldGovernanceAction[];
-};
-
-type FormConfigAuditResult = {
-  businessConfigFormFields: string[];
-  businessConfigFormLayoutFields: string[];
-  hasBusinessConfigFormLayout: boolean;
-  layoutMatchesFields: boolean;
-  legacyPolicyFields: string[];
-  skippedLegacyPolicyFields: string[];
-  activeLegacyPolicyFields: string[];
-  hasConflict: boolean;
-};
-
-type FormConfigOperationLogEntry = {
-  id: string;
-  at: string;
-  operator: string;
-  action: string;
-  summary: string;
-  status: 'pending' | 'saved' | 'reverted' | 'done';
-};
-
-class ContractAccessPolicyError extends Error {
-  reasonCode: string;
-
-  constructor(message: string, reasonCode: string) {
-    super(message);
-    this.name = 'ContractAccessPolicyError';
-    this.reasonCode = reasonCode;
-  }
-}
-
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
-const PROJECT_CONTEXT_CHANGED_EVENT = 'sc:project-context-changed';
 
 function resolveWorkspaceContextQuery() {
   return readWorkspaceContext(route.query as Record<string, unknown>);
@@ -5945,15 +5736,6 @@ function detectMethodName(key: string, payloadMethod: string) {
   return detectObjectMethodFromActionKey(key, payloadMethod);
 }
 
-function normalizeActionLabel(raw: unknown, fallback = ''): string {
-  const text = String(raw ?? '').trim();
-  if (!text) return String(fallback || '').trim();
-  if (!text.startsWith('{') || !text.includes('label')) return text;
-  const match = text.match(/['"]label['"]\s*:\s*['"]([^'"]+)['"]/);
-  if (match?.[1]) return String(match[1]).trim();
-  return text;
-}
-
 function currentWorkflowContract(): Record<string, unknown> {
   const root = dictOrEmpty(contract.value);
   const storeSnapshot = dictOrEmpty(v2ContractStore.value?.snapshot);
@@ -6401,31 +6183,6 @@ const contractActions = computed<ContractAction[]>(() => {
 
 const headerActions = computed(() => contractActions.value.filter((item) => item.level === 'header' || item.level === 'toolbar'));
 const bodyActions = computed(() => contractActions.value.filter((item) => item.level !== 'header' && item.level !== 'toolbar'));
-
-function dictOrEmpty(value: unknown): Record<string, unknown> {
-  return value && typeof value === 'object' && !Array.isArray(value)
-    ? value as Record<string, unknown>
-    : {};
-}
-
-function mergeFieldLabelsFromSource(source: unknown, out: Record<string, string>) {
-  if (!source || typeof source !== 'object' || Array.isArray(source)) return;
-  const row = source as Record<string, unknown>;
-  const directLabels = dictOrEmpty(row.fieldLabels || row.field_labels);
-  Object.entries(directLabels).forEach(([name, value]) => {
-    const label = String(value || '').trim();
-    if (name && label) out[name] = label;
-  });
-  Object.values(row).forEach((value) => {
-    if (value && typeof value === 'object') {
-      if (Array.isArray(value)) {
-        value.forEach((item) => mergeFieldLabelsFromSource(item, out));
-      } else {
-        mergeFieldLabelsFromSource(value, out);
-      }
-    }
-  });
-}
 
 const contractFieldLabels = computed<Record<string, string>>(() => {
   const labels: Record<string, string> = {};

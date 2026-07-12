@@ -1,0 +1,46 @@
+# P4-P0-03 Contract Form Split Evidence
+
+Date: 2026-07-12
+Branch: `topic/p4-p0-03-contract-form-split`
+Tracked issue: `#1029`
+
+## Scope
+
+This first P4-P0-03 slice starts decomposing `frontend/apps/web/src/pages/ContractFormPage.vue` without changing product behavior.
+
+Extracted responsibilities:
+
+- Shared contract form types and constants moved to `frontend/apps/web/src/pages/contractForm/types.ts`.
+- Action-contract parsing helpers moved to `frontend/apps/web/src/pages/contractForm/actionContract.ts`.
+- Generic contract record helpers moved to `frontend/apps/web/src/pages/contractForm/recordUtils.ts`.
+
+The route component remains the orchestration shell and still owns runtime state, navigation, persistence, and user interaction flow.
+
+## Line Count
+
+| File | Before | After |
+| --- | ---: | ---: |
+| `frontend/apps/web/src/pages/ContractFormPage.vue` | 13762 | 13519 |
+
+## Boundary Decision
+
+- Backend contracts remain the source of truth for fields, actions, permissions, and Odoo-native structure.
+- The frontend extraction only names and consumes already-provided contract data.
+- No frontend fallback menu, permission, action, or form policy was introduced.
+- No data migration, backend endpoint change, or visual redesign is included in this slice.
+
+## Verification
+
+Local verification completed:
+
+- `scripts/dev/pnpm_exec.sh -C frontend/apps/web lint:src`
+- `scripts/dev/pnpm_exec.sh -C frontend/apps/web typecheck:strict`
+- `scripts/dev/pnpm_exec.sh -C frontend/apps/web build`
+
+## Rollback
+
+Rollback is code-only:
+
+1. Revert this slice commit.
+2. Restore the prior inline type/helper definitions in `ContractFormPage.vue`.
+3. No database, attachment, menu, or contract migration is required.
