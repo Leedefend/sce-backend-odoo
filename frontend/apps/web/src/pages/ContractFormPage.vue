@@ -539,6 +539,7 @@ import {
 import { dictOrEmpty, mergeFieldLabelsFromSource } from './contractForm/recordUtils';
 import {
   collectContractActionBadgeCountFieldNames,
+  collectNativeFormDesignFields,
   collectNativeFavoriteFieldNames,
   collectNativeLayoutBadgeCountFieldNames,
   collectNativeLayoutFieldNames,
@@ -556,10 +557,10 @@ import {
   nativeNodeWidget,
   nativeNodeWidgetSemantics,
   normalizeContractFieldSemantics,
-  normalizeNativeLayoutColumns,
   normalizeSemanticFieldGroups,
   resolveNativeButtonLabel as resolveNativeButtonLabelFromNode,
   resolveFieldSemanticMeta,
+  resolveNativeFormRootColumns,
   semanticFieldNamesBySurfaceRole,
   type FieldSemanticMeta,
   type NativeLayoutLikeNode,
@@ -4570,51 +4571,11 @@ const nativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
 
 const nativeFormRootColumns = computed<1 | 2 | 3>(() => {
   if (isContractFieldOrderEditable.value) return formLayoutColumnsDraft.value;
-  const walk = (nodes: NativeFormLayoutNode[]): 1 | 2 | 3 | null => {
-    for (const node of nodes) {
-      const attrs = node && typeof node.attributes === 'object' && node.attributes
-        ? node.attributes as Record<string, unknown>
-        : {};
-      const direct = normalizeNativeLayoutColumns(
-        attrs.col
-        ?? attrs.columns
-        ?? (node as { cols?: unknown; columns?: unknown }).cols
-        ?? (node as { cols?: unknown; columns?: unknown }).columns,
-      );
-      if (direct) return direct;
-      for (const key of ['children', 'pages', 'tabs', 'nodes', 'items'] as const) {
-        const children = node?.[key];
-        if (Array.isArray(children)) {
-          const nested = walk(children as NativeFormLayoutNode[]);
-          if (nested) return nested;
-        }
-      }
-    }
-    return null;
-  };
-  return walk(nativeFormLayoutNodes.value) || 3;
+  return resolveNativeFormRootColumns(nativeFormLayoutNodes.value as NativeLayoutLikeNode[]);
 });
 
 watch(baseNativeFormLayoutNodes, (nodes) => {
-  const keys: string[] = [];
-  const seen = new Set<string>();
-  const labels: Record<string, string> = {};
-  const walk = (items: NativeFormLayoutNode[]) => {
-    items.forEach((node) => {
-      const type = nativeLayoutNodeType(node);
-      const name = String(node?.name || '').trim();
-      if (type === 'field' && name && !seen.has(name)) {
-        seen.add(name);
-        keys.push(name);
-        labels[name] = String(node?.string || node?.label || name).trim() || name;
-      }
-      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
-        const children = node?.[key];
-        if (Array.isArray(children)) walk(children as NativeFormLayoutNode[]);
-      });
-    });
-  };
-  walk(nodes);
+  const { keys, labels } = collectNativeFormDesignFields(nodes as NativeLayoutLikeNode[]);
   nativeFormDesignFieldKeys.value = keys;
   nativeFormDesignFieldLabels.value = labels;
 }, { immediate: true });

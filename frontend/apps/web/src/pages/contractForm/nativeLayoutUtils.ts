@@ -21,6 +21,11 @@ export type FieldSemanticMeta = {
   technical?: boolean;
 };
 
+export type NativeFormDesignFields = {
+  keys: string[];
+  labels: Record<string, string>;
+};
+
 const CHILD_KEYS = ['children', 'pages', 'tabs', 'nodes', 'items'] as const;
 
 export function nativeLayoutNodeType(node: NativeLayoutLikeNode) {
@@ -44,6 +49,53 @@ export function nativeNodeFieldInfo(node?: NativeLayoutLikeNode | null): Record<
 export function normalizeNativeLayoutColumns(value: unknown): 1 | 2 | 3 | null {
   const columns = Number(value);
   return columns === 1 || columns === 2 || columns === 3 ? columns : null;
+}
+
+export function resolveNativeFormRootColumns(nodes: NativeLayoutLikeNode[], fallback: 1 | 2 | 3 = 3): 1 | 2 | 3 {
+  const walk = (items: NativeLayoutLikeNode[]): 1 | 2 | 3 | null => {
+    for (const node of items) {
+      const attrs = node && typeof node.attributes === 'object' && node.attributes
+        ? node.attributes as Record<string, unknown>
+        : {};
+      const direct = normalizeNativeLayoutColumns(
+        attrs.col
+        ?? attrs.columns
+        ?? (node as { cols?: unknown; columns?: unknown }).cols
+        ?? (node as { cols?: unknown; columns?: unknown }).columns,
+      );
+      if (direct) return direct;
+      for (const key of CHILD_KEYS) {
+        const children = node?.[key];
+        if (!Array.isArray(children)) continue;
+        const nested = walk(children as NativeLayoutLikeNode[]);
+        if (nested) return nested;
+      }
+    }
+    return null;
+  };
+  return walk(nodes) || fallback;
+}
+
+export function collectNativeFormDesignFields(nodes: NativeLayoutLikeNode[]): NativeFormDesignFields {
+  const keys: string[] = [];
+  const seen = new Set<string>();
+  const labels: Record<string, string> = {};
+  const walk = (items: NativeLayoutLikeNode[]) => {
+    items.forEach((node) => {
+      const name = String(node?.name || '').trim();
+      if (nativeLayoutNodeType(node) === 'field' && name && !seen.has(name)) {
+        seen.add(name);
+        keys.push(name);
+        labels[name] = String(node?.string || node?.label || name).trim() || name;
+      }
+      CHILD_KEYS.forEach((key) => {
+        const children = node?.[key];
+        if (Array.isArray(children)) walk(children as NativeLayoutLikeNode[]);
+      });
+    });
+  };
+  walk(nodes);
+  return { keys, labels };
 }
 
 function stringList(value: unknown): string[] {
