@@ -1379,14 +1379,21 @@ import {
   workflowActionRowForMethod,
 } from './contractForm/workflowContract';
 import {
-  activityFieldLabel as resolveActivityFieldLabel,
   formUiLabelFromLabels,
   formUiLabelsFromFormView,
-  labelFromMap,
   layoutContainsType,
-  nativeChatterActionLabel,
-  normalizeLabelMap,
 } from './contractForm/uiLabels';
+import {
+  nativeActivityFieldLabel,
+  nativeAttachmentContractOrNull,
+  nativeAttachmentLabel,
+  nativeAttachmentLabelsFromContract,
+  nativeAttachmentMaxBytes as nativeAttachmentMaxBytesFromContract,
+  nativeChatterActionsFromContract,
+  resolveNativeAttachmentContract,
+  resolveNativeChatterContract,
+  resolveRuntimeCollaborationContract,
+} from './contractForm/collaborationContract';
 import {
   MANY2ONE_CREATE_OPTION,
   MANY2ONE_OPEN_RECORD_OPTION,
@@ -5305,48 +5312,25 @@ function contractFieldLabel(name: string) {
 }
 
 const runtimeCollaborationContract = computed(() => {
-  const fromV2Store = dictOrEmpty(v2ContractStore.value?.snapshot?.runtimeContract);
-  const fromLegacy = dictOrEmpty((contract.value as Record<string, unknown> | null | undefined)?.runtimeContract);
-  return dictOrEmpty(Object.keys(fromV2Store).length ? fromV2Store.collaboration : fromLegacy.collaboration);
+  return resolveRuntimeCollaborationContract(
+    v2ContractStore.value?.snapshot?.runtimeContract,
+    (contract.value as Record<string, unknown> | null | undefined)?.runtimeContract,
+  );
 });
 
 const nativeChatterContract = computed(() => {
-  const formView = dictOrEmpty(contract.value?.views?.form);
-  const projected = dictOrEmpty(formView.chatter);
-  if (Object.keys(projected).length) return projected;
-  return dictOrEmpty(runtimeCollaborationContract.value.chatter);
+  return resolveNativeChatterContract(contract.value?.views?.form, runtimeCollaborationContract.value);
 });
 
 const nativeAttachmentContract = computed(() => {
-  const formView = dictOrEmpty(contract.value?.views?.form);
-  const projected = dictOrEmpty(formView.attachments);
-  if (Object.keys(projected).length) return projected;
-  return dictOrEmpty(runtimeCollaborationContract.value.attachments);
+  return resolveNativeAttachmentContract(contract.value?.views?.form, runtimeCollaborationContract.value);
 });
 
 const nativeChatterActions = computed<NativeChatterAction[]>(() => {
-  const chatter = nativeChatterContract.value;
-  if (!chatter || chatter.enabled !== true) return [];
-  const actions = Array.isArray(chatter.actions) ? chatter.actions as Array<Record<string, unknown>> : [];
-  return actions
-    .map((row) => {
-      const key = String(row.key || row.label || '').trim();
-      const intent = String(row.intent || row.kind || key).trim().toLowerCase();
-      const payload = row.payload && typeof row.payload === 'object' && !Array.isArray(row.payload)
-        ? row.payload as Record<string, unknown>
-        : {};
-      const mode = String(payload.mode || intent || key).trim().toLowerCase();
-      return {
-        key,
-        label: nativeChatterActionLabel(mode, row),
-        intent,
-        mode,
-        payload,
-        enabled: Boolean(recordId.value) && Boolean(model.value),
-        hint: intent,
-      };
-    })
-    .filter((row) => row.key && row.label);
+  return nativeChatterActionsFromContract(nativeChatterContract.value, {
+    recordId: recordId.value,
+    model: model.value,
+  });
 });
 
 const nativeChatterTitle = computed(() => {
@@ -5387,7 +5371,7 @@ const activeActivityAction = computed(() => (
 ));
 
 function activityFieldLabel(name: string, fallback: string) {
-  return resolveActivityFieldLabel(activeActivityAction.value?.payload, name, fallback);
+  return nativeActivityFieldLabel(activeActivityAction.value, name, fallback);
 }
 
 const activitySummaryLabel = computed(() => activityFieldLabel('summary', '摘要'));
@@ -5413,29 +5397,21 @@ const isNativeChatterSubmitDisabled = computed(() => {
 });
 
 const nativeAttachments = computed(() => {
-  const raw = nativeAttachmentContract.value;
-  if (!raw || raw.enabled !== true) return null;
-  return raw;
+  return nativeAttachmentContractOrNull(nativeAttachmentContract.value);
 });
 
 const nativeAttachmentLabels = computed<Record<string, string>>(() => {
-  return normalizeLabelMap(nativeAttachments.value?.ui_labels);
+  return nativeAttachmentLabelsFromContract(nativeAttachments.value);
 });
 
-function nativeAttachmentLabel(key: string, fallback: string) {
-  return labelFromMap(nativeAttachmentLabels.value, key, fallback);
+function resolveNativeAttachmentLabel(key: string, fallback: string) {
+  return nativeAttachmentLabel(nativeAttachmentLabels.value, key, fallback);
 }
 
-const nativeAttachmentUploadLabel = computed(() => nativeAttachmentLabel('upload', '上传附件'));
-const nativeAttachmentUploadingLabel = computed(() => nativeAttachmentLabel('uploading', '上传中...'));
-const nativeAttachmentViewLabel = computed(() => nativeAttachmentLabel('view', '查看'));
-const nativeAttachmentMaxBytes = computed(() => {
-  const upload = nativeAttachments.value?.upload;
-  const raw = upload && typeof upload === 'object' && !Array.isArray(upload)
-    ? Number((upload as Record<string, unknown>).max_bytes || 0)
-    : 0;
-  return Number.isFinite(raw) && raw > 0 ? raw : 5 * 1024 * 1024;
-});
+const nativeAttachmentUploadLabel = computed(() => resolveNativeAttachmentLabel('upload', '上传附件'));
+const nativeAttachmentUploadingLabel = computed(() => resolveNativeAttachmentLabel('uploading', '上传中...'));
+const nativeAttachmentViewLabel = computed(() => resolveNativeAttachmentLabel('view', '查看'));
+const nativeAttachmentMaxBytes = computed(() => nativeAttachmentMaxBytesFromContract(nativeAttachments.value));
 
 const hasNativeChatterNode = computed(() => nativeLayoutContainsType(nativeFormLayoutNodes.value, 'chatter'));
 
