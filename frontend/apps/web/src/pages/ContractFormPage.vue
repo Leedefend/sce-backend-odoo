@@ -543,6 +543,8 @@ import {
   collectNativeFavoriteFieldNames,
   collectNativeLayoutBadgeCountFieldNames,
   collectNativeLayoutFieldNames,
+  collectNativeVisibleFieldNames,
+  collectNativeVisibleFieldOrder,
   collectNativeVisibleSectionTitles,
   countNativeNodesByType,
   evaluateNativeModifierValue as evaluateNativeModifierValueWithResolver,
@@ -4593,21 +4595,10 @@ function resolveNativeButtonLabel(node: NativeFormLayoutNode) {
   return resolveNativeButtonLabelFromNode(node as NativeLayoutLikeNode, (field) => formData[field]);
 }
 
-const nativeVisibleFieldNames = computed(() => {
-  const names = new Set<string>();
-  const walk = (nodes: NativeFormLayoutNode[]) => {
-    nodes.forEach((node) => {
-      const name = String(node?.name || '').trim();
-      if (name && isNativeFieldVisible(name, node)) names.add(name);
-      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
-        const children = node?.[key];
-        if (Array.isArray(children)) walk(children as NativeFormLayoutNode[]);
-      });
-    });
-  };
-  walk(nativeFormLayoutNodes.value);
-  return names;
-});
+const nativeVisibleFieldNames = computed(() => collectNativeVisibleFieldNames(
+  nativeFormLayoutNodes.value as NativeLayoutLikeNode[],
+  (name, node) => isNativeFieldVisible(name, node as NativeFormLayoutNode),
+));
 
 function formDataFieldNames() {
   const fieldMap = contract.value?.fields || {};
@@ -4846,24 +4837,10 @@ function isNativeFieldVisible(name: string, nodeRaw?: NativeFormLayoutNode) {
 }
 
 function currentNativeFieldOrder() {
-  const out: string[] = [];
-  const seen = new Set<string>();
-  const walk = (nodes: NativeFormLayoutNode[]) => {
-    nodes.forEach((node) => {
-      const type = String(node?.type || (node as { containerType?: string })?.containerType || '').trim().toLowerCase();
-      const name = String(node?.name || '').trim();
-      if (type === 'field' && name && !seen.has(name) && isNativeFieldVisible(name, node)) {
-        seen.add(name);
-        out.push(name);
-      }
-      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
-        const children = node?.[key];
-        if (Array.isArray(children)) walk(children as NativeFormLayoutNode[]);
-      });
-    });
-  };
-  walk(nativeFormLayoutNodes.value);
-  return out;
+  return collectNativeVisibleFieldOrder(
+    nativeFormLayoutNodes.value as NativeLayoutLikeNode[],
+    (name, node) => isNativeFieldVisible(name, node as NativeFormLayoutNode),
+  );
 }
 
 function ensureFieldOrderDraftStartsFromCurrentLayout() {

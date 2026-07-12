@@ -98,6 +98,48 @@ export function collectNativeFormDesignFields(nodes: NativeLayoutLikeNode[]): Na
   return { keys, labels };
 }
 
+export function collectNativeVisibleFieldNames(
+  nodes: NativeLayoutLikeNode[],
+  isVisible: (name: string, node: NativeLayoutLikeNode) => boolean,
+): Set<string> {
+  const names = new Set<string>();
+  const walk = (items: NativeLayoutLikeNode[]) => {
+    items.forEach((node) => {
+      const name = String(node?.name || '').trim();
+      if (name && isVisible(name, node)) names.add(name);
+      CHILD_KEYS.forEach((key) => {
+        const children = node?.[key];
+        if (Array.isArray(children)) walk(children as NativeLayoutLikeNode[]);
+      });
+    });
+  };
+  walk(nodes);
+  return names;
+}
+
+export function collectNativeVisibleFieldOrder(
+  nodes: NativeLayoutLikeNode[],
+  isVisible: (name: string, node: NativeLayoutLikeNode) => boolean,
+): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const walk = (items: NativeLayoutLikeNode[]) => {
+    items.forEach((node) => {
+      const name = String(node?.name || '').trim();
+      if (isNativeFieldLayoutNode(node) && name && !seen.has(name) && isVisible(name, node)) {
+        seen.add(name);
+        out.push(name);
+      }
+      CHILD_KEYS.forEach((key) => {
+        const children = node?.[key];
+        if (Array.isArray(children)) walk(children as NativeLayoutLikeNode[]);
+      });
+    });
+  };
+  walk(nodes);
+  return out;
+}
+
 function stringList(value: unknown): string[] {
   return Array.isArray(value) ? value.map((item) => String(item || '').trim()).filter(Boolean) : [];
 }
