@@ -1,5 +1,5 @@
 import { buildOne2ManyInlineCommands } from '../../app/x2manyCommands';
-import { fieldType, fromDatetimeInputValue, toDateInputValue, toDatetimeInputValue } from './fieldUtils';
+import { fieldType, fromDatetimeInputValue, normalizeRelationIds, toDateInputValue, toDatetimeInputValue } from './fieldUtils';
 import type { One2ManyColumn, One2ManyInlineRow } from './types';
 import type { FieldDescriptor } from '@sc/schema';
 
@@ -139,6 +139,92 @@ export function one2manyDraftSummary(rows: One2ManyInlineRow[]) {
   if (updated) parts.push(`修改 ${updated}`);
   if (removed) parts.push(`删除 ${removed}`);
   return parts.length ? `待提交：${parts.join(' / ')}` : '待提交：无变更';
+}
+
+export function createOne2manyDraftRow(params: {
+  key: string;
+  primary: string;
+  columns: One2ManyColumn[];
+}): One2ManyInlineRow {
+  const values = params.columns.reduce<Record<string, unknown>>((acc, column) => {
+    acc[column.name] = column.ttype === 'boolean' ? false : '';
+    return acc;
+  }, {});
+  return {
+    key: params.key,
+    id: null,
+    isNew: true,
+    removed: false,
+    dirty: true,
+    dirtyFields: params.columns.map((column) => column.name),
+    values: { ...values, [params.primary]: values[params.primary] ?? '' },
+  };
+}
+
+export function initOne2manyRowsFromRelationSource(params: {
+  source: unknown;
+  relationOptions: Array<{ id: number; label: string }>;
+  primary: string;
+}): One2ManyInlineRow[] {
+  const ids = normalizeRelationIds(params.source);
+  const optionMap = new Map(params.relationOptions.map((item) => [item.id, item.label]));
+  return ids.map((id) => ({
+    key: `o2m_id_${id}`,
+    id,
+    isNew: false,
+    removed: false,
+    dirty: false,
+    dirtyFields: [],
+    values: {
+      [params.primary]: optionMap.get(id) || `#${id}`,
+      name: optionMap.get(id) || `#${id}`,
+    },
+  }));
+}
+
+export function collectOne2manyDraftValidationFromRows(params: {
+  rowsByField: Record<string, One2ManyInlineRow[]>;
+  recordId: number;
+  resolvePrimaryColumn: (fieldName: string) => string;
+  resolveColumns: (fieldName: string) => One2ManyColumn[];
+}) {
+  const issues: string[] = [];
+  const rowErrors: Record<string, string[]> = {};
+  Object.entries(params.rowsByField).forEach(([fieldName, rows]) => {
+    if (!Array.isArray(rows) || !rows.length) return;
+    const hasTouchedRows = rows.some((row) => row.isNew || row.dirty || row.removed);
+    if (params.recordId && !hasTouchedRows) return;
+    const primary = params.resolvePrimaryColumn(fieldName);
+    const columns = params.resolveColumns(fieldName);
+    const requiredColumns = columns.filter((column) => column.required);
+    const labels = new Set<string>();
+    rows.forEach((row, index) => {
+      if (row.removed) return;
+      const rowKey = `${fieldName}:${row.key}`;
+      const perRow: string[] = [];
+      requiredColumns.forEach((column) => {
+        const value = row.values?.[column.name];
+        if (isOne2manyEmptyValue(column, value)) {
+          perRow.push(`${column.label}不能为空`);
+          issues.push(`${fieldName} 第${index + 1}行${column.label}不能为空`);
+        }
+      });
+      const label = String(row.values?.[primary] ?? row.values?.name ?? '').trim();
+      if (label) {
+        const key = label.toLowerCase();
+        if (labels.has(key)) {
+          perRow.push(`主值重复：${label}`);
+          issues.push(`${fieldName} 存在重复行值：${label}`);
+        } else {
+          labels.add(key);
+        }
+      }
+      if (perRow.length) {
+        rowErrors[rowKey] = perRow;
+      }
+    });
+  });
+  return { issues, rowErrors };
 }
 
 export function buildOne2manyCommandValue(

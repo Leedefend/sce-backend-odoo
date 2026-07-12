@@ -588,7 +588,9 @@ import {
   formRuntimeReasonLabel,
   formRuntimeRowStateLabel,
   buildOne2manyCommandValue as buildOne2manyCommandValueFromRows,
-  isOne2manyEmptyValue,
+  collectOne2manyDraftValidationFromRows,
+  createOne2manyDraftRow,
+  initOne2manyRowsFromRelationSource,
   normalizeOne2manyColumnValue,
   one2manyCanCreateFromPolicies,
   one2manyColumnDisplayValue,
@@ -2737,19 +2739,7 @@ function addOne2manyRow(name: string) {
   const rows = ensureOne2manyRows(name);
   const primary = one2manyPrimaryColumn(name);
   const columns = one2manyColumns(name);
-  const values = columns.reduce<Record<string, unknown>>((acc, column) => {
-    acc[column.name] = column.ttype === 'boolean' ? false : '';
-    return acc;
-  }, {});
-  rows.push({
-    key: makeOne2manyKey(),
-    id: null,
-    isNew: true,
-    removed: false,
-    dirty: true,
-    dirtyFields: columns.map((column) => column.name),
-    values: { ...values, [primary]: values[primary] ?? '' },
-  });
+  rows.push(createOne2manyDraftRow({ key: makeOne2manyKey(), primary, columns }));
   markFieldChanged(name);
 }
 
@@ -2794,22 +2784,9 @@ function restoreOne2manyRow(fieldName: string, rowKey: string) {
 }
 
 function initOne2manyRows(name: string, source: unknown) {
-  const ids = normalizeRelationIds(source);
   const options = relationOptionsForField(name);
-  const optionMap = new Map(options.map((item) => [item.id, item.label]));
   const primary = one2manyPrimaryColumn(name);
-  one2manyRows[name] = ids.map((id) => ({
-    key: `o2m_id_${id}`,
-    id,
-    isNew: false,
-    removed: false,
-    dirty: false,
-    dirtyFields: [],
-    values: {
-      [primary]: optionMap.get(id) || `#${id}`,
-      name: optionMap.get(id) || `#${id}`,
-    },
-  }));
+  one2manyRows[name] = initOne2manyRowsFromRelationSource({ source, relationOptions: options, primary });
 }
 
 async function hydrateOne2manyRows(name: string) {
@@ -2864,43 +2841,12 @@ function buildOne2manyCommandValue(name: string, mode: 'onchange' | 'write') {
 }
 
 function collectOne2manyDraftValidation() {
-  const issues: string[] = [];
-  const rowErrors: Record<string, string[]> = {};
-  Object.entries(one2manyRows).forEach(([fieldName, rows]) => {
-    if (!Array.isArray(rows) || !rows.length) return;
-    const hasTouchedRows = rows.some((row) => row.isNew || row.dirty || row.removed);
-    if (recordId.value && !hasTouchedRows) return;
-    const primary = one2manyPrimaryColumn(fieldName);
-    const columns = one2manyColumns(fieldName);
-    const requiredColumns = columns.filter((column) => column.required);
-    const labels = new Set<string>();
-    rows.forEach((row, index) => {
-      if (row.removed) return;
-      const rowKey = `${fieldName}:${row.key}`;
-      const perRow: string[] = [];
-      requiredColumns.forEach((column) => {
-        const value = row.values?.[column.name];
-        if (isOne2manyEmptyValue(column, value)) {
-          perRow.push(`${column.label}不能为空`);
-          issues.push(`${fieldName} 第${index + 1}行${column.label}不能为空`);
-        }
-      });
-      const label = String(row.values?.[primary] ?? row.values?.name ?? '').trim();
-      if (label) {
-        const key = label.toLowerCase();
-        if (labels.has(key)) {
-          perRow.push(`主值重复：${label}`);
-          issues.push(`${fieldName} 存在重复行值：${label}`);
-        } else {
-          labels.add(key);
-        }
-      }
-      if (perRow.length) {
-        rowErrors[rowKey] = perRow;
-      }
-    });
+  return collectOne2manyDraftValidationFromRows({
+    rowsByField: one2manyRows,
+    recordId: recordId.value,
+    resolvePrimaryColumn: one2manyPrimaryColumn,
+    resolveColumns: one2manyColumns,
   });
-  return { issues, rowErrors };
 }
 
 function one2manyRowErrors(fieldName: string, rowKey: string) {
