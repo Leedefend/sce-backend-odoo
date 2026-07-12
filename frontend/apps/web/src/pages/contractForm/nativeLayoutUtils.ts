@@ -113,6 +113,21 @@ export type RequiredMarkInput = {
   coreFieldNames: string[];
 };
 
+export type NativeFieldVisibilityInput = {
+  name: string;
+  node?: NativeLayoutLikeNode;
+  statusField?: string;
+  showHud: boolean;
+  renderProfile: string;
+  isCreate: boolean;
+  isNodeVisible: (node: NativeLayoutLikeNode) => boolean;
+  resolveDescriptor: (name: string, node?: NativeLayoutLikeNode) => FieldDescriptor | undefined;
+  resolveFieldLabel: (name: string) => string;
+  semantic: (name: string) => FieldSemanticMeta;
+  runtimeState: (name: string) => RuntimeFieldStateLike;
+  evaluatePolicy: (name: string, descriptor: FieldDescriptor) => FieldPolicyLike;
+};
+
 const CHILD_KEYS = ['children', 'pages', 'tabs', 'nodes', 'items'] as const;
 const CREATE_WORKFLOW_STATE_FIELD_NAMES = new Set([
   'state',
@@ -504,6 +519,35 @@ export function shouldShowRequiredMark(input: RequiredMarkInput) {
     return input.policyRequiredFields.has(node.name) || input.validationRequiredFields.has(node.name);
   }
   return input.coreFieldNames.includes(node.name);
+}
+
+export function isNativeFieldVisible(input: NativeFieldVisibilityInput) {
+  const normalized = String(input.name || '').trim();
+  if (!normalized) return false;
+  if (input.node && !input.isNodeVisible(input.node)) return false;
+  const statusField = String(input.statusField || '').trim();
+  if (statusField && normalized === statusField) return false;
+  if (normalized === 'message_needaction') return false;
+  const semantic = input.semantic(normalized);
+  if ((semantic.technical || semantic.semantic_type === 'technical') && !input.showHud) return false;
+  if (semantic.surface_role === 'hidden' && !input.showHud) return false;
+  const state = input.runtimeState(normalized);
+  if (state.invisible) return false;
+  const descriptor = input.resolveDescriptor(normalized, input.node);
+  if (!descriptor) return false;
+  if (isCreateWorkflowStateField(
+    normalized,
+    nativeFieldLabel(input.node || {}, descriptor, input.resolveFieldLabel),
+    input.isCreate,
+  )) return false;
+  const resolved = input.evaluatePolicy(normalized, descriptor);
+  if (resolved.visible) return true;
+  // Native layout is already a backend-scoped form contract. Do not re-apply
+  // the legacy core/advanced create-mode filter here, otherwise fields in
+  // later notebook pages disappear even though the action-bound view exposes
+  // them explicitly. Explicit invisible/status rules are handled above.
+  if (input.node) return true;
+  return input.renderProfile === 'create' && semantic.surface_role === 'advanced';
 }
 
 function stringList(value: unknown): string[] {

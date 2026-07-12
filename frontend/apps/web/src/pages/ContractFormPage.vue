@@ -568,6 +568,7 @@ import {
   buildNativeFieldSchemas,
   applyReadonlyFieldValues,
   shouldShowRequiredMark as shouldShowRequiredMarkFromNativeLayout,
+  isNativeFieldVisible as isNativeFieldVisibleFromNativeLayout,
   type FieldSemanticMeta,
   type NativeLayoutLikeNode,
   type SemanticFieldGroup,
@@ -4676,38 +4677,30 @@ function isNativeFavoriteField(name: string) {
 }
 
 function isNativeFieldVisible(name: string, nodeRaw?: NativeFormLayoutNode) {
-  const normalized = String(name || '').trim();
-  if (!normalized) return false;
-  if (nodeRaw && !isNativeLayoutNodeVisible(nodeRaw)) return false;
-  const statusField = nativeStatusbar.value.field;
-  if (statusField && normalized === statusField) return false;
-  if (normalized === 'message_needaction') return false;
-  const semantic = fieldSemanticMeta(normalized);
-  if ((semantic.technical || semantic.semantic_type === 'technical') && !showHud.value) return false;
-  if (semantic.surface_role === 'hidden' && !showHud.value) return false;
-  const state = runtimeState(normalized);
-  if (state.invisible) return false;
-  const descriptor = nodeRaw
-    ? nativeNodeFieldDescriptor(nodeRaw, contract.value?.fields?.[normalized])
-    : contract.value?.fields?.[normalized];
-  if (!descriptor) return false;
-  if (isCreateWorkflowStateField(normalized, nativeFieldLabel(nodeRaw || {} as NativeFormLayoutNode, descriptor, contractFieldLabel), !recordId.value)) return false;
-  const resolved = evaluateFieldPolicy(
-    contract.value,
-    normalized,
-    {
-      required: Boolean(descriptor?.required),
-      readonly: Boolean(descriptor?.readonly),
-    },
-    policyContext.value,
-  );
-  if (resolved.visible) return true;
-  // Native layout is already a backend-scoped form contract. Do not re-apply
-  // the legacy core/advanced create-mode filter here, otherwise fields in
-  // later notebook pages disappear even though the action-bound view exposes
-  // them explicitly. Explicit invisible/status rules are handled above.
-  if (nodeRaw) return true;
-  return renderProfile.value === 'create' && semantic.surface_role === 'advanced';
+  return isNativeFieldVisibleFromNativeLayout({
+    name,
+    node: nodeRaw,
+    statusField: nativeStatusbar.value.field,
+    showHud: showHud.value,
+    renderProfile: renderProfile.value,
+    isCreate: !recordId.value,
+    isNodeVisible: (node) => isNativeLayoutNodeVisible(node as NativeFormLayoutNode),
+    resolveDescriptor: (fieldName, node) => (node
+      ? nativeNodeFieldDescriptor(node as NativeFormLayoutNode, contract.value?.fields?.[fieldName])
+      : contract.value?.fields?.[fieldName]),
+    resolveFieldLabel: contractFieldLabel,
+    semantic: fieldSemanticMeta,
+    runtimeState,
+    evaluatePolicy: (fieldName, descriptor) => evaluateFieldPolicy(
+      contract.value,
+      fieldName,
+      {
+        required: Boolean(descriptor?.required),
+        readonly: Boolean(descriptor?.readonly),
+      },
+      policyContext.value,
+    ),
+  });
 }
 
 function currentNativeFieldOrder() {
