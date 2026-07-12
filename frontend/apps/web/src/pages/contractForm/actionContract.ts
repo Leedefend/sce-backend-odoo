@@ -186,6 +186,59 @@ export function buildActiveContractModeActions(params: {
     });
 }
 
+export function createRootActionCandidatesFromRules(params: {
+  rules: unknown;
+  targetModel: string;
+}): ContractAction[] {
+  const rows = Array.isArray(params.rules) ? params.rules : [];
+  return rows
+    .map((raw) => (raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, unknown> : null))
+    .filter((row): row is Record<string, unknown> => Boolean(row))
+    .map((row) => {
+      const sourceWidgetId = String(row.sourceWidgetId || row.source_widget_id || '').trim();
+      const targetScope = String(row.targetScope || row.target_scope || '').trim().toLowerCase();
+      const button = parseMaybeJsonRecord(row.button);
+      const buttonName = String(button.name || '').trim();
+      const buttonType = String(button.type || 'object').trim();
+      const normalizedIntent = String(row.intent || 'execute_button').trim().toLowerCase();
+      const normalizedButtonType = buttonType.toLowerCase();
+      if (
+        !buttonName
+        || sourceWidgetId !== 'page.root'
+        || (targetScope && targetScope !== 'header' && targetScope !== 'footer')
+        || (normalizedIntent && normalizedIntent !== 'execute' && normalizedIntent !== 'execute_button')
+        || (normalizedButtonType && normalizedButtonType !== 'object' && normalizedButtonType !== 'server' && normalizedButtonType !== 'server_action')
+      ) {
+        return null;
+      }
+      const action: ContractAction = {
+        key: String(row.actionKey || row.key || row.actionId || buttonName).trim() || buttonName,
+        label: String(row.label || buttonName).trim() || buttonName,
+        kind: buttonType === 'server' || buttonType === 'server_action' ? 'server' : 'object',
+        level: targetScope === 'footer' ? 'footer' : 'header',
+        selection: 'none' as const,
+        actionId: null,
+        methodName: buttonName,
+        targetModel: String(params.targetModel || '').trim(),
+        context: {},
+        domainRaw: '',
+        target: '',
+        url: '',
+        enabled: true,
+        hint: '',
+        intent: String(row.intent || 'execute_button').trim(),
+        semantic: 'primary_action',
+        sourceWidgetId,
+        clientMode: '',
+        visibleProfiles: ['create', 'edit', 'readonly'] as Array<'create' | 'edit' | 'readonly'>,
+        requiredParams: [],
+        requiresReason: false,
+      };
+      return action;
+    })
+    .filter((action): action is ContractAction => Boolean(action));
+}
+
 export function stableContractId(value: unknown, fallback: string) {
   const raw = String(value || fallback || '').trim();
   const normalized = raw

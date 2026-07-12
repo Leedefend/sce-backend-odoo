@@ -462,6 +462,7 @@ import {
   contractActionRuleControl,
   contractActionRuleKey,
   contractPromptFieldsFromRule,
+  createRootActionCandidatesFromRules,
   normalizeActionSafety,
   normalizeActionLabel,
   normalizeRequiredParams,
@@ -3957,52 +3958,10 @@ const primarySubmitAction = computed<ContractAction | null>(() => {
 function rawCreateRootActionCandidates(): ContractAction[] {
   const v2 = resolveUnifiedPageContractV2(contract.value);
   const rows = parseMaybeJsonRecord(v2?.actionContract).actionRuleList;
-  if (!Array.isArray(rows)) return [];
-  return rows
-    .map((raw) => (raw && typeof raw === 'object' && !Array.isArray(raw) ? raw as Record<string, unknown> : null))
-    .filter((row): row is Record<string, unknown> => Boolean(row))
-    .map((row) => {
-      const sourceWidgetId = String(row.sourceWidgetId || row.source_widget_id || '').trim();
-      const targetScope = String(row.targetScope || row.target_scope || '').trim().toLowerCase();
-      const button = parseMaybeJsonRecord(row.button);
-      const buttonName = String(button.name || '').trim();
-      const buttonType = String(button.type || 'object').trim();
-      const normalizedIntent = String(row.intent || 'execute_button').trim().toLowerCase();
-      const normalizedButtonType = buttonType.toLowerCase();
-      if (
-        !buttonName
-        || sourceWidgetId !== 'page.root'
-        || (targetScope && targetScope !== 'header' && targetScope !== 'footer')
-        || (normalizedIntent && normalizedIntent !== 'execute' && normalizedIntent !== 'execute_button')
-        || (normalizedButtonType && normalizedButtonType !== 'object' && normalizedButtonType !== 'server' && normalizedButtonType !== 'server_action')
-      ) {
-        return null;
-      }
-      return {
-        key: String(row.actionKey || row.key || row.actionId || buttonName).trim() || buttonName,
-        label: String(row.label || buttonName).trim() || buttonName,
-        kind: buttonType === 'server' || buttonType === 'server_action' ? 'server' : 'object',
-        level: targetScope === 'footer' ? 'footer' : 'header',
-        selection: 'none' as const,
-        actionId: null,
-        methodName: buttonName,
-        targetModel: String(model.value || '').trim(),
-        context: {},
-        domainRaw: '',
-        target: '',
-        url: '',
-        enabled: true,
-        hint: '',
-        intent: String(row.intent || 'execute_button').trim(),
-        semantic: 'primary_action',
-        sourceWidgetId,
-        clientMode: '',
-        visibleProfiles: ['create', 'edit', 'readonly'] as Array<'create' | 'edit' | 'readonly'>,
-        requiredParams: [],
-        requiresReason: false,
-      };
-    })
-    .filter(Boolean) as ContractAction[];
+  return createRootActionCandidatesFromRules({
+    rules: rows,
+    targetModel: model.value,
+  });
 }
 
 const primaryCreateFooterAction = computed<ContractAction | null>(() => {
