@@ -6,42 +6,66 @@ Generated from `test_inventory.csv`.
 
 - Total assets: `1120`
 - Review queue: `4`
-- Unknown runtime: `33`
-- Long-running assets: `145`
+- Unknown runtime: `3`
+- Long-running assets: `331`
+- Manual gate review: `4`
+- PR dedupe candidates: `784`
 
 ## By Layer
 
 | Layer | Count |
 | --- | ---: |
-| contract | 441 |
 | governance | 347 |
+| contract | 275 |
+| data_migration | 217 |
 | unit | 149 |
 | odoo_integration | 56 |
-| data_migration | 51 |
 | e2e | 38 |
 | security | 20 |
 | frontend_acceptance | 17 |
 | gate | 1 |
 
+## By Decision Gate
+
+| Decision Gate | Count |
+| --- | ---: |
+| pr_candidate | 784 |
+| integration_candidate | 292 |
+| release_candidate | 36 |
+| manual_review | 4 |
+| release_required | 2 |
+| pr_required | 1 |
+| integration_required | 1 |
+
+## By Disposition
+
+| Disposition | Count |
+| --- | ---: |
+| deduplicate_before_required | 784 |
+| keep_integration_or_release_only | 292 |
+| keep_release_only | 36 |
+| canonical_entry | 4 |
+| review_or_archive | 4 |
+
 ## By Runtime
 
 | Runtime | Count |
 | --- | ---: |
-| <5m | 941 |
-| 10-30m | 107 |
+| <5m | 785 |
+| 10-30m | 293 |
 | 30-60m | 38 |
-| unknown | 33 |
+| unknown | 3 |
 | 10-15m | 1 |
 
 ## By Owner
 
 | Owner | Count |
 | --- | ---: |
-| platform owner | 441 |
 | architecture owner | 347 |
+| platform owner | 275 |
+| data owner | 217 |
 | test owner | 150 |
 | backend owner | 56 |
-| data owner | 51 |
 | qa owner | 38 |
 | security owner | 20 |
 | frontend owner | 17 |
@@ -74,36 +98,127 @@ Generated from `test_inventory.csv`.
 
 | ID | Layer | Entrypoint |
 | --- | --- | --- |
-| T-ASSET-025 | unit | `scripts/audit/smoke_business_full.sh` |
-| T-ASSET-026 | security | `scripts/audit/smoke_role_matrix.sh` |
-| T-ASSET-028 | unit | `scripts/ci/ensure_testdeps.sh` |
-| T-ASSET-029 | governance | `scripts/ci/gate_audit.sh` |
-| T-ASSET-030 | governance | `scripts/ci/gate_audit_tp08.sh` |
 | T-ASSET-034 | unit | `scripts/diag/fe_smoke.sh` |
 | T-ASSET-036 | unit | `scripts/diag/test-frontend-changes.sh` |
 | T-ASSET-037 | unit | `scripts/diag/test-menu-issue.sh` |
-| T-ASSET-284 | contract | `scripts/ops/validate_company_contractor_responsibility_context.sh` |
-| T-ASSET-285 | contract | `scripts/ops/validate_company_contractor_responsibility_summary.sh` |
-| T-ASSET-286 | contract | `scripts/ops/validate_contract_business_categories.sh` |
-| T-ASSET-287 | contract | `scripts/ops/validate_contract_business_category_binding.sh` |
-| T-ASSET-288 | contract | `scripts/ops/validate_contract_settlement_payment_closure.sh` |
-| T-ASSET-290 | contract | `scripts/ops/validate_income_contract_receipt_invoice_closure.sh` |
-| T-ASSET-291 | contract | `scripts/ops/validate_operation_strategy_contract_surface.sh` |
-| T-ASSET-293 | contract | `scripts/ops/validate_settlement_contract_surface.sh` |
-| T-ASSET-294 | contract | `scripts/ops/validate_subcontract_request_contract_anchor.sh` |
-| T-ASSET-303 | security | `scripts/verify/auth_xpath_guard.sh` |
-| T-ASSET-354 | unit | `scripts/verify/capability_smoke.sh` |
-| T-ASSET-373 | contract | `scripts/verify/contract_drift_guard.sh` |
-| T-ASSET-386 | contract | `scripts/verify/contract_preflight_resume.sh` |
-| T-ASSET-413 | contract | `scripts/verify/e2e_contract_guard.sh` |
-| T-ASSET-414 | governance | `scripts/verify/e2e_scene_guard.sh` |
-| T-ASSET-419 | governance | `scripts/verify/extension_modules_guard.sh` |
-| T-ASSET-558 | contract | `scripts/verify/form_structure_contract_runtime_audit.sh` |
-| T-ASSET-565 | governance | `scripts/verify/form_view_scope_action_projection_audit.sh` |
-| T-ASSET-715 | unit | `scripts/verify/marketplace_smoke.sh` |
-| T-ASSET-741 | governance | `scripts/verify/native_parser_capability_audit.sh` |
-| T-ASSET-755 | unit | `scripts/verify/ops_batch_smoke.sh` |
-| T-ASSET-802 | governance | `scripts/verify/prod_guard_smoke.sh` |
-| T-ASSET-887 | unit | `scripts/verify/scene_admin_smoke.sh` |
-| T-ASSET-982 | unit | `scripts/verify/subscription_smoke.sh` |
-| T-ASSET-1004 | governance | `scripts/verify/test_seed_dependency_guard.sh` |
+
+## PR Dedupe Candidate Sample
+
+| ID | Layer | Entrypoint | Owner |
+| --- | --- | --- | --- |
+| T-ASSET-002 | frontend_acceptance | `frontend/apps/web/scripts/business_form_all_category_direct_acceptance.mjs` | frontend owner |
+| T-ASSET-003 | frontend_acceptance | `frontend/apps/web/scripts/business_form_frontend_full_walk_acceptance.mjs` | frontend owner |
+| T-ASSET-004 | frontend_acceptance | `frontend/apps/web/scripts/business_form_user_perspective_acceptance.mjs` | frontend owner |
+| T-ASSET-005 | frontend_acceptance | `frontend/apps/web/scripts/business_form_user_perspective_summary_guard.mjs` | frontend owner |
+| T-ASSET-006 | frontend_acceptance | `frontend/apps/web/scripts/config_workbench_operation_acceptance.mjs` | frontend owner |
+| T-ASSET-007 | frontend_acceptance | `frontend/apps/web/scripts/config_workbench_operation_coverage_guard.mjs` | frontend owner |
+| T-ASSET-008 | frontend_acceptance | `frontend/apps/web/scripts/config_workbench_operation_summary_guard.mjs` | frontend owner |
+| T-ASSET-009 | frontend_acceptance | `frontend/apps/web/scripts/handling_entry_catalog_smoke.mjs` | frontend owner |
+| T-ASSET-010 | contract | `frontend/apps/web/scripts/list_selection_contract_smoke.mjs` | platform owner |
+| T-ASSET-011 | frontend_acceptance | `frontend/apps/web/scripts/low_code_business_config_acceptance.mjs` | frontend owner |
+| T-ASSET-012 | frontend_acceptance | `frontend/apps/web/scripts/low_code_form_group_matrix_acceptance.mjs` | frontend owner |
+| T-ASSET-015 | frontend_acceptance | `frontend/apps/web/scripts/low_code_global_stability_acceptance.mjs` | frontend owner |
+| T-ASSET-016 | frontend_acceptance | `frontend/apps/web/scripts/low_code_menu_navigation_alignment_acceptance.mjs` | frontend owner |
+| T-ASSET-017 | frontend_acceptance | `frontend/apps/web/scripts/product_navigation_boundary_acceptance.mjs` | frontend owner |
+| T-ASSET-018 | frontend_acceptance | `frontend/apps/web/scripts/product_page_structure_guard.mjs` | frontend owner |
+| T-ASSET-020 | frontend_acceptance | `frontend/apps/web/scripts/system_user_experience_shell_acceptance.mjs` | frontend owner |
+| T-ASSET-021 | frontend_acceptance | `frontend/apps/web/scripts/system_user_experience_shell_summary_guard.mjs` | frontend owner |
+| T-ASSET-022 | frontend_acceptance | `frontend/apps/web/scripts/user_visible_surface_visual_coverage_summary_guard.mjs` | frontend owner |
+| T-ASSET-023 | governance | `scripts/audit/boundary_audit_smart_core.py` | architecture owner |
+| T-ASSET-024 | governance | `scripts/audit/scene_config_audit.js` | architecture owner |
+| T-ASSET-027 | governance | `scripts/ci/assert_audit_tp08.py` | architecture owner |
+| T-ASSET-029 | governance | `scripts/ci/gate_audit.sh` | architecture owner |
+| T-ASSET-030 | governance | `scripts/ci/gate_audit_tp08.sh` | architecture owner |
+| T-ASSET-031 | unit | `scripts/ci/generate_e2e_journey_matrix.py` | test owner |
+| T-ASSET-032 | unit | `scripts/ci/generate_test_inventory.py` | test owner |
+| T-ASSET-033 | unit | `scripts/ci/summarize_test_inventory.py` | test owner |
+| T-ASSET-261 | contract | `scripts/ops/contract_product_acceptance_policy_restore.py` | platform owner |
+| T-ASSET-267 | contract | `scripts/ops/direct_general_contract_input_tax_to_output_invoice_registration_sync.py` | platform owner |
+| T-ASSET-268 | contract | `scripts/ops/engineering_progress_income_visible_contract_sync.py` | platform owner |
+| T-ASSET-269 | contract | `scripts/ops/formal_list_surface_test_contract_cleanup.py` | platform owner |
+| T-ASSET-273 | contract | `scripts/ops/operation_strategy_contract_surface_backfill.py` | platform owner |
+| T-ASSET-274 | contract | `scripts/ops/output_invoice_application_visible_contract_sync.py` | platform owner |
+| T-ASSET-275 | contract | `scripts/ops/output_invoice_registration_visible_contract_sync.py` | platform owner |
+| T-ASSET-279 | contract | `scripts/ops/partner_payment_visible_contract_sync.py` | platform owner |
+| T-ASSET-282 | contract | `scripts/ops/settlement_contract_surface_backfill.py` | platform owner |
+| T-ASSET-286 | contract | `scripts/ops/validate_contract_business_categories.sh` | platform owner |
+| T-ASSET-297 | contract | `scripts/verify/action_default_group_contract_audit.py` | platform owner |
+| T-ASSET-298 | contract | `scripts/verify/action_view_orchestration_contract_shape_smoke.js` | platform owner |
+| T-ASSET-299 | governance | `scripts/verify/app_config_engine_boundary_guard.py` | architecture owner |
+| T-ASSET-300 | governance | `scripts/verify/application_form_required_marker_audit.py` | architecture owner |
+| T-ASSET-303 | security | `scripts/verify/auth_xpath_guard.sh` | security owner |
+| T-ASSET-304 | unit | `scripts/verify/auto_degrade_smoke_report.py` | test owner |
+| T-ASSET-305 | governance | `scripts/verify/backend_architecture_full_report_guard.py` | architecture owner |
+| T-ASSET-306 | contract | `scripts/verify/backend_architecture_full_report_guard_schema_guard.py` | platform owner |
+| T-ASSET-307 | contract | `scripts/verify/backend_architecture_full_report_schema_guard.py` | platform owner |
+| T-ASSET-308 | governance | `scripts/verify/backend_boundary_guard.py` | architecture owner |
+| T-ASSET-309 | governance | `scripts/verify/backend_business_fact_model_audit.py` | architecture owner |
+| T-ASSET-310 | contract | `scripts/verify/backend_contract_boundary_guard.py` | platform owner |
+| T-ASSET-311 | contract | `scripts/verify/backend_contract_closure_guard.py` | platform owner |
+| T-ASSET-312 | contract | `scripts/verify/backend_contract_closure_mainline_summary.py` | platform owner |
+| T-ASSET-313 | contract | `scripts/verify/backend_contract_closure_mainline_summary_schema_guard.py` | platform owner |
+| T-ASSET-314 | contract | `scripts/verify/backend_contract_closure_snapshot_guard.py` | platform owner |
+| T-ASSET-315 | contract | `scripts/verify/backend_contract_closure_snapshot_schema_guard.py` | platform owner |
+| T-ASSET-316 | governance | `scripts/verify/backend_evidence_manifest_guard.py` | architecture owner |
+| T-ASSET-317 | contract | `scripts/verify/backend_evidence_manifest_schema_guard.py` | platform owner |
+| T-ASSET-318 | governance | `scripts/verify/baseline_freeze_guard.py` | architecture owner |
+| T-ASSET-319 | governance | `scripts/verify/baseline_policy_integrity_guard.py` | architecture owner |
+| T-ASSET-320 | governance | `scripts/verify/boundary_import_guard.py` | architecture owner |
+| T-ASSET-321 | contract | `scripts/verify/boundary_import_guard_schema_guard.py` | platform owner |
+| T-ASSET-322 | governance | `scripts/verify/boundary_import_guard_strict_guard.py` | architecture owner |
+| T-ASSET-323 | governance | `scripts/verify/business_action_coverage_audit.py` | architecture owner |
+| T-ASSET-324 | governance | `scripts/verify/business_capability_baseline_report_guard.py` | architecture owner |
+| T-ASSET-325 | contract | `scripts/verify/business_capability_baseline_report_schema_guard.py` | platform owner |
+| T-ASSET-326 | governance | `scripts/verify/business_category_dictionary_audit.py` | architecture owner |
+| T-ASSET-328 | contract | `scripts/verify/business_config_contract_snapshot.py` | platform owner |
+| T-ASSET-329 | unit | `scripts/verify/business_config_form_layout_acceptance.js` | test owner |
+| T-ASSET-330 | governance | `scripts/verify/business_config_guard_inventory.py` | architecture owner |
+| T-ASSET-332 | governance | `scripts/verify/business_config_user_language_guard.py` | architecture owner |
+| T-ASSET-333 | governance | `scripts/verify/business_core_journey_guard.py` | architecture owner |
+| T-ASSET-335 | unit | `scripts/verify/business_document_state_policy_switch_smoke.py` | test owner |
+| T-ASSET-336 | governance | `scripts/verify/business_fact_backfill_audit.py` | architecture owner |
+| T-ASSET-338 | governance | `scripts/verify/business_flow_closure_audit.py` | architecture owner |
+| T-ASSET-339 | governance | `scripts/verify/business_form_historical_logic_coverage_audit.py` | architecture owner |
+| T-ASSET-340 | governance | `scripts/verify/business_form_interaction_capability_audit.py` | architecture owner |
+| T-ASSET-341 | governance | `scripts/verify/business_form_policy_coverage_audit.py` | architecture owner |
+| T-ASSET-342 | governance | `scripts/verify/business_form_policy_field_hit_audit.py` | architecture owner |
+| T-ASSET-343 | governance | `scripts/verify/business_form_productization_audit.py` | architecture owner |
+| T-ASSET-344 | governance | `scripts/verify/business_form_productization_standard_guard.py` | architecture owner |
+| T-ASSET-345 | unit | `scripts/verify/business_form_user_perspective_acceptance.py` | test owner |
+| T-ASSET-346 | governance | `scripts/verify/business_list_config_boundary_audit.py` | architecture owner |
+| ... | ... | 704 more | ... |
+
+## Dedupe Hotspots
+
+| Family | Count |
+| --- | ---: |
+| `scripts/verify/unified_page_contract` | 67 |
+| `scripts/verify/frontend_page_contract` | 7 |
+| `scripts/verify/backend_contract_closure` | 5 |
+| `scripts/verify/scene_action_surface` | 5 |
+| `scripts/verify/company_contractor_responsibility` | 4 |
+| `scripts/verify/lowcode_customer_config` | 4 |
+| `scripts/verify/scene_base_contract` | 4 |
+| `frontend/apps/web/scripts/config_workbench_operation` | 3 |
+| `scripts/verify/backend_architecture_full` | 3 |
+| `scripts/verify/fe_scene_contract` | 3 |
+| `scripts/verify/fe_scene_package` | 3 |
+| `scripts/verify/form_structure_contract` | 3 |
+| `scripts/verify/frontend_page_block` | 3 |
+| `scripts/verify/grouped_governance_brief` | 3 |
+| `scripts/verify/grouped_governance_trend` | 3 |
+| `scripts/verify/material_settlement_payment` | 3 |
+| `scripts/verify/payment_request_approval` | 3 |
+| `scripts/verify/release_v2_0` | 3 |
+| `scripts/verify/scene_contract_coverage` | 3 |
+| `scripts/verify/scene_validation_recovery` | 3 |
+| `scripts/verify/smart_core_minimum` | 3 |
+| `frontend/apps/web/scripts/business_form_user` | 2 |
+| `frontend/apps/web/scripts/system_user_experience` | 2 |
+| `scripts/verify/backend_evidence_manifest` | 2 |
+| `scripts/verify/boundary_import_guard` | 2 |
+| `scripts/verify/business_capability_baseline` | 2 |
+| `scripts/verify/business_form_policy` | 2 |
+| `scripts/verify/business_form_productization` | 2 |
+| `scripts/verify/contract_assembler_semantic` | 2 |
+| `scripts/verify/contract_business_category` | 2 |

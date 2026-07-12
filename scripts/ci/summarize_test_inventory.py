@@ -42,10 +42,40 @@ def top_directories(rows: list[dict[str, str]]) -> Counter[str]:
     return counter
 
 
+def family_key(entrypoint: str) -> str:
+    if entrypoint.startswith("make "):
+        return "make"
+    parts = entrypoint.split("/")
+    directory = "/".join(parts[:-1]) if len(parts) > 1 else "."
+    stem = Path(parts[-1]).stem
+    tokens = stem.replace("-", "_").split("_")
+    while tokens and tokens[-1] in {
+        "guard",
+        "audit",
+        "verify",
+        "acceptance",
+        "smoke",
+        "test",
+        "screen",
+        "write",
+        "read",
+        "probe",
+        "summary",
+        "report",
+    }:
+        tokens.pop()
+    prefix = "_".join(tokens[:3] if len(tokens) >= 3 else tokens) or stem
+    return f"{directory}/{prefix}"
+
+
 def write_summary(rows: list[dict[str, str]]) -> None:
     review_rows = [row for row in rows if row["status"] != "active"]
     unknown_runtime = [row for row in rows if row["estimated_runtime"] == "unknown"]
     long_runtime = [row for row in rows if row["estimated_runtime"] in {"10-30m", "30-60m"}]
+    manual_review = [row for row in rows if row.get("decision_gate") == "manual_review"]
+    dedupe_candidates = [
+        row for row in rows if row.get("disposition") == "deduplicate_before_required"
+    ]
 
     lines: list[str] = [
         "# Test Inventory Summary",
@@ -58,10 +88,20 @@ def write_summary(rows: list[dict[str, str]]) -> None:
         f"- Review queue: `{len(review_rows)}`",
         f"- Unknown runtime: `{len(unknown_runtime)}`",
         f"- Long-running assets: `{len(long_runtime)}`",
+        f"- Manual gate review: `{len(manual_review)}`",
+        f"- PR dedupe candidates: `{len(dedupe_candidates)}`",
         "",
         "## By Layer",
         "",
         *table(Counter(row["layer"] for row in rows), ("Layer", "Count")),
+        "",
+        "## By Decision Gate",
+        "",
+        *table(Counter(row.get("decision_gate", "unknown") for row in rows), ("Decision Gate", "Count")),
+        "",
+        "## By Disposition",
+        "",
+        *table(Counter(row.get("disposition", "unknown") for row in rows), ("Disposition", "Count")),
         "",
         "## By Runtime",
         "",
@@ -97,6 +137,27 @@ def write_summary(rows: list[dict[str, str]]) -> None:
             lines.append(f"| ... | ... | {len(unknown_runtime) - 80} more |")
     else:
         lines.append("No unknown runtime assets.")
+
+    lines.extend(["", "## PR Dedupe Candidate Sample", ""])
+    if dedupe_candidates:
+        lines.extend(["| ID | Layer | Entrypoint | Owner |", "| --- | --- | --- | --- |"])
+        for row in dedupe_candidates[:80]:
+            lines.append(
+                f"| {row['id']} | {row['layer']} | `{row['entrypoint']}` | {row['owner']} |"
+            )
+        if len(dedupe_candidates) > 80:
+            lines.append(f"| ... | ... | {len(dedupe_candidates) - 80} more | ... |")
+    else:
+        lines.append("No PR dedupe candidates.")
+
+    lines.extend(["", "## Dedupe Hotspots", ""])
+    if dedupe_candidates:
+        hotspot_counter = Counter(family_key(row["entrypoint"]) for row in dedupe_candidates)
+        lines.extend(["| Family | Count |", "| --- | ---: |"])
+        for key, value in hotspot_counter.most_common(30):
+            lines.append(f"| `{key}` | {value} |")
+    else:
+        lines.append("No dedupe hotspots.")
 
     SUMMARY.write_text("\n".join(lines) + "\n", encoding="utf-8")
 

@@ -41,6 +41,8 @@ MANUAL_ENTRIES = [
         "estimated_runtime": "10-15m",
         "owner": "test owner",
         "status": "active",
+        "decision_gate": "pr_required",
+        "disposition": "canonical_entry",
         "notes": "Mandatory local and GitHub PR gate.",
     },
     {
@@ -51,6 +53,8 @@ MANUAL_ENTRIES = [
         "estimated_runtime": "30-60m",
         "owner": "qa owner",
         "status": "active",
+        "decision_gate": "release_required",
+        "disposition": "canonical_entry",
         "notes": "Release/full verification gate, not required for every small PR.",
     },
     {
@@ -61,6 +65,8 @@ MANUAL_ENTRIES = [
         "estimated_runtime": "30-60m",
         "owner": "backend owner",
         "status": "active",
+        "decision_gate": "integration_required",
+        "disposition": "canonical_entry",
         "notes": "Requires Docker/Odoo runtime.",
     },
     {
@@ -74,6 +80,8 @@ MANUAL_ENTRIES = [
         "estimated_runtime": "10-30m",
         "owner": "qa owner",
         "status": "active",
+        "decision_gate": "release_required",
+        "disposition": "canonical_entry",
         "notes": "Runs TEST_TAGS=e2e_fixed_journey on a clean Odoo test database.",
     },
 ]
@@ -84,10 +92,10 @@ def classify_layer(path: Path) -> str:
     name = path.name.lower()
     if "/e2e/" in text or "full_browser" in name or "browser" in name:
         return "e2e"
-    if "contract" in name or "schema" in name or "intent" in name:
-        return "contract"
     if "/migration/" in text or "asset_verify" in name or "replay" in name:
         return "data_migration"
+    if "contract" in name or "schema" in name or "intent" in name:
+        return "contract"
     if "permission" in name or "role" in name or "auth" in name:
         return "security"
     if "/ops/" in text or "/prod/" in text or "runtime" in name or "deploy" in name:
@@ -99,6 +107,13 @@ def classify_layer(path: Path) -> str:
     return "unit"
 
 
+def _read_text(path: Path) -> str:
+    try:
+        return path.read_text(encoding="utf-8", errors="ignore").lower()
+    except OSError:
+        return ""
+
+
 def runtime_class(path: Path, layer: str) -> str:
     name = path.name.lower()
     if layer == "e2e" or "full_browser" in name:
@@ -106,7 +121,12 @@ def runtime_class(path: Path, layer: str) -> str:
     if layer in {"odoo_integration", "data_migration"}:
         return "10-30m"
     if path.suffix == ".sh":
-        return "unknown"
+        if "/diag/" in path.as_posix().lower():
+            return "unknown"
+        content = _read_text(path)
+        if any(token in content for token in ("docker compose", "compose_", "compose ", "odoo", "jsonrpc", "/jsonrpc", "base_url", "db_name")):
+            return "10-30m"
+        return "<5m"
     return "<5m"
 
 
@@ -135,6 +155,35 @@ def status_for(path: Path) -> str:
     return "active"
 
 
+def decision_gate_for(path: Path, layer: str, runtime: str, status: str) -> str:
+    if status != "active":
+        return "manual_review"
+    text = path.as_posix().lower()
+    if "/diag/" in text:
+        return "manual_review"
+    if layer == "e2e" or runtime == "30-60m":
+        return "release_candidate"
+    if layer in {"odoo_integration", "data_migration"} or runtime == "10-30m":
+        return "integration_candidate"
+    if layer in {"security", "contract", "governance", "frontend_acceptance", "unit"}:
+        return "pr_candidate"
+    return "manual_review"
+
+
+def disposition_for(layer: str, runtime: str, status: str, decision_gate: str) -> str:
+    if status != "active":
+        return "review_or_archive"
+    if runtime == "unknown":
+        return "classify_runtime_before_gate"
+    if decision_gate == "pr_candidate":
+        return "deduplicate_before_required"
+    if decision_gate == "integration_candidate":
+        return "keep_integration_or_release_only"
+    if decision_gate == "release_candidate":
+        return "keep_release_only"
+    return "needs_owner_decision"
+
+
 def iter_assets() -> list[Path]:
     assets: list[Path] = []
     for root in SCAN_ROOTS:
@@ -156,15 +205,20 @@ def build_rows() -> list[dict[str, str]]:
     for index, path in enumerate(iter_assets(), start=1):
         rel = path.relative_to(ROOT).as_posix()
         layer = classify_layer(path)
+        runtime = runtime_class(path, layer)
+        status = status_for(path)
+        decision_gate = decision_gate_for(path, layer, runtime, status)
         rows.append(
             {
                 "id": f"T-ASSET-{index:03d}",
                 "layer": layer,
                 "entrypoint": rel,
                 "purpose": purpose_for(path, layer),
-                "estimated_runtime": runtime_class(path, layer),
+                "estimated_runtime": runtime,
                 "owner": owner_for(layer),
-                "status": status_for(path),
+                "status": status,
+                "decision_gate": decision_gate,
+                "disposition": disposition_for(layer, runtime, status, decision_gate),
                 "notes": "Generated by scripts/ci/generate_test_inventory.py",
             }
         )
@@ -185,6 +239,8 @@ def write_csv(path: Path) -> None:
                 "estimated_runtime",
                 "owner",
                 "status",
+                "decision_gate",
+                "disposition",
                 "notes",
             ],
             lineterminator="\n",
