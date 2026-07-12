@@ -13,6 +13,10 @@ jobs:
   quality_gate:
     runs-on: [self-hosted, huawei, ubuntu22]
     timeout-minutes: 30
+    env:
+      CI_CACHE_REPO: /opt/ci-cache/sce-backend-odoo.git
+      HEAD_REF: ${{ github.event.pull_request.head.ref || github.ref_name }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
     defaults:
       run:
@@ -20,8 +24,17 @@ jobs:
         working-directory: ${{ github.workspace }}
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout from CI mirror
+        run: |
+          set -euo pipefail
+          git --git-dir="$CI_CACHE_REPO" remote set-url origin https://github.com/Leedefend/sce-backend-odoo.git
+          git --git-dir="$CI_CACHE_REPO" fetch --no-tags --prune origin "+refs/heads/${HEAD_REF}:refs/remotes/origin/${HEAD_REF}" \
+            || git --git-dir="$CI_CACHE_REPO" fetch --no-tags origin "$HEAD_SHA"
+          find "$GITHUB_WORKSPACE" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+          git clone --reference-if-able "$CI_CACHE_REPO" "$CI_CACHE_REPO" "$GITHUB_WORKSPACE"
+          git remote set-url origin https://github.com/Leedefend/sce-backend-odoo.git
+          git checkout --force "$HEAD_SHA"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
 
       - name: Verify runner tools
         run: |

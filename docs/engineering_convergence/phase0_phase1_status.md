@@ -44,6 +44,7 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 | GitHub Actions enablement | Done | Repository Actions enabled through GitHub API; dedicated self-hosted runner `ci-1-95-2-123` is online on `1.95.2.123` |
 | P1-02 Branch protection | Done | `main` protection enabled through GitHub API with PR review, CODEOWNERS, conversation resolution, force-push/delete blocks, and required check `v1.1 quality gate / quality_gate` |
 | CI runner boundary | Done | CI server `1.95.2.123` provides runner labels `self-hosted`, `huawei`, `ubuntu22`, `ci`, and `docker`; heavy Docker/Odoo stage workflows target this runner class |
+| CI checkout cache | Done | Seeded `/opt/ci-cache/sce-backend-odoo.git` on `1.95.2.123`; `v1.1 quality gate` checks out through the local mirror to avoid repeated large GitHub fetches |
 | P0-03 Issue cleanup pass | Done | Audited 38 open issues; closed test artifacts `#55` and `#62`; labeled historical backlog `#2`, `#4`-`#9`, and `#64`-`#76`; all remaining open issues now have labels |
 | SEC-06 Secret scan gate | Done | `scripts/ci/secret_scan.py`, `make security.secrets.scan` |
 | P4-01 Module dependency map | Done | `module_dependency_map.md`, `scripts/ci/generate_module_dependency_map.py` |
