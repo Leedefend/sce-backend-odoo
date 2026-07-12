@@ -58,6 +58,7 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 | P3 fixed-data Odoo journey tests | Done | `addons/smart_construction_core/tests/test_e2e_fixed_journeys.py` |
 | P3 fixed-data Odoo journey gate | Done | `make test.e2e.fixed_data.odoo` |
 | P3 role-level fixed-data E2E evidence | Done | `phase3_role_evidence.md`; E2E-02, E2E-03, and E2E-08 execute through business role users |
+| P3 payment and isolation fixed-data E2E evidence | Done | `phase3_role_evidence.md`; E2E-06 and E2E-10 execute through finance, ordinary member, and project-isolated records |
 | CI boundary audit artifact output | Done | `audit.boundary.smart_core.ci` writes to `artifacts/ci/boundary_audit/*` |
 | P4 split-plan queue | Done | `split_plan_queue.md`, `scripts/ci/generate_split_plan_queue.py` |
 
@@ -67,7 +68,7 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 | --- | --- |
 | `git diff --check` | Passed |
 | `make ci` | Passed |
-| `make test.e2e.fixed_data.odoo` | Passed, 3 role-level Odoo post-tests for E2E-02, E2E-03, and E2E-08 |
+| `make test.e2e.fixed_data.odoo` | Passed, 5 role-level Odoo post-tests for E2E-02, E2E-03, E2E-06, E2E-08, and E2E-10 |
 | `make audit.boundary.smart_core.ci` | Passed, artifact-only output without rewriting tracked docs |
 | `python3 scripts/ci/generate_test_inventory.py` | Passed, 1120 inventory entries |
 | `python3 scripts/ci/summarize_test_inventory.py` | Passed, 1120 inventory entries, unknown runtime reduced to 3, aggregate-covered assets 229 |
@@ -94,5 +95,4 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 
 ## Next Execution Focus
 
-1. `#1028`: Upgrade remaining partial journeys E2E-06 and E2E-10 to fixed-data executable gates.
-2. `#1029`: Assign concrete owner names and PR sequence for the P0 split-plan files in `split_plan_queue.md`.
+1. `#1029`: Assign concrete owner names and PR sequence for the P0 split-plan files in `split_plan_queue.md`.

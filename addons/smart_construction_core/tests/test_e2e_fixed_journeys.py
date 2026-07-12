@@ -2,6 +2,7 @@
 import base64
 
 from odoo import fields
+from odoo.exceptions import AccessError
 from odoo.tests.common import TransactionCase, tagged
 
 
@@ -42,6 +43,20 @@ class TestE2EFixedJourneys(TransactionCase):
                 "purchase.group_purchase_user",
             ],
         )
+        self.finance_user = self._role_user(
+            "e2e_finance_user",
+            [
+                "smart_construction_core.group_sc_cap_project_read",
+                "smart_construction_core.group_sc_cap_contract_read",
+                "smart_construction_core.group_sc_cap_finance_user",
+            ],
+        )
+        self.ordinary_member = self._role_user(
+            "e2e_ordinary_member",
+            [
+                "smart_construction_core.group_sc_cap_project_read",
+            ],
+        )
 
     def _role_user(self, login, xmlids):
         groups = self.env["res.groups"].browse([self.env.ref(xmlid).id for xmlid in xmlids])
@@ -53,6 +68,8 @@ class TestE2EFixedJourneys(TransactionCase):
                     "name": login.replace("_", " ").title(),
                     "login": "%s@example.com" % login,
                     "email": "%s@example.com" % login,
+                    "company_id": self.company.id,
+                    "company_ids": [(6, 0, [self.company.id])],
                     "groups_id": [(6, 0, groups.ids)],
                 }
             )
@@ -67,6 +84,7 @@ class TestE2EFixedJourneys(TransactionCase):
                 "user_id": manager.id,
                 "manager_id": manager.id,
                 "company_id": self.company.id,
+                "privacy_visibility": "followers",
             }
         )
         if followers:
@@ -80,6 +98,7 @@ class TestE2EFixedJourneys(TransactionCase):
                 "user_id": self.project_manager.id,
                 "manager_id": self.project_manager.id,
                 "company_id": self.company.id,
+                "privacy_visibility": "followers",
             }
         )
 
@@ -87,6 +106,16 @@ class TestE2EFixedJourneys(TransactionCase):
         return self.env["res.partner"].create({"name": name})
 
     def _tax(self, name="E2E Fixed VAT"):
+        existing = self.env["account.tax"].search(
+            [
+                ("name", "=", name),
+                ("company_id", "=", self.company.id),
+                ("type_tax_use", "=", "purchase"),
+            ],
+            limit=1,
+        )
+        if existing:
+            return existing
         return self.env["account.tax"].create(
             {
                 "name": name,
@@ -140,6 +169,19 @@ class TestE2EFixedJourneys(TransactionCase):
                         },
                     )
                 ],
+            }
+        )
+
+    def _payment_request(self, project, partner, contract, amount, user=None):
+        env = self.env(user=user) if user else self.env
+        return env["payment.request"].create(
+            {
+                "project_id": project.id,
+                "partner_id": partner.id,
+                "contract_id": contract.id,
+                "type": "pay",
+                "amount": amount,
+                "currency_id": self.company.currency_id.id,
             }
         )
 
@@ -228,6 +270,66 @@ class TestE2EFixedJourneys(TransactionCase):
         self.assertTrue(
             self.project_manager.has_group("smart_construction_core.group_sc_cap_project_manager")
         )
+
+    def test_e2e_06_finance_user_starts_payment_request_fixed_data(self):
+        project = self._project(
+            "E2E-06 Payment Request",
+            manager=self.project_manager,
+            followers=[self.finance_user],
+        )
+        partner = self._partner("E2E Payment Supplier")
+        contract = self._contract(project, partner)
+
+        request = self._payment_request(
+            project,
+            partner,
+            contract,
+            360.0,
+            user=self.finance_user,
+        )
+
+        self.assertEqual(request.state, "draft")
+        self.assertEqual(request.project_id.id, project.id)
+        self.assertEqual(request.contract_id.id, contract.id)
+        self.assertAlmostEqual(request.amount, 360.0)
+        self.assertTrue(
+            self.finance_user.has_group("smart_construction_core.group_sc_cap_finance_user")
+        )
+
+    def test_e2e_10_project_and_payment_cross_project_denial_fixed_data(self):
+        own_project = self._project(
+            "E2E-10 Own Project",
+            manager=self.project_manager,
+            followers=[self.ordinary_member, self.finance_user],
+        )
+        other_project = self._project(
+            "E2E-10 Other Project",
+            manager=self.project_manager,
+        )
+        own_partner = self._partner("E2E-10 Own Supplier")
+        other_partner = self._partner("E2E-10 Other Supplier")
+        own_contract = self._contract(own_project, own_partner)
+        other_contract = self._contract(other_project, other_partner)
+        own_request = self._payment_request(own_project, own_partner, own_contract, 100.0)
+        other_request = self._payment_request(other_project, other_partner, other_contract, 200.0)
+
+        member_projects = self.env(user=self.ordinary_member)["project.project"].search(
+            [("id", "in", [own_project.id, other_project.id])]
+        )
+        self.assertEqual(member_projects.ids, [own_project.id])
+        with self.assertRaises(AccessError):
+            self.env(user=self.ordinary_member)["project.project"].browse(other_project.id).read(
+                ["name"]
+            )
+
+        finance_requests = self.env(user=self.finance_user)["payment.request"].search(
+            [("id", "in", [own_request.id, other_request.id])]
+        )
+        self.assertEqual(finance_requests.ids, [own_request.id])
+        with self.assertRaises(AccessError):
+            self.env(user=self.finance_user)["payment.request"].browse(other_request.id).read(
+                ["name"]
+            )
 
     def test_e2e_08_settlement_submit_approve_done_fixed_data(self):
         project = self._project(
