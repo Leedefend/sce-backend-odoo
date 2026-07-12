@@ -1284,9 +1284,11 @@ import {
 } from './contractForm/fieldUtils';
 import {
   appendFormConfigOperationLogEntry,
+  buildFormFieldConfigScope,
   buildFormConfigOperationLogStorageKey,
   createFormConfigOperationLogEntry,
   formConfigOperationStatusLabel,
+  formatFormConfigAuditSummary,
   formatFormConfigOperationSummary as formatFormConfigOperationSummaryText,
   formatFormConfigOperationTime,
   collectNativeLayoutGroupTitles,
@@ -2700,37 +2702,10 @@ const currentFormConfigPageLabel = computed(() => normalizeConfigPageLabel(
   || '当前表单',
 ));
 
-const formFieldConfigScope = computed(() => {
-  const page = currentFormConfigPageLabel.value || '当前表单';
-  return {
-    scope: page,
-    saveTarget: '只影响当前页面，不影响其它页面',
-    summary: `本页调整${page}的字段名称、显示、顺序、分组和新增字段，保存后只影响当前页面。`,
-  };
-});
+const formFieldConfigScope = computed(() => buildFormFieldConfigScope(currentFormConfigPageLabel.value));
 
 const formConfigAuditSummary = computed(() => {
-  const result = formConfigAuditResult.value;
-  if (!result) return '';
-  if (!showLowCodeTechnicalDetails.value) {
-    const layoutText = result.hasBusinessConfigFormLayout
-      ? (result.layoutMatchesFields ? '，布局已对齐' : '，布局需要重新保存')
-      : '';
-    const takeoverText = result.skippedLegacyPolicyFields.length
-      ? `，${result.skippedLegacyPolicyFields.length} 个旧字段规则已由当前页面配置接管`
-      : '';
-    return `检查通过，当前页面 ${result.businessConfigFormFields.length} 个字段配置可生效${layoutText}${takeoverText}。`;
-  }
-  const conflictText = result.skippedLegacyPolicyFields.length
-    ? `业务配置已接管旧规则字段：${result.skippedLegacyPolicyFields.join('、')}`
-    : '无被接管的旧规则字段';
-  const activeLegacyText = result.activeLegacyPolicyFields.length
-    ? `系统补充配置生效：${result.activeLegacyPolicyFields.join('、')}`
-    : '无系统补充配置生效';
-  const layoutText = result.hasBusinessConfigFormLayout
-    ? `正式布局 ${result.businessConfigFormLayoutFields.length}，${result.layoutMatchesFields ? '字段顺序一致' : '字段顺序不一致'}`
-    : '未固化正式布局';
-  return `配置字段 ${result.businessConfigFormFields.length} / 系统补充配置 ${result.legacyPolicyFields.length}，${layoutText}，${conflictText}，${activeLegacyText}`;
+  return formatFormConfigAuditSummary(formConfigAuditResult.value, showLowCodeTechnicalDetails.value);
 });
 
 const selectedFormSettingsFieldRow = computed(() => {

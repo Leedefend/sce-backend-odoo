@@ -1,4 +1,4 @@
-import type { FormConfigOperationLogEntry, LowCodeFieldSize } from './types';
+import type { FormConfigAuditResult, FormConfigOperationLogEntry, LowCodeFieldSize } from './types';
 import { normalizeLowCodeColumnsOrNull } from './fieldUtils';
 import { nativeLayoutNodeType, type NativeLayoutLikeNode } from './nativeLayoutUtils';
 
@@ -149,6 +149,41 @@ export function normalizeConfigPageLabel(value: string) {
     .replace(/^新建\s*/, '')
     .replace(/\s*这个页面$/, '')
     .trim();
+}
+
+export function buildFormFieldConfigScope(pageLabel: string) {
+  const page = normalizeConfigPageLabel(pageLabel) || '当前表单';
+  return {
+    scope: page,
+    saveTarget: '只影响当前页面，不影响其它页面',
+    summary: `本页调整${page}的字段名称、显示、顺序、分组和新增字段，保存后只影响当前页面。`,
+  };
+}
+
+export function formatFormConfigAuditSummary(
+  result: FormConfigAuditResult | null | undefined,
+  showTechnicalDetails: boolean,
+) {
+  if (!result) return '';
+  if (!showTechnicalDetails) {
+    const layoutText = result.hasBusinessConfigFormLayout
+      ? (result.layoutMatchesFields ? '，布局已对齐' : '，布局需要重新保存')
+      : '';
+    const takeoverText = result.skippedLegacyPolicyFields.length
+      ? `，${result.skippedLegacyPolicyFields.length} 个旧字段规则已由当前页面配置接管`
+      : '';
+    return `检查通过，当前页面 ${result.businessConfigFormFields.length} 个字段配置可生效${layoutText}${takeoverText}。`;
+  }
+  const conflictText = result.skippedLegacyPolicyFields.length
+    ? `业务配置已接管旧规则字段：${result.skippedLegacyPolicyFields.join('、')}`
+    : '无被接管的旧规则字段';
+  const activeLegacyText = result.activeLegacyPolicyFields.length
+    ? `系统补充配置生效：${result.activeLegacyPolicyFields.join('、')}`
+    : '无系统补充配置生效';
+  const layoutText = result.hasBusinessConfigFormLayout
+    ? `正式布局 ${result.businessConfigFormLayoutFields.length}，${result.layoutMatchesFields ? '字段顺序一致' : '字段顺序不一致'}`
+    : '未固化正式布局';
+  return `配置字段 ${result.businessConfigFormFields.length} / 系统补充配置 ${result.legacyPolicyFields.length}，${layoutText}，${conflictText}，${activeLegacyText}`;
 }
 
 export function isSuggestedInternalFormField(fieldKey: string, label = '') {
