@@ -1,5 +1,5 @@
 import type { FormConfigAuditResult, FormConfigOperationLogEntry, LowCodeFieldSize } from './types';
-import { normalizeLowCodeColumnsOrNull } from './fieldUtils';
+import { normalizeLowCodeColumns, normalizeLowCodeColumnsOrNull, normalizeLowCodeFieldSize } from './fieldUtils';
 import { nativeLayoutNodeType, type NativeLayoutLikeNode } from './nativeLayoutUtils';
 
 export function normalizeFormConfigOperationLogEntries(raw: unknown, operator = '当前用户') {
@@ -469,6 +469,65 @@ export function resolveSelectedFormSettingsFieldGroupTitle(params: {
   if (params.draftGroupTitle) return params.draftGroupTitle;
   const nativeGroup = params.nativeGroups.find((group) => group.fieldKeys.includes(fieldKey));
   return nativeGroup?.title || params.fallbackDraftTitle || '业务配置字段';
+}
+
+export function extractLowCodeLayoutDraftState(
+  formSpec: Record<string, unknown>,
+  runtimeColumns: 1 | 2 | 3,
+) {
+  const explicitColumns = normalizeLowCodeColumnsOrNull(formSpec.columns ?? (formSpec as { cols?: unknown }).cols);
+  const columns = explicitColumns || runtimeColumns;
+  const groupVisible: Record<string, boolean> = {};
+  const groupColumns: Record<string, 1 | 2 | 3> = {};
+  const fieldSize: Record<string, LowCodeFieldSize> = {};
+  const inferFieldSize = (row: Record<string, unknown>) => {
+    const rawClass = String(row.class || row.className || '').trim();
+    return normalizeLowCodeFieldSize(
+      row.field_size
+      || row.fieldSize
+      || row.size
+      || (rawClass.includes('field--large') ? 'large'
+        : (rawClass.includes('field--full') ? 'full'
+          : (rawClass.includes('field--wide') ? 'wide' : 'normal'))),
+    );
+  };
+  const collectLayout = (nodes: unknown, activeGroup = '') => {
+    for (const raw of Array.isArray(nodes) ? nodes : []) {
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
+      const node = raw as Record<string, unknown>;
+      const nodeType = String(node.type || node.kind || node.containerType || '').trim().toLowerCase();
+      const title = normalizeFieldGroupTitle(node.string || node.label || node.title);
+      const groupTitle = nodeType === 'group' && title ? title : activeGroup;
+      if (nodeType === 'group' && title) {
+        groupVisible[title] = node.visible !== false;
+        groupColumns[title] = normalizeLowCodeColumns(
+          node.columns ?? node.cols ?? ((node.attributes && typeof node.attributes === 'object' && !Array.isArray(node.attributes))
+            ? (node.attributes as Record<string, unknown>).columns ?? (node.attributes as Record<string, unknown>).cols
+            : undefined),
+          columns,
+        );
+      }
+      const fieldName = String(node.name || node.field || node.field_name || '').trim();
+      if (nodeType === 'field' && fieldName) fieldSize[fieldName] = inferFieldSize(node);
+      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+        collectLayout(node[key], groupTitle);
+      });
+    }
+  };
+  collectLayout(formSpec.layout);
+  const formFields = Array.isArray(formSpec.fields) ? formSpec.fields as Array<Record<string, unknown>> : [];
+  formFields.forEach((row) => {
+    const fieldName = String(row.name || row.field || row.field_name || '').trim();
+    if (!fieldName || fieldSize[fieldName]) return;
+    fieldSize[fieldName] = inferFieldSize(row);
+  });
+  return {
+    columns,
+    columnsConfigured: Boolean(explicitColumns),
+    groupVisible,
+    groupColumns,
+    fieldSize,
+  };
 }
 
 export function mergeLowCodeLayoutWithRuntimeGroupShells<T extends NativeLayoutLikeNode>(base: T[], runtime: NativeLayoutLikeNode[]): T[] {

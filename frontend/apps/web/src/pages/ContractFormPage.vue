@@ -1273,7 +1273,6 @@ import {
   fromDatetimeInputValue,
   lowCodeFieldSizeClass,
   normalizeLowCodeColumns,
-  normalizeLowCodeColumnsOrNull,
   normalizeLowCodeFieldSize,
   normalizeRelationIds,
   parseMany2oneDisplay,
@@ -1291,6 +1290,7 @@ import {
   buildFormDesignerSearchableFieldRows,
   createFormConfigOperationLogEntry,
   collectNativeFieldStructureGroups,
+  extractLowCodeLayoutDraftState,
   filterFormDesignerFieldRows,
   formConfigOperationStatusLabel,
   fieldGroupTitleMatches,
@@ -2858,80 +2858,30 @@ watch(selectedFormSettingsFieldGroupTitle, (title) => {
 
 function syncLayoutDraftFromFormSpec(formSpec: Record<string, unknown>) {
   const runtimeColumns = inferLowCodeLayoutColumns(runtimeNativeFormLayoutNodes()) || inferLowCodeLayoutColumns(rawNativeFormLayoutNodes.value) || 3;
-  const explicitColumns = normalizeLowCodeColumnsOrNull(formSpec.columns ?? (formSpec as { cols?: unknown }).cols);
-  const specColumns = explicitColumns || runtimeColumns;
-  formLayoutColumnsConfigured.value = Boolean(explicitColumns);
-  formLayoutColumnsBase.value = specColumns;
+  const next = extractLowCodeLayoutDraftState(formSpec, runtimeColumns);
+  formLayoutColumnsConfigured.value = next.columnsConfigured;
+  formLayoutColumnsBase.value = next.columns;
   if (!formLayoutDirty.value) {
-    formLayoutColumnsDraft.value = specColumns;
+    formLayoutColumnsDraft.value = next.columns;
   }
-  const nextGroupVisible: Record<string, boolean> = {};
-  const nextGroupColumns: Record<string, 1 | 2 | 3> = {};
-  const nextFieldSize: Record<string, LowCodeFieldSize> = {};
-  const collectLayout = (nodes: unknown, activeGroup = '') => {
-    for (const raw of Array.isArray(nodes) ? nodes : []) {
-      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
-      const node = raw as Record<string, unknown>;
-      const nodeType = String(node.type || node.kind || node.containerType || '').trim().toLowerCase();
-      const title = normalizeFieldGroupTitle(node.string || node.label || node.title);
-      const groupTitle = nodeType === 'group' && title ? title : activeGroup;
-      if (nodeType === 'group' && title) {
-        nextGroupVisible[title] = node.visible !== false;
-        nextGroupColumns[title] = normalizeLowCodeColumns(
-          node.columns ?? node.cols ?? ((node.attributes && typeof node.attributes === 'object' && !Array.isArray(node.attributes))
-            ? (node.attributes as Record<string, unknown>).columns ?? (node.attributes as Record<string, unknown>).cols
-            : undefined),
-          specColumns,
-        );
-      }
-      const fieldName = String(node.name || node.field || node.field_name || '').trim();
-      if (nodeType === 'field' && fieldName) {
-        const rawSize = node.field_size || node.fieldSize || node.size;
-        const rawClass = String(node.class || node.className || '').trim();
-        const inferred = rawSize
-          || (rawClass.includes('field--large') ? 'large'
-            : (rawClass.includes('field--full') ? 'full'
-              : (rawClass.includes('field--wide') ? 'wide' : 'normal')));
-        nextFieldSize[fieldName] = normalizeLowCodeFieldSize(inferred);
-      }
-      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
-        collectLayout(node[key], groupTitle);
-      });
-    }
-  };
-  collectLayout(formSpec.layout);
-  const formFields = Array.isArray(formSpec.fields) ? formSpec.fields as Array<Record<string, unknown>> : [];
-  formFields.forEach((row) => {
-    const fieldName = String(row.name || row.field || row.field_name || '').trim();
-    if (!fieldName || nextFieldSize[fieldName]) return;
-    const rawClass = String(row.class || row.className || '').trim();
-    nextFieldSize[fieldName] = normalizeLowCodeFieldSize(
-      row.field_size
-      || row.fieldSize
-      || row.size
-      || (rawClass.includes('field--large') ? 'large'
-        : (rawClass.includes('field--full') ? 'full'
-          : (rawClass.includes('field--wide') ? 'wide' : 'normal'))),
-    );
-  });
-  groupVisibilityBase.value = nextGroupVisible;
+  groupVisibilityBase.value = next.groupVisible;
   if (!Object.keys(groupLayoutDirtyKeys).length) {
     Object.keys(groupVisibilityDraft).forEach((key) => delete groupVisibilityDraft[key]);
-    Object.entries(nextGroupVisible).forEach(([key, value]) => {
+    Object.entries(next.groupVisible).forEach(([key, value]) => {
       groupVisibilityDraft[key] = value;
     });
   }
-  groupColumnsBase.value = nextGroupColumns;
+  groupColumnsBase.value = next.groupColumns;
   if (!Object.keys(groupLayoutDirtyKeys).length) {
     Object.keys(groupColumnsDraft).forEach((key) => delete groupColumnsDraft[key]);
-    Object.entries(nextGroupColumns).forEach(([key, value]) => {
+    Object.entries(next.groupColumns).forEach(([key, value]) => {
       groupColumnsDraft[key] = value;
     });
   }
-  fieldSizeBase.value = nextFieldSize;
+  fieldSizeBase.value = next.fieldSize;
   if (!Object.keys(fieldLayoutDirtyKeys).length) {
     Object.keys(fieldSizeDraft).forEach((key) => delete fieldSizeDraft[key]);
-    Object.entries(nextFieldSize).forEach(([key, value]) => {
+    Object.entries(next.fieldSize).forEach(([key, value]) => {
       fieldSizeDraft[key] = value;
     });
   }
