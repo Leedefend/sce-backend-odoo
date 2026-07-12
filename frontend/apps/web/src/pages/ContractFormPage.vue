@@ -1307,11 +1307,13 @@ import {
   isSuggestedInternalFormField,
   layoutHasReadableFieldGroups,
   lowCodeLayoutFieldLabelFromNodes,
+  lowCodeScopedContractName,
   lowCodeFieldSizeLabel,
   mergeLowCodeLayoutWithRuntimeGroupShells,
   normalizeConfigPageLabel,
   normalizeFieldGroupTitle,
   normalizeFormConfigOperationLogEntries,
+  normalizeLowCodeApplyParams,
   readableFallbackFieldLabel,
   resolveSelectedFormSettingsFieldGroupTitle,
   type LowCodeLayoutDraftRow,
@@ -3155,22 +3157,6 @@ function effectiveLowCodeFieldLabel(name: string, descriptor?: FieldDescriptor) 
     || descriptor?.string
     || readableFallbackFieldLabel(fieldName),
   ).trim() || readableFallbackFieldLabel(fieldName);
-}
-
-function normalizeLowCodeApplyParams(raw: Record<string, unknown>): Record<string, unknown> {
-  const params = { ...raw };
-  for (const key of ['action_id', 'actionId', 'view_id', 'viewId']) {
-    if (!(key in params)) continue;
-    const numeric = Number(params[key] || 0);
-    params[key] = Number.isFinite(numeric) && numeric >= 0 ? Math.trunc(numeric) : 0;
-  }
-  return params;
-}
-
-function lowCodeScopedContractName(modelName: string, params: Record<string, unknown>) {
-  const actionId = Number(params.action_id || params.actionId || 0);
-  const viewId = Number(params.view_id || params.viewId || 0);
-  return `view_orchestration:${modelName}:form:action:${Number.isFinite(actionId) ? Math.trunc(actionId) : 0}:view:${Number.isFinite(viewId) ? Math.trunc(viewId) : 0}`;
 }
 
 const isQuickSubmitDisabled = computed(() => {
