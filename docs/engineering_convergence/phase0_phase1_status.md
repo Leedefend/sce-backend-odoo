@@ -88,9 +88,8 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 
 ## Next Execution Focus
 
-1. Validate PR `#1024` on self-hosted runner `ci-1-95-2-123`.
-2. Decide whether historical BOQ/model backlog `#2`, `#4`-`#9`, and `#64`-`#76` belongs in v1.1 or a later milestone.
-3. Keep the seven residual 2-asset hotspot families as explicit owner-review items unless a real aggregate gate is introduced.
-4. Add role/browser evidence for the fixed-data E2E-02, E2E-03, and E2E-08 journeys before release.
-5. Upgrade remaining partial journeys E2E-06 and E2E-10 to fixed-data executable gates.
-6. Assign concrete owner names and PR sequence for the P0 split-plan files in `split_plan_queue.md`.
+1. Decide whether historical BOQ/model backlog `#2`, `#4`-`#9`, and `#64`-`#76` belongs in v1.1 or a later milestone.
+2. Keep the seven residual 2-asset hotspot families as explicit owner-review items unless a real aggregate gate is introduced.
+3. Add role/browser evidence for the fixed-data E2E-02, E2E-03, and E2E-08 journeys before release.
+4. Upgrade remaining partial journeys E2E-06 and E2E-10 to fixed-data executable gates.
+5. Assign concrete owner names and PR sequence for the P0 split-plan files in `split_plan_queue.md`.
