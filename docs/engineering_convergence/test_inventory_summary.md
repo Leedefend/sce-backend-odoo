@@ -9,8 +9,8 @@ Generated from `test_inventory.csv`.
 - Unknown runtime: `3`
 - Long-running assets: `331`
 - Manual gate review: `4`
-- Aggregate-covered assets: `86`
-- PR dedupe candidates: `702`
+- Aggregate-covered assets: `142`
+- PR dedupe candidates: `647`
 
 ## By Layer
 
@@ -42,9 +42,9 @@ Generated from `test_inventory.csv`.
 
 | Disposition | Count |
 | --- | ---: |
-| deduplicate_before_required | 702 |
-| keep_integration_or_release_only | 292 |
-| covered_by_aggregate | 82 |
+| deduplicate_before_required | 647 |
+| keep_integration_or_release_only | 291 |
+| covered_by_aggregate | 138 |
 | keep_release_only | 36 |
 | canonical_entry | 4 |
 | review_or_archive | 4 |
@@ -54,14 +54,42 @@ Generated from `test_inventory.csv`.
 | Aggregate Target | Count |
 | --- | ---: |
 | verify.unified_page_contract.lite | 54 |
+| verify.scene.runtime_boundary.gate | 12 |
 | verify.unified_page_contract.v2 | 11 |
 | verify.frontend.product.ready | 7 |
 | verify.backend.contract.closure.mainline | 5 |
-| verify.scene.runtime_boundary.gate | 5 |
+| verify.lowcode_config.customer_module_asset.pipeline | 4 |
+| verify.backend.architecture.full.report.guard.schema.guard | 3 |
+| verify.finance_interfund.position.all | 3 |
+| verify.frontend.grouped_governance_brief.baseline.guard | 3 |
+| verify.frontend.grouped_governance_trend_consistency.baseline.guard | 3 |
+| verify.portal.payment_request_approval_all_smoke.container | 3 |
+| verify.release.v2_0_0.governance.guard | 3 |
+| verify.contract.scene_coverage.guard | 3 |
+| verify.smart_core.minimum_surface | 3 |
+| verify.business_config.config_workbench_operation_quick | 2 |
+| verify.form_structure.contract | 2 |
 | make ci | 1 |
 | make test.e2e | 1 |
 | make test.odoo.integration | 1 |
 | make test.e2e.fixed_data.odoo | 1 |
+| verify.business_config.config_workbench_operation_acceptance | 1 |
+| scene.contract.export | 1 |
+| verify.portal.scene_contract_export_smoke.container | 1 |
+| verify.portal.scene_contract_smoke.container | 1 |
+| verify.portal.scene_package_dry_run_smoke.container | 1 |
+| verify.portal.scene_observability_strict.container | 1 |
+| verify.portal.scene_package_installed_smoke.container | 1 |
+| verify.formal_list_surface.no_test_placeholder_guard | 1 |
+| verify.frontend.page_block_registry_guard | 1 |
+| verify.frontend.page_block_renderer_smoke | 1 |
+| verify.frontend.page_block_visual_snapshot_guard | 1 |
+| verify.lowcode_config.customer_module_asset.release_hardening.guard | 1 |
+| verify.delivery.material.cross_document_progress | 1 |
+| verify.smart_core.boundary_guard | 1 |
+| verify.unified_page_contract.v2.harmony_h5_compile_acceptance.host | 1 |
+| verify.unified_page_contract.v2.regression_audit.host | 1 |
+| verify.unified_page_contract.v2.web_visual_acceptance.host | 1 |
 
 ## By Runtime
 
@@ -126,9 +154,6 @@ Generated from `test_inventory.csv`.
 | T-ASSET-003 | frontend_acceptance | `frontend/apps/web/scripts/business_form_frontend_full_walk_acceptance.mjs` | frontend owner |
 | T-ASSET-004 | frontend_acceptance | `frontend/apps/web/scripts/business_form_user_perspective_acceptance.mjs` | frontend owner |
 | T-ASSET-005 | frontend_acceptance | `frontend/apps/web/scripts/business_form_user_perspective_summary_guard.mjs` | frontend owner |
-| T-ASSET-006 | frontend_acceptance | `frontend/apps/web/scripts/config_workbench_operation_acceptance.mjs` | frontend owner |
-| T-ASSET-007 | frontend_acceptance | `frontend/apps/web/scripts/config_workbench_operation_coverage_guard.mjs` | frontend owner |
-| T-ASSET-008 | frontend_acceptance | `frontend/apps/web/scripts/config_workbench_operation_summary_guard.mjs` | frontend owner |
 | T-ASSET-009 | frontend_acceptance | `frontend/apps/web/scripts/handling_entry_catalog_smoke.mjs` | frontend owner |
 | T-ASSET-010 | contract | `frontend/apps/web/scripts/list_selection_contract_smoke.mjs` | platform owner |
 | T-ASSET-011 | frontend_acceptance | `frontend/apps/web/scripts/low_code_business_config_acceptance.mjs` | frontend owner |
@@ -164,9 +189,6 @@ Generated from `test_inventory.csv`.
 | T-ASSET-300 | governance | `scripts/verify/application_form_required_marker_audit.py` | architecture owner |
 | T-ASSET-303 | security | `scripts/verify/auth_xpath_guard.sh` | security owner |
 | T-ASSET-304 | unit | `scripts/verify/auto_degrade_smoke_report.py` | test owner |
-| T-ASSET-305 | governance | `scripts/verify/backend_architecture_full_report_guard.py` | architecture owner |
-| T-ASSET-306 | contract | `scripts/verify/backend_architecture_full_report_guard_schema_guard.py` | platform owner |
-| T-ASSET-307 | contract | `scripts/verify/backend_architecture_full_report_schema_guard.py` | platform owner |
 | T-ASSET-308 | governance | `scripts/verify/backend_boundary_guard.py` | architecture owner |
 | T-ASSET-309 | governance | `scripts/verify/backend_business_fact_model_audit.py` | architecture owner |
 | T-ASSET-310 | contract | `scripts/verify/backend_contract_boundary_guard.py` | platform owner |
@@ -202,30 +224,18 @@ Generated from `test_inventory.csv`.
 | T-ASSET-350 | governance | `scripts/verify/capability_dormant_explain_guard.py` | architecture owner |
 | T-ASSET-351 | governance | `scripts/verify/capability_provider_guard.py` | architecture owner |
 | T-ASSET-352 | unit | `scripts/verify/capability_registry_smoke.py` | test owner |
-| ... | ... | 622 more | ... |
+| T-ASSET-353 | unit | `scripts/verify/capability_smoke.py` | test owner |
+| T-ASSET-356 | contract | `scripts/verify/company_contractor_responsibility_context_audit.py` | platform owner |
+| T-ASSET-361 | governance | `scripts/verify/company_operation_summary_source_audit.py` | architecture owner |
+| T-ASSET-362 | governance | `scripts/verify/complexity_guard.py` | architecture owner |
+| T-ASSET-363 | contract | `scripts/verify/construction_contract_history_value_gap_probe.py` | platform owner |
+| T-ASSET-364 | governance | `scripts/verify/construction_diary_visible_fields_audit.py` | architecture owner |
+| ... | ... | 567 more | ... |
 
 ## Dedupe Hotspots
 
 | Family | Count |
 | --- | ---: |
-| `scripts/verify/company_contractor_responsibility` | 4 |
-| `scripts/verify/lowcode_customer_config` | 4 |
-| `scripts/verify/scene_base_contract` | 4 |
-| `frontend/apps/web/scripts/config_workbench_operation` | 3 |
-| `scripts/verify/backend_architecture_full` | 3 |
-| `scripts/verify/fe_scene_contract` | 3 |
-| `scripts/verify/fe_scene_package` | 3 |
-| `scripts/verify/form_structure_contract` | 3 |
-| `scripts/verify/frontend_page_block` | 3 |
-| `scripts/verify/grouped_governance_brief` | 3 |
-| `scripts/verify/grouped_governance_trend` | 3 |
-| `scripts/verify/material_settlement_payment` | 3 |
-| `scripts/verify/payment_request_approval` | 3 |
-| `scripts/verify/release_v2_0` | 3 |
-| `scripts/verify/scene_contract_coverage` | 3 |
-| `scripts/verify/scene_validation_recovery` | 3 |
-| `scripts/verify/smart_core_minimum` | 3 |
-| `scripts/verify/unified_page_contract` | 3 |
 | `frontend/apps/web/scripts/business_form_user` | 2 |
 | `frontend/apps/web/scripts/system_user_experience` | 2 |
 | `scripts/verify/backend_evidence_manifest` | 2 |
@@ -238,3 +248,21 @@ Generated from `test_inventory.csv`.
 | `scripts/verify/fe_ar_ap` | 2 |
 | `scripts/verify/fe_list_shell` | 2 |
 | `scripts/verify/fe_menu_scene` | 2 |
+| `scripts/verify/fe_portal_scene` | 2 |
+| `scripts/verify/fe_scene_auto` | 2 |
+| `scripts/verify/fe_scene_health` | 2 |
+| `scripts/verify/fe_scene_registry` | 2 |
+| `scripts/verify/fe_view_contract` | 2 |
+| `scripts/verify/finance_business_fact` | 2 |
+| `scripts/verify/form_m2_payment` | 2 |
+| `scripts/verify/form_m3_purchase` | 2 |
+| `scripts/verify/form_view_scope` | 2 |
+| `scripts/verify/frontend_scene_contract` | 2 |
+| `scripts/verify/grouped_drift_summary` | 2 |
+| `scripts/verify/grouped_pagination_semantic` | 2 |
+| `scripts/verify/intent_canonical_alias` | 2 |
+| `scripts/verify/intent_smoke_utils` | 2 |
+| `scripts/verify/material_business_category` | 2 |
+| `scripts/verify/material_settlement_payment` | 2 |
+| `scripts/verify/native_view_semantic` | 2 |
+| `scripts/verify/non_demo_data` | 2 |

@@ -25,6 +25,15 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 | P2-02 Frontend page contract aggregate coverage | Done | 7 assets covered by `verify.frontend.product.ready` |
 | P2-02 Backend contract closure aggregate coverage | Done | 5 assets covered by `verify.backend.contract.closure.mainline` |
 | P2-02 Scene action surface aggregate coverage | Done | 5 assets covered by `verify.scene.runtime_boundary.gate` |
+| P2-02 Scene base contract aggregate coverage | Done | 4 assets covered by `verify.scene.runtime_boundary.gate` |
+| P2-02 Low-code customer config aggregate coverage | Done | 5 assets covered by customer module asset pipeline and release hardening gates |
+| P2-02 Finance responsibility aggregate coverage | Done | 3 assets covered by `verify.finance_interfund.position.all` |
+| P2-02 Config workbench operation aggregate coverage | Done | 3 assets covered by quick and browser acceptance gates |
+| P2-02 Backend architecture report aggregate coverage | Done | 3 assets covered by `verify.backend.architecture.full.report.guard.schema.guard` |
+| P2-02 Scene frontend contract aggregate coverage | Done | 3 assets covered by scene contract export and portal smoke gates |
+| P2-02 Formal list surface aggregate coverage | Done | Placeholder guard covered by `verify.formal_list_surface.no_test_placeholder_guard`; cleanup policy remains explicit |
+| P2-02 Smart core boundary aggregate coverage | Done | `smart_core_boundary_guard.py` covered by `verify.smart_core.boundary_guard` |
+| P2-02 Secondary dedupe hotspot aggregate coverage | Done | Scene package, grouped governance, release v2.0, scene coverage/recovery, payment approval, smart core minimum, and selected material/form assets mapped to existing gates |
 | SEC-06 Secret scan gate | Done | `scripts/ci/secret_scan.py`, `make security.secrets.scan` |
 | P4-01 Module dependency map | Done | `module_dependency_map.md`, `scripts/ci/generate_module_dependency_map.py` |
 | P4-02 Domain boundary ADR | Done | `adr_0001_domain_boundaries.md` |
@@ -44,7 +53,7 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 | `make test.e2e.fixed_data.odoo` | Passed, 3 Odoo post-tests for E2E-02, E2E-03, and E2E-08 |
 | `make audit.boundary.smart_core.ci` | Passed, artifact-only output without rewriting tracked docs |
 | `python3 scripts/ci/generate_test_inventory.py` | Passed, 1120 inventory entries |
-| `python3 scripts/ci/summarize_test_inventory.py` | Passed, 1120 inventory entries, unknown runtime reduced to 3, aggregate-covered assets 86 |
+| `python3 scripts/ci/summarize_test_inventory.py` | Passed, 1120 inventory entries, unknown runtime reduced to 3, aggregate-covered assets 142 |
 | `python3 scripts/ci/generate_e2e_journey_matrix.py` | Passed, 38 E2E assets mapped to 12 journeys with 0 empty gaps |
 | `python3 scripts/ci/generate_module_dependency_map.py` | Passed, 14 modules and 0 circular dependencies |
 | `python3 scripts/ci/generate_complexity_budget_report.py` | Passed, 3785 files scanned |

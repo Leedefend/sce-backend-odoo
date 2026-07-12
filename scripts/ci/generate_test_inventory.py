@@ -178,10 +178,93 @@ def aggregate_target_for(path: Path, runtime: str) -> str:
     name = path.name.lower()
     if name.startswith("frontend_page_contract_"):
         return "verify.frontend.product.ready"
+    if name in {
+        "config_workbench_operation_coverage_guard.mjs",
+        "config_workbench_operation_summary_guard.mjs",
+    }:
+        return "verify.business_config.config_workbench_operation_quick"
+    if name == "config_workbench_operation_acceptance.mjs":
+        return "verify.business_config.config_workbench_operation_acceptance"
+    if name in {
+        "backend_architecture_full_report_guard.py",
+        "backend_architecture_full_report_guard_schema_guard.py",
+        "backend_architecture_full_report_schema_guard.py",
+    }:
+        return "verify.backend.architecture.full.report.guard.schema.guard"
     if name.startswith("backend_contract_closure_"):
         return "verify.backend.contract.closure.mainline"
+    if name in {
+        "company_contractor_responsibility_fact_audit.py",
+        "company_contractor_responsibility_summary_audit.py",
+        "company_contractor_responsibility_http_smoke.py",
+    }:
+        return "verify.finance_interfund.position.all"
+    if name in {
+        "lowcode_customer_config_acceptance_decision_template.py",
+        "lowcode_customer_config_apply_acceptance_decisions.py",
+        "lowcode_customer_config_apply_acceptance_decisions_test.py",
+        "lowcode_customer_config_module_asset_replay_guard.py",
+    }:
+        return "verify.lowcode_config.customer_module_asset.pipeline"
+    if name == "lowcode_customer_config_release_hardening_guard.py":
+        return "verify.lowcode_config.customer_module_asset.release_hardening.guard"
+    if name.startswith("scene_base_contract_"):
+        return "verify.scene.runtime_boundary.gate"
     if name.startswith("scene_action_surface_strategy_"):
         return "verify.scene.runtime_boundary.gate"
+    if name == "fe_scene_contract_smoke.js":
+        return "verify.portal.scene_contract_smoke.container"
+    if name == "fe_scene_contract_export_smoke.js":
+        return "verify.portal.scene_contract_export_smoke.container"
+    if name == "fe_scene_contract_export.js":
+        return "scene.contract.export"
+    if name == "formal_list_surface_no_test_placeholder_guard.py":
+        return "verify.formal_list_surface.no_test_placeholder_guard"
+    if name == "smart_core_boundary_guard.py":
+        return "verify.smart_core.boundary_guard"
+    if name in {
+        "form_structure_contract_runtime_audit.py",
+        "form_structure_contract_standardizer_guard.py",
+    }:
+        return "verify.form_structure.contract"
+    if name == "fe_scene_package_dry_run_smoke.js":
+        return "verify.portal.scene_package_dry_run_smoke.container"
+    if name == "fe_scene_package_import_smoke.js":
+        return "verify.portal.scene_observability_strict.container"
+    if name == "fe_scene_package_installed_smoke.js":
+        return "verify.portal.scene_package_installed_smoke.container"
+    if name.startswith("frontend_page_block_"):
+        return {
+            "frontend_page_block_registry_guard.py": "verify.frontend.page_block_registry_guard",
+            "frontend_page_block_renderer_smoke_guard.py": "verify.frontend.page_block_renderer_smoke",
+            "frontend_page_block_visual_snapshot_guard.py": "verify.frontend.page_block_visual_snapshot_guard",
+        }.get(name, "")
+    if name.startswith("grouped_governance_brief_"):
+        return "verify.frontend.grouped_governance_brief.baseline.guard"
+    if name.startswith("grouped_governance_trend_consistency_"):
+        return "verify.frontend.grouped_governance_trend_consistency.baseline.guard"
+    if name in {
+        "payment_request_approval_field_consumer_audit.py",
+        "payment_request_approval_handoff_smoke.py",
+        "payment_request_approval_smoke.py",
+    }:
+        return "verify.portal.payment_request_approval_all_smoke.container"
+    if name == "material_settlement_payment_execution_traceability_audit.py":
+        return "verify.delivery.material.cross_document_progress"
+    if name.startswith("release_v2_0_0_"):
+        return "verify.release.v2_0_0.governance.guard"
+    if name.startswith("scene_contract_coverage_"):
+        return "verify.contract.scene_coverage.guard"
+    if name.startswith("scene_validation_recovery_strategy_"):
+        return "verify.scene.runtime_boundary.gate"
+    if name.startswith("smart_core_minimum_"):
+        return "verify.smart_core.minimum_surface"
+    if name == "unified_page_contract_v2_harmony_h5_compile_acceptance_guard.py":
+        return "verify.unified_page_contract.v2.harmony_h5_compile_acceptance.host"
+    if name == "unified_page_contract_v2_regression_audit.py":
+        return "verify.unified_page_contract.v2.regression_audit.host"
+    if name == "unified_page_contract_v2_web_visual_acceptance.js":
+        return "verify.unified_page_contract.v2.web_visual_acceptance.host"
     if name == "web_unified_page_contract_v2_guard.py":
         return "verify.unified_page_contract.v2"
     if name.startswith("unified_page_contract_v2_"):
