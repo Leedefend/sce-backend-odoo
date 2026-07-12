@@ -1,3 +1,5 @@
+import type { FieldDescriptor } from '@sc/schema';
+
 export type NativeLayoutLikeNode = Record<string, unknown> & {
   children?: unknown;
   pages?: unknown;
@@ -118,6 +120,82 @@ export function nativeNodeWidgetSemantics(node?: NativeLayoutLikeNode | null) {
     ? fieldInfo.widget_semantics as Record<string, unknown>
     : {};
   return semantics;
+}
+
+export function nativeNodeFieldDescriptor(
+  nodeRaw: NativeLayoutLikeNode,
+  fallback: FieldDescriptor | undefined,
+  resolveFieldLabel: (name: string) => string,
+): FieldDescriptor | undefined {
+  const node = nodeRaw as Record<string, unknown>;
+  const fieldInfo = nativeNodeFieldInfo(node);
+  if (!Object.keys(fieldInfo).length && !fallback) return undefined;
+  const name = String(nodeRaw?.name || fieldInfo.name || fallback?.name || '').trim();
+  const label = String(resolveFieldLabel(name) || fallback?.string || node.string || node.label || fieldInfo.string || fieldInfo.label || name || '').trim();
+  const type = String(fieldInfo.type || fieldInfo.ttype || fallback?.type || fallback?.ttype || '').trim();
+  const relation = String(fieldInfo.relation || fallback?.relation || '').trim();
+  const relationField = String(fieldInfo.relation_field || fallback?.relation_field || '').trim();
+  const widget = String(node.widget || fieldInfo.widget || (fallback as Record<string, unknown> | undefined)?.widget || '').trim();
+  const selection = Array.isArray(fieldInfo.selection)
+    ? fieldInfo.selection as FieldDescriptor['selection']
+    : fallback?.selection;
+  const domain = fieldInfo.domain !== undefined
+    ? fieldInfo.domain
+    : (fallback as Record<string, unknown> | undefined)?.domain;
+  const context = fieldInfo.context !== undefined
+    ? fieldInfo.context
+    : (fallback as Record<string, unknown> | undefined)?.context;
+  const relationEntry = fieldInfo.relation_entry !== undefined
+    ? fieldInfo.relation_entry
+    : (fallback as Record<string, unknown> | undefined)?.relation_entry;
+  const widgetOptions = fieldInfo.widget_options !== undefined
+    ? fieldInfo.widget_options
+    : (fieldInfo.options !== undefined
+      ? fieldInfo.options
+      : ((fallback as Record<string, unknown> | undefined)?.widget_options
+        ?? (fallback as Record<string, unknown> | undefined)?.options));
+  return {
+    ...(fallback || {}),
+    ...(name ? { name } : {}),
+    ...(label ? { string: label } : {}),
+    ...(type ? { type, ttype: type } : {}),
+    ...(typeof fieldInfo.required === 'boolean' ? { required: fieldInfo.required } : {}),
+    ...(typeof fieldInfo.readonly === 'boolean' ? { readonly: fieldInfo.readonly } : {}),
+    ...(selection ? { selection } : {}),
+    ...(relation ? { relation } : {}),
+    ...(relationField ? { relation_field: relationField } : {}),
+    ...(widget ? { widget } : {}),
+    ...(domain !== undefined ? { domain } : {}),
+    ...(context !== undefined ? { context } : {}),
+    ...(relationEntry !== undefined ? { relation_entry: relationEntry } : {}),
+    ...(widgetOptions !== undefined ? { widget_options: widgetOptions } : {}),
+  } as FieldDescriptor;
+}
+
+export function findNativeFieldNode(nodes: NativeLayoutLikeNode[], name: string): NativeLayoutLikeNode | null {
+  const target = String(name || '').trim();
+  if (!target) return null;
+  for (const node of nodes) {
+    if (nativeLayoutNodeType(node) === 'field' && String(node?.name || '').trim() === target) return node;
+    for (const key of CHILD_KEYS) {
+      const children = node?.[key];
+      if (!Array.isArray(children)) continue;
+      const found = findNativeFieldNode(children as NativeLayoutLikeNode[], target);
+      if (found) return found;
+    }
+  }
+  return null;
+}
+
+export function nativeFieldSubview(nodes: NativeLayoutLikeNode[], name: string): Record<string, unknown> | null {
+  const node = findNativeFieldNode(nodes, name);
+  if (!node) return null;
+  const fieldInfo = nativeNodeFieldInfo(node);
+  const subview = fieldInfo?.subview;
+  if (subview && typeof subview === 'object' && !Array.isArray(subview)) {
+    return subview as Record<string, unknown>;
+  }
+  return null;
 }
 
 export function resolveNativeButtonLabel(node: NativeLayoutLikeNode, resolveFieldValue: (field: string) => unknown) {

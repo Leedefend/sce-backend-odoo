@@ -1310,10 +1310,13 @@ import {
   collectNativeVisibleSectionTitles,
   countNativeNodesByType,
   evaluateNativeModifierValue as evaluateNativeModifierValueWithResolver,
+  findNativeFieldNode as findNativeFieldNodeInTree,
   isNativeFieldLayoutNode,
   isStaticTruthyModifier,
   nativeModifierValue,
+  nativeFieldSubview as nativeFieldSubviewFromTree,
   nativeLayoutNodeType,
+  nativeNodeFieldDescriptor as nativeNodeFieldDescriptorFromNode,
   nativeNodeFieldInfo,
   nativeNodeWidget,
   nativeNodeWidgetSemantics,
@@ -3944,68 +3947,11 @@ function one2manyRelationFieldDescriptor(fieldName: string, column: string) {
 }
 
 function nativeNodeFieldDescriptor(nodeRaw: NativeFormLayoutNode, fallback?: FieldDescriptor): FieldDescriptor | undefined {
-  const node = nodeRaw as Record<string, unknown>;
-  const fieldInfo = nativeNodeFieldInfo(node);
-  if (!Object.keys(fieldInfo).length && !fallback) return undefined;
-  const name = String(nodeRaw?.name || fieldInfo.name || fallback?.name || '').trim();
-  const label = String(contractFieldLabel(name) || fallback?.string || node.string || node.label || fieldInfo.string || fieldInfo.label || name || '').trim();
-  const type = String(fieldInfo.type || fieldInfo.ttype || fallback?.type || fallback?.ttype || '').trim();
-  const relation = String(fieldInfo.relation || fallback?.relation || '').trim();
-  const relationField = String(fieldInfo.relation_field || fallback?.relation_field || '').trim();
-  const widget = String(node.widget || fieldInfo.widget || (fallback as Record<string, unknown> | undefined)?.widget || '').trim();
-  const selection = Array.isArray(fieldInfo.selection)
-    ? fieldInfo.selection as FieldDescriptor['selection']
-    : fallback?.selection;
-  const domain = fieldInfo.domain !== undefined
-    ? fieldInfo.domain
-    : (fallback as Record<string, unknown> | undefined)?.domain;
-  const context = fieldInfo.context !== undefined
-    ? fieldInfo.context
-    : (fallback as Record<string, unknown> | undefined)?.context;
-  const relationEntry = fieldInfo.relation_entry !== undefined
-    ? fieldInfo.relation_entry
-    : (fallback as Record<string, unknown> | undefined)?.relation_entry;
-  const widgetOptions = fieldInfo.widget_options !== undefined
-    ? fieldInfo.widget_options
-    : (fieldInfo.options !== undefined
-      ? fieldInfo.options
-      : ((fallback as Record<string, unknown> | undefined)?.widget_options
-        ?? (fallback as Record<string, unknown> | undefined)?.options));
-  return {
-    ...(fallback || {}),
-    ...(name ? { name } : {}),
-    ...(label ? { string: label } : {}),
-    ...(type ? { type, ttype: type } : {}),
-    ...(typeof fieldInfo.required === 'boolean' ? { required: fieldInfo.required } : {}),
-    ...(typeof fieldInfo.readonly === 'boolean' ? { readonly: fieldInfo.readonly } : {}),
-    ...(selection ? { selection } : {}),
-    ...(relation ? { relation } : {}),
-    ...(relationField ? { relation_field: relationField } : {}),
-    ...(widget ? { widget } : {}),
-    ...(domain !== undefined ? { domain } : {}),
-    ...(context !== undefined ? { context } : {}),
-    ...(relationEntry !== undefined ? { relation_entry: relationEntry } : {}),
-    ...(widgetOptions !== undefined ? { widget_options: widgetOptions } : {}),
-  } as FieldDescriptor;
+  return nativeNodeFieldDescriptorFromNode(nodeRaw as NativeLayoutLikeNode, fallback, contractFieldLabel);
 }
 
 function findNativeFieldNode(name: string): NativeFormLayoutNode | null {
-  const target = String(name || '').trim();
-  if (!target) return null;
-  const walk = (nodes: NativeFormLayoutNode[]): NativeFormLayoutNode | null => {
-    for (const node of nodes) {
-      const type = String(node?.type || (node as { containerType?: string })?.containerType || '').trim().toLowerCase();
-      if (type === 'field' && String(node?.name || '').trim() === target) return node;
-      for (const key of ['children', 'pages', 'tabs', 'nodes', 'items'] as const) {
-        const children = node?.[key];
-        if (!Array.isArray(children)) continue;
-        const found = walk(children as NativeFormLayoutNode[]);
-        if (found) return found;
-      }
-    }
-    return null;
-  };
-  return walk(nativeFormLayoutNodes.value);
+  return findNativeFieldNodeInTree(nativeFormLayoutNodes.value as NativeLayoutLikeNode[], name) as NativeFormLayoutNode | null;
 }
 
 function effectiveFieldDescriptor(name: string): FieldDescriptor | undefined {
@@ -4047,29 +3993,7 @@ function mergeNativeLayoutFieldDescriptorsIntoContract() {
 }
 
 function nativeFieldSubview(name: string): Record<string, unknown> | null {
-  const target = String(name || '').trim();
-  if (!target) return null;
-  const walk = (nodes: NativeFormLayoutNode[]): Record<string, unknown> | null => {
-    for (const node of nodes) {
-      const nodeName = String(node?.name || '').trim();
-      const nodeType = String(node?.type || '').trim().toLowerCase();
-      if (nodeType === 'field' && nodeName === target) {
-        const fieldInfo = nativeNodeFieldInfo(node);
-        const subview = fieldInfo?.subview;
-        if (subview && typeof subview === 'object' && !Array.isArray(subview)) {
-          return subview as Record<string, unknown>;
-        }
-      }
-      for (const key of ['children', 'pages', 'tabs', 'nodes', 'items'] as const) {
-        const children = node?.[key];
-        if (!Array.isArray(children)) continue;
-        const found = walk(children as NativeFormLayoutNode[]);
-        if (found) return found;
-      }
-    }
-    return null;
-  };
-  return walk(nativeFormLayoutNodes.value);
+  return nativeFieldSubviewFromTree(nativeFormLayoutNodes.value as NativeLayoutLikeNode[], name);
 }
 
 function one2manyColumns(name: string): One2ManyColumn[] {
