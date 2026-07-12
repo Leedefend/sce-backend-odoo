@@ -12,7 +12,7 @@ Generated from repository source files. This report is informational during the 
 
 | Lines | Category | File |
 | ---: | --- | --- |
-| 8531 | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
+| 8470 | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
 | 4820 | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 4491 | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 4400 | Python source | `addons/smart_construction_core/core_extension.py` |
@@ -127,7 +127,7 @@ Generated from repository source files. This report is informational during the 
 
 | Lines | Status | Category | File |
 | ---: | --- | --- | --- |
-| 8531 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
+| 8470 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
 | 4820 | split_plan_required | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 4491 | split_plan_required | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 4400 | split_plan_required | Python source | `addons/smart_construction_core/core_extension.py` |

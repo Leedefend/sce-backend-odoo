@@ -8,6 +8,19 @@ export type NativeLayoutLikeNode = Record<string, unknown> & {
   items?: unknown;
 };
 
+export type SemanticFieldGroup = {
+  name: string;
+  label: string;
+  collapsible: boolean;
+  fields: string[];
+};
+
+export type FieldSemanticMeta = {
+  semantic_type?: string;
+  surface_role?: string;
+  technical?: boolean;
+};
+
 const CHILD_KEYS = ['children', 'pages', 'tabs', 'nodes', 'items'] as const;
 
 export function nativeLayoutNodeType(node: NativeLayoutLikeNode) {
@@ -31,6 +44,95 @@ export function nativeNodeFieldInfo(node?: NativeLayoutLikeNode | null): Record<
 export function normalizeNativeLayoutColumns(value: unknown): 1 | 2 | 3 | null {
   const columns = Number(value);
   return columns === 1 || columns === 2 || columns === 3 ? columns : null;
+}
+
+function stringList(value: unknown): string[] {
+  return Array.isArray(value) ? value.map((item) => String(item || '').trim()).filter(Boolean) : [];
+}
+
+export function normalizeSemanticFieldGroups(
+  rawGroups: unknown,
+  fallbackProfile: unknown,
+): Record<string, SemanticFieldGroup> {
+  const out: Record<string, SemanticFieldGroup> = {};
+  const rows = Array.isArray(rawGroups) ? rawGroups : [];
+  for (const item of rows) {
+    if (!item || typeof item !== 'object' || Array.isArray(item)) continue;
+    const row = item as Record<string, unknown>;
+    const key = String(row.name || '').trim().toLowerCase();
+    if (!key) continue;
+    out[key] = {
+      name: key,
+      label: String(row.label || (key === 'core' ? '核心信息' : '高级信息')).trim(),
+      collapsible: Boolean(row.collapsible),
+      fields: stringList(row.fields),
+    };
+  }
+  if (Object.keys(out).length) return out;
+
+  const profile = fallbackProfile && typeof fallbackProfile === 'object' && !Array.isArray(fallbackProfile)
+    ? fallbackProfile as Record<string, unknown>
+    : {};
+  const core = stringList(profile.core_fields);
+  const advanced = stringList(profile.advanced_fields);
+  if (!core.length && !advanced.length) return out;
+  out.core = {
+    name: 'core',
+    label: '核心信息',
+    collapsible: false,
+    fields: core,
+  };
+  out.advanced = {
+    name: 'advanced',
+    label: '高级信息',
+    collapsible: true,
+    fields: advanced,
+  };
+  return out;
+}
+
+export function normalizeContractFieldSemantics(raw: unknown): Record<string, FieldSemanticMeta> {
+  const out: Record<string, FieldSemanticMeta> = {};
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
+  Object.entries(raw as Record<string, unknown>).forEach(([name, value]) => {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return;
+    const row = value as Record<string, unknown>;
+    out[name] = {
+      semantic_type: String(row.semantic_type || '').trim().toLowerCase(),
+      surface_role: String(row.surface_role || '').trim().toLowerCase(),
+      technical: Boolean(row.technical),
+    };
+  });
+  return out;
+}
+
+export function resolveFieldSemanticMeta(
+  fieldName: string,
+  fieldSemantics: Record<string, FieldSemanticMeta>,
+  descriptor?: FieldDescriptor,
+): FieldSemanticMeta {
+  const name = String(fieldName || '').trim();
+  const fromMap = fieldSemantics[name];
+  if (fromMap) return fromMap;
+  const source = descriptor as Record<string, unknown> | undefined;
+  return {
+    semantic_type: String(source?.semantic_type || '').trim().toLowerCase(),
+    surface_role: String(source?.surface_role || '').trim().toLowerCase(),
+    technical: Boolean(source?.technical),
+  };
+}
+
+export function semanticFieldNamesBySurfaceRole(
+  fields: Record<string, FieldDescriptor> | undefined,
+  fieldSemantics: Record<string, FieldSemanticMeta>,
+  groups: Record<string, SemanticFieldGroup>,
+  role: 'core' | 'advanced',
+): string[] {
+  const fromSemantic = Object.keys(fields || {}).filter((name) => (
+    resolveFieldSemanticMeta(name, fieldSemantics, fields?.[name]).surface_role === role
+  ));
+  if (fromSemantic.length) return fromSemantic;
+  return groups[role]?.fields || [];
 }
 
 export function nativeModifierValue(nodeRaw: NativeLayoutLikeNode, key: 'invisible' | 'readonly' | 'required') {

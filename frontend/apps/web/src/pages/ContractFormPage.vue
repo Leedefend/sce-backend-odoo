@@ -555,9 +555,15 @@ import {
   nativeNodeFieldInfo,
   nativeNodeWidget,
   nativeNodeWidgetSemantics,
+  normalizeContractFieldSemantics,
   normalizeNativeLayoutColumns,
+  normalizeSemanticFieldGroups,
   resolveNativeButtonLabel as resolveNativeButtonLabelFromNode,
+  resolveFieldSemanticMeta,
+  semanticFieldNamesBySurfaceRole,
+  type FieldSemanticMeta,
   type NativeLayoutLikeNode,
+  type SemanticFieldGroup,
 } from './contractForm/nativeLayoutUtils';
 import {
   formRuntimeCommandHintLabel,
@@ -4002,95 +4008,28 @@ async function runNativeLayoutAction(row: Record<string, unknown>) {
   await runAction(action);
 }
 
-type SemanticFieldGroup = {
-  name: string;
-  label: string;
-  collapsible: boolean;
-  fields: string[];
-};
-
 const semanticFieldGroups = computed<Record<string, SemanticFieldGroup>>(() => {
   const snapshot = dictOrEmpty(v2ContractStore.value?.snapshot);
   const source = Object.keys(snapshot).length ? snapshot : contract.value;
   const raw = resolveUnifiedPageContractV2FieldGroups(source);
-  const out: Record<string, SemanticFieldGroup> = {};
-  for (const item of raw || []) {
-    if (!item || typeof item !== 'object') continue;
-    const row = item as Record<string, unknown>;
-    const key = String(row.name || '').trim().toLowerCase();
-    if (!key) continue;
-    const fields = Array.isArray(row.fields) ? row.fields.map((f) => String(f || '').trim()).filter(Boolean) : [];
-    out[key] = {
-      name: key,
-      label: String(row.label || (key === 'core' ? '核心信息' : '高级信息')).trim(),
-      collapsible: Boolean(row.collapsible),
-      fields,
-    };
-  }
-  if (!Object.keys(out).length) {
-    const profile = ((contract.value?.views?.form as Record<string, unknown> | undefined)?.form_profile
-      || (contract.value as Record<string, unknown> | undefined)?.form_profile) as Record<string, unknown> | undefined;
-    const core = Array.isArray(profile?.core_fields)
-      ? profile?.core_fields.map((f) => String(f || '').trim()).filter(Boolean)
-      : [];
-    const advanced = Array.isArray(profile?.advanced_fields)
-      ? profile?.advanced_fields.map((f) => String(f || '').trim()).filter(Boolean)
-      : [];
-    if (core.length || advanced.length) {
-      out.core = {
-        name: 'core',
-        label: '核心信息',
-        collapsible: false,
-        fields: core,
-      };
-      out.advanced = {
-        name: 'advanced',
-        label: '高级信息',
-        collapsible: true,
-        fields: advanced,
-      };
-    }
-  }
-  return out;
+  const profile = ((contract.value?.views?.form as Record<string, unknown> | undefined)?.form_profile
+    || (contract.value as Record<string, unknown> | undefined)?.form_profile) as Record<string, unknown> | undefined;
+  return normalizeSemanticFieldGroups(raw, profile);
 });
 
-const contractFieldSemantics = computed<Record<string, { semantic_type?: string; surface_role?: string; technical?: boolean }>>(() => {
-  const out: Record<string, { semantic_type?: string; surface_role?: string; technical?: boolean }> = {};
-  const raw = (contract.value as Record<string, unknown> | null)?.field_semantics;
-  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
-    Object.entries(raw as Record<string, unknown>).forEach(([name, value]) => {
-      if (!value || typeof value !== 'object' || Array.isArray(value)) return;
-      const row = value as Record<string, unknown>;
-      out[name] = {
-        semantic_type: String(row.semantic_type || '').trim().toLowerCase(),
-        surface_role: String(row.surface_role || '').trim().toLowerCase(),
-        technical: Boolean(row.technical),
-      };
-    });
-  }
-  return out;
+const contractFieldSemantics = computed<Record<string, FieldSemanticMeta>>(() => {
+  return normalizeContractFieldSemantics((contract.value as Record<string, unknown> | null)?.field_semantics);
 });
 
 function fieldSemanticMeta(name: string) {
-  const fromMap = contractFieldSemantics.value[name];
-  if (fromMap) return fromMap;
-  const descriptor = contract.value?.fields?.[name] as Record<string, unknown> | undefined;
-  return {
-    semantic_type: String(descriptor?.semantic_type || '').trim().toLowerCase(),
-    surface_role: String(descriptor?.surface_role || '').trim().toLowerCase(),
-    technical: Boolean(descriptor?.technical),
-  };
+  return resolveFieldSemanticMeta(name, contractFieldSemantics.value, contract.value?.fields?.[name]);
 }
 
 const coreFieldNames = computed<string[]>(() => {
-  const fromSemantic = Object.keys(contract.value?.fields || {}).filter((name) => fieldSemanticMeta(name).surface_role === 'core');
-  if (fromSemantic.length) return fromSemantic;
-  return semanticFieldGroups.value.core?.fields || [];
+  return semanticFieldNamesBySurfaceRole(contract.value?.fields, contractFieldSemantics.value, semanticFieldGroups.value, 'core');
 });
 const advancedFieldNames = computed<string[]>(() => {
-  const fromSemantic = Object.keys(contract.value?.fields || {}).filter((name) => fieldSemanticMeta(name).surface_role === 'advanced');
-  if (fromSemantic.length) return fromSemantic;
-  return semanticFieldGroups.value.advanced?.fields || [];
+  return semanticFieldNamesBySurfaceRole(contract.value?.fields, contractFieldSemantics.value, semanticFieldGroups.value, 'advanced');
 });
 const hasAdvancedFields = computed(() => advancedFieldNames.value.length > 0);
 const policyRequiredFields = computed(() => {
