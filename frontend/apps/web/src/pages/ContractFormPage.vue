@@ -1364,6 +1364,7 @@ import {
   one2manyDraftSummary,
   one2manyPrimaryColumnFromColumns,
   one2manyRowLabelFromPrimary,
+  one2manyRowHintsFromPatches,
   one2manyRowStateLabel,
   selectOne2manySubview,
   one2manySubviewPolicies,
@@ -3686,29 +3687,11 @@ function one2manyRowErrors(fieldName: string, rowKey: string) {
 }
 
 function one2manyRowHints(fieldName: string, row: One2ManyInlineRow) {
-  const messages: string[] = [];
-  onchangeLinePatches.value.forEach((patch) => {
-    if (String(patch.field || '') !== fieldName) return;
-    const rowKey = String(patch.row_key || '').trim();
-    const rowId = Number(patch.row_id || 0);
-    const matched = (rowKey && rowKey === row.key) || (rowId > 0 && Number(row.id || 0) === rowId);
-    if (!matched) return;
-    const warns = Array.isArray(patch.warnings) ? patch.warnings : [];
-    warns.forEach((warn) => {
-      const message = String(warn?.message || warn?.title || '').trim();
-      if (message) messages.push(message);
-      const reasonCode = String(warn?.reason_code || '').trim();
-      if (reasonCode) messages.push(`处理原因：${formRuntimeReasonLabel(reasonCode)}`);
-    });
-    const rowState = String(patch.row_state || '').trim().toLowerCase();
-    if (rowState) {
-      messages.push(`处理结果：${formRuntimeRowStateLabel(rowState)}`);
-    }
-    if (Array.isArray(patch.command_hint) && patch.command_hint.length) {
-      messages.push(`处理建议：${formRuntimeCommandHintLabel(patch.command_hint)}`);
-    }
+  return one2manyRowHintsFromPatches({
+    patches: onchangeLinePatches.value as Array<Record<string, unknown>>,
+    fieldName,
+    row,
   });
-  return Array.from(new Set(messages));
 }
 
 function applyOnchangeLinePatches(linePatches: OnchangeLinePatch[]) {

@@ -255,3 +255,34 @@ export function formRuntimeCommandHintLabel(commands: unknown[]): string {
   });
   return Array.from(new Set(labels)).join('、');
 }
+
+export function one2manyRowHintsFromPatches(params: {
+  patches: Array<Record<string, unknown>>;
+  fieldName: string;
+  row: One2ManyInlineRow;
+}) {
+  const messages: string[] = [];
+  params.patches.forEach((patch) => {
+    if (String(patch.field || '') !== params.fieldName) return;
+    const rowKey = String(patch.row_key || '').trim();
+    const rowId = Number(patch.row_id || 0);
+    const matched = (rowKey && rowKey === params.row.key) || (rowId > 0 && Number(params.row.id || 0) === rowId);
+    if (!matched) return;
+    const warns = Array.isArray(patch.warnings) ? patch.warnings : [];
+    warns.forEach((warn) => {
+      const item = warn && typeof warn === 'object' && !Array.isArray(warn)
+        ? warn as Record<string, unknown>
+        : {};
+      const message = String(item.message || item.title || '').trim();
+      if (message) messages.push(message);
+      const reasonCode = String(item.reason_code || '').trim();
+      if (reasonCode) messages.push(`处理原因：${formRuntimeReasonLabel(reasonCode)}`);
+    });
+    const rowState = String(patch.row_state || '').trim().toLowerCase();
+    if (rowState) messages.push(`处理结果：${formRuntimeRowStateLabel(rowState)}`);
+    if (Array.isArray(patch.command_hint) && patch.command_hint.length) {
+      messages.push(`处理建议：${formRuntimeCommandHintLabel(patch.command_hint)}`);
+    }
+  });
+  return Array.from(new Set(messages));
+}
