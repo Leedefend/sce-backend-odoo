@@ -5,7 +5,7 @@ import {
   normalizeLowCodeColumnsOrNull,
   normalizeLowCodeFieldSize,
 } from './fieldUtils';
-import { nativeLayoutNodeType, type NativeLayoutLikeNode } from './nativeLayoutUtils';
+import { nativeLayoutNodeType, nativeNodeFieldInfo, type NativeLayoutLikeNode } from './nativeLayoutUtils';
 
 export function normalizeFormConfigOperationLogEntries(raw: unknown, operator = '当前用户') {
   if (!Array.isArray(raw)) return [];
@@ -684,6 +684,41 @@ export function buildLowCodeViewOrchestration(params: {
     };
   }
   return Object.keys(views).length ? { views } : undefined;
+}
+
+export function lowCodeLayoutFieldLabelFromNodes(name: string, ...nodeGroups: NativeLayoutLikeNode[][]) {
+  const targetName = String(name || '').trim();
+  if (!targetName) return '';
+  const walk = (nodes: NativeLayoutLikeNode[]): string => {
+    for (const node of nodes) {
+      if (!node || typeof node !== 'object') continue;
+      const nodeType = String(node.type || (node as { containerType?: string }).containerType || '').trim().toLowerCase();
+      const nodeName = String(node.name || '').trim();
+      if (nodeType === 'field' && nodeName === targetName) {
+        const fieldInfo = nativeNodeFieldInfo(node);
+        const label = String(
+          node.string
+          || node.label
+          || fieldInfo.string
+          || fieldInfo.label
+          || '',
+        ).trim();
+        if (label) return label;
+      }
+      for (const key of ['children', 'pages', 'tabs', 'nodes', 'items'] as const) {
+        const children = node[key];
+        if (!Array.isArray(children)) continue;
+        const found = walk(children as NativeLayoutLikeNode[]);
+        if (found) return found;
+      }
+    }
+    return '';
+  };
+  for (const nodes of nodeGroups) {
+    const label = walk(nodes);
+    if (label) return label;
+  }
+  return '';
 }
 
 export function mergeLowCodeLayoutWithRuntimeGroupShells<T extends NativeLayoutLikeNode>(base: T[], runtime: NativeLayoutLikeNode[]): T[] {

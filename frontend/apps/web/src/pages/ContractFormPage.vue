@@ -1306,6 +1306,7 @@ import {
   isReadableFieldGroupTitle,
   isSuggestedInternalFormField,
   layoutHasReadableFieldGroups,
+  lowCodeLayoutFieldLabelFromNodes,
   lowCodeFieldSizeLabel,
   mergeLowCodeLayoutWithRuntimeGroupShells,
   normalizeConfigPageLabel,
@@ -3138,35 +3139,7 @@ function buildLowCodeViewOrchestration() {
 }
 
 function lowCodeLayoutFieldLabel(name: string) {
-  const targetName = String(name || '').trim();
-  if (!targetName) return '';
-  const walk = (nodes: NativeFormLayoutNode[]): string => {
-    for (const node of nodes) {
-      if (!node || typeof node !== 'object') continue;
-      const nodeType = String(node.type || (node as { containerType?: string }).containerType || '').trim().toLowerCase();
-      const nodeName = String(node.name || '').trim();
-      if (nodeType === 'field' && nodeName === targetName) {
-        const nodeRecord = node as Record<string, unknown>;
-        const fieldInfo = nativeNodeFieldInfo(nodeRecord);
-        const label = String(
-          nodeRecord.string
-          || nodeRecord.label
-          || fieldInfo.string
-          || fieldInfo.label
-          || '',
-        ).trim();
-        if (label) return label;
-      }
-      for (const key of ['children', 'pages', 'tabs', 'nodes', 'items'] as const) {
-        const children = node[key];
-        if (!Array.isArray(children)) continue;
-        const found = walk(children as NativeFormLayoutNode[]);
-        if (found) return found;
-      }
-    }
-    return '';
-  };
-  return walk(rawNativeFormLayoutNodes.value) || walk(lowCodeFormLayoutBase.value);
+  return lowCodeLayoutFieldLabelFromNodes(name, rawNativeFormLayoutNodes.value, lowCodeFormLayoutBase.value);
 }
 
 function effectiveLowCodeFieldLabel(name: string, descriptor?: FieldDescriptor) {
