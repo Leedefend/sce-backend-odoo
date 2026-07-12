@@ -33,12 +33,13 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 | --- | --- |
 | `git diff --check` | Passed |
 | `make ci` | Passed |
-| `python3 scripts/ci/generate_test_inventory.py` | Passed, 1116 inventory entries |
-| `python3 scripts/ci/summarize_test_inventory.py` | Passed, 1116 inventory entries |
-| `python3 scripts/ci/generate_e2e_journey_matrix.py` | Passed, 34 E2E assets mapped to 12 journeys |
+| `python3 scripts/ci/generate_test_inventory.py` | Passed, 1119 inventory entries |
+| `python3 scripts/ci/summarize_test_inventory.py` | Passed, 1119 inventory entries |
+| `python3 scripts/ci/generate_e2e_journey_matrix.py` | Passed, 37 E2E assets mapped to 12 journeys with 0 empty gaps |
 | `python3 scripts/ci/generate_module_dependency_map.py` | Passed, 14 modules and 0 circular dependencies |
 | `python3 scripts/ci/generate_complexity_budget_report.py` | Passed, 3785 files scanned |
 | `python3 scripts/ci/generate_split_plan_queue.py` | Passed, 45 split-plan files classified |
+| `make test.e2e.preflight` | Passed, BOQ import, BOQ-to-WBS/task generation, and settlement approval preflight |
 | `git push -u origin topic/v1.1-engineering-convergence` | Passed |
 
 ## Requires GitHub Admin or Authenticated Remote Execution
@@ -57,5 +58,5 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 3. Create seed issues from `github_issue_seed_v1.1.md`.
 4. Enable branch protection after the workflow is visible.
 5. Start Phase 2 cleanup: classify duplicated/stale validation assets and define mandatory versus release-only gates.
-6. Add E2E coverage for E2E-02 BOQ import, E2E-03 BOQ-to-WBS/task generation, and E2E-08 settlement approval.
+6. Upgrade E2E-02 BOQ import, E2E-03 BOQ-to-WBS/task generation, and E2E-08 settlement approval from preflight coverage to fixed-data browser/API journeys.
 7. Assign concrete owner names and PR sequence for the P0 split-plan files in `split_plan_queue.md`.

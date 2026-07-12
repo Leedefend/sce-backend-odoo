@@ -15,7 +15,7 @@ Owner: release owner
 | R-008 | Secrets or real credentials are committed to repository or image layers. | High | DevOps owner | Week 1 | Run secret scan in CI and rotate any discovered credential. | SEC-06 report. |
 | R-009 | Large BOQ/import/data-scale paths are not performance-baselined before pilot. | Medium | Performance owner | Week 5 | Build S/M/L/XL performance datasets and measure P95. | Performance baseline report. |
 | R-010 | Pilot enters real usage without daily issue/evidence loop. | Medium | Project manager | Week 6 | Define pilot issue labels, daily metrics, exit criteria, and sign-off template. | Pilot runbook and daily report template. |
-| R-011 | Core E2E journey coverage has gaps for BOQ import, BOQ-to-WBS/task generation, and settlement approval. | High | QA owner | Week 3 | Add fixed-data E2E scenarios for E2E-02, E2E-03, and E2E-08. | `e2e_journey_matrix.md` and E2E run artifacts. |
+| R-011 | Core E2E journey coverage has only preflight coverage for BOQ import, BOQ-to-WBS/task generation, and settlement approval. | High | QA owner | Week 3 | Upgrade E2E-02, E2E-03, and E2E-08 from preflight to fixed-data browser/API journeys with artifacts. | `e2e_journey_matrix.md`, `make test.e2e.preflight`, and future E2E run artifacts. |
 | R-012 | Three P0 split-plan files continue to absorb unrelated behavior: `ContractFormPage.vue`, `Makefile`, `BusinessConfigSurfaceView.vue`. | High | Architecture owner | Week 4 | Assign owners and split plans before accepting non-defect additions. | `split_plan_queue.md` and follow-up PRs. |
 
 ## Review Cadence

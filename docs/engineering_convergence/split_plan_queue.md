@@ -14,7 +14,7 @@ Generated from `complexity_budget_report.md` split-plan-required files.
 | Priority | Lines | Owner | File | Decomposition Direction |
 | --- | ---: | --- | --- | --- |
 | P0 | 13762 | Frontend owner | `frontend/apps/web/src/pages/ContractFormPage.vue` | Extract composables, child panels, data adapters, and action handlers; keep the route component as orchestration shell. |
-| P0 | 6036 | DevOps owner | `Makefile` | Move implementation bodies into `scripts/ci`, `scripts/verify`, or included `make/*.mk` fragments while keeping stable public targets. |
+| P0 | 6042 | DevOps owner | `Makefile` | Move implementation bodies into `scripts/ci`, `scripts/verify`, or included `make/*.mk` fragments while keeping stable public targets. |
 | P0 | 5447 | Frontend owner | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` | Extract composables, child panels, data adapters, and action handlers; keep the route component as orchestration shell. |
 | P1 | 4820 | Platform owner | `addons/smart_core/utils/contract_governance.py` | Define owner-specific decomposition plan before adding unrelated behavior. |
 | P1 | 4491 | Platform owner | `addons/smart_core/handlers/ui_contract_v2.py` | Extract parsing, validation, assembly, and response mapping into owned services. |

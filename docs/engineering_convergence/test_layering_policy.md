@@ -18,6 +18,7 @@ This policy defines which validation assets run at each decision point during v1
 - Production mutation guard.
 - High-confidence secret scan.
 - Test inventory freshness check.
+- E2E fixed-scenario preflight checks for BOQ import, BOQ-to-WBS/task generation, and settlement approval.
 - Python syntax check for core addons and scripts.
 - Frontend lint, strict typecheck, and build.
 - Contract/static frontend script checks.

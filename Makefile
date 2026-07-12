@@ -5984,9 +5984,9 @@ verify.unified_page_contract.lite: guard.prod.forbid
 # ----------------------------------------------------------------------
 # v1.1 Engineering Convergence quality entries
 # ----------------------------------------------------------------------
-.PHONY: ci test.frontend test.unit test.odoo.integration test.contract test.e2e test.all test.inventory test.inventory.summary test.e2e.matrix architecture.module_dependency_map architecture.complexity_report architecture.split_plan_queue security.secrets.scan
+.PHONY: ci test.frontend test.unit test.odoo.integration test.contract test.e2e.preflight test.e2e test.all test.inventory test.inventory.summary test.e2e.matrix architecture.module_dependency_map architecture.complexity_report architecture.split_plan_queue security.secrets.scan
 
-ci: guard.prod.forbid security.secrets.scan test.inventory test.inventory.summary test.e2e.matrix architecture.module_dependency_map architecture.complexity_report architecture.split_plan_queue test.unit test.frontend test.contract
+ci: guard.prod.forbid security.secrets.scan test.inventory test.inventory.summary test.e2e.matrix architecture.module_dependency_map architecture.complexity_report architecture.split_plan_queue test.unit test.frontend test.contract test.e2e.preflight
 	@git diff --check
 	@echo "[OK] v1.1 PR quality gate passed"
 
@@ -5996,7 +5996,7 @@ test.frontend: guard.prod.forbid
 	@scripts/dev/pnpm_exec.sh -C frontend/apps/web build
 
 test.unit: guard.prod.forbid
-	@python3 scripts/ci/python_syntax_check.py addons/smart_core addons/smart_construction_core scripts/ci scripts/audit scripts/common scripts/e2e/e2e_contract_smoke.py scripts/e2e/e2e_scene_smoke.py
+	@python3 scripts/ci/python_syntax_check.py addons/smart_core addons/smart_construction_core scripts/ci scripts/audit scripts/common scripts/e2e
 
 test.odoo.integration: guard.prod.forbid
 	@$(MAKE) --no-print-directory ci.smoke
@@ -6007,6 +6007,12 @@ test.contract: guard.prod.forbid
 	@node --check frontend/apps/web/scripts/system_user_experience_shell_acceptance.mjs
 	@node --check frontend/apps/web/scripts/user_page_visual_coverage.cjs
 	@node --check frontend/apps/web/scripts/system_user_experience_full_browser_summary_guard.mjs
+
+test.e2e.preflight: guard.prod.forbid
+	@python3 scripts/e2e/e2e_boq_import_fixed_data_preflight.py >/dev/null
+	@python3 scripts/e2e/e2e_boq_to_wbs_task_preflight.py >/dev/null
+	@python3 scripts/e2e/e2e_settlement_approval_preflight.py >/dev/null
+	@echo "[OK] v1.1 E2E preflight passed"
 
 test.e2e: guard.prod.forbid
 	@$(MAKE) --no-print-directory verify.system_user_experience.full_browser
