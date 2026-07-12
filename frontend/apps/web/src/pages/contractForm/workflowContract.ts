@@ -1,4 +1,6 @@
 import { parseMaybeJsonRecord } from '../../app/contractRuntime';
+import { dictOrEmpty } from './recordUtils';
+import type { NativeStatusbarVm } from './types';
 
 export function workflowActionMethodAliases(key: string): string[] {
   const normalized = String(key || '').trim();
@@ -108,4 +110,27 @@ export function normalizeWorkflowEvidenceGateRows(workflow: Record<string, unkno
       seen.add(row.reasonCode);
       return true;
     });
+}
+
+export function normalizeWorkflowPhaseStatusbar(workflow: Record<string, unknown>): NativeStatusbarVm {
+  const statusbar = dictOrEmpty(workflow.statusbar);
+  const current = String(statusbar.current || '').trim();
+  const states = Array.isArray(statusbar.states)
+    ? statusbar.states
+      .map((item) => dictOrEmpty(item))
+      .map((item) => ({ value: String(item.value || '').trim(), label: String(item.label || item.value || '').trim() }))
+      .filter((item) => item.value && item.label)
+    : [];
+  if (!current || !states.length) {
+    return { visible: false, field: '', current: '', states: [], reachedValues: [], readonly: true };
+  }
+  const currentIndex = states.findIndex((item) => String(item.value) === current);
+  return {
+    visible: true,
+    field: String(statusbar.field || '__workflow_phase').trim() || '__workflow_phase',
+    current,
+    states,
+    reachedValues: currentIndex >= 0 ? states.slice(0, currentIndex).map((item) => String(item.value)) : [],
+    readonly: true,
+  };
 }

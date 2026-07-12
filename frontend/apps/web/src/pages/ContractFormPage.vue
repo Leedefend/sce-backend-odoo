@@ -1329,6 +1329,7 @@ import {
   isWorkflowTransitionMethod,
   normalizeWorkflowActionRows,
   normalizeWorkflowEvidenceGateRows,
+  normalizeWorkflowPhaseStatusbar,
   workflowActionMethodAliases,
   workflowActionRowForMethod,
 } from './contractForm/workflowContract';
@@ -6882,27 +6883,7 @@ const nativeFavoriteFieldNames = computed(() => {
 });
 
 function workflowPhaseStatusbar(): NativeStatusbarVm {
-  const workflow = currentWorkflowContract();
-  const statusbar = dictOrEmpty(workflow.statusbar);
-  const current = String(statusbar.current || '').trim();
-  const states = Array.isArray(statusbar.states)
-    ? statusbar.states
-      .map((item) => dictOrEmpty(item))
-      .map((item) => ({ value: String(item.value || '').trim(), label: String(item.label || item.value || '').trim() }))
-      .filter((item) => item.value && item.label)
-    : [];
-  if (!current || !states.length) {
-    return { visible: false, field: '', current: '', states: [], reachedValues: [], readonly: true };
-  }
-  const currentIndex = states.findIndex((item) => String(item.value) === current);
-  return {
-    visible: true,
-    field: String(statusbar.field || '__workflow_phase').trim() || '__workflow_phase',
-    current,
-    states,
-    reachedValues: currentIndex >= 0 ? states.slice(0, currentIndex).map((item) => String(item.value)) : [],
-    readonly: true,
-  };
+  return normalizeWorkflowPhaseStatusbar(currentWorkflowContract());
 }
 
 const nativeStatusbar = computed<NativeStatusbarVm>(() => {

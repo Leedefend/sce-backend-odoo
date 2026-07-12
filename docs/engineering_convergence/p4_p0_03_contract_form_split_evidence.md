@@ -22,6 +22,7 @@ Extracted responsibilities:
 - Form-configuration operation-log formatting, internal-field detection, and field-group title normalization moved to `frontend/apps/web/src/pages/contractForm/formConfigHelpers.ts`.
 - Native-layout node type detection, column normalization, node counting, and badge-field collection moved to `frontend/apps/web/src/pages/contractForm/nativeLayoutUtils.ts`.
 - Required-value checks, comparable-value normalization, numeric parsing, route-default normalization, and navigation URL normalization moved to `frontend/apps/web/src/pages/contractForm/valueUtils.ts`.
+- Workflow phase statusbar normalization moved to `frontend/apps/web/src/pages/contractForm/workflowContract.ts`.
 
 The route component remains the orchestration shell and still owns runtime state, navigation, persistence, and user interaction flow.
 
@@ -29,7 +30,7 @@ The route component remains the orchestration shell and still owns runtime state
 
 | File | Before | After |
 | --- | ---: | ---: |
-| `frontend/apps/web/src/pages/ContractFormPage.vue` | 13762 | 12865 |
+| `frontend/apps/web/src/pages/ContractFormPage.vue` | 13762 | 12846 |
 
 ## Boundary Decision
 
