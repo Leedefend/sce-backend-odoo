@@ -737,6 +737,53 @@ export function lowCodeScopedContractName(modelName: string, params: Record<stri
   return `view_orchestration:${modelName}:form:action:${Number.isFinite(actionId) ? Math.trunc(actionId) : 0}:view:${Number.isFinite(viewId) ? Math.trunc(viewId) : 0}`;
 }
 
+export function normalizeLowCodeContractListRows(rows: unknown) {
+  return (Array.isArray(rows) ? rows : [])
+    .map((item) => {
+      const row = item && typeof item === 'object' && !Array.isArray(item)
+        ? item as Record<string, unknown>
+        : {};
+      return {
+        id: Number(row.id || 0),
+        name: String(row.name || '').trim(),
+        model: String(row.model || '').trim(),
+        status: String(row.status || 'draft').trim() || 'draft',
+        version_no: Number(row.version_no || 1),
+      };
+    })
+    .filter((row) => row.name);
+}
+
+export function lowCodeViewOrchestrationFromContractResponse(response: unknown): Record<string, unknown> {
+  const root = response && typeof response === 'object' && !Array.isArray(response)
+    ? response as Record<string, unknown>
+    : {};
+  const json = root.contract_json && typeof root.contract_json === 'object' && !Array.isArray(root.contract_json)
+    ? root.contract_json as Record<string, unknown>
+    : {};
+  const orchestration = json.view_orchestration && typeof json.view_orchestration === 'object' && !Array.isArray(json.view_orchestration)
+    ? json.view_orchestration as Record<string, unknown>
+    : {};
+  return orchestration;
+}
+
+export function lowCodeViewsFromContractResponse(response: unknown): Record<string, unknown> {
+  const orchestration = lowCodeViewOrchestrationFromContractResponse(response);
+  return orchestration.views && typeof orchestration.views === 'object' && !Array.isArray(orchestration.views)
+    ? orchestration.views as Record<string, unknown>
+    : {};
+}
+
+export function lowCodeFormSpecFromViews(views: Record<string, unknown>): Record<string, unknown> {
+  return views.form && typeof views.form === 'object' && !Array.isArray(views.form)
+    ? views.form as Record<string, unknown>
+    : {};
+}
+
+export function lowCodeLayoutFromFormSpec(formSpec: Record<string, unknown>) {
+  return Array.isArray(formSpec.layout) ? formSpec.layout as NativeLayoutLikeNode[] : [];
+}
+
 export function mergeLowCodeLayoutWithRuntimeGroupShells<T extends NativeLayoutLikeNode>(base: T[], runtime: NativeLayoutLikeNode[]): T[] {
   if (!Array.isArray(base) || !base.length) return base;
   const existing = new Set(

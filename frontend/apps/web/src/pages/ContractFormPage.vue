@@ -501,14 +501,18 @@ import {
   isReadableFieldGroupTitle,
   isSuggestedInternalFormField,
   layoutHasReadableFieldGroups,
+  lowCodeFormSpecFromViews,
   lowCodeLayoutFieldLabelFromNodes,
+  lowCodeLayoutFromFormSpec,
   lowCodeScopedContractName,
   lowCodeFieldSizeLabel,
+  lowCodeViewsFromContractResponse,
   mergeLowCodeLayoutWithRuntimeGroupShells,
   normalizeConfigPageLabel,
   normalizeFieldGroupTitle,
   normalizeFormConfigOperationLogEntries,
   normalizeLowCodeApplyParams,
+  normalizeLowCodeContractListRows,
   readableFallbackFieldLabel,
   resolveSelectedFormSettingsFieldGroupTitle,
   type LowCodeLayoutDraftRow,
@@ -2163,18 +2167,9 @@ async function hydrateLowCodeDraftFromContract() {
       params: { ...base, model: modelName, name: contractName, view_type: 'form' },
     }).catch(() => null);
     if (!res) return;
-    const viewOrchestration = res?.contract_json && typeof res.contract_json === 'object' && !Array.isArray(res.contract_json)
-      ? (res.contract_json as { view_orchestration?: Record<string, unknown> }).view_orchestration || {}
-      : {};
-    const orchestrationViews = viewOrchestration && typeof viewOrchestration === 'object' && !Array.isArray(viewOrchestration)
-      ? ((viewOrchestration as Record<string, unknown>).views || {}) as Record<string, unknown>
-      : {};
-    const formSpec = orchestrationViews.form && typeof orchestrationViews.form === 'object' && !Array.isArray(orchestrationViews.form)
-      ? orchestrationViews.form as Record<string, unknown>
-      : {};
-    lowCodeFormLayoutBase.value = Array.isArray(formSpec.layout)
-      ? formSpec.layout as unknown as NativeFormLayoutNode[]
-      : [];
+    const orchestrationViews = lowCodeViewsFromContractResponse(res);
+    const formSpec = lowCodeFormSpecFromViews(orchestrationViews);
+    lowCodeFormLayoutBase.value = lowCodeLayoutFromFormSpec(formSpec) as NativeFormLayoutNode[];
     syncLayoutDraftFromFormSpec(formSpec);
     syncFieldDraftFromFormSpec(formSpec, { overwriteDraftGroups: true });
     lowCodeLayoutDraft.value = collectLowCodeLayoutFromViewOrchestration(orchestrationViews, modelName);
@@ -2200,18 +2195,9 @@ async function refreshLowCodeFormLayoutBase() {
       intent: BUSINESS_CONFIG_INTENTS.contractGet,
       params: { ...base, model: modelName, name: scopedName, view_type: 'form' },
     }).catch(() => null);
-    const viewOrchestration = res?.contract_json && typeof res.contract_json === 'object' && !Array.isArray(res.contract_json)
-      ? (res.contract_json as { view_orchestration?: Record<string, unknown> }).view_orchestration || {}
-      : {};
-    const orchestrationViews = viewOrchestration && typeof viewOrchestration === 'object' && !Array.isArray(viewOrchestration)
-      ? ((viewOrchestration as Record<string, unknown>).views || {}) as Record<string, unknown>
-      : {};
-    const formSpec = orchestrationViews.form && typeof orchestrationViews.form === 'object' && !Array.isArray(orchestrationViews.form)
-      ? orchestrationViews.form as Record<string, unknown>
-      : {};
-    lowCodeFormLayoutBase.value = Array.isArray(formSpec.layout)
-      ? formSpec.layout as unknown as NativeFormLayoutNode[]
-      : [];
+    const orchestrationViews = lowCodeViewsFromContractResponse(res);
+    const formSpec = lowCodeFormSpecFromViews(orchestrationViews);
+    lowCodeFormLayoutBase.value = lowCodeLayoutFromFormSpec(formSpec) as NativeFormLayoutNode[];
     syncLayoutDraftFromFormSpec(formSpec);
     syncFieldDraftFromFormSpec(formSpec, { syncOrder: false, syncVisibility: false });
   } catch {
@@ -2231,14 +2217,7 @@ async function loadLowCodeContractList() {
       intent: BUSINESS_CONFIG_INTENTS.contractList,
       params: { ...base, model: modelName, view_type: 'form' },
     });
-    const items = Array.isArray(result?.items) ? result.items || [] : [];
-    lowCodeContractList.value = items.map((row) => ({
-      id: Number(row?.id || 0),
-      name: String(row?.name || '').trim(),
-      model: String(row?.model || '').trim(),
-      status: String(row?.status || 'draft').trim() || 'draft',
-      version_no: Number(row?.version_no || 1),
-    })).filter((row) => row.name);
+    lowCodeContractList.value = normalizeLowCodeContractListRows(result?.items);
     if (lowCodeSelectedContractName.value && !lowCodeContractList.value.some((row) => row.name === lowCodeSelectedContractName.value)) {
       lowCodeSelectedContractName.value = '';
     }
@@ -2265,18 +2244,9 @@ async function switchLowCodeContractByName() {
       params: { ...base, model: modelName, name, view_type: 'form' },
     });
     lowCodeContractLoaded.value = false;
-    const json = res?.contract_json;
-    if (!json || typeof json !== 'object' || Array.isArray(json)) return;
-    const viewOrchestration = (json as { view_orchestration?: Record<string, unknown> }).view_orchestration || {};
-    const orchestrationViews = viewOrchestration && typeof viewOrchestration === 'object' && !Array.isArray(viewOrchestration)
-      ? ((viewOrchestration as Record<string, unknown>).views || {}) as Record<string, unknown>
-      : {};
-    const formSpec = orchestrationViews.form && typeof orchestrationViews.form === 'object' && !Array.isArray(orchestrationViews.form)
-      ? orchestrationViews.form as Record<string, unknown>
-      : {};
-    lowCodeFormLayoutBase.value = Array.isArray(formSpec.layout)
-      ? formSpec.layout as unknown as NativeFormLayoutNode[]
-      : [];
+    const orchestrationViews = lowCodeViewsFromContractResponse(res);
+    const formSpec = lowCodeFormSpecFromViews(orchestrationViews);
+    lowCodeFormLayoutBase.value = lowCodeLayoutFromFormSpec(formSpec) as NativeFormLayoutNode[];
     syncLayoutDraftFromFormSpec(formSpec);
     syncFieldDraftFromFormSpec(formSpec, { overwriteDraftGroups: true });
     lowCodeLayoutDraft.value = collectLowCodeLayoutFromViewOrchestration(orchestrationViews, modelName);

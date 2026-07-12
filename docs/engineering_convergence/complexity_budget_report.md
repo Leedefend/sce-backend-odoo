@@ -6,13 +6,13 @@ Generated from repository source files. This report is informational during the 
 
 - Scanned files: `3832`
 - Files requiring split plan: `43`
-- Files above warning threshold: `61`
+- Files above warning threshold: `62`
 
 ## Split Plan Required
 
 | Lines | Category | File |
 | ---: | --- | --- |
-| 8796 | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
+| 8766 | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
 | 4820 | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 4491 | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 4400 | Python source | `addons/smart_construction_core/core_extension.py` |
@@ -113,6 +113,7 @@ Generated from repository source files. This report is informational during the 
 | 827 | Python source | `addons/smart_construction_core/models/support/partner_legacy.py` |
 | 813 | Vue source | `frontend/apps/web/src/components/page/PageRenderer.vue` |
 | 807 | Python source | `addons/smart_core/app_config_engine/services/dispatchers/nav_dispatcher.py` |
+| 807 | TypeScript source | `frontend/apps/web/src/pages/contractForm/formConfigHelpers.ts` |
 | 804 | Python source | `addons/smart_core/tests/test_delivery_menu_entry_target.py` |
 | 801 | Python source | `addons/smart_construction_core/models/core/financing_loan.py` |
 | 480 | Shell script | `scripts/migration/history_continuity_oneclick.sh` |
@@ -126,7 +127,7 @@ Generated from repository source files. This report is informational during the 
 
 | Lines | Status | Category | File |
 | ---: | --- | --- | --- |
-| 8796 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
+| 8766 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
 | 4820 | split_plan_required | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 4491 | split_plan_required | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 4400 | split_plan_required | Python source | `addons/smart_construction_core/core_extension.py` |
