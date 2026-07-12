@@ -69,6 +69,7 @@ Revert this PR if the governance baseline must be removed. No production data or
 - `docs/engineering_convergence/module_dependency_map.md`
 - `docs/engineering_convergence/complexity_budget_report.md`
 - `docs/engineering_convergence/split_plan_queue.md`
+- `docs/engineering_convergence/backlog_scope_decision_v1.1.md`
 - `docs/engineering_convergence/github_governance_runbook.md`
 - GitHub milestone `v1.1 Engineering Convergence`
 - GitHub issues `#1008`-`#1023`
@@ -79,7 +80,7 @@ Revert this PR if the governance baseline must be removed. No production data or
 ## Residual Items
 
 - Seven residual 2-asset dedupe hotspot families remain intentionally unmarked as aggregate-covered; their dispositions are documented in `test_inventory_summary.md`.
-- Historical BOQ/model backlog `#2`, `#4`-`#9`, and `#64`-`#76` is labeled and intentionally left outside the v1.1 milestone until product scope is decided.
+- Historical BOQ/model backlog `#2`, `#4`-`#9`, and `#64`-`#76` is labeled and explicitly deferred from v1.1 by `backlog_scope_decision_v1.1.md`.
 - Release-scale E2E role/browser evidence, E2E-06/E2E-10 fixed-data gates, security audit, performance baseline, and disaster recovery rehearsal remain future phase work.
 
 ## Checklist

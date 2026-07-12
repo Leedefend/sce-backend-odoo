@@ -81,6 +81,18 @@ Every PR must link one or more issues and include:
 - Rollback notes.
 - Screenshots or traces when user-visible behavior changes.
 
+## Review Identity Rule
+
+`Leedefend` is the repository CODEOWNER for this convergence baseline. A CODEOWNER
+approval only counts when the approving account is not the pull-request author.
+
+For protected `main` changes:
+
+- The PR author and required CODEOWNER reviewer must be different GitHub accounts.
+- Commit author metadata does not change the PR author and does not satisfy review separation.
+- Automation or collaborators may prepare and open PRs, but `Leedefend` remains the required owner reviewer unless CODEOWNERS is intentionally changed in a separate governance PR.
+- If a PR was opened by `Leedefend`, it can still run CI and collect evidence, but it cannot satisfy the required `Leedefend` approval by self-review. Reopen or recreate it from a non-owner author account when strict branch protection is being exercised.
+
 ## Phase 0 Exit Checklist
 
 - `release_scope_v1.1.md` approved.

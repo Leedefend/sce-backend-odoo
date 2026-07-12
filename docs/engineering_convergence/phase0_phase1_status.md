@@ -48,6 +48,7 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 | P0-03 Issue cleanup pass | Done | Audited 38 open issues; closed test artifacts `#55` and `#62`; labeled historical backlog `#2`, `#4`-`#9`, and `#64`-`#76`; all remaining open issues now have labels |
 | Seed issue closeout | Done | Closed completed seed issues `#1009`-`#1023`; kept EPIC `#1008` open for the remaining v1.1 convergence phases |
 | Follow-up issue queue | Done | Created next tracked issues `#1025`-`#1029` for backlog scope, residual hotspots, role/browser evidence, E2E-06/E2E-10 gates, and split-plan sequencing |
+| Historical backlog scope decision | Done | `backlog_scope_decision_v1.1.md` explicitly defers `#2`, `#4`-`#9`, and `#64`-`#76` from v1.1 convergence |
 | SEC-06 Secret scan gate | Done | `scripts/ci/secret_scan.py`, `make security.secrets.scan` |
 | P4-01 Module dependency map | Done | `module_dependency_map.md`, `scripts/ci/generate_module_dependency_map.py` |
 | P4-02 Domain boundary ADR | Done | `adr_0001_domain_boundaries.md` |
@@ -84,15 +85,14 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 | Item | Status | Next Action |
 | --- | --- | --- |
 | P0-02 Milestone creation | Done | Milestone `v1.1 Engineering Convergence` created through `gh api` |
-| P0-03 Existing issue cleanup | Done | Seed issues `#1008`-`#1023` created; test artifacts `#55` and `#62` closed; historical backlog labeled and left without milestone pending product scope decision |
+| P0-03 Existing issue cleanup | Done | Seed issues `#1008`-`#1023` created; test artifacts `#55` and `#62` closed; historical backlog labeled and explicitly deferred by `backlog_scope_decision_v1.1.md` |
 | P1-02 Branch protection | Done | `main` protection enabled through GitHub API |
 | Required CI check enforcement | Done | Required check is `v1.1 quality gate / quality_gate` on the dedicated self-hosted CI runner |
 | Draft PR creation | Done | Draft PR `#1024` created from `topic/v1.1-engineering-convergence` to `main` |
 
 ## Next Execution Focus
 
-1. `#1025`: Decide whether historical BOQ/model backlog `#2`, `#4`-`#9`, and `#64`-`#76` belongs in v1.1 or a later milestone.
-2. `#1026`: Keep the seven residual 2-asset hotspot families as explicit owner-review items unless a real aggregate gate is introduced.
-3. `#1027`: Add role/browser evidence for the fixed-data E2E-02, E2E-03, and E2E-08 journeys before release.
-4. `#1028`: Upgrade remaining partial journeys E2E-06 and E2E-10 to fixed-data executable gates.
-5. `#1029`: Assign concrete owner names and PR sequence for the P0 split-plan files in `split_plan_queue.md`.
+1. `#1026`: Keep the seven residual 2-asset hotspot families as explicit owner-review items unless a real aggregate gate is introduced.
+2. `#1027`: Add role/browser evidence for the fixed-data E2E-02, E2E-03, and E2E-08 journeys before release.
+3. `#1028`: Upgrade remaining partial journeys E2E-06 and E2E-10 to fixed-data executable gates.
+4. `#1029`: Assign concrete owner names and PR sequence for the P0 split-plan files in `split_plan_queue.md`.
