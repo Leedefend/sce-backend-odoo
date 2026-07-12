@@ -1330,8 +1330,12 @@ import {
 } from './contractForm/one2manyUtils';
 import {
   relationEntry,
+  fallbackRelationSearchColumns,
+  normalizeRelationSearchColumns,
   relationOptionFromRow,
   relationReadFields,
+  relationSearchColumnsFromContract,
+  relationSearchDialogContract,
   relationSearchReadFields,
   relationUiLabel,
   relationUiLabels,
@@ -4510,15 +4514,6 @@ function relationModel(name: string) {
   return String(descriptor?.relation || entry.model || '').trim();
 }
 
-function relationSearchDialogContract(name: string): Record<string, unknown> {
-  const descriptor = contract.value?.fields?.[name] as Record<string, unknown> | undefined;
-  const entry = descriptor?.relation_entry;
-  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return {};
-  const dialog = (entry as Record<string, unknown>).search_dialog;
-  if (!dialog || typeof dialog !== 'object' || Array.isArray(dialog)) return {};
-  return dialog as Record<string, unknown>;
-}
-
 function formUiLabels(): Record<string, string> {
   return formUiLabelsFromFormView(contract.value?.views?.form);
 }
@@ -4787,63 +4782,12 @@ async function fetchRelationOptions(name: string, keyword: string, limit = 80): 
     .filter((item): item is RelationOption => Boolean(item));
 }
 
-function fallbackRelationSearchColumns(name: string): RelationSearchColumn[] {
-  const descriptor = contract.value?.fields?.[name];
-  return [{
-    name: 'display_name',
-    label: String(descriptor?.string || '名称'),
-  }];
-}
-
-function relationSearchColumnsFromContract(fieldName: string): RelationSearchColumn[] {
-  const dialog = relationSearchDialogContract(fieldName);
-  const columns = Array.isArray(dialog.columns) ? dialog.columns : [];
-  const out: RelationSearchColumn[] = [];
-  for (const item of columns) {
-    const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
-    const name = String(row.name || row.field || '').trim();
-    if (!name || name === 'id') continue;
-    const label = String(row.label || row.string || name).trim() || name;
-    out.push({ name, label });
-    if (out.length >= 8) break;
-  }
-  return out;
-}
-
-function normalizeRelationSearchColumns(data: Record<string, unknown> | undefined, fieldName: string): RelationSearchColumn[] {
-  const fields = data?.fields && typeof data.fields === 'object'
-    ? data.fields as Record<string, FieldDescriptor>
-    : {};
-  const views = data?.views && typeof data.views === 'object'
-    ? data.views as Record<string, unknown>
-    : {};
-  const tree = views.tree && typeof views.tree === 'object'
-    ? views.tree as Record<string, unknown>
-    : {};
-  const rawColumns = Array.isArray(tree.columns_schema) && tree.columns_schema.length
-    ? tree.columns_schema
-    : Array.isArray(tree.columns)
-      ? tree.columns
-      : [];
-  const out: RelationSearchColumn[] = [];
-  for (const item of rawColumns) {
-    const row = item && typeof item === 'object' ? item as Record<string, unknown> : null;
-    const name = String(row?.name || item || '').trim();
-    if (!name || name === 'id') continue;
-    const field = fields[name];
-    const label = String(row?.label || row?.string || field?.string || name).trim();
-    out.push({ name, label });
-    if (out.length >= 6) break;
-  }
-  if (!out.length) return fallbackRelationSearchColumns(fieldName);
-  return out;
-}
-
 async function loadRelationSearchColumns(fieldName: string): Promise<RelationSearchColumn[]> {
-  const contractColumns = relationSearchColumnsFromContract(fieldName);
+  const descriptor = effectiveFieldDescriptor(fieldName);
+  const contractColumns = relationSearchColumnsFromContract(relationSearchDialogContract(descriptor));
   if (contractColumns.length) return contractColumns;
   const relation = relationModel(fieldName);
-  if (!relation) return fallbackRelationSearchColumns(fieldName);
+  if (!relation) return fallbackRelationSearchColumns(descriptor);
   try {
     const response = await loadModelContractRaw(relation, {
       viewType: 'tree',
@@ -4852,9 +4796,9 @@ async function loadRelationSearchColumns(fieldName: string): Promise<RelationSea
     const data = response?.data && typeof response.data === 'object'
       ? response.data as Record<string, unknown>
       : response as unknown as Record<string, unknown>;
-    return normalizeRelationSearchColumns(data, fieldName);
+    return normalizeRelationSearchColumns(data, descriptor);
   } catch {
-    return fallbackRelationSearchColumns(fieldName);
+    return fallbackRelationSearchColumns(descriptor);
   }
 }
 
@@ -4865,13 +4809,13 @@ async function fetchRelationSearchRows(name: string, keyword: string, limit = 12
   const entry = relationEntry(descriptor);
   if (entry && entry.canRead === false) return [];
   const domain = mergedRelationDomain(name, descriptor);
-  const dialog = relationSearchDialogContract(name);
-  const columns = relationSearchDialog.columns.length ? relationSearchDialog.columns : relationSearchColumnsFromContract(name);
+  const dialog = relationSearchDialogContract(descriptor);
+  const columns = relationSearchDialog.columns.length ? relationSearchDialog.columns : relationSearchColumnsFromContract(dialog);
   const limitValue = Number(dialog.limit || limit || 120);
   const order = String(dialog.order || 'id desc').trim() || 'id desc';
   const listed = await listContractFormRecords({
     model: relation,
-    fields: relationSearchReadFields(columns.length ? columns : fallbackRelationSearchColumns(name), dialog),
+    fields: relationSearchReadFields(columns.length ? columns : fallbackRelationSearchColumns(descriptor), dialog),
     limit: Number.isFinite(limitValue) && limitValue > 0 ? Math.min(Math.trunc(limitValue), 200) : 120,
     order,
     domain,
@@ -4919,9 +4863,10 @@ async function openRelationSearchDialog(fieldName: string, descriptor?: FieldDes
   relationSearchDialog.error = '';
   relationSearchDialog.options = [];
   relationSearchDialog.rows = [];
-  relationSearchDialog.columns = relationSearchColumnsFromContract(fieldName);
+  const resolvedDescriptor = effectiveFieldDescriptor(fieldName);
+  relationSearchDialog.columns = relationSearchColumnsFromContract(relationSearchDialogContract(resolvedDescriptor));
   relationSearchDialog.selectedId = null;
-  relationSearchDialog.createMode = relationCreateMode(fieldName, descriptor);
+  relationSearchDialog.createMode = relationCreateMode(fieldName, resolvedDescriptor);
   relationSearchDialog.columns = await loadRelationSearchColumns(fieldName);
   await runRelationSearch();
   await nextTick();

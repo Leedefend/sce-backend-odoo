@@ -135,6 +135,67 @@ export function relationUiLabel(descriptor: FieldDescriptor | undefined, key: st
   return relationUiLabels(descriptor)[key] || fallback || key;
 }
 
+export function relationSearchDialogContract(descriptor?: FieldDescriptor): Record<string, unknown> {
+  const entry = (descriptor as Record<string, unknown> | undefined)?.relation_entry;
+  if (!entry || typeof entry !== 'object' || Array.isArray(entry)) return {};
+  const dialog = (entry as Record<string, unknown>).search_dialog;
+  if (!dialog || typeof dialog !== 'object' || Array.isArray(dialog)) return {};
+  return dialog as Record<string, unknown>;
+}
+
+export function fallbackRelationSearchColumns(descriptor?: FieldDescriptor): RelationSearchColumn[] {
+  return [{
+    name: 'display_name',
+    label: String(descriptor?.string || '名称'),
+  }];
+}
+
+export function relationSearchColumnsFromContract(dialog: Record<string, unknown>): RelationSearchColumn[] {
+  const columns = Array.isArray(dialog.columns) ? dialog.columns : [];
+  const out: RelationSearchColumn[] = [];
+  for (const item of columns) {
+    const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
+    const name = String(row.name || row.field || '').trim();
+    if (!name || name === 'id') continue;
+    const label = String(row.label || row.string || name).trim() || name;
+    out.push({ name, label });
+    if (out.length >= 8) break;
+  }
+  return out;
+}
+
+export function normalizeRelationSearchColumns(
+  data: Record<string, unknown> | undefined,
+  fallbackDescriptor?: FieldDescriptor,
+): RelationSearchColumn[] {
+  const fields = data?.fields && typeof data.fields === 'object'
+    ? data.fields as Record<string, FieldDescriptor>
+    : {};
+  const views = data?.views && typeof data.views === 'object'
+    ? data.views as Record<string, unknown>
+    : {};
+  const tree = views.tree && typeof views.tree === 'object'
+    ? views.tree as Record<string, unknown>
+    : {};
+  const rawColumns = Array.isArray(tree.columns_schema) && tree.columns_schema.length
+    ? tree.columns_schema
+    : Array.isArray(tree.columns)
+      ? tree.columns
+      : [];
+  const out: RelationSearchColumn[] = [];
+  for (const item of rawColumns) {
+    const row = item && typeof item === 'object' ? item as Record<string, unknown> : null;
+    const name = String(row?.name || item || '').trim();
+    if (!name || name === 'id') continue;
+    const field = fields[name];
+    const label = String(row?.label || row?.string || field?.string || name).trim();
+    out.push({ name, label });
+    if (out.length >= 6) break;
+  }
+  if (!out.length) return fallbackRelationSearchColumns(fallbackDescriptor);
+  return out;
+}
+
 export function relationSearchReadFields(columns: RelationSearchColumn[], dialog: Record<string, unknown> = {}) {
   const out = new Set<string>(['id', 'display_name', 'name']);
   const contractFields = Array.isArray(dialog.read_fields) ? dialog.read_fields : [];
