@@ -46,6 +46,7 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 | CI runner boundary | Done | CI server `1.95.2.123` provides runner labels `self-hosted`, `huawei`, `ubuntu22`, `ci`, and `docker`; heavy Docker/Odoo stage workflows target this runner class |
 | CI checkout cache | Done | Seeded `/opt/ci-cache/sce-backend-odoo.git` on `1.95.2.123`; `v1.1 quality gate` checks out through the local mirror to avoid repeated large GitHub fetches |
 | P0-03 Issue cleanup pass | Done | Audited 38 open issues; closed test artifacts `#55` and `#62`; labeled historical backlog `#2`, `#4`-`#9`, and `#64`-`#76`; all remaining open issues now have labels |
+| Seed issue closeout | Done | Closed completed seed issues `#1009`-`#1023`; kept EPIC `#1008` open for the remaining v1.1 convergence phases |
 | SEC-06 Secret scan gate | Done | `scripts/ci/secret_scan.py`, `make security.secrets.scan` |
 | P4-01 Module dependency map | Done | `module_dependency_map.md`, `scripts/ci/generate_module_dependency_map.py` |
 | P4-02 Domain boundary ADR | Done | `adr_0001_domain_boundaries.md` |
@@ -72,6 +73,7 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 | `python3 scripts/ci/generate_split_plan_queue.py` | Passed, 45 split-plan files classified |
 | `python3 scripts/ci/generate_github_remote_execution_plan.py` | Passed, 16 issue bodies and remote execution plan current |
 | `bash docs/engineering_convergence/github_remote_execute.sh` | Passed after `gh` browser authentication; created milestone, labels, seed issues `#1008`-`#1023`, and draft PR `#1024` |
+| GitHub PR check `v1.1 quality gate / quality_gate` | Passed on self-hosted runner `ci-1-95-2-123`, latest run `29186010740` completed in 2m30s |
 | `make test.e2e.preflight` | Passed, BOQ import, BOQ-to-WBS/task generation, and settlement approval preflight |
 | `python3 scripts/ci/python_syntax_check.py addons/smart_construction_core/tests/test_e2e_fixed_journeys.py scripts/e2e` | Passed |
 | `git push -u origin topic/v1.1-engineering-convergence` | Passed |
