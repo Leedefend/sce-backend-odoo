@@ -4,7 +4,7 @@ Generated from repository source files. This report is informational during the 
 
 ## Summary
 
-- Scanned files: `3802`
+- Scanned files: `3803`
 - Files requiring split plan: `44`
 - Files above warning threshold: `60`
 
@@ -36,8 +36,8 @@ Generated from repository source files. This report is informational during the 
 | 2306 | Python source | `addons/smart_core/handlers/system_init.py` |
 | 2289 | Python source | `addons/smart_construction_core/models/core/project_core.py` |
 | 2196 | Python source | `addons/smart_core/handlers/api_data.py` |
-| 2134 | Vue source | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` |
 | 2051 | Python source | `scripts/verify/backend_business_fact_model_audit.py` |
+| 2047 | Vue source | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` |
 | 2039 | Python source | `addons/smart_core/tests/test_ui_contract_v2_boundaries.py` |
 | 2005 | TypeScript source | `frontend/apps/web/src/stores/session.ts` |
 | 1974 | Python source | `addons/smart_construction_core/models/core/payment_request.py` |
@@ -150,8 +150,8 @@ Generated from repository source files. This report is informational during the 
 | 2306 | split_plan_required | Python source | `addons/smart_core/handlers/system_init.py` |
 | 2289 | split_plan_required | Python source | `addons/smart_construction_core/models/core/project_core.py` |
 | 2196 | split_plan_required | Python source | `addons/smart_core/handlers/api_data.py` |
-| 2134 | split_plan_required | Vue source | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` |
 | 2051 | split_plan_required | Python source | `scripts/verify/backend_business_fact_model_audit.py` |
+| 2047 | split_plan_required | Vue source | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` |
 | 2039 | split_plan_required | Python source | `addons/smart_core/tests/test_ui_contract_v2_boundaries.py` |
 | 2010 | warning | XML data/view | `addons/smart_construction_core/security/sc_record_rules.xml` |
 | 2005 | split_plan_required | TypeScript source | `frontend/apps/web/src/stores/session.ts` |

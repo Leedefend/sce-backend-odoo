@@ -362,8 +362,6 @@ import {
   bootstrapBusinessFormConfig,
   bootstrapBusinessListSearchConfig,
   bootstrapCoverageMissingConfig,
-  compareBusinessConfigSnapshot,
-  exportBusinessConfigSnapshot,
   loadBusinessConfigSurface,
   saveBusinessAnalysisConfig,
   saveBusinessListSearchConfig,
@@ -373,8 +371,6 @@ import {
   type BusinessConfigCoverageScanPayload,
   type BusinessConfigListSearchAuditPayload,
   type BusinessConfigRemediationAction,
-  type BusinessConfigSnapshotComparePayload,
-  type BusinessConfigSnapshotSummaryPayload,
   type BusinessConfigSurfacePayload,
 } from '../api/businessConfig';
 import {
@@ -418,12 +414,11 @@ import {
   severityLabel,
   shortFieldNameHint,
   versionStatusLabel,
-  viewTypeLabel,
   visibleRowRemediationActions,
 } from './businessConfigSurface/formatters';
-import { buildSnapshotRemediationPlan, normalizeSnapshotFileToken } from './businessConfigSurface/snapshotRemediation';
 import { findMenuConfigNavigationEntry } from './businessConfigSurface/navigation';
 import { useBusinessConfigApprovalEditor } from './businessConfigSurface/useBusinessConfigApprovalEditor';
+import { useBusinessConfigSnapshots } from './businessConfigSurface/useBusinessConfigSnapshots';
 import { useBusinessConfigVersions } from './businessConfigSurface/useBusinessConfigVersions';
 
 const SURFACE_LOAD_TIMEOUT_MS = 20000;
@@ -510,10 +505,6 @@ const listSearchPanelOpen = ref(false);
 const analysisPanelOpen = ref(false);
 const selectedRuntimeRoute = ref<BusinessConfigCoverageScanItem['runtime_route'] | null>(null);
 const advancedPanelOpen = ref(false);
-const snapshotCompareText = ref('');
-const snapshotCompareLoading = ref(false);
-const snapshotExportLoading = ref(false);
-const snapshotCompareResult = ref<BusinessConfigSnapshotComparePayload | null>(null);
 const listColumnsText = ref('');
 const searchFiltersText = ref('');
 const searchGroupByText = ref('');
@@ -672,7 +663,27 @@ const startScopeSummary = computed(() => {
   if (currentModel.value) return '已选择业务页面，可配置表单、列表、菜单和审批';
   return '先从业务页面目录选择配置对象';
 });
-const snapshotSummary = computed<BusinessConfigSnapshotSummaryPayload | null>(() => surface.value?.snapshot_summary || null);
+const {
+  snapshotCompareText,
+  snapshotCompareLoading,
+  snapshotExportLoading,
+  snapshotCompareResult,
+  snapshotSummary,
+  snapshotSummaryText,
+  snapshotCompareSummary,
+  snapshotCompareChangedRows,
+  snapshotCompareAddedRows,
+  snapshotCompareRemovedRows,
+  snapshotRemediationSummary,
+  downloadSnapshot,
+  downloadSnapshotRemediationPlan,
+  compareSnapshot,
+} = useBusinessConfigSnapshots({
+  surface,
+  error,
+  setMessage,
+  clearMessage,
+});
 const deliveryReadiness = computed(() => surface.value?.delivery_readiness || null);
 const deliveryReadinessItems = computed(() => deliveryReadiness.value?.items || []);
 const visibleDeliveryReadinessItems = computed(() => {
@@ -690,36 +701,6 @@ const visibleDeliveryReadinessProgressText = computed(() => {
   if (!deliveryReadiness.value || !items.length) return snapshotSummary.value ? `配置 ${snapshotSummary.value.contract_count}` : '';
   const readyCount = items.filter((item) => item.status === 'ready').length;
   return `${readyCount}/${items.length} 项就绪`;
-});
-const snapshotSummaryText = computed(() => {
-  const summary = snapshotSummary.value;
-  if (!summary) return '';
-  const published = summary.status_counts?.published || 0;
-  const viewTypes = Object.entries(summary.view_type_counts || {})
-    .map(([key, count]) => `${viewTypeLabel(key)} ${count}`)
-    .join('、');
-  return `配置快照 ${summary.contract_count}，已发布 ${published}，按业务操作 ${summary.action_scope_count}${viewTypes ? `，${viewTypes}` : ''}`;
-});
-const snapshotCompareSummary = computed(() => {
-  const result = snapshotCompareResult.value;
-  if (!result) return '';
-  return [
-    `当前 ${result.current_contract_count}`,
-    `基线 ${result.baseline_contract_count}`,
-    `变化 ${result.changed_count}`,
-    `新增 ${result.added_count}`,
-    `移除 ${result.removed_count}`,
-  ].join('，');
-});
-const snapshotCompareChangedRows = computed(() => (snapshotCompareResult.value?.changed || []).slice(0, 8));
-const snapshotCompareAddedRows = computed(() => (snapshotCompareResult.value?.added || []).slice(0, 6));
-const snapshotCompareRemovedRows = computed(() => (snapshotCompareResult.value?.removed || []).slice(0, 6));
-const snapshotRemediationSummary = computed(() => {
-  const result = snapshotCompareResult.value;
-  if (!result) return '';
-  const total = result.changed_count + result.added_count + result.removed_count;
-  if (!total) return '两个环境配置一致，无需生成整改项。';
-  return `可生成 ${total} 条整改项：新增 ${result.added_count}，移除 ${result.removed_count}，变化 ${result.changed_count}。`;
 });
 const pageTypeOptions = [
   { key: 'all' as const, label: '全部页面' },
@@ -1175,74 +1156,6 @@ async function copyCoverageSummary() {
     setMessage('已复制验收摘要');
   } catch {
     setMessage('复制摘要失败', '浏览器未允许写入剪贴板，请稍后重试');
-  }
-}
-
-async function downloadSnapshot() {
-  snapshotExportLoading.value = true;
-  error.value = '';
-  clearMessage();
-  try {
-    const snapshot = await exportBusinessConfigSnapshot();
-    const database = String(snapshot.database || 'business-config').replace(/[^a-zA-Z0-9_-]+/g, '-');
-    const blob = new Blob([`${JSON.stringify(snapshot, null, 2)}\n`], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = `business-config-contract-snapshot-${database}.json`;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    URL.revokeObjectURL(url);
-    setMessage('已生成当前快照');
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : '当前快照导出失败';
-  } finally {
-    snapshotExportLoading.value = false;
-  }
-}
-
-function downloadJsonFile(payload: unknown, filename: string) {
-  const blob = new Blob([`${JSON.stringify(payload, null, 2)}\n`], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = filename;
-  document.body.appendChild(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
-}
-
-function downloadSnapshotRemediationPlan() {
-  const result = snapshotCompareResult.value;
-  if (!result) return;
-  const plan = buildSnapshotRemediationPlan(result);
-  const current = normalizeSnapshotFileToken(result.current_database);
-  const baseline = normalizeSnapshotFileToken(result.baseline_database);
-  downloadJsonFile(plan, `business-config-remediation-${baseline}-to-${current}.json`);
-  setMessage('已生成整改清单', snapshotRemediationSummary.value);
-}
-
-async function compareSnapshot() {
-  const text = snapshotCompareText.value.trim();
-  if (!text) return;
-  snapshotCompareLoading.value = true;
-  error.value = '';
-  clearMessage();
-  try {
-    const snapshot = JSON.parse(text) as Record<string, unknown>;
-    snapshotCompareResult.value = await compareBusinessConfigSnapshot({ snapshot });
-    const result = snapshotCompareResult.value;
-    setMessage(
-      '已完成快照对比',
-      `变化 ${result.changed_count}，新增 ${result.added_count}，移除 ${result.removed_count}`,
-    );
-  } catch (err) {
-    snapshotCompareResult.value = null;
-    error.value = err instanceof Error ? err.message : '配置快照解析或对比失败';
-  } finally {
-    snapshotCompareLoading.value = false;
   }
 }
 
