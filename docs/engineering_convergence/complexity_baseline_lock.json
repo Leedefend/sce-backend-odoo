@@ -1,0 +1,20 @@
+{
+  "description": "Debt-lock line-count ceilings for P0 split-plan files. Reductions are allowed; increases require an explicit architecture review and baseline update.",
+  "files": {
+    "Makefile": {
+      "max_lines": 272,
+      "owner": "DevOps owner",
+      "reason": "Root Makefile must remain a thin entrypoint and delegate implementation to included fragments."
+    },
+    "frontend/apps/web/src/pages/ContractFormPage.vue": {
+      "max_lines": 12253,
+      "owner": "Frontend owner",
+      "reason": "Contract form route shell is under active decomposition and must not absorb new responsibilities."
+    },
+    "frontend/apps/web/src/views/BusinessConfigSurfaceView.vue": {
+      "max_lines": 1494,
+      "owner": "Frontend owner",
+      "reason": "Business configuration surface is a P0 split-plan file and must not grow during convergence."
+    }
+  }
+}
