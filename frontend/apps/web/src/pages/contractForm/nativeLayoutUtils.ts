@@ -107,6 +107,102 @@ export function evaluateNativeModifierValue(value: unknown, resolveFieldValue: (
   return false;
 }
 
+export function nativeNodeWidget(node?: NativeLayoutLikeNode | null) {
+  const fieldInfo = nativeNodeFieldInfo(node);
+  return String(node?.widget || fieldInfo.widget || '').trim().toLowerCase();
+}
+
+export function nativeNodeWidgetSemantics(node?: NativeLayoutLikeNode | null) {
+  const fieldInfo = nativeNodeFieldInfo(node);
+  const semantics = fieldInfo.widget_semantics && typeof fieldInfo.widget_semantics === 'object'
+    ? fieldInfo.widget_semantics as Record<string, unknown>
+    : {};
+  return semantics;
+}
+
+export function resolveNativeButtonLabel(node: NativeLayoutLikeNode, resolveFieldValue: (field: string) => unknown) {
+  const action = node?.action && typeof node.action === 'object' && !Array.isArray(node.action)
+    ? node.action as Record<string, unknown>
+    : {};
+  const badge = action.badge && typeof action.badge === 'object' && !Array.isArray(action.badge)
+    ? action.badge as Record<string, unknown>
+    : {};
+  const countField = String(badge.count_field || badge.field || '').trim();
+  const sourceField = String(badge.source_field || '').trim();
+  const badgeLabel = String(badge.label || node.displayLabel || node.label || node.string || node.name || '').trim();
+  const fallbackLabel = String(node.displayLabel || action.displayLabel || node.label || node.string || node.name || '操作').trim();
+  if (!badgeLabel) {
+    return fallbackLabel;
+  }
+  const countValue = countField ? resolveFieldValue(countField) : undefined;
+  const count = Array.isArray(countValue) ? countValue.length : (typeof countValue === 'number' ? countValue : null);
+  if (count !== null) {
+    return `${count}${badgeLabel}`;
+  }
+  const sourceValue = sourceField ? resolveFieldValue(sourceField) : undefined;
+  const sourceCount = Array.isArray(sourceValue) ? sourceValue.length : (typeof sourceValue === 'number' ? sourceValue : null);
+  if (sourceCount === null) {
+    return fallbackLabel;
+  }
+  return `${sourceCount}${badgeLabel}`;
+}
+
+export function collectNativeVisibleSectionTitles(nodes: NativeLayoutLikeNode[]): string[] {
+  const titles: string[] = [];
+  const titledContainerTypes = new Set(['group', 'page']);
+  nodes.forEach((node) => {
+    const type = nativeLayoutNodeType(node);
+    const raw = String(node?.string || node?.label || '').trim();
+    if (raw && titledContainerTypes.has(type) && raw.toLowerCase() !== type) {
+      titles.push(raw);
+    }
+    CHILD_KEYS.forEach((key) => {
+      const children = node?.[key];
+      if (Array.isArray(children)) titles.push(...collectNativeVisibleSectionTitles(children as NativeLayoutLikeNode[]));
+    });
+  });
+  return Array.from(new Set(titles));
+}
+
+export function collectNativeLayoutFieldNames(
+  nodes: NativeLayoutLikeNode[],
+  out: Set<string>,
+  isKnownField: (name: string) => boolean,
+) {
+  nodes.forEach((node) => {
+    const type = nativeLayoutNodeType(node);
+    const name = String(node?.name || '').trim();
+    if (type === 'field' && name && isKnownField(name)) {
+      out.add(name);
+    }
+    CHILD_KEYS.forEach((key) => {
+      const children = node?.[key];
+      if (Array.isArray(children)) collectNativeLayoutFieldNames(children as NativeLayoutLikeNode[], out, isKnownField);
+    });
+  });
+}
+
+export function collectNativeFavoriteFieldNames(nodes: NativeLayoutLikeNode[], out: Set<string>) {
+  for (const node of nodes) {
+    const name = String(node?.name || '').trim();
+    const label = String(node?.label || node?.string || '').trim();
+    if (
+      name
+      && (
+        nativeNodeWidget(node) === 'boolean_favorite'
+        || name === 'is_favorite'
+        || (nativeNodeWidget(node) === 'checkbox' && label.includes('仪表板'))
+      )
+    ) {
+      out.add(name);
+    }
+    CHILD_KEYS.forEach((key) => {
+      const children = node?.[key];
+      if (Array.isArray(children)) collectNativeFavoriteFieldNames(children as NativeLayoutLikeNode[], out);
+    });
+  }
+}
+
 export function countNativeNodesByType(nodes: NativeLayoutLikeNode[], targetType: string): number {
   const target = String(targetType || '').trim().toLowerCase();
   let count = 0;

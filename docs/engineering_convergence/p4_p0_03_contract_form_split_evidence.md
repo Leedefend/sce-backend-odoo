@@ -13,14 +13,14 @@ Extracted responsibilities:
 - Shared contract form types and constants moved to `frontend/apps/web/src/pages/contractForm/types.ts`.
 - Action-contract parsing helpers moved to `frontend/apps/web/src/pages/contractForm/actionContract.ts`.
 - Generic contract record helpers moved to `frontend/apps/web/src/pages/contractForm/recordUtils.ts`.
-- Field, relation-display, date-input, view-label, and UI-error helpers moved to `frontend/apps/web/src/pages/contractForm/fieldUtils.ts`.
+- Field, relation-display, date-input, input-type, view-label, and UI-error helpers moved to `frontend/apps/web/src/pages/contractForm/fieldUtils.ts`.
 - Access-policy normalization moved to `frontend/apps/web/src/pages/contractForm/accessPolicy.ts`.
 - Relation descriptor parsing and relation search read-field assembly moved to `frontend/apps/web/src/pages/contractForm/relationDescriptor.ts`.
 - One2many column value normalization, input/display helpers, required-value checks, and runtime line-patch labels moved to `frontend/apps/web/src/pages/contractForm/one2manyUtils.ts`.
 - Workflow action-row normalization, transition aliases, and evidence-gate row parsing moved to `frontend/apps/web/src/pages/contractForm/workflowContract.ts`.
 - Form UI labels, native chatter labels, activity field labels, attachment labels, and native-layout type lookup moved to `frontend/apps/web/src/pages/contractForm/uiLabels.ts`.
 - Form-configuration operation-log formatting, internal-field detection, and field-group title normalization moved to `frontend/apps/web/src/pages/contractForm/formConfigHelpers.ts`.
-- Native-layout node type detection, field-info extraction, modifier evaluation, column normalization, node counting, and badge-field collection moved to `frontend/apps/web/src/pages/contractForm/nativeLayoutUtils.ts`.
+- Native-layout node type detection, field-info extraction, modifier evaluation, widget metadata, button labels, field/favorite collection, section-title collection, column normalization, node counting, and badge-field collection moved to `frontend/apps/web/src/pages/contractForm/nativeLayoutUtils.ts`.
 - Required-value checks, comparable-value normalization, numeric parsing, route-default normalization, and navigation URL normalization moved to `frontend/apps/web/src/pages/contractForm/valueUtils.ts`.
 - Workflow phase statusbar normalization moved to `frontend/apps/web/src/pages/contractForm/workflowContract.ts`.
 
@@ -30,7 +30,7 @@ The route component remains the orchestration shell and still owns runtime state
 
 | File | Before | After |
 | --- | ---: | ---: |
-| `frontend/apps/web/src/pages/ContractFormPage.vue` | 13762 | 12767 |
+| `frontend/apps/web/src/pages/ContractFormPage.vue` | 13762 | 12674 |
 
 ## Boundary Decision
 

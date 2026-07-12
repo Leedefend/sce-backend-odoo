@@ -1266,6 +1266,7 @@ import {
 import { normalizeContractAccessPolicy } from './contractForm/accessPolicy';
 import {
   cleanRelationDisplayLabel,
+  fieldInputType,
   fieldType,
   fromDatetimeInputValue,
   lowCodeFieldSizeClass,
@@ -1301,7 +1302,10 @@ import {
 import { dictOrEmpty, mergeFieldLabelsFromSource } from './contractForm/recordUtils';
 import {
   collectContractActionBadgeCountFieldNames,
+  collectNativeFavoriteFieldNames,
   collectNativeLayoutBadgeCountFieldNames,
+  collectNativeLayoutFieldNames,
+  collectNativeVisibleSectionTitles,
   countNativeNodesByType,
   evaluateNativeModifierValue as evaluateNativeModifierValueWithResolver,
   isNativeFieldLayoutNode,
@@ -1309,7 +1313,10 @@ import {
   nativeModifierValue,
   nativeLayoutNodeType,
   nativeNodeFieldInfo,
+  nativeNodeWidget,
+  nativeNodeWidgetSemantics,
   normalizeNativeLayoutColumns,
+  resolveNativeButtonLabel as resolveNativeButtonLabelFromNode,
   type NativeLayoutLikeNode,
 } from './contractForm/nativeLayoutUtils';
 import {
@@ -6744,25 +6751,7 @@ watch(baseNativeFormLayoutNodes, (nodes) => {
 
 const nativeNotebookPageCount = computed(() => countNativeNodesByType(nativeFormLayoutNodes.value as NativeLayoutLikeNode[], 'page'));
 const nativeGroupCount = computed(() => countNativeNodesByType(nativeFormLayoutNodes.value as NativeLayoutLikeNode[], 'group'));
-const nativeVisibleSectionTitles = computed(() => {
-  const titles: string[] = [];
-  const titledContainerTypes = new Set(['group', 'page']);
-  const walk = (nodes: NativeFormLayoutNode[]) => {
-    nodes.forEach((node) => {
-      const type = String(node?.type || (node as { containerType?: string })?.containerType || '').trim().toLowerCase();
-      const raw = String(node?.string || node?.label || '').trim();
-      if (raw && titledContainerTypes.has(type) && raw.toLowerCase() !== type) {
-        titles.push(raw);
-      }
-      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
-        const children = node?.[key];
-        if (Array.isArray(children)) walk(children as NativeFormLayoutNode[]);
-      });
-    });
-  };
-  walk(nativeFormLayoutNodes.value);
-  return Array.from(new Set(titles));
-});
+const nativeVisibleSectionTitles = computed(() => collectNativeVisibleSectionTitles(nativeFormLayoutNodes.value as NativeLayoutLikeNode[]));
 const showNativeDefaultSectionTitle = computed(() => (
   useNativeFormTree.value
   && nativeVisibleFieldNames.value.size > 0
@@ -6770,29 +6759,7 @@ const showNativeDefaultSectionTitle = computed(() => (
 ));
 
 function resolveNativeButtonLabel(node: NativeFormLayoutNode) {
-  const action = node?.action && typeof node.action === 'object' && !Array.isArray(node.action)
-    ? node.action as Record<string, unknown>
-    : {};
-  const badge = action.badge && typeof action.badge === 'object' && !Array.isArray(action.badge)
-    ? action.badge as Record<string, unknown>
-    : {};
-  const countField = String(badge.count_field || badge.field || '').trim();
-  const sourceField = String(badge.source_field || '').trim();
-  const badgeLabel = String(badge.label || node.displayLabel || node.label || node.string || node.name || '').trim();
-  if (!badgeLabel) {
-    return String(node.displayLabel || action.displayLabel || node.label || node.string || node.name || '操作').trim();
-  }
-  const countValue = countField ? formData[countField] : undefined;
-  const count = Array.isArray(countValue) ? countValue.length : (typeof countValue === 'number' ? countValue : null);
-  if (count !== null) {
-    return `${count}${badgeLabel}`;
-  }
-  const sourceValue = sourceField ? formData[sourceField] : undefined;
-  const sourceCount = Array.isArray(sourceValue) ? sourceValue.length : (typeof sourceValue === 'number' ? sourceValue : null);
-  if (sourceCount === null) {
-    return String(node.displayLabel || action.displayLabel || node.label || node.string || node.name || '操作').trim();
-  }
-  return `${sourceCount}${badgeLabel}`;
+  return resolveNativeButtonLabelFromNode(node as NativeLayoutLikeNode, (field) => formData[field]);
 }
 
 const nativeVisibleFieldNames = computed(() => {
@@ -6811,20 +6778,6 @@ const nativeVisibleFieldNames = computed(() => {
   return names;
 });
 
-function collectNativeLayoutFieldNames(nodes: NativeFormLayoutNode[], out: Set<string>) {
-  nodes.forEach((node) => {
-    const type = String(node?.type || '').trim().toLowerCase();
-    const name = String(node?.name || '').trim();
-    if (type === 'field' && name && contract.value?.fields?.[name]) {
-      out.add(name);
-    }
-    (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
-      const children = node?.[key];
-      if (Array.isArray(children)) collectNativeLayoutFieldNames(children as NativeFormLayoutNode[], out);
-    });
-  });
-}
-
 function formDataFieldNames() {
   const fieldMap = contract.value?.fields || {};
   const contractRecord = contract.value && typeof contract.value === 'object'
@@ -6840,7 +6793,7 @@ function formDataFieldNames() {
     ? views.form as Record<string, unknown>
     : {};
   const names = new Set<string>();
-  collectNativeLayoutFieldNames(rawNativeFormLayoutNodes.value, names);
+  collectNativeLayoutFieldNames(rawNativeFormLayoutNodes.value as NativeLayoutLikeNode[], names, (name) => Boolean(contract.value?.fields?.[name]));
   collectNativeLayoutBadgeCountFieldNames(rawNativeFormLayoutNodes.value as NativeLayoutLikeNode[], names);
   collectContractActionBadgeCountFieldNames(contractRecord.buttons, names);
   collectContractActionBadgeCountFieldNames(toolbar.header, names);
@@ -7005,44 +6958,6 @@ function isNativeLayoutNodeVisible(nodeRaw: NativeFormLayoutNode) {
     return Boolean(contractActionFromNativeRow(node));
   }
   return true;
-}
-
-function nativeNodeWidget(nodeRaw?: NativeFormLayoutNode) {
-  const node = nodeRaw as Record<string, unknown> | undefined;
-  const fieldInfo = nativeNodeFieldInfo(node);
-  return String(node?.widget || fieldInfo.widget || '').trim().toLowerCase();
-}
-
-function nativeNodeWidgetSemantics(nodeRaw?: NativeFormLayoutNode) {
-  const node = nodeRaw as Record<string, unknown> | undefined;
-  const fieldInfo = nativeNodeFieldInfo(node);
-  const semantics = fieldInfo.widget_semantics && typeof fieldInfo.widget_semantics === 'object'
-    ? fieldInfo.widget_semantics as Record<string, unknown>
-    : {};
-  return semantics;
-}
-
-function collectNativeFavoriteFieldNames(nodes: NativeFormLayoutNode[], out: Set<string>) {
-  for (const node of nodes) {
-    const name = String(node?.name || '').trim();
-    const label = String(node?.label || node?.string || '').trim();
-    if (
-      name
-      && (
-        nativeNodeWidget(node) === 'boolean_favorite'
-        || name === 'is_favorite'
-        || (nativeNodeWidget(node) === 'checkbox' && label.includes('仪表板'))
-      )
-    ) {
-      out.add(name);
-    }
-    const children: NativeFormLayoutNode[] = [];
-    for (const key of ['children', 'pages', 'tabs', 'nodes', 'items'] as const) {
-      const value = node?.[key];
-      if (Array.isArray(value)) children.push(...value);
-    }
-    if (children.length) collectNativeFavoriteFieldNames(children, out);
-  }
 }
 
 function isNativeFavoriteField(name: string) {
@@ -8097,14 +8012,6 @@ function resolveCreateDefaults() {
     ];
   }
   return defaults;
-}
-
-function fieldInputType(ttype?: string) {
-  const type = String(ttype || '').toLowerCase();
-  if (type === 'integer' || type === 'float' || type === 'monetary') return 'number';
-  if (type === 'date') return 'date';
-  if (type === 'datetime') return 'datetime-local';
-  return 'text';
 }
 
 function resolveNavigationUrl(url: string) {

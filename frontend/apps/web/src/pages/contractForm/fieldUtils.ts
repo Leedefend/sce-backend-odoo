@@ -46,6 +46,14 @@ export function fieldType(descriptor?: FieldDescriptor | null) {
   return String(descriptor?.ttype || descriptor?.type || '').trim().toLowerCase();
 }
 
+export function fieldInputType(ttype?: string) {
+  const type = String(ttype || '').toLowerCase();
+  if (type === 'integer' || type === 'float' || type === 'monetary') return 'number';
+  if (type === 'date') return 'date';
+  if (type === 'datetime') return 'datetime-local';
+  return 'text';
+}
+
 export function toDateInputValue(value: unknown) {
   const raw = String(value ?? '').trim();
   if (!raw) return '';
