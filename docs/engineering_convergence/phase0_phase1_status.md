@@ -19,7 +19,11 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 | P1-06 Unified quality entry | Done | `make ci`, `make test.*`, `make security.secrets.scan` |
 | P1-07 CI failure taxonomy | Done | `ci_failure_taxonomy.md` |
 | P2-01 Test inventory | Done | `test_inventory.csv`, `scripts/ci/generate_test_inventory.py` |
+| P2-01 Test inventory summary | Done | `test_inventory_summary.md`, `scripts/ci/summarize_test_inventory.py` |
 | SEC-06 Secret scan gate | Done | `scripts/ci/secret_scan.py`, `make security.secrets.scan` |
+| P4-01 Module dependency map | Done | `module_dependency_map.md`, `scripts/ci/generate_module_dependency_map.py` |
+| P4-02 Domain boundary ADR | Done | `adr_0001_domain_boundaries.md` |
+| P4-07 Complexity budget baseline | Done | `complexity_budget_policy.md`, `complexity_budget_report.md` |
 
 ## Verified
 
@@ -27,7 +31,10 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 | --- | --- |
 | `git diff --check` | Passed |
 | `make ci` | Passed |
-| `python3 scripts/ci/generate_test_inventory.py` | Passed, 1114 inventory entries |
+| `python3 scripts/ci/generate_test_inventory.py` | Passed, 1115 inventory entries |
+| `python3 scripts/ci/summarize_test_inventory.py` | Passed, 1115 inventory entries |
+| `python3 scripts/ci/generate_module_dependency_map.py` | Passed, 14 modules and 0 circular dependencies |
+| `python3 scripts/ci/generate_complexity_budget_report.py` | Passed, 3783 files scanned |
 | `git push -u origin topic/v1.1-engineering-convergence` | Passed |
 
 ## Requires GitHub Admin or Authenticated Remote Execution
@@ -46,3 +53,5 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 3. Create seed issues from `github_issue_seed_v1.1.md`.
 4. Enable branch protection after the workflow is visible.
 5. Start Phase 2 cleanup: classify duplicated/stale validation assets and define mandatory versus release-only gates.
+6. Assign owners for the 45 split-plan-required files in `complexity_budget_report.md`.
+7. Map the 34 E2E validation assets to the 12 named business-chain journeys.
