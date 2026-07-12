@@ -564,6 +564,7 @@ import {
   resolveFieldSemanticMeta,
   resolveNativeFormRootColumns,
   semanticFieldNamesBySurfaceRole,
+  buildLegacyLayoutNodes,
   type FieldSemanticMeta,
   type NativeLayoutLikeNode,
   type SemanticFieldGroup,
@@ -4860,21 +4861,17 @@ function collectSceneValidationPrecheckErrors(fieldLabels: Record<string, string
 
 const layoutNodes = computed<LayoutNode[]>(() => {
   const fieldMap = contract.value?.fields || {};
-  const order = contract.value?.views?.form?.layout || [];
   const v2FieldContainerStatus = collectUnifiedPageContractV2FieldContainerStatus(contract.value);
-  const used = new Set<string>();
-  const nodes: LayoutNode[] = [];
-  const containerKeys = ['children', 'tabs', 'pages', 'nodes', 'items'];
-
-  function pushField(nameRaw: unknown) {
-    const name = String(nameRaw || '').trim();
-    if (!name || used.has(name)) return;
-    const descriptor = fieldMap[name];
-    if (!descriptor) return;
-    if (isCreateWorkflowStateField(name, String(contractFieldLabel(name) || descriptor?.string || ''), !recordId.value)) return;
-    const containerStatus = v2FieldContainerStatus[name];
-    if (containerStatus?.visible === false) return;
-    const resolved = evaluateFieldPolicy(
+  return buildLegacyLayoutNodes({
+    fields: fieldMap,
+    order: contract.value?.views?.form?.layout || [],
+    containerStatus: v2FieldContainerStatus,
+    visibleFields: contractVisibleFields.value,
+    fallbackFieldNames: [...coreFieldNames.value, ...advancedFieldNames.value],
+    isCreate: !recordId.value,
+    readonly: recordId.value ? !rights.value.write : !rights.value.create,
+    resolveFieldLabel: contractFieldLabel,
+    evaluatePolicy: (name, descriptor) => evaluateFieldPolicy(
       contract.value,
       name,
       {
@@ -4882,62 +4879,9 @@ const layoutNodes = computed<LayoutNode[]>(() => {
         readonly: Boolean(descriptor?.readonly),
       },
       policyContext.value,
-    );
-    if (!resolved.visible) return;
-    used.add(name);
-    const state = runtimeState(name);
-    nodes.push({
-      key: `field_${name}`,
-      kind: 'field',
-      name,
-      label: String(contractFieldLabel(name) || descriptor?.string || name),
-      readonly: Boolean(resolved.readonly || state.readonly || containerStatus?.disabled === true || (recordId.value ? !rights.value.write : !rights.value.create)),
-      required: Boolean(resolved.required || state.required),
-      descriptor,
-    });
-  }
-
-  function walkLayout(nodeRaw: unknown, parentKey: string) {
-    if (!nodeRaw || typeof nodeRaw !== 'object') return;
-    const node = nodeRaw as Record<string, unknown>;
-    const kind = String(node.type || '').trim().toLowerCase();
-    if (!kind) return;
-    const label = String(node.string || node.label || '').trim();
-    const nodeKey = `${parentKey}_${kind}_${String(node.name || label || nodes.length)}`;
-
-    if (kind === 'header' || kind === 'sheet' || kind === 'group' || kind === 'notebook' || kind === 'page') {
-      nodes.push({
-        key: `layout_${nodeKey}`,
-        kind: kind as LayoutNode['kind'],
-        name: String(node.name || '').trim(),
-        label,
-        readonly: true,
-        required: false,
-      });
-    }
-    if (kind === 'field') {
-      pushField(node.name);
-      return;
-    }
-    containerKeys.forEach((key) => {
-      const children = node[key];
-      if (!Array.isArray(children)) return;
-      children.forEach((child, index) => walkLayout(child, `${nodeKey}_${key}_${index}`));
-    });
-  }
-
-  if (Array.isArray(order)) {
-    order.forEach((item, index) => walkLayout(item, `root_${index}`));
-  }
-  if (!nodes.some((node) => node.kind === 'field')) {
-    const fallback = contractVisibleFields.value.length
-      ? contractVisibleFields.value
-      : [...coreFieldNames.value, ...advancedFieldNames.value];
-    const fallbackFields = fallback.length ? fallback : Object.keys(fieldMap).slice(0, 16);
-    fallbackFields.forEach((name) => pushField(name));
-  }
-
-  return nodes;
+    ),
+    runtimeState,
+  });
 });
 
 const buildSectionFieldSchemas = createFormSectionFieldSchemaBuilder({

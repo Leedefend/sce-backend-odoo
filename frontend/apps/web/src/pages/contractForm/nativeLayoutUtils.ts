@@ -1,6 +1,6 @@
 import type { FieldDescriptor } from '@sc/schema';
 import { lowCodeFieldSizeClass, normalizeLowCodeFieldSize } from './fieldUtils';
-import type { LowCodeFieldSize } from './types';
+import type { LayoutNode, LowCodeFieldSize } from './types';
 
 export type NativeLayoutLikeNode = Record<string, unknown> & {
   children?: unknown;
@@ -57,6 +57,31 @@ export type NativeFieldPresentation = {
   label: string;
   nodeClass: string;
   spanClass: string;
+};
+
+export type RuntimeFieldStateLike = {
+  invisible?: boolean;
+  readonly?: boolean;
+  required?: boolean;
+};
+
+export type FieldPolicyLike = {
+  visible: boolean;
+  readonly?: boolean;
+  required?: boolean;
+};
+
+export type LegacyLayoutNodeInput = {
+  fields: Record<string, FieldDescriptor>;
+  order: unknown;
+  containerStatus: Record<string, { visible?: boolean; disabled?: boolean }>;
+  visibleFields: string[];
+  fallbackFieldNames: string[];
+  isCreate: boolean;
+  readonly: boolean;
+  resolveFieldLabel: (name: string) => string;
+  evaluatePolicy: (name: string, descriptor: FieldDescriptor) => FieldPolicyLike;
+  runtimeState: (name: string) => RuntimeFieldStateLike;
 };
 
 const CHILD_KEYS = ['children', 'pages', 'tabs', 'nodes', 'items'] as const;
@@ -308,6 +333,74 @@ export function isCreateWorkflowStateField(name: string, label = '', isCreate = 
     || normalizedLabel === '状态'
     || normalizedLabel.endsWith('状态')
   );
+}
+
+export function buildLegacyLayoutNodes(input: LegacyLayoutNodeInput): LayoutNode[] {
+  const used = new Set<string>();
+  const nodes: LayoutNode[] = [];
+
+  function pushField(nameRaw: unknown) {
+    const name = String(nameRaw || '').trim();
+    if (!name || used.has(name)) return;
+    const descriptor = input.fields[name];
+    if (!descriptor) return;
+    const label = String(input.resolveFieldLabel(name) || descriptor?.string || name);
+    if (isCreateWorkflowStateField(name, label, input.isCreate)) return;
+    const containerStatus = input.containerStatus[name];
+    if (containerStatus?.visible === false) return;
+    const resolved = input.evaluatePolicy(name, descriptor);
+    if (!resolved.visible) return;
+    used.add(name);
+    const state = input.runtimeState(name);
+    nodes.push({
+      key: `field_${name}`,
+      kind: 'field',
+      name,
+      label,
+      readonly: Boolean(resolved.readonly || state.readonly || containerStatus?.disabled === true || input.readonly),
+      required: Boolean(resolved.required || state.required),
+      descriptor,
+    });
+  }
+
+  function walkLayout(nodeRaw: unknown, parentKey: string) {
+    if (!nodeRaw || typeof nodeRaw !== 'object') return;
+    const node = nodeRaw as Record<string, unknown>;
+    const kind = String(node.type || '').trim().toLowerCase();
+    if (!kind) return;
+    const label = String(node.string || node.label || '').trim();
+    const nodeKey = `${parentKey}_${kind}_${String(node.name || label || nodes.length)}`;
+
+    if (kind === 'header' || kind === 'sheet' || kind === 'group' || kind === 'notebook' || kind === 'page') {
+      nodes.push({
+        key: `layout_${nodeKey}`,
+        kind: kind as LayoutNode['kind'],
+        name: String(node.name || '').trim(),
+        label,
+        readonly: true,
+        required: false,
+      });
+    }
+    if (kind === 'field') {
+      pushField(node.name);
+      return;
+    }
+    CHILD_KEYS.forEach((key) => {
+      const children = node[key];
+      if (!Array.isArray(children)) return;
+      children.forEach((child, index) => walkLayout(child, `${nodeKey}_${key}_${index}`));
+    });
+  }
+
+  if (Array.isArray(input.order)) {
+    input.order.forEach((item, index) => walkLayout(item, `root_${index}`));
+  }
+  if (!nodes.some((node) => node.kind === 'field')) {
+    const fallback = input.visibleFields.length ? input.visibleFields : input.fallbackFieldNames;
+    const fallbackFields = fallback.length ? fallback : Object.keys(input.fields).slice(0, 16);
+    fallbackFields.forEach((name) => pushField(name));
+  }
+  return nodes;
 }
 
 function stringList(value: unknown): string[] {
