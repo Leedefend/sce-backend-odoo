@@ -27,6 +27,7 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 | P3 E2E journey matrix | Done | `e2e_journey_matrix.md`, `scripts/ci/generate_e2e_journey_matrix.py` |
 | P3 fixed-data Odoo journey tests | Done | `addons/smart_construction_core/tests/test_e2e_fixed_journeys.py` |
 | P3 fixed-data Odoo journey gate | Done | `make test.e2e.fixed_data.odoo` |
+| CI boundary audit artifact output | Done | `audit.boundary.smart_core.ci` writes to `artifacts/ci/boundary_audit/*` |
 | P4 split-plan queue | Done | `split_plan_queue.md`, `scripts/ci/generate_split_plan_queue.py` |
 
 ## Verified
@@ -36,6 +37,7 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 | `git diff --check` | Passed |
 | `make ci` | Passed |
 | `make test.e2e.fixed_data.odoo` | Passed, 3 Odoo post-tests for E2E-02, E2E-03, and E2E-08 |
+| `make audit.boundary.smart_core.ci` | Passed, artifact-only output without rewriting tracked docs |
 | `python3 scripts/ci/generate_test_inventory.py` | Passed, 1120 inventory entries |
 | `python3 scripts/ci/summarize_test_inventory.py` | Passed, 1120 inventory entries |
 | `python3 scripts/ci/generate_e2e_journey_matrix.py` | Passed, 38 E2E assets mapped to 12 journeys with 0 empty gaps |

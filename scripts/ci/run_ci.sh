@@ -31,7 +31,7 @@ log "CI run: TEST_TAGS_FINAL=${TEST_TAGS_FINAL}"
 
 # Boundary audit (fail fast)
 log "CI boundary audit: smart_core"
-make audit.boundary.smart_core
+make audit.boundary.smart_core.ci
 
 # 0) 准备数据库（保证干净）
 log "CI db reset: ${DB_CI}"

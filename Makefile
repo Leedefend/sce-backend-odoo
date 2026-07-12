@@ -37,6 +37,9 @@ LEGACY_ATTACHMENT_BROWSER_SAMPLES ?=
 LEGACY_ATTACHMENT_BROWSER_SAMPLES_FILE ?=
 LEGACY_ATTACHMENT_BROWSER_SAMPLE_MANIFEST_OUTPUT ?= /mnt/artifacts/backend/legacy_attachment_frontend_browser_samples.json
 LEGACY_ATTACHMENT_BROWSER_SAMPLE_PER_MIMETYPE ?= 0
+BOUNDARY_AUDIT_JSON_OUT ?= artifacts/boundary_audit/smart_core_hits.json
+BOUNDARY_AUDIT_MD_OUT ?= docs/ops/boundary_audit_smart_core_20260130.md
+BOUNDARY_AUDIT_GENERATED_AT ?= snapshot
 
 # Snapshot DB knobs from invocation context before .env include so explicit
 # shell/CLI inputs are not overridden by values inside .env.<tier>.
@@ -5394,7 +5397,7 @@ gate.boundary: guard.prod.forbid check-compose-project check-compose-env
 # ======================================================
 # ==================== Diagnostics ======================
 # ======================================================
-.PHONY: diag.compose verify.ops gate.audit ci.gate.tp08 audit.boundary.smart_core
+.PHONY: diag.compose verify.ops gate.audit ci.gate.tp08 audit.boundary.smart_core audit.boundary.smart_core.ci
 diag.compose: check-compose-env
 	@echo "=== base ==="
 	@$(COMPOSE_BASE) config | sed -n '/^services:/,/^volumes:/p' | sed -n '1,200p'
@@ -5429,10 +5432,17 @@ audit.boundary.smart_core: guard.prod.forbid
 	@$(RUN_ENV) python3 scripts/audit/boundary_audit_smart_core.py \
 		--root "$(ROOT_DIR)" \
 		--scan-dir "addons/smart_core" \
-		--json-out "artifacts/boundary_audit/smart_core_hits.json" \
-		--md-out "docs/ops/boundary_audit_smart_core_20260130.md" \
+		--json-out "$(BOUNDARY_AUDIT_JSON_OUT)" \
+		--md-out "$(BOUNDARY_AUDIT_MD_OUT)" \
 		--allowlist "scripts/audit/boundary_allowlist.txt" \
+		--generated-at "$(BOUNDARY_AUDIT_GENERATED_AT)" \
 		--fail-on-reverse-deps
+
+audit.boundary.smart_core.ci: guard.prod.forbid
+	@$(MAKE) --no-print-directory audit.boundary.smart_core \
+		BOUNDARY_AUDIT_JSON_OUT=artifacts/ci/boundary_audit/smart_core_hits.json \
+		BOUNDARY_AUDIT_MD_OUT=artifacts/ci/boundary_audit/smart_core_hits.md \
+		BOUNDARY_AUDIT_GENERATED_AT=ci-artifact
 
 ci.gate.tp08: guard.prod.forbid check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/ci/gate_audit_tp08.sh

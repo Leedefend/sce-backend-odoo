@@ -1,40 +1,67 @@
 # smart_core boundary audit
 
 - Scan root: addons/smart_core
-- Generated at (UTC): 2026-04-23T16:34:55.920377Z
-- Files scanned: 261
+- Generated at (UTC): snapshot
+- Files scanned: 400
 
 ## Keyword Hits
 - addons/smart_core/core/industry_orchestration_service_adapter.py
 - addons/smart_core/core/page_contracts_builder.py
-- addons/smart_core/core/release_navigation_contract_builder.py
-- addons/smart_core/core/scene_delivery_policy.py
 - addons/smart_core/core/scene_dsl_compiler.py
-- addons/smart_core/core/scene_ready_semantic_orchestration_bridge.py
-- addons/smart_core/core/system_init_extension_fact_merger.py
+- addons/smart_core/core/scene_ready_contract_builder.py
 - addons/smart_core/core/workspace_home_contract_builder.py
-- addons/smart_core/delivery/edition_release_snapshot_service.py
-- addons/smart_core/delivery/product_policy_service.py
-- addons/smart_core/delivery/release_approval_policy_service.py
-- addons/smart_core/delivery/release_audit_trail_service.py
-- addons/smart_core/delivery/release_operator_read_model_service.py
+- addons/smart_core/delivery/menu_service.py
+- addons/smart_core/handlers/business_config_surface.py
+- addons/smart_core/handlers/menu_configuration.py
+- addons/smart_core/handlers/reason_codes.py
 - addons/smart_core/handlers/system_init.py
-- addons/smart_core/orchestration/project_dashboard_scene_orchestrator.py
+- addons/smart_core/handlers/ui_contract_v2.py
+- addons/smart_core/orchestration/payment_slice_contract_orchestrator.py
+- addons/smart_core/orchestration/settlement_slice_contract_orchestrator.py
 - addons/smart_core/tests/test_action_dispatcher_server_mapping.py
+- addons/smart_core/tests/test_api_data_list_param_boundaries.py
+- addons/smart_core/tests/test_api_server_time_boundaries.py
+- addons/smart_core/tests/test_backend_contract_boundaries.py
+- addons/smart_core/tests/test_backend_contract_boundary_guard.py
 - addons/smart_core/tests/test_backend_semantic_copy_supply.py
+- addons/smart_core/tests/test_business_config_contract_schema.py
+- addons/smart_core/tests/test_business_config_surface.py
 - addons/smart_core/tests/test_contract_governance_project_form.py
+- addons/smart_core/tests/test_contract_governance_record_context_registry.py
+- addons/smart_core/tests/test_delivery_menu_entry_target.py
+- addons/smart_core/tests/test_delivery_menu_group_order_boundary.py
+- addons/smart_core/tests/test_file_download_locator_policy.py
 - addons/smart_core/tests/test_identity_resolver_entry_target.py
 - addons/smart_core/tests/test_intent_dispatcher_permission_error_contract.py
+- addons/smart_core/tests/test_intent_operation_policy.py
+- addons/smart_core/tests/test_login_company_boundary.py
+- addons/smart_core/tests/test_menu_configuration_audit.py
+- addons/smart_core/tests/test_menu_delivery_convergence_service.py
+- addons/smart_core/tests/test_odoo_native_alignment_boundaries.py
+- addons/smart_core/tests/test_permission_contract_runtime_uid.py
+- addons/smart_core/tests/test_project_context_boundaries.py
+- addons/smart_core/tests/test_reason_code_legacy_meta_registry.py
+- addons/smart_core/tests/test_relation_entry_contract.py
+- addons/smart_core/tests/test_release_gate_category_options.py
 - addons/smart_core/tests/test_release_operator_surface_copy_backend.py
+- addons/smart_core/tests/test_release_preflight_target_validation.py
+- addons/smart_core/tests/test_scene_contract_builder_semantics.py
 - addons/smart_core/tests/test_scene_delivery_policy.py
 - addons/smart_core/tests/test_scene_nav_contract_builder.py
 - addons/smart_core/tests/test_scene_normalizer_entry_target.py
 - addons/smart_core/tests/test_scene_normalizer_target_resolution.py
+- addons/smart_core/tests/test_scene_provider_target_identity_merge.py
 - addons/smart_core/tests/test_scene_ready_contract_builder_semantic_consumption.py
 - addons/smart_core/tests/test_scene_ready_semantic_orchestration_bridge.py
 - addons/smart_core/tests/test_scene_runtime_contract_chain.py
+- addons/smart_core/tests/test_system_init_extension_fact_merger.py
+- addons/smart_core/tests/test_system_init_payload_builder_semantics.py
+- addons/smart_core/tests/test_system_init_scene_runtime_surface_builder.py
 - addons/smart_core/tests/test_ui_base_contract_asset_repository.py
+- addons/smart_core/tests/test_ui_contract_v2_boundaries.py
+- addons/smart_core/tests/test_unified_page_contract_v2_mobile_compact.py
 - addons/smart_core/utils/contract_governance.py
+- addons/smart_core/utils/reason_codes.py
 
 ## Reverse Dependency Hits
 - None
