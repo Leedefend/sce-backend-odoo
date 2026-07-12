@@ -19,7 +19,7 @@ Extracted responsibilities:
 - One2many subview policy helpers, create-label rules, primary/row label helpers, row-state labels, draft summary, inline command building, column value normalization, input/display helpers, required-value checks, and runtime line-patch labels moved to `frontend/apps/web/src/pages/contractForm/one2manyUtils.ts`.
 - Workflow action-row normalization, transition aliases, and evidence-gate row parsing moved to `frontend/apps/web/src/pages/contractForm/workflowContract.ts`.
 - Form UI labels, native chatter labels, activity field labels, attachment labels, and native-layout type lookup moved to `frontend/apps/web/src/pages/contractForm/uiLabels.ts`.
-- Form-configuration operation-log formatting, internal-field detection, and field-group title normalization moved to `frontend/apps/web/src/pages/contractForm/formConfigHelpers.ts`.
+- Form-configuration operation-log formatting, internal-field detection, field-group title normalization, low-code layout column inference, readable-group detection, group-title collection, and runtime group shell merging moved to `frontend/apps/web/src/pages/contractForm/formConfigHelpers.ts`.
 - Native-layout node type detection, field-info extraction, field-descriptor merging, field/subview lookup, modifier evaluation, widget metadata, button labels, field/favorite collection, section-title collection, column normalization, node counting, and badge-field collection moved to `frontend/apps/web/src/pages/contractForm/nativeLayoutUtils.ts`.
 - Required-value checks, comparable-value normalization, numeric parsing, route-default normalization, and navigation URL normalization moved to `frontend/apps/web/src/pages/contractForm/valueUtils.ts`.
 - Workflow phase statusbar normalization moved to `frontend/apps/web/src/pages/contractForm/workflowContract.ts`.
@@ -30,7 +30,7 @@ The route component remains the orchestration shell and still owns runtime state
 
 | File | Before | After |
 | --- | ---: | ---: |
-| `frontend/apps/web/src/pages/ContractFormPage.vue` | 13762 | 12376 |
+| `frontend/apps/web/src/pages/ContractFormPage.vue` | 13762 | 12266 |
 
 ## Boundary Decision
 

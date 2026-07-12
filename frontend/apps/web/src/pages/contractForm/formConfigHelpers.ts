@@ -1,4 +1,6 @@
 import type { FormConfigOperationLogEntry } from './types';
+import { normalizeLowCodeColumnsOrNull } from './fieldUtils';
+import { nativeLayoutNodeType, type NativeLayoutLikeNode } from './nativeLayoutUtils';
 
 export function normalizeFormConfigOperationLogEntries(raw: unknown, operator = '当前用户') {
   if (!Array.isArray(raw)) return [];
@@ -109,4 +111,119 @@ export function isReadableFieldGroupTitle(value: unknown) {
   if (/^默认分组\s*\d*$/i.test(text)) return false;
   if (/^[a-z][a-z0-9_:. -]*$/i.test(text) && /[_:.]/.test(text)) return false;
   return true;
+}
+
+export function inferLowCodeLayoutColumns(nodes: NativeLayoutLikeNode[]): 1 | 2 | 3 | null {
+  const counts: Record<1 | 2 | 3, number> = { 1: 0, 2: 0, 3: 0 };
+  const directFieldCount = (node: NativeLayoutLikeNode) => {
+    const children = Array.isArray(node?.children) ? node.children as NativeLayoutLikeNode[] : [];
+    return children.filter((child) => nativeLayoutNodeType(child) === 'field' && child.visible !== false).length;
+  };
+  const walk = (items: NativeLayoutLikeNode[]) => {
+    items.forEach((node) => {
+      const attrs = node && typeof node.attributes === 'object' && node.attributes
+        ? node.attributes as Record<string, unknown>
+        : {};
+      const nodeType = nativeLayoutNodeType(node);
+      const columns = normalizeLowCodeColumnsOrNull(
+        attrs.col
+        ?? attrs.columns
+        ?? attrs.cols
+        ?? (node as { col?: unknown; cols?: unknown; columns?: unknown }).col
+        ?? (node as { col?: unknown; cols?: unknown; columns?: unknown }).cols
+        ?? (node as { col?: unknown; cols?: unknown; columns?: unknown }).columns,
+      );
+      const fieldCount = directFieldCount(node);
+      const hasFields = fieldCount > 0;
+      if (columns && (nodeType === 'group' || hasFields)) {
+        counts[columns] += Math.max(1, fieldCount);
+      }
+      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+        const children = node?.[key];
+        if (Array.isArray(children)) walk(children as NativeLayoutLikeNode[]);
+      });
+    });
+  };
+  walk(nodes);
+  const ranked = (Object.entries(counts) as Array<[string, number]>)
+    .filter(([, count]) => count > 0)
+    .sort((left, right) => right[1] - left[1] || Number(right[0]) - Number(left[0]));
+  return ranked.length ? normalizeLowCodeColumnsOrNull(ranked[0][0]) : null;
+}
+
+export function layoutHasReadableFieldGroups(nodes: NativeLayoutLikeNode[]) {
+  let found = false;
+  const visit = (rows: NativeLayoutLikeNode[]) => {
+    rows.forEach((node) => {
+      if (found || !node || typeof node !== 'object') return;
+      const row = node as Record<string, unknown>;
+      const type = nativeLayoutNodeType(node);
+      const title = normalizeFieldGroupTitle(row.string || row.label || row.title);
+      const children = Array.isArray(row.children) ? row.children as NativeLayoutLikeNode[] : [];
+      const directFields = children
+        .filter((child) => nativeLayoutNodeType(child) === 'field' && String(child?.name || '').trim())
+        .length;
+      if (type === 'group' && isReadableFieldGroupTitle(title) && directFields) {
+        found = true;
+        return;
+      }
+      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+        const childRows = row[key];
+        if (Array.isArray(childRows)) visit(childRows as NativeLayoutLikeNode[]);
+      });
+    });
+  };
+  visit(nodes);
+  return found;
+}
+
+export function fieldStructureTitle(pageTitle: string, groupTitle: string) {
+  const page = String(pageTitle || '').trim();
+  const group = String(groupTitle || '').trim();
+  if (page && group && page !== group) return `${page} / ${group}`;
+  return page || group || '主表区域';
+}
+
+export function collectNativeLayoutGroupTitles(nodes: NativeLayoutLikeNode[]) {
+  const titles: string[] = [];
+  const walk = (rows: NativeLayoutLikeNode[], pageTitle = '', groupTitle = '') => {
+    rows.forEach((node) => {
+      const type = nativeLayoutNodeType(node);
+      const title = String(node?.string || node?.label || '').trim();
+      const nextPage = type === 'page' && title ? title : pageTitle;
+      const nextGroup = type === 'group' && isReadableFieldGroupTitle(title)
+        ? fieldStructureTitle(nextPage, title)
+        : groupTitle;
+      if (type === 'page' && isReadableFieldGroupTitle(title)) titles.push(title);
+      if (type === 'group' && isReadableFieldGroupTitle(nextGroup)) titles.push(nextGroup);
+      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+        const children = node?.[key];
+        if (Array.isArray(children)) walk(children as NativeLayoutLikeNode[], nextPage, nextGroup);
+      });
+    });
+  };
+  walk(Array.isArray(nodes) ? nodes : []);
+  return titles;
+}
+
+export function mergeLowCodeLayoutWithRuntimeGroupShells<T extends NativeLayoutLikeNode>(base: T[], runtime: NativeLayoutLikeNode[]): T[] {
+  if (!Array.isArray(base) || !base.length) return base;
+  const existing = new Set(
+    collectNativeLayoutGroupTitles(base)
+      .map((title) => normalizeFieldGroupTitle(title))
+      .filter(Boolean),
+  );
+  const missing = collectNativeLayoutGroupTitles(runtime)
+    .map((title) => normalizeFieldGroupTitle(title))
+    .filter((title) => title && title !== '主表区域' && !existing.has(title));
+  if (!missing.length) return base;
+  return [
+    ...base,
+    ...Array.from(new Set(missing)).map((title) => ({
+      type: 'group',
+      string: title,
+      label: title,
+      children: [],
+    } as T)),
+  ];
 }

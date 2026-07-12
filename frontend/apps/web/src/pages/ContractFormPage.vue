@@ -1287,8 +1287,13 @@ import {
   formConfigOperationStatusLabel,
   formatFormConfigOperationSummary as formatFormConfigOperationSummaryText,
   formatFormConfigOperationTime,
+  collectNativeLayoutGroupTitles,
+  fieldStructureTitle,
+  inferLowCodeLayoutColumns,
   isReadableFieldGroupTitle,
   isSuggestedInternalFormField,
+  layoutHasReadableFieldGroups,
+  mergeLowCodeLayoutWithRuntimeGroupShells,
   normalizeFieldGroupTitle,
   normalizeFormConfigOperationLogEntries,
   readableFallbackFieldLabel,
@@ -2417,44 +2422,6 @@ const hasFieldGroupChanges = computed(() => Object.keys(fieldGroupDraft).some((f
   return Boolean(draft) && draft !== base;
 }));
 
-function inferLowCodeLayoutColumns(nodes: NativeFormLayoutNode[]): 1 | 2 | 3 | null {
-  const counts: Record<1 | 2 | 3, number> = { 1: 0, 2: 0, 3: 0 };
-  const directFieldCount = (node: NativeFormLayoutNode) => {
-    const children = Array.isArray(node?.children) ? node.children as NativeFormLayoutNode[] : [];
-    return children.filter((child) => nativeLayoutNodeType(child) === 'field' && child.visible !== false).length;
-  };
-  const walk = (items: NativeFormLayoutNode[]) => {
-    items.forEach((node) => {
-      const attrs = node && typeof node.attributes === 'object' && node.attributes
-        ? node.attributes as Record<string, unknown>
-        : {};
-      const nodeType = nativeLayoutNodeType(node);
-      const columns = normalizeLowCodeColumnsOrNull(
-        attrs.col
-        ?? attrs.columns
-        ?? attrs.cols
-        ?? (node as { col?: unknown; cols?: unknown; columns?: unknown }).col
-        ?? (node as { col?: unknown; cols?: unknown; columns?: unknown }).cols
-        ?? (node as { col?: unknown; cols?: unknown; columns?: unknown }).columns,
-      );
-      const fieldCount = directFieldCount(node);
-      const hasFields = fieldCount > 0;
-      if (columns && (nodeType === 'group' || hasFields)) {
-        counts[columns] += Math.max(1, fieldCount);
-      }
-      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
-        const children = node?.[key];
-        if (Array.isArray(children)) walk(children as NativeFormLayoutNode[]);
-      });
-    });
-  };
-  walk(nodes);
-  const ranked = (Object.entries(counts) as Array<[string, number]>)
-    .filter(([, count]) => count > 0)
-    .sort((left, right) => right[1] - left[1] || Number(right[0]) - Number(left[0]));
-  return ranked.length ? normalizeLowCodeColumnsOrNull(ranked[0][0]) : null;
-}
-
 function effectiveGroupVisible(title: string) {
   const key = normalizeFieldGroupTitle(title);
   if (!key) return true;
@@ -2663,32 +2630,6 @@ function changedFieldVisibilityDraft() {
   }, {});
 }
 
-function layoutHasReadableFieldGroups(nodes: NativeFormLayoutNode[]) {
-  let found = false;
-  const visit = (rows: NativeFormLayoutNode[]) => {
-    rows.forEach((node) => {
-      if (found || !node || typeof node !== 'object') return;
-      const row = node as Record<string, unknown>;
-      const type = nativeLayoutNodeType(node);
-      const title = normalizeFieldGroupTitle(row.string || row.label || row.title);
-      const children = Array.isArray(row.children) ? row.children as NativeFormLayoutNode[] : [];
-      const directFields = children
-        .filter((child) => nativeLayoutNodeType(child) === 'field' && String(child?.name || '').trim())
-        .length;
-      if (type === 'group' && isReadableFieldGroupTitle(title) && directFields) {
-        found = true;
-        return;
-      }
-      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
-        const childRows = row[key];
-        if (Array.isArray(childRows)) visit(childRows as NativeFormLayoutNode[]);
-      });
-    });
-  };
-  visit(nodes);
-  return found;
-}
-
 function changedFieldGroupDraft() {
   return Object.keys(fieldGroupDraft).reduce<Record<string, string>>((acc, fieldKey) => {
     const key = String(fieldKey || '').trim();
@@ -2844,13 +2785,6 @@ const selectedFormSettingsFieldRow = computed(() => {
   };
 });
 
-function fieldStructureTitle(pageTitle: string, groupTitle: string) {
-  const page = String(pageTitle || '').trim();
-  const group = String(groupTitle || '').trim();
-  if (page && group && page !== group) return `${page} / ${group}`;
-  return page || group || '主表区域';
-}
-
 const nativeFieldStructureGroups = computed<Array<{ key: string; title: string; fieldKeys: string[] }>>(() => {
   const groups = new Map<string, { key: string; title: string; fieldKeys: string[] }>();
   const fieldSeen = new Set<string>();
@@ -2950,50 +2884,6 @@ const currentFormDesignFieldCount = computed(() => {
   if (activeContractModeFieldRows.value.length) return activeContractModeFieldRows.value.length;
   return nativeFieldStructureGroups.value.reduce((total, group) => total + group.fieldKeys.length, 0);
 });
-
-function collectNativeLayoutGroupTitles(nodes: NativeFormLayoutNode[]) {
-  const titles: string[] = [];
-  const walk = (rows: NativeFormLayoutNode[], pageTitle = '', groupTitle = '') => {
-    rows.forEach((node) => {
-      const type = nativeLayoutNodeType(node);
-      const title = String(node?.string || node?.label || '').trim();
-      const nextPage = type === 'page' && title ? title : pageTitle;
-      const nextGroup = type === 'group' && isReadableFieldGroupTitle(title)
-        ? fieldStructureTitle(nextPage, title)
-        : groupTitle;
-      if (type === 'page' && isReadableFieldGroupTitle(title)) titles.push(title);
-      if (type === 'group' && isReadableFieldGroupTitle(nextGroup)) titles.push(nextGroup);
-      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
-        const children = node?.[key];
-        if (Array.isArray(children)) walk(children as NativeFormLayoutNode[], nextPage, nextGroup);
-      });
-    });
-  };
-  walk(Array.isArray(nodes) ? nodes : []);
-  return titles;
-}
-
-function mergeLowCodeLayoutWithRuntimeGroupShells(base: NativeFormLayoutNode[], runtime: NativeFormLayoutNode[]) {
-  if (!Array.isArray(base) || !base.length) return base;
-  const existing = new Set(
-    collectNativeLayoutGroupTitles(base)
-      .map((title) => normalizeFieldGroupTitle(title))
-      .filter(Boolean),
-  );
-  const missing = collectNativeLayoutGroupTitles(runtime)
-    .map((title) => normalizeFieldGroupTitle(title))
-    .filter((title) => title && title !== '主表区域' && !existing.has(title));
-  if (!missing.length) return base;
-  return [
-    ...base,
-    ...Array.from(new Set(missing)).map((title) => ({
-      type: 'group',
-      string: title,
-      label: title,
-      children: [],
-    } as NativeFormLayoutNode)),
-  ];
-}
 
 const currentFormGroupOptions = computed(() => {
   const groupTitles = nativeFieldStructureGroups.value
