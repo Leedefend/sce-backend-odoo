@@ -37,6 +37,7 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 | P2-02 User-experience and portal smoke aggregate coverage | Done | System user experience, backend evidence, boundary import, business capability, form productization, finance fact, and portal smoke assets mapped to existing gates |
 | P2-02 Dedupe hotspot closeout | Done | No remaining dedupe hotspot above 2 assets; grouped drift summary mapped to `verify.frontend.grouped_drift_summary.baseline.guard` |
 | P2-02 Secondary 2-asset hotspot reduction | Done | Existing Make gates mapped for frontend, project dashboard, non-demo data, scene, role, SCBS, P1, and formal release validation assets; remaining grouped hotspots are seven 2-asset families without a confirmed aggregate gate |
+| P2-02 Residual hotspot disposition | Done | `test_inventory_summary.md` records the seven retained 2-asset families and why they are not marked aggregate-covered |
 | SEC-06 Secret scan gate | Done | `scripts/ci/secret_scan.py`, `make security.secrets.scan` |
 | P4-01 Module dependency map | Done | `module_dependency_map.md`, `scripts/ci/generate_module_dependency_map.py` |
 | P4-02 Domain boundary ADR | Done | `adr_0001_domain_boundaries.md` |
@@ -80,7 +81,7 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 2. Create milestone and labels.
 3. Create seed issues from `github_issue_seed_v1.1.md`.
 4. Enable branch protection after the workflow is visible.
-5. Start Phase 2 cleanup: reduce the top dedupe hotspot families before promoting any PR candidates to required gates.
+5. Keep the seven residual 2-asset hotspot families as explicit owner-review items unless a real aggregate gate is introduced.
 6. Add role/browser evidence for the fixed-data E2E-02, E2E-03, and E2E-08 journeys before release.
 7. Upgrade remaining partial journeys E2E-06 and E2E-10 to fixed-data executable gates.
 8. Assign concrete owner names and PR sequence for the P0 split-plan files in `split_plan_queue.md`.
