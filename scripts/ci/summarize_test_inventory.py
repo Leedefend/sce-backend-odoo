@@ -11,13 +11,41 @@ INVENTORY = ROOT / "docs" / "engineering_convergence" / "test_inventory.csv"
 SUMMARY = ROOT / "docs" / "engineering_convergence" / "test_inventory_summary.md"
 
 RESIDUAL_HOTSPOT_DISPOSITIONS = {
-    "scripts/verify/business_form_policy": "Retain as explicit PR candidates; no confirmed aggregate gate covers both policy coverage and field-hit audit.",
-    "scripts/verify/contract_business_category": "Retain as explicit PR candidates; action audit and binding audit are only wrapped by separate ops scripts.",
-    "scripts/verify/form_m2_payment": "Retain as explicit PR candidates; acceptance pair has no confirmed Make aggregate.",
-    "scripts/verify/form_m3_purchase": "Retain as explicit PR candidates; purchase/order-line acceptance pair has no confirmed Make aggregate.",
-    "scripts/verify/intent_smoke_utils": "Retain as helper debt; utility modules are consumed by multiple smokes and should not be marked covered by one gate.",
-    "scripts/verify/material_business_category": "Retain as explicit PR candidates; action and binding audits are only wrapped by separate ops scripts.",
-    "scripts/verify/material_settlement_payment": "Retain as explicit PR candidates; approval policy and reversal audits are not covered by the traceability aggregate.",
+    "scripts/verify/business_form_policy": {
+        "owner": "architecture owner",
+        "gate": "owner-reviewed PR candidates",
+        "disposition": "Retain as explicit PR candidates; no confirmed aggregate gate covers both policy coverage and field-hit audit.",
+    },
+    "scripts/verify/contract_business_category": {
+        "owner": "platform owner",
+        "gate": "owner-reviewed PR candidates",
+        "disposition": "Retain as explicit PR candidates; action audit and binding audit are only wrapped by separate ops scripts.",
+    },
+    "scripts/verify/form_m2_payment": {
+        "owner": "test owner",
+        "gate": "owner-reviewed PR candidates",
+        "disposition": "Retain as explicit PR candidates; acceptance pair has no confirmed Make aggregate.",
+    },
+    "scripts/verify/form_m3_purchase": {
+        "owner": "test owner",
+        "gate": "owner-reviewed PR candidates",
+        "disposition": "Retain as explicit PR candidates; purchase/order-line acceptance pair has no confirmed Make aggregate.",
+    },
+    "scripts/verify/intent_smoke_utils": {
+        "owner": "platform owner",
+        "gate": "helper debt, no aggregate gate",
+        "disposition": "Retain as helper debt; utility modules are consumed by multiple smokes and should not be marked covered by one gate.",
+    },
+    "scripts/verify/material_business_category": {
+        "owner": "architecture owner",
+        "gate": "owner-reviewed PR candidates",
+        "disposition": "Retain as explicit PR candidates; action and binding audits are only wrapped by separate ops scripts.",
+    },
+    "scripts/verify/material_settlement_payment": {
+        "owner": "architecture owner",
+        "gate": "owner-reviewed PR candidates",
+        "disposition": "Retain as explicit PR candidates; approval policy and reversal audits are not covered by the traceability aggregate.",
+    },
 }
 
 
@@ -186,13 +214,24 @@ def write_summary(rows: list[dict[str, str]]) -> None:
             if value >= 2
         ]
         if residuals:
-            lines.extend(["| Family | Count | Disposition |", "| --- | ---: | --- |"])
+            lines.extend(
+                [
+                    "| Family | Count | Owner | Gate Decision | Disposition |",
+                    "| --- | ---: | --- | --- | --- |",
+                ]
+            )
             for key, value in residuals:
-                disposition = RESIDUAL_HOTSPOT_DISPOSITIONS.get(
+                decision = RESIDUAL_HOTSPOT_DISPOSITIONS.get(
                     key,
-                    "Requires owner review before mapping to an aggregate gate.",
+                    {
+                        "owner": "test owner",
+                        "gate": "requires owner review",
+                        "disposition": "Requires owner review before mapping to an aggregate gate.",
+                    },
                 )
-                lines.append(f"| `{key}` | {value} | {disposition} |")
+                lines.append(
+                    f"| `{key}` | {value} | {decision['owner']} | {decision['gate']} | {decision['disposition']} |"
+                )
         else:
             lines.append("No dedupe hotspot family has two or more remaining PR candidates.")
     else:

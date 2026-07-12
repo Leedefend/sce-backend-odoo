@@ -318,12 +318,12 @@ Generated from `test_inventory.csv`.
 
 ## Residual Dedupe Hotspot Disposition
 
-| Family | Count | Disposition |
-| --- | ---: | --- |
-| `scripts/verify/business_form_policy` | 2 | Retain as explicit PR candidates; no confirmed aggregate gate covers both policy coverage and field-hit audit. |
-| `scripts/verify/contract_business_category` | 2 | Retain as explicit PR candidates; action audit and binding audit are only wrapped by separate ops scripts. |
-| `scripts/verify/form_m2_payment` | 2 | Retain as explicit PR candidates; acceptance pair has no confirmed Make aggregate. |
-| `scripts/verify/form_m3_purchase` | 2 | Retain as explicit PR candidates; purchase/order-line acceptance pair has no confirmed Make aggregate. |
-| `scripts/verify/intent_smoke_utils` | 2 | Retain as helper debt; utility modules are consumed by multiple smokes and should not be marked covered by one gate. |
-| `scripts/verify/material_business_category` | 2 | Retain as explicit PR candidates; action and binding audits are only wrapped by separate ops scripts. |
-| `scripts/verify/material_settlement_payment` | 2 | Retain as explicit PR candidates; approval policy and reversal audits are not covered by the traceability aggregate. |
+| Family | Count | Owner | Gate Decision | Disposition |
+| --- | ---: | --- | --- | --- |
+| `scripts/verify/business_form_policy` | 2 | architecture owner | owner-reviewed PR candidates | Retain as explicit PR candidates; no confirmed aggregate gate covers both policy coverage and field-hit audit. |
+| `scripts/verify/contract_business_category` | 2 | platform owner | owner-reviewed PR candidates | Retain as explicit PR candidates; action audit and binding audit are only wrapped by separate ops scripts. |
+| `scripts/verify/form_m2_payment` | 2 | test owner | owner-reviewed PR candidates | Retain as explicit PR candidates; acceptance pair has no confirmed Make aggregate. |
+| `scripts/verify/form_m3_purchase` | 2 | test owner | owner-reviewed PR candidates | Retain as explicit PR candidates; purchase/order-line acceptance pair has no confirmed Make aggregate. |
+| `scripts/verify/intent_smoke_utils` | 2 | platform owner | helper debt, no aggregate gate | Retain as helper debt; utility modules are consumed by multiple smokes and should not be marked covered by one gate. |
+| `scripts/verify/material_business_category` | 2 | architecture owner | owner-reviewed PR candidates | Retain as explicit PR candidates; action and binding audits are only wrapped by separate ops scripts. |
+| `scripts/verify/material_settlement_payment` | 2 | architecture owner | owner-reviewed PR candidates | Retain as explicit PR candidates; approval policy and reversal audits are not covered by the traceability aggregate. |

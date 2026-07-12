@@ -79,7 +79,7 @@ Revert this PR if the governance baseline must be removed. No production data or
 
 ## Residual Items
 
-- Seven residual 2-asset dedupe hotspot families remain intentionally unmarked as aggregate-covered; their dispositions are documented in `test_inventory_summary.md`.
+- Seven residual 2-asset dedupe hotspot families remain intentionally unmarked as aggregate-covered; their owner decisions, gate decisions, and dispositions are documented in `test_inventory_summary.md`.
 - Historical BOQ/model backlog `#2`, `#4`-`#9`, and `#64`-`#76` is labeled and explicitly deferred from v1.1 by `backlog_scope_decision_v1.1.md`.
 - Release-scale E2E role/browser evidence, E2E-06/E2E-10 fixed-data gates, security audit, performance baseline, and disaster recovery rehearsal remain future phase work.
 
