@@ -666,77 +666,23 @@
           </button>
           <p v-if="contractModeFeedback" class="contract-mode-feedback">{{ contractModeFeedback }}</p>
         </section>
-        <form
-          v-if="contractPromptRule"
-          class="contract-mode-prompt"
-          @submit.prevent="submitContractPromptAction"
-        >
-          <label
-            v-for="field in contractPromptFields"
-            :key="`contract-prompt-${field.name}`"
-            class="contract-mode-prompt-field"
-          >
-            <span>{{ field.label }}</span>
-            <select
-              v-if="field.options.length"
-              v-model="contractPromptValues[field.name]"
-              :required="field.required"
-              :disabled="busy"
-            >
-              <option value=""></option>
-              <option v-for="option in field.options" :key="option.value" :value="option.value">{{ option.label }}</option>
-            </select>
-            <input
-              v-else
-              v-model="contractPromptValues[field.name]"
-              :required="field.required"
-              :disabled="busy"
-            />
-          </label>
-          <button type="submit" class="chip-btn" :disabled="busy">确定</button>
-          <button type="button" class="ghost" :disabled="busy" @click="closeContractPromptAction">取消</button>
-        </form>
-        <div
-          v-if="lowCodeFieldCreateDialog.open"
-          class="contract-field-create-backdrop"
-          role="presentation"
-          @click.self="closeInlineCustomFieldCreate"
-          @keydown.esc="closeInlineCustomFieldCreate"
-        >
-          <form
-            class="contract-field-create-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="contract-field-create-title"
-            @submit.prevent="submitInlineCustomFieldCreate"
-          >
-            <header class="contract-field-create-head">
-              <h3 id="contract-field-create-title">新增字段</h3>
-              <button type="button" class="contract-field-create-close" :disabled="busy" aria-label="取消新增字段" @click="closeInlineCustomFieldCreate">x</button>
-            </header>
-            <label class="contract-mode-prompt-field">
-              <span>字段标题</span>
-              <input ref="lowCodeFieldCreateLabelRef" v-model="lowCodeFieldCreateDialog.label" required :disabled="busy" />
-            </label>
-            <label class="contract-mode-prompt-field">
-              <span>字段类型</span>
-              <select v-model="lowCodeFieldCreateDialog.ttype" required :disabled="busy">
-                <option value="char">单行文本</option>
-                <option value="text">多行文本</option>
-                <option value="integer">整数</option>
-                <option value="float">小数</option>
-                <option value="boolean">是/否</option>
-                <option value="date">日期</option>
-                <option value="datetime">日期时间</option>
-                <option value="html">富文本</option>
-              </select>
-            </label>
-            <footer class="contract-field-create-actions">
-              <button type="submit" class="chip-btn" :disabled="busy">创建字段</button>
-              <button type="button" class="ghost" :disabled="busy" @click="closeInlineCustomFieldCreate">取消</button>
-            </footer>
-          </form>
-        </div>
+        <ContractPromptActionForm
+          :busy="busy"
+          :fields="contractPromptFields"
+          :values="contractPromptValues"
+          :visible="Boolean(contractPromptRule)"
+          @cancel="closeContractPromptAction"
+          @submit="submitContractPromptAction"
+          @value-change="contractPromptValues[$event.fieldName] = $event.value"
+        />
+        <LowCodeFieldCreateDialog
+          :busy="busy"
+          :dialog="lowCodeFieldCreateDialog"
+          @close="closeInlineCustomFieldCreate"
+          @submit="submitInlineCustomFieldCreate"
+          @update:label="lowCodeFieldCreateDialog.label = $event"
+          @update:ttype="lowCodeFieldCreateDialog.ttype = $event"
+        />
         <ul v-if="lowCodePrecheckWarnings.length" class="contract-lowcode-warnings">
           <li v-for="(warning, index) in lowCodePrecheckWarnings" :key="`lowcode-warning-${index}`">{{ warning }}</li>
         </ul>
@@ -884,6 +830,8 @@ import SceneBlocksRenderer from '../components/scene/SceneBlocksRenderer.vue';
 import PageFooterTemplate from '../components/template/PageFooter.vue';
 import NativeCollaborationPanel from './contractForm/NativeCollaborationPanel.vue';
 import RelationSearchDialog, { type RelationSearchDialogState } from './contractForm/RelationSearchDialog.vue';
+import ContractPromptActionForm from './contractForm/ContractPromptActionForm.vue';
+import LowCodeFieldCreateDialog, { type LowCodeFieldCreateDialogState } from './contractForm/LowCodeFieldCreateDialog.vue';
 import type {
   FormSectionFieldActionPayload,
   FormSectionFieldSchema,
@@ -1932,7 +1880,7 @@ const fieldVisibilityDirtyKeys = reactive<Record<string, boolean>>({});
 const formConfigAuditBusy = ref(false);
 const formConfigAuditResult = ref<FormConfigAuditResult | null>(null);
 const formConfigOperationLog = ref<FormConfigOperationLogEntry[]>([]);
-const lowCodeFieldCreateDialog = reactive({
+const lowCodeFieldCreateDialog = reactive<LowCodeFieldCreateDialogState>({
   open: false,
   afterFieldKey: '',
   groupTitle: '',
@@ -1940,7 +1888,6 @@ const lowCodeFieldCreateDialog = reactive({
   label: '',
   ttype: 'char',
 });
-const lowCodeFieldCreateLabelRef = ref<HTMLInputElement | null>(null);
 const lowCodeContractLoaded = ref(false);
 const lowCodeContractHydrating = ref(false);
 const lowCodePrecheckWarnings = ref<string[]>([]);
@@ -8256,7 +8203,6 @@ function openInlineCustomFieldCreate(groupTitle: string, afterFieldKey = '') {
   lowCodeFieldCreateDialog.sequence = contractFieldSequence(afterFieldKey, fieldOrderDraft.value.length ? (fieldOrderDraft.value.length + 1) * 10 : 100) + 5;
   lowCodeFieldCreateDialog.label = '';
   lowCodeFieldCreateDialog.ttype = 'char';
-  void nextTick(() => lowCodeFieldCreateLabelRef.value?.focus());
 }
 
 function onContractInlineFieldAddAfter(payload: { field: FormSectionFieldSchema; groupTitle: string }) {
