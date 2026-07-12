@@ -24,7 +24,7 @@ Extracted responsibilities:
 - Required-value checks, comparable-value normalization, numeric parsing, route-default normalization, and navigation URL normalization moved to `frontend/apps/web/src/pages/contractForm/valueUtils.ts`.
 - Workflow phase statusbar normalization moved to `frontend/apps/web/src/pages/contractForm/workflowContract.ts`.
 - The Web Contract V2 frontend architecture guard is now part of the local `make ci` gate through `verify.unified_page_contract.v2.web_architecture`.
-- P0 split-plan file growth is now locked by `docs/engineering_convergence/complexity_baseline_lock.json` and `scripts/ci/enforce_complexity_baseline_lock.py`.
+- High-risk split-plan file growth is now locked by `docs/engineering_convergence/complexity_baseline_lock.json` and `scripts/ci/enforce_complexity_baseline_lock.py`.
 
 The route component remains the orchestration shell and still owns runtime state, navigation, persistence, and user interaction flow.
 
