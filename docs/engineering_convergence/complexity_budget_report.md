@@ -4,7 +4,7 @@ Generated from repository source files. This report is informational during the 
 
 ## Summary
 
-- Scanned files: `3800`
+- Scanned files: `3801`
 - Files requiring split plan: `44`
 - Files above warning threshold: `60`
 
@@ -30,10 +30,10 @@ Generated from repository source files. This report is informational during the 
 | 2830 | Python source | `addons/smart_construction_core/models/core/material_acceptance.py` |
 | 2594 | Vue source | `frontend/apps/web/src/views/MyWorkView.vue` |
 | 2585 | Python source | `addons/smart_construction_core/tests/test_user_feedback_business_views.py` |
-| 2567 | Vue source | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` |
 | 2529 | XML data/view | `addons/smart_construction_core/views/menu_business_taxonomy.xml` |
 | 2452 | Python source | `addons/smart_core/core/unified_page_contract_v2_assembler.py` |
 | 2385 | Vue source | `frontend/apps/web/src/layouts/AppShell.vue` |
+| 2316 | Vue source | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` |
 | 2306 | Python source | `addons/smart_core/handlers/system_init.py` |
 | 2289 | Python source | `addons/smart_construction_core/models/core/project_core.py` |
 | 2196 | Python source | `addons/smart_core/handlers/api_data.py` |
@@ -144,10 +144,10 @@ Generated from repository source files. This report is informational during the 
 | 2830 | split_plan_required | Python source | `addons/smart_construction_core/models/core/material_acceptance.py` |
 | 2594 | split_plan_required | Vue source | `frontend/apps/web/src/views/MyWorkView.vue` |
 | 2585 | split_plan_required | Python source | `addons/smart_construction_core/tests/test_user_feedback_business_views.py` |
-| 2567 | split_plan_required | Vue source | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` |
 | 2529 | split_plan_required | XML data/view | `addons/smart_construction_core/views/menu_business_taxonomy.xml` |
 | 2452 | split_plan_required | Python source | `addons/smart_core/core/unified_page_contract_v2_assembler.py` |
 | 2385 | split_plan_required | Vue source | `frontend/apps/web/src/layouts/AppShell.vue` |
+| 2316 | split_plan_required | Vue source | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` |
 | 2306 | split_plan_required | Python source | `addons/smart_core/handlers/system_init.py` |
 | 2289 | split_plan_required | Python source | `addons/smart_construction_core/models/core/project_core.py` |
 | 2196 | split_plan_required | Python source | `addons/smart_core/handlers/api_data.py` |
