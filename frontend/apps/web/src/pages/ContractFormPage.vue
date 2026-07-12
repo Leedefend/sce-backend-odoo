@@ -1290,6 +1290,14 @@ import {
   normalizeFormConfigOperationLogEntries,
   readableFallbackFieldLabel,
 } from './contractForm/formConfigHelpers';
+import {
+  isMissingRequiredValue,
+  isRequiredFieldEmptyByType,
+  normalizeComparable,
+  normalizeRouteDefault,
+  parseNumeric,
+  resolveNavigationUrl as resolveNavigationUrlFromOrigin,
+} from './contractForm/valueUtils';
 import { dictOrEmpty, mergeFieldLabelsFromSource } from './contractForm/recordUtils';
 import {
   collectContractActionBadgeCountFieldNames,
@@ -7346,16 +7354,6 @@ function shouldShowRequiredMark(node: LayoutNode) {
   return coreFieldNames.value.includes(node.name);
 }
 
-function isMissingRequiredValue(value: unknown) {
-  if (value === null || value === undefined) return true;
-  if (typeof value === 'string') return value.trim().length === 0;
-  if (typeof value === 'number') return !Number.isFinite(value) || value <= 0;
-  if (Array.isArray(value)) return value.length === 0;
-  if (typeof value === 'boolean') return false;
-  if (typeof value === 'object') return Object.keys(value as Record<string, unknown>).length === 0;
-  return false;
-}
-
 function collectSceneValidationPrecheckErrors(fieldLabels: Record<string, string>): string[] {
   const out: string[] = [];
   for (const field of sceneValidationRequiredFields.value) {
@@ -7578,15 +7576,6 @@ const contractReadiness = computed<FormContractReadiness>(() => {
   return analyzeFormContractReadiness(contract.value, { requirePureFormViewType: false });
 });
 
-function normalizeComparable(value: unknown) {
-  if (Array.isArray(value) && value.every((item) => typeof item === 'number')) {
-    return JSON.stringify([...value].sort((a, b) => a - b));
-  }
-  if (Array.isArray(value)) return JSON.stringify(value);
-  if (value && typeof value === 'object') return JSON.stringify(value);
-  return String(value ?? '');
-}
-
 function comparableFieldValue(name: string, value: unknown) {
   const descriptor = contract.value?.fields?.[name];
   const ttype = fieldType(descriptor);
@@ -7612,13 +7601,6 @@ function isFieldWritable(name: string) {
   if (node) return !node.readonly;
   const statusField = nativeStatusbar.value.field;
   return Boolean(statusField && statusField === name && !nativeStatusbar.value.readonly);
-}
-
-function parseNumeric(text: unknown) {
-  const raw = String(text ?? '').trim();
-  if (!raw) return null;
-  const parsed = Number(raw);
-  return Number.isFinite(parsed) ? parsed : null;
 }
 
 function normalizeFieldValue(name: string, value: unknown) {
@@ -8130,13 +8112,7 @@ function collectWritableValues() {
 }
 
 function isRequiredFieldEmpty(value: unknown, descriptor?: FieldDescriptor | null) {
-  const ttype = fieldType(descriptor);
-  if (Array.isArray(value)) return value.length === 0;
-  if (ttype === 'many2one') return !Number(value || 0);
-  if (ttype === 'many2many' || ttype === 'one2many') return !Array.isArray(value) || value.length === 0;
-  if (value === false || value === null || value === undefined) return true;
-  if (typeof value === 'string') return value.trim() === '';
-  return false;
+  return isRequiredFieldEmptyByType(value, fieldType(descriptor));
 }
 
 function collectRequiredFieldIssues(values: Record<string, unknown>) {
@@ -8229,23 +8205,8 @@ function fieldInputType(ttype?: string) {
   return 'text';
 }
 
-function normalizeRouteDefault(value: unknown) {
-  const raw = Array.isArray(value) ? value[value.length - 1] : value;
-  if (typeof raw !== 'string') return raw;
-  const normalized = raw.trim();
-  if (!normalized) return '';
-  if (normalized === 'true') return true;
-  if (normalized === 'false') return false;
-  if (/^-?\d+(\.\d+)?$/.test(normalized)) return Number(normalized);
-  return normalized;
-}
-
 function resolveNavigationUrl(url: string) {
-  const raw = String(url || '').trim();
-  if (!raw) return '';
-  if (/^https?:\/\//i.test(raw)) return raw;
-  if (raw.startsWith('/')) return `${window.location.origin}${raw}`;
-  return raw;
+  return resolveNavigationUrlFromOrigin(url, window.location.origin);
 }
 
 function syncContractV2ShadowStore(rawContract: unknown) {
