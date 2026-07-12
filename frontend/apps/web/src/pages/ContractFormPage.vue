@@ -1283,7 +1283,9 @@ import {
   viewTypeDisplayLabel,
 } from './contractForm/fieldUtils';
 import {
-  formConfigOperationCoalesceKey,
+  appendFormConfigOperationLogEntry,
+  buildFormConfigOperationLogStorageKey,
+  createFormConfigOperationLogEntry,
   formConfigOperationStatusLabel,
   formatFormConfigOperationSummary as formatFormConfigOperationSummaryText,
   formatFormConfigOperationTime,
@@ -2473,14 +2475,15 @@ const formConfigOperatorName = computed(() => {
 });
 
 const formConfigOperationLogStorageKey = computed(() => {
-  const modelName = String(model.value || route.params.model || '').trim() || 'unknown';
-  const action = Number(actionId.value || route.query.action_id || 0) || 0;
-  const view = String(routeQueryText('view_id') || routeQueryText('viewId') || '0').trim() || '0';
-  const page = String(routeQueryText('page_label') || routeQueryText('pageLabel') || route.fullPath || '').trim();
   const user = (session.user || {}) as Record<string, unknown>;
-  const userId = String(user.id || user.login || formConfigOperatorName.value || '').trim() || 'anonymous';
-  const db = String(route.query.db || '').trim() || 'default';
-  return `sc_form_config_operation_log:${db}:${modelName}:action:${action}:view:${view}:page:${page}:user:${userId}`;
+  return buildFormConfigOperationLogStorageKey({
+    db: route.query.db,
+    modelName: model.value || route.params.model,
+    actionId: actionId.value || route.query.action_id,
+    viewId: routeQueryText('view_id') || routeQueryText('viewId'),
+    page: routeQueryText('page_label') || routeQueryText('pageLabel') || route.fullPath,
+    userId: user.id || user.login || formConfigOperatorName.value,
+  });
 });
 
 function persistFormConfigOperationLog() {
@@ -2511,33 +2514,9 @@ function appendFormConfigOperation(
   summary: string,
   status: FormConfigOperationLogEntry['status'] = 'pending',
 ) {
-  const normalizedAction = String(action || '').trim();
-  const normalizedSummary = String(summary || '').trim();
-  if (!normalizedAction || !normalizedSummary) return;
-  const now = new Date();
-  const entry = {
-    id: `${now.getTime()}-${Math.random().toString(36).slice(2, 8)}`,
-    at: now.toISOString(),
-    operator: formConfigOperatorName.value,
-    action: normalizedAction,
-    summary: normalizedSummary,
-    status,
-  };
-  const latest = formConfigOperationLog.value[0];
-  const currentKey = formConfigOperationCoalesceKey(normalizedAction, normalizedSummary);
-  const latestKey = latest ? formConfigOperationCoalesceKey(latest.action, latest.summary) : '';
-  if (status === 'pending' && latest?.status === 'pending' && currentKey && currentKey === latestKey) {
-    formConfigOperationLog.value = [
-      { ...entry, id: latest.id },
-      ...formConfigOperationLog.value.slice(1),
-    ].slice(0, 50);
-    persistFormConfigOperationLog();
-    return;
-  }
-  formConfigOperationLog.value = [
-    entry,
-    ...formConfigOperationLog.value,
-  ].slice(0, 50);
+  const entry = createFormConfigOperationLogEntry(action, summary, formConfigOperatorName.value, status);
+  if (!entry) return;
+  formConfigOperationLog.value = appendFormConfigOperationLogEntry(formConfigOperationLog.value, entry);
   persistFormConfigOperationLog();
 }
 

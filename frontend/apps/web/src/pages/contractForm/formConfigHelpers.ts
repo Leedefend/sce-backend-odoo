@@ -29,6 +29,60 @@ export function normalizeFormConfigOperationLogEntries(raw: unknown, operator = 
     .filter((item): item is FormConfigOperationLogEntry => Boolean(item));
 }
 
+export function buildFormConfigOperationLogStorageKey(params: {
+  db: unknown;
+  modelName: unknown;
+  actionId: unknown;
+  viewId: unknown;
+  page: unknown;
+  userId: unknown;
+}) {
+  const db = String(params.db || '').trim() || 'default';
+  const modelName = String(params.modelName || '').trim() || 'unknown';
+  const action = Number(params.actionId || 0) || 0;
+  const view = String(params.viewId || '0').trim() || '0';
+  const page = String(params.page || '').trim();
+  const userId = String(params.userId || '').trim() || 'anonymous';
+  return `sc_form_config_operation_log:${db}:${modelName}:action:${action}:view:${view}:page:${page}:user:${userId}`;
+}
+
+export function createFormConfigOperationLogEntry(
+  action: string,
+  summary: string,
+  operator: string,
+  status: FormConfigOperationLogEntry['status'] = 'pending',
+): FormConfigOperationLogEntry | null {
+  const normalizedAction = String(action || '').trim();
+  const normalizedSummary = String(summary || '').trim();
+  if (!normalizedAction || !normalizedSummary) return null;
+  const now = new Date();
+  return {
+    id: `${now.getTime()}-${Math.random().toString(36).slice(2, 8)}`,
+    at: now.toISOString(),
+    operator: String(operator || '当前用户').trim(),
+    action: normalizedAction,
+    summary: normalizedSummary,
+    status,
+  };
+}
+
+export function appendFormConfigOperationLogEntry(
+  entries: FormConfigOperationLogEntry[],
+  entry: FormConfigOperationLogEntry,
+  limit = 50,
+) {
+  const currentKey = formConfigOperationCoalesceKey(entry.action, entry.summary);
+  const latest = entries[0];
+  const latestKey = latest ? formConfigOperationCoalesceKey(latest.action, latest.summary) : '';
+  if (entry.status === 'pending' && latest?.status === 'pending' && currentKey && currentKey === latestKey) {
+    return [
+      { ...entry, id: latest.id },
+      ...entries.slice(1),
+    ].slice(0, limit);
+  }
+  return [entry, ...entries].slice(0, limit);
+}
+
 export function formConfigOperationSubject(action: string, summary: string) {
   const normalizedAction = String(action || '').trim();
   const normalizedSummary = String(summary || '').trim();
