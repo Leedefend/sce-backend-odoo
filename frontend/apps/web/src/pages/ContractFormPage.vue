@@ -583,6 +583,7 @@ import {
 } from './contractForm/one2manyUtils';
 import {
   closedRelationSearchDialogState,
+  dynamicRelationDomainFromDescriptor,
   relationEntry,
   dynamicDomainDependencyFields,
   fallbackRelationSearchColumns,
@@ -2729,43 +2730,12 @@ function formUiLabel(key: string) {
 }
 
 function dynamicDomainFromDescriptor(descriptor?: FieldDescriptor) {
-  const raw = (descriptor as Record<string, unknown> | undefined)?.domain;
-  if (typeof raw !== 'string' || !raw.trim()) return [];
-  const out: unknown[] = [];
-  const text = raw.trim();
-  const tuplePattern = /\(['"]([\w.]+)['"]\s*,\s*['"]([=!<>]{1,2}|in|not in|ilike|like)['"]\s*,\s*([A-Za-z_]\w*)\)/g;
-  let match: RegExpExecArray | null;
-  let hasDynamicDependency = false;
-  let hasUnresolvedDependency = false;
-  while ((match = tuplePattern.exec(text))) {
-    const [, fieldName, operator, valueField] = match;
-    if (!fieldName || !operator || !valueField) continue;
-    hasDynamicDependency = true;
-    const value = resolveDynamicDomainDependencyValue(valueField);
-    if (value === undefined || value === null || value === '' || value === false) {
-      hasUnresolvedDependency = true;
-      continue;
-    }
-    const normalizedValue = normalizeFieldValue(valueField, value);
-    if (normalizedValue === undefined || normalizedValue === null || normalizedValue === '' || normalizedValue === false) {
-      hasUnresolvedDependency = true;
-      continue;
-    }
-    out.push([fieldName, operator, normalizedValue]);
-  }
-  if (hasDynamicDependency && hasUnresolvedDependency) {
-    const descriptorRecord = descriptor as Record<string, unknown> | undefined;
-    const currentFieldName = String(descriptorRecord?.name || descriptorRecord?.field || '').trim();
-    if (currentFieldName && fieldType(descriptor) === 'many2one') {
-      const currentValue = normalizeFieldValue(currentFieldName, formData[currentFieldName]);
-      const currentId = Number(currentValue || 0);
-      if (Number.isFinite(currentId) && currentId > 0) {
-        return [['id', '=', Math.trunc(currentId)]];
-      }
-    }
-    return [['id', '=', -1]];
-  }
-  return out;
+  return dynamicRelationDomainFromDescriptor({
+    descriptor,
+    resolveDependencyValue: resolveDynamicDomainDependencyValue,
+    normalizeDependencyValue: normalizeFieldValue,
+    currentFieldValue: (fieldName) => formData[fieldName],
+  });
 }
 
 function resolveDynamicDomainDependencyValue(valueField: string) {

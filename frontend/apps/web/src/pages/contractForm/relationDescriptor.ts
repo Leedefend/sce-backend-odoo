@@ -1,6 +1,6 @@
 import type { FieldDescriptor } from '@sc/schema';
 import { toPositiveInt } from '../../app/contractRuntime';
-import { cleanRelationDisplayLabel, normalizeRelationIds } from './fieldUtils';
+import { cleanRelationDisplayLabel, fieldType, normalizeRelationIds } from './fieldUtils';
 import type { RelationOption, RelationSearchColumn, RelationUiLabels } from './types';
 
 export function relationEntry(descriptor?: FieldDescriptor) {
@@ -258,6 +258,51 @@ export function dynamicDomainDependencyFields(descriptor?: FieldDescriptor) {
     if (valueField) deps.add(valueField);
   }
   return Array.from(deps);
+}
+
+export function dynamicRelationDomainFromDescriptor(params: {
+  descriptor?: FieldDescriptor;
+  resolveDependencyValue: (fieldName: string) => unknown;
+  normalizeDependencyValue: (fieldName: string, value: unknown) => unknown;
+  currentFieldValue: (fieldName: string) => unknown;
+}) {
+  const raw = (params.descriptor as Record<string, unknown> | undefined)?.domain;
+  if (typeof raw !== 'string' || !raw.trim()) return [];
+  const out: unknown[] = [];
+  const text = raw.trim();
+  const tuplePattern = /\(['"]([\w.]+)['"]\s*,\s*['"]([=!<>]{1,2}|in|not in|ilike|like)['"]\s*,\s*([A-Za-z_]\w*)\)/g;
+  let match: RegExpExecArray | null;
+  let hasDynamicDependency = false;
+  let hasUnresolvedDependency = false;
+  while ((match = tuplePattern.exec(text))) {
+    const [, fieldName, operator, valueField] = match;
+    if (!fieldName || !operator || !valueField) continue;
+    hasDynamicDependency = true;
+    const value = params.resolveDependencyValue(valueField);
+    if (value === undefined || value === null || value === '' || value === false) {
+      hasUnresolvedDependency = true;
+      continue;
+    }
+    const normalizedValue = params.normalizeDependencyValue(valueField, value);
+    if (normalizedValue === undefined || normalizedValue === null || normalizedValue === '' || normalizedValue === false) {
+      hasUnresolvedDependency = true;
+      continue;
+    }
+    out.push([fieldName, operator, normalizedValue]);
+  }
+  if (hasDynamicDependency && hasUnresolvedDependency) {
+    const descriptorRecord = params.descriptor as Record<string, unknown> | undefined;
+    const currentFieldName = String(descriptorRecord?.name || descriptorRecord?.field || '').trim();
+    if (currentFieldName && fieldType(params.descriptor) === 'many2one') {
+      const currentValue = params.normalizeDependencyValue(currentFieldName, params.currentFieldValue(currentFieldName));
+      const currentId = Number(currentValue || 0);
+      if (Number.isFinite(currentId) && currentId > 0) {
+        return [['id', '=', Math.trunc(currentId)]];
+      }
+    }
+    return [['id', '=', -1]];
+  }
+  return out;
 }
 
 export function isBlockAllDomain(domain: unknown) {
