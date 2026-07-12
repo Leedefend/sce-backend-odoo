@@ -1288,6 +1288,8 @@ import {
   buildCurrentFormGroupOptions,
   buildFormDesignerGroupNavigatorItems,
   buildFormDesignerSearchableFieldRows,
+  buildLowCodeViewOrchestration as buildLowCodeViewOrchestrationFromDraft,
+  collectLowCodeLayoutFromViewOrchestration,
   createFormConfigOperationLogEntry,
   collectNativeFieldStructureGroups,
   extractLowCodeFormFieldDraftState,
@@ -1311,6 +1313,7 @@ import {
   normalizeFormConfigOperationLogEntries,
   readableFallbackFieldLabel,
   resolveSelectedFormSettingsFieldGroupTitle,
+  type LowCodeLayoutDraftRow,
 } from './contractForm/formConfigHelpers';
 import {
   isMissingRequiredValue,
@@ -2212,7 +2215,7 @@ const lowCodePrecheckWarnings = ref<string[]>([]);
 const lowCodeContractList = ref<Array<{ id: number; name: string; model: string; status: string; version_no: number }>>([]);
 const lowCodeSelectedContractName = ref('');
 const lowCodeFormLayoutBase = ref<NativeFormLayoutNode[]>([]);
-const lowCodeLayoutDraft = ref<Array<{ section: 'form' | 'list' | 'kanban'; object: string; field: string }>>([]);
+const lowCodeLayoutDraft = ref<LowCodeLayoutDraftRow[]>([]);
 
 const contractModeBaseFieldRows = computed<ContractFieldGovernanceRow[]>(() => {
   const mode = activeContractMode.value;
@@ -3117,115 +3120,21 @@ async function rollbackSelectedLowCodeContract() {
   }
 }
 
-function collectLowCodeLayoutFromViewOrchestration(views: Record<string, unknown>, modelName: string) {
-  const out: Array<{ section: 'form' | 'list' | 'kanban'; object: string; field: string }> = [];
-  const collect = (section: 'form' | 'list' | 'kanban', viewKey: string, rowKey: string) => {
-    const spec = views[viewKey] && typeof views[viewKey] === 'object' && !Array.isArray(views[viewKey])
-      ? views[viewKey] as Record<string, unknown>
-      : {};
-    const rows = Array.isArray(spec[rowKey]) ? spec[rowKey] as unknown[] : [];
-    rows.forEach((row) => {
-      const item = row && typeof row === 'object' ? row as Record<string, unknown> : {};
-      const field = String(item.name || item.field || '').trim();
-      if (field) out.push({ section, object: modelName, field });
-    });
-  };
-  collect('form', 'form', 'fields');
-  collect('list', 'tree', 'columns');
-  collect('list', 'list', 'columns');
-  collect('kanban', 'kanban', 'fields');
-  return out;
-}
-
 function buildLowCodeViewOrchestration() {
   const availableFields = contract.value?.fields || {};
-  const fieldLabel = (name: string) => effectiveLowCodeFieldLabel(name, availableFields[name]);
-  const fieldGroupTitle = (name: string) => (
-    effectiveFieldGroupTitleForDraft(name)
-  );
-  const sectionFields = (section: 'form' | 'list' | 'kanban') => lowCodeLayoutDraft.value
-    .filter((row) => row.section === section)
-    .map((row) => String(row.field || '').trim())
-    .filter((name) => name && availableFields[name]);
-  const formDraftNames = fieldOrderDraft.value.filter((name) => availableFields[name]);
-  const formNames = isContractFieldOrderEditable.value && formDraftNames.length
-    ? formDraftNames
-    : (sectionFields('form').length ? sectionFields('form') : formDraftNames);
-  const listNames = sectionFields('list');
-  const kanbanNames = sectionFields('kanban');
-  const views: Record<string, unknown> = {};
-  if (formNames.length) {
-    const groupBuckets = new Map<string, string[]>();
-    formNames.forEach((name) => {
-      const title = fieldGroupTitle(name);
-      const key = title || '业务配置字段';
-      if (!groupBuckets.has(key)) groupBuckets.set(key, []);
-      groupBuckets.get(key)?.push(name);
-    });
-    const layoutGroups = Array.from(groupBuckets.entries())
-      .filter(([title]) => effectiveGroupVisible(title))
-      .map(([title, names]) => ({
-      type: 'group',
-      string: title,
-      visible: effectiveGroupVisible(title),
-      columns: effectiveGroupColumns(title),
-      children: names.map((name) => ({
-        type: 'field',
-        name,
-        ...(lowCodeFieldSizeClass(effectiveFieldSize(name)) ? {
-          class: lowCodeFieldSizeClass(effectiveFieldSize(name)),
-          field_size: effectiveFieldSize(name),
-        } : {}),
-      })),
-    }));
-    views.form = {
-      columns: formLayoutColumnsDraft.value,
-      fields: formNames.map((name, index) => {
-        const groupTitle = fieldGroupTitle(name);
-        const fieldSize = effectiveFieldSize(name);
-        const fieldClass = lowCodeFieldSizeClass(fieldSize);
-        return {
-          name,
-          label: fieldLabel(name),
-          visible: fieldVisibilityDraft[name] !== false && effectiveGroupVisible(groupTitle || '业务配置字段'),
-          sequence: (index + 1) * 10,
-          ...(groupTitle ? { group_title: groupTitle } : {}),
-          ...(fieldClass ? { class: fieldClass, field_size: fieldSize } : {}),
-        };
-      }),
-      sections: Array.from(groupBuckets.entries()).map(([title, names], index) => ({
-        name: `business_config_section_${index + 1}`,
-        title,
-        visible: effectiveGroupVisible(title),
-        columns: effectiveGroupColumns(title),
-        sequence: (index + 1) * 10,
-        fields: [...names],
-      })),
-      layout: layoutGroups,
-    };
-  }
-  if (listNames.length) {
-    views.tree = {
-      columns: listNames.map((name, index) => ({
-        name,
-        label: fieldLabel(name),
-        visible: true,
-        sequence: (index + 1) * 10,
-      })),
-    };
-  }
-  if (kanbanNames.length) {
-    views.kanban = {
-      fields: kanbanNames.map((name, index) => ({
-        name,
-        label: fieldLabel(name),
-        visible: true,
-        sequence: (index + 1) * 10,
-      })),
-      slots: { primary: kanbanNames.slice(0, 3) },
-    };
-  }
-  return Object.keys(views).length ? { views } : undefined;
+  return buildLowCodeViewOrchestrationFromDraft({
+    availableFieldNames: Object.keys(availableFields),
+    layoutDraft: lowCodeLayoutDraft.value,
+    formOrderDraft: fieldOrderDraft.value,
+    formOrderEditable: isContractFieldOrderEditable.value,
+    formColumns: formLayoutColumnsDraft.value,
+    resolveFieldLabel: (name) => effectiveLowCodeFieldLabel(name, availableFields[name]),
+    resolveFieldGroupTitle: effectiveFieldGroupTitleForDraft,
+    resolveFieldVisible: (name, groupTitle) => fieldVisibilityDraft[name] !== false && effectiveGroupVisible(groupTitle),
+    resolveGroupVisible: effectiveGroupVisible,
+    resolveGroupColumns: effectiveGroupColumns,
+    resolveFieldSize: effectiveFieldSize,
+  });
 }
 
 function lowCodeLayoutFieldLabel(name: string) {

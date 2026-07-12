@@ -1,5 +1,10 @@
 import type { FormConfigAuditResult, FormConfigOperationLogEntry, LowCodeFieldSize } from './types';
-import { normalizeLowCodeColumns, normalizeLowCodeColumnsOrNull, normalizeLowCodeFieldSize } from './fieldUtils';
+import {
+  lowCodeFieldSizeClass,
+  normalizeLowCodeColumns,
+  normalizeLowCodeColumnsOrNull,
+  normalizeLowCodeFieldSize,
+} from './fieldUtils';
 import { nativeLayoutNodeType, type NativeLayoutLikeNode } from './nativeLayoutUtils';
 
 export function normalizeFormConfigOperationLogEntries(raw: unknown, operator = '当前用户') {
@@ -553,6 +558,132 @@ export function extractLowCodeFormFieldDraftState(formSpec: Record<string, unkno
     visibility,
     groups,
   };
+}
+
+export type LowCodeLayoutDraftRow = {
+  section: 'form' | 'list' | 'kanban';
+  object: string;
+  field: string;
+};
+
+export function collectLowCodeLayoutFromViewOrchestration(views: Record<string, unknown>, modelName: string) {
+  const out: LowCodeLayoutDraftRow[] = [];
+  const collect = (section: LowCodeLayoutDraftRow['section'], viewKey: string, rowKey: string) => {
+    const spec = views[viewKey] && typeof views[viewKey] === 'object' && !Array.isArray(views[viewKey])
+      ? views[viewKey] as Record<string, unknown>
+      : {};
+    const rows = Array.isArray(spec[rowKey]) ? spec[rowKey] as unknown[] : [];
+    rows.forEach((row) => {
+      const item = row && typeof row === 'object' ? row as Record<string, unknown> : {};
+      const field = String(item.name || item.field || '').trim();
+      if (field) out.push({ section, object: modelName, field });
+    });
+  };
+  collect('form', 'form', 'fields');
+  collect('list', 'tree', 'columns');
+  collect('list', 'list', 'columns');
+  collect('kanban', 'kanban', 'fields');
+  return out;
+}
+
+export function buildLowCodeViewOrchestration(params: {
+  availableFieldNames: string[];
+  layoutDraft: LowCodeLayoutDraftRow[];
+  formOrderDraft: string[];
+  formOrderEditable: boolean;
+  formColumns: 1 | 2 | 3;
+  resolveFieldLabel: (name: string) => string;
+  resolveFieldGroupTitle: (name: string) => string;
+  resolveFieldVisible: (name: string, groupTitle: string) => boolean;
+  resolveGroupVisible: (title: string) => boolean;
+  resolveGroupColumns: (title: string) => 1 | 2 | 3;
+  resolveFieldSize: (name: string) => LowCodeFieldSize;
+}) {
+  const availableFields = new Set(params.availableFieldNames.map((name) => String(name || '').trim()).filter(Boolean));
+  const sectionFields = (section: LowCodeLayoutDraftRow['section']) => params.layoutDraft
+    .filter((row) => row.section === section)
+    .map((row) => String(row.field || '').trim())
+    .filter((name) => name && availableFields.has(name));
+  const formDraftNames = params.formOrderDraft.filter((name) => availableFields.has(name));
+  const formNames = params.formOrderEditable && formDraftNames.length
+    ? formDraftNames
+    : (sectionFields('form').length ? sectionFields('form') : formDraftNames);
+  const listNames = sectionFields('list');
+  const kanbanNames = sectionFields('kanban');
+  const views: Record<string, unknown> = {};
+  if (formNames.length) {
+    const groupBuckets = new Map<string, string[]>();
+    formNames.forEach((name) => {
+      const title = params.resolveFieldGroupTitle(name);
+      const key = title || '业务配置字段';
+      if (!groupBuckets.has(key)) groupBuckets.set(key, []);
+      groupBuckets.get(key)?.push(name);
+    });
+    const layoutGroups = Array.from(groupBuckets.entries())
+      .filter(([title]) => params.resolveGroupVisible(title))
+      .map(([title, names]) => ({
+        type: 'group',
+        string: title,
+        visible: params.resolveGroupVisible(title),
+        columns: params.resolveGroupColumns(title),
+        children: names.map((name) => {
+          const fieldSize = params.resolveFieldSize(name);
+          const fieldClass = lowCodeFieldSizeClass(fieldSize);
+          return {
+            type: 'field',
+            name,
+            ...(fieldClass ? { class: fieldClass, field_size: fieldSize } : {}),
+          };
+        }),
+      }));
+    views.form = {
+      columns: params.formColumns,
+      fields: formNames.map((name, index) => {
+        const groupTitle = params.resolveFieldGroupTitle(name);
+        const fieldSize = params.resolveFieldSize(name);
+        const fieldClass = lowCodeFieldSizeClass(fieldSize);
+        return {
+          name,
+          label: params.resolveFieldLabel(name),
+          visible: params.resolveFieldVisible(name, groupTitle || '业务配置字段'),
+          sequence: (index + 1) * 10,
+          ...(groupTitle ? { group_title: groupTitle } : {}),
+          ...(fieldClass ? { class: fieldClass, field_size: fieldSize } : {}),
+        };
+      }),
+      sections: Array.from(groupBuckets.entries()).map(([title, names], index) => ({
+        name: `business_config_section_${index + 1}`,
+        title,
+        visible: params.resolveGroupVisible(title),
+        columns: params.resolveGroupColumns(title),
+        sequence: (index + 1) * 10,
+        fields: [...names],
+      })),
+      layout: layoutGroups,
+    };
+  }
+  if (listNames.length) {
+    views.tree = {
+      columns: listNames.map((name, index) => ({
+        name,
+        label: params.resolveFieldLabel(name),
+        visible: true,
+        sequence: (index + 1) * 10,
+      })),
+    };
+  }
+  if (kanbanNames.length) {
+    views.kanban = {
+      fields: kanbanNames.map((name, index) => ({
+        name,
+        label: params.resolveFieldLabel(name),
+        visible: true,
+        sequence: (index + 1) * 10,
+      })),
+      slots: { primary: kanbanNames.slice(0, 3) },
+    };
+  }
+  return Object.keys(views).length ? { views } : undefined;
 }
 
 export function mergeLowCodeLayoutWithRuntimeGroupShells<T extends NativeLayoutLikeNode>(base: T[], runtime: NativeLayoutLikeNode[]): T[] {
