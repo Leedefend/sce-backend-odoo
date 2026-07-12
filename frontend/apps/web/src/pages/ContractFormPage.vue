@@ -248,45 +248,27 @@
           @group-rename="onContractInlineGroupRename"
           @native-action="runNativeLayoutAction"
         />
-        <section v-if="activeContractModeActions.length" class="contract-mode-actions">
-          <button
-            v-for="action in activeContractModeActions"
-            :key="`mode-${action.key}`"
-            type="button"
-            class="chip-btn"
-            :disabled="busy"
-            @click="openContractModeAction(action.raw)"
-          >
-            {{ action.label }}
-          </button>
-          <p v-if="contractModeFeedback" class="contract-mode-feedback">{{ contractModeFeedback }}</p>
-        </section>
-        <ContractPromptActionForm
+        <ContractModeSupportPanel
+          :active-actions="activeContractModeActions"
+          :advanced-expanded="advancedExpanded"
           :busy="busy"
-          :fields="contractPromptFields"
-          :values="contractPromptValues"
-          :visible="Boolean(contractPromptRule)"
-          @cancel="closeContractPromptAction"
-          @submit="submitContractPromptAction"
-          @value-change="contractPromptValues[$event.fieldName] = $event.value"
+          :low-code-field-create-dialog="lowCodeFieldCreateDialog"
+          :low-code-precheck-warnings="lowCodePrecheckWarnings"
+          :mode-feedback="contractModeFeedback"
+          :prompt-fields="contractPromptFields"
+          :prompt-values="contractPromptValues"
+          :prompt-visible="Boolean(contractPromptRule)"
+          :show-advanced-toggle="hasAdvancedFields && !isProjectIntakeCreateMode && !useNativeFormTree"
+          @cancel-prompt="closeContractPromptAction"
+          @close-field-create="closeInlineCustomFieldCreate"
+          @field-create-label-change="lowCodeFieldCreateDialog.label = $event"
+          @field-create-type-change="lowCodeFieldCreateDialog.ttype = $event"
+          @open-mode-action="openContractModeAction"
+          @prompt-value-change="contractPromptValues[$event.fieldName] = $event.value"
+          @submit-field-create="submitInlineCustomFieldCreate"
+          @submit-prompt="submitContractPromptAction"
+          @toggle-advanced="advancedExpanded = !advancedExpanded"
         />
-        <LowCodeFieldCreateDialog
-          :busy="busy"
-          :dialog="lowCodeFieldCreateDialog"
-          @close="closeInlineCustomFieldCreate"
-          @submit="submitInlineCustomFieldCreate"
-          @update:label="lowCodeFieldCreateDialog.label = $event"
-          @update:ttype="lowCodeFieldCreateDialog.ttype = $event"
-        />
-        <ul v-if="lowCodePrecheckWarnings.length" class="contract-lowcode-warnings">
-          <li v-for="(warning, index) in lowCodePrecheckWarnings" :key="`lowcode-warning-${index}`">{{ warning }}</li>
-        </ul>
-        <div v-if="hasAdvancedFields && !isProjectIntakeCreateMode && !useNativeFormTree" class="layout-divider advanced-toggle">
-          <button class="chip-btn" :disabled="busy" @click="advancedExpanded = !advancedExpanded">
-            {{ advancedExpanded ? '收起高级信息' : '展开高级信息' }}
-          </button>
-        </div>
-
       </section>
 
       <PageFooterTemplate v-if="isProjectIntakeCreateMode" hint="填写完成后点击“创建项目”">
@@ -366,8 +348,8 @@ import NativeCollaborationPanel, {
 } from './contractForm/NativeCollaborationPanel.vue';
 import ContractFormNativeCanvas from './contractForm/ContractFormNativeCanvas.vue';
 import RelationSearchDialog, { type RelationSearchDialogState } from './contractForm/RelationSearchDialog.vue';
-import ContractPromptActionForm from './contractForm/ContractPromptActionForm.vue';
-import LowCodeFieldCreateDialog, { type LowCodeFieldCreateDialogState } from './contractForm/LowCodeFieldCreateDialog.vue';
+import ContractModeSupportPanel from './contractForm/ContractModeSupportPanel.vue';
+import { type LowCodeFieldCreateDialogState } from './contractForm/LowCodeFieldCreateDialog.vue';
 import CurrentFormFieldSettingsPanel from './contractForm/CurrentFormFieldSettingsPanel.vue';
 import ContractFormActionBlocks from './contractForm/ContractFormActionBlocks.vue';
 import type {
