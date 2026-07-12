@@ -118,6 +118,39 @@ export function relationOptionFromRow(row: Record<string, unknown>, descriptor?:
   };
 }
 
+export function exactRelationOption(rows: RelationOption[], keyword: string) {
+  const normalized = String(keyword || '').trim().toLowerCase();
+  if (!normalized) return null;
+  return rows.find((row) => row.label.trim().toLowerCase() === normalized) || null;
+}
+
+export function resolveRelationQuickFillOption(rows: RelationOption[], keyword: string, matchMode = 'exact_label') {
+  const normalized = String(keyword || '').trim();
+  if (!normalized) return null;
+  const lowered = normalized.toLowerCase();
+  const candidates = rows.filter((row) => row.label.trim().toLowerCase().includes(lowered));
+  const exact = exactRelationOption(candidates, normalized);
+  if (exact) return exact;
+  return matchMode === 'single_contains_or_exact' && candidates.length === 1 ? candidates[0] : null;
+}
+
+export function hasAmbiguousRelationMatches(rows: RelationOption[], keyword: string, matchMode = 'exact_label') {
+  const normalized = String(keyword || '').trim().toLowerCase();
+  if (!normalized) return false;
+  const candidates = rows.filter((row) => row.label.trim().toLowerCase().includes(normalized));
+  const exactCount = candidates.filter((row) => row.label.trim().toLowerCase() === normalized).length;
+  if (exactCount > 1) return true;
+  if (exactCount === 1) return false;
+  return matchMode === 'single_contains_or_exact' && candidates.length > 1;
+}
+
+export function singleContainingRelationOption(rows: RelationOption[], keyword: string) {
+  const normalized = String(keyword || '').trim().toLowerCase();
+  if (!normalized) return null;
+  const candidates = rows.filter((row) => row.label.trim().toLowerCase().includes(normalized));
+  return candidates.length === 1 ? candidates[0] : null;
+}
+
 export function relationUiLabels(descriptor?: FieldDescriptor): RelationUiLabels {
   const entry = (descriptor as Record<string, unknown> | undefined)?.relation_entry;
   const labels = entry && typeof entry === 'object' && !Array.isArray(entry)

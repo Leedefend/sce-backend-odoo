@@ -1332,6 +1332,7 @@ import {
   relationEntry,
   dynamicDomainDependencyFields,
   fallbackRelationSearchColumns,
+  hasAmbiguousRelationMatches,
   isBlockAllDomain,
   normalizeRelationSearchColumns,
   relationCreateMode,
@@ -1343,6 +1344,8 @@ import {
   relationSearchReadFields,
   relationUiLabel,
   relationUiLabels,
+  resolveRelationQuickFillOption,
+  singleContainingRelationOption,
 } from './contractForm/relationDescriptor';
 import {
   isWorkflowTransitionMethod,
@@ -4468,39 +4471,6 @@ function setRelationKeyword(name: string, keyword: string) {
     const currentKeyword = relationKeywords[name] || '';
     void queryRelationOptions(name, currentKeyword);
   }, 260);
-}
-
-function exactRelationOption(rows: RelationOption[], keyword: string) {
-  const normalized = String(keyword || '').trim().toLowerCase();
-  if (!normalized) return null;
-  return rows.find((row) => row.label.trim().toLowerCase() === normalized) || null;
-}
-
-function resolveRelationQuickFillOption(rows: RelationOption[], keyword: string, matchMode = 'exact_label') {
-  const normalized = String(keyword || '').trim();
-  if (!normalized) return null;
-  const lowered = normalized.toLowerCase();
-  const candidates = rows.filter((row) => row.label.trim().toLowerCase().includes(lowered));
-  const exact = exactRelationOption(candidates, normalized);
-  if (exact) return exact;
-  return matchMode === 'single_contains_or_exact' && candidates.length === 1 ? candidates[0] : null;
-}
-
-function hasAmbiguousRelationMatches(rows: RelationOption[], keyword: string, matchMode = 'exact_label') {
-  const normalized = String(keyword || '').trim().toLowerCase();
-  if (!normalized) return false;
-  const candidates = rows.filter((row) => row.label.trim().toLowerCase().includes(normalized));
-  const exactCount = candidates.filter((row) => row.label.trim().toLowerCase() === normalized).length;
-  if (exactCount > 1) return true;
-  if (exactCount === 1) return false;
-  return matchMode === 'single_contains_or_exact' && candidates.length > 1;
-}
-
-function singleContainingRelationOption(rows: RelationOption[], keyword: string) {
-  const normalized = String(keyword || '').trim().toLowerCase();
-  if (!normalized) return null;
-  const candidates = rows.filter((row) => row.label.trim().toLowerCase().includes(normalized));
-  return candidates.length === 1 ? candidates[0] : null;
 }
 
 function filteredRelationOptions(name: string) {
