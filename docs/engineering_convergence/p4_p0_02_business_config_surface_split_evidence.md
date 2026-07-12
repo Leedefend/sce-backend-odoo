@@ -24,12 +24,13 @@ Extracted files:
 | `frontend/apps/web/src/views/businessConfigSurface/BusinessConfigEditorPanels.vue` | List/search and analysis editor panels. |
 | `frontend/apps/web/src/views/businessConfigSurface/LowCodeFieldChipEditor.vue` | Shared draggable field-chip editor used by list/search and analysis panels. |
 | `frontend/apps/web/src/views/businessConfigSurface/useBusinessConfigApprovalEditor.ts` | Approval policy editor state machine, validation, persistence, and drag/drop step ordering. |
+| `frontend/apps/web/src/views/businessConfigSurface/useBusinessConfigVersions.ts` | Configuration version loading, version summary text, rollback confirmation, and post-rollback refresh orchestration. |
 
 ## Line Count Evidence
 
 | File | Before | After |
 | --- | ---: | ---: |
-| `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` | 5447 | 2316 |
+| `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` | 5447 | 2134 |
 
 The route component remains in the P0 split-plan queue after this pass because the Vue split-plan threshold is 1500 lines. The next pass should extract stateful composables for coverage workflows, list/search and analysis editors, approval policy editing, and version rollback orchestration.
 

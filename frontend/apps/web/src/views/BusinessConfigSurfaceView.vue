@@ -364,14 +364,11 @@ import {
   bootstrapCoverageMissingConfig,
   compareBusinessConfigSnapshot,
   exportBusinessConfigSnapshot,
-  loadBusinessConfigContractVersions,
   loadBusinessConfigSurface,
-  rollbackBusinessConfigContract,
   saveBusinessAnalysisConfig,
   saveBusinessListSearchConfig,
   scanBusinessConfigCoverage,
   type BusinessConfigAnalysisAuditPayload,
-  type BusinessConfigContractVersionsPayload,
   type BusinessConfigCoverageScanItem,
   type BusinessConfigCoverageScanPayload,
   type BusinessConfigListSearchAuditPayload,
@@ -395,10 +392,8 @@ import {
   analysisItemLabel,
   boundaryLabel,
   cleanBusinessFieldLabel,
-  countDiff,
   deliveryReadinessItemStatusText,
   fieldTypeLabel,
-  formatDiffNames,
   namesToText,
   normalizeNamesText,
   overallStatusLabel,
@@ -429,6 +424,7 @@ import {
 import { buildSnapshotRemediationPlan, normalizeSnapshotFileToken } from './businessConfigSurface/snapshotRemediation';
 import { findMenuConfigNavigationEntry } from './businessConfigSurface/navigation';
 import { useBusinessConfigApprovalEditor } from './businessConfigSurface/useBusinessConfigApprovalEditor';
+import { useBusinessConfigVersions } from './businessConfigSurface/useBusinessConfigVersions';
 
 const SURFACE_LOAD_TIMEOUT_MS = 20000;
 const ACTIVE_EDITOR_SCROLL_OPTIONS = { block: 'start', behavior: 'auto' } as const;
@@ -513,12 +509,7 @@ const analysisAudit = ref<BusinessConfigAnalysisAuditPayload | null>(null);
 const listSearchPanelOpen = ref(false);
 const analysisPanelOpen = ref(false);
 const selectedRuntimeRoute = ref<BusinessConfigCoverageScanItem['runtime_route'] | null>(null);
-const versionsLoading = ref(false);
-const versionsPanelOpen = ref(false);
 const advancedPanelOpen = ref(false);
-const versionTitle = ref('配置版本');
-const activeVersionSection = ref<'form' | 'list_search' | 'analysis' | ''>('');
-const versionContracts = ref<BusinessConfigContractVersionsPayload['contracts']>([]);
 const snapshotCompareText = ref('');
 const snapshotCompareLoading = ref(false);
 const snapshotExportLoading = ref(false);
@@ -752,38 +743,6 @@ const listSearchPanelDescription = computed(() => (
     ? '这些配置写入正式业务配置，不写入个人列偏好。'
     : '保存为这个页面的默认列表、搜索和分组设置，不覆盖个人列宽和排序偏好。'
 ));
-const versionPanelDescription = computed(() => (
-  advancedPanelOpen.value
-    ? '按当前业务对象、业务操作、页面类型、角色范围读取正式业务配置版本。'
-    : '查看这个页面的配置保存记录，可在需要时回滚到历史版本。'
-));
-const versionPanelGuide = computed(() => {
-  if (activeVersionSection.value === 'form') {
-    return {
-      title: '表单版本怎么用',
-      body: '当前生效版决定办理页面的字段、分组和布局。恢复历史版本后会立即发布为新的当前配置。',
-    };
-  }
-  if (activeVersionSection.value === 'list_search') {
-    return {
-      title: '列表与搜索版本怎么用',
-      body: '这里管理页面默认列表列、搜索条件和默认分组，不覆盖用户自己的列宽、排序等个人设置。',
-    };
-  }
-  if (activeVersionSection.value === 'analysis') {
-    return {
-      title: '分析版本怎么用',
-      body: '这里管理透视、图表等分析视图的默认指标和维度。恢复历史版本后刷新业务页面即可生效。',
-    };
-  }
-  return {
-    title: '配置版本怎么用',
-    body: '先确认当前生效版，再选择需要恢复的历史版本。恢复操作会发布为新的当前配置。',
-  };
-});
-const versionEmptyText = computed(() => (
-  advancedPanelOpen.value ? '当前作用域暂无版本记录。' : '当前页面暂无版本记录。'
-));
 function isCoverageIssue(row: BusinessConfigCoverageScanItem) {
   return !row.is_complete || !row.is_runtime_complete || !row.has_menu;
 }
@@ -905,6 +864,41 @@ const scopeView = computed(() => {
 
 const scopeRole = computed(() => String(scopeRoleKey.value || '').trim() || undefined);
 
+const {
+  versionsLoading,
+  versionsPanelOpen,
+  versionTitle,
+  activeVersionSection,
+  versionContracts,
+  versionPanelDescription,
+  versionPanelGuide,
+  versionEmptyText,
+  loadVersions,
+  rollbackContractFromWorkbench,
+  versionContractDisplayName,
+  versionContractImpactText,
+  versionRollbackButtonLabel,
+  versionContractDecisionText,
+  versionDeltaText,
+  versionSummaryText,
+} = useBusinessConfigVersions({
+  currentModel,
+  scopeAction,
+  scopeView,
+  scopeRole,
+  selectedPageLabel,
+  surface,
+  advancedPanelOpen,
+  listSearchSaving,
+  coverageScan,
+  error,
+  setMessage,
+  clearMessage,
+  loadSurface,
+  rescanCoverageAfterBootstrap,
+  rollbackConfirm,
+});
+
 function coverageRowKey(row: Pick<BusinessConfigCoverageScanItem, 'model' | 'action_id' | 'view_id'>) {
   return [
     String(row.model || '').trim(),
@@ -996,84 +990,6 @@ function sectionTaskCoverageText(sectionKey: string, contractCount: number) {
   }
   const progress = sectionConfigProgressText(sectionKey, contractCount);
   return progress ? `覆盖 ${progress}` : '覆盖 0/1';
-}
-
-function versionContractDisplayName(contract: BusinessConfigContractVersionsPayload['contracts'][number]) {
-  if (advancedPanelOpen.value) return contract.name || contract.model || '业务配置';
-  const page = selectedPageLabel.value || surface.value?.model || contract.model || '当前页面';
-  const view = viewTypeLabel(contract.view_type);
-  return view ? `${page} · ${view}` : page;
-}
-
-function versionContractImpactText(contract: BusinessConfigContractVersionsPayload['contracts'][number]) {
-  const view = viewTypeLabel(contract.view_type);
-  if (contract.view_type === 'form') return '影响办理页字段、分组、显示隐藏和布局。';
-  if (contract.view_type === 'tree' || contract.view_type === 'list') return '影响办理页默认列表列。';
-  if (contract.view_type === 'search') return '影响办理页搜索条件和默认分组。';
-  if (['pivot', 'graph', 'calendar', 'dashboard'].includes(contract.view_type)) return `影响${view}视图的默认展示。`;
-  return `影响${view}配置的默认运行效果。`;
-}
-
-function versionRollbackButtonLabel(contract: BusinessConfigContractVersionsPayload['contracts'][number]) {
-  return contract.versions.length < 2 ? '暂无可回滚版本' : '恢复上一版本配置';
-}
-
-function versionContractDecisionText(contract: BusinessConfigContractVersionsPayload['contracts'][number]) {
-  const historyCount = Math.max(0, contract.versions.length - 1);
-  const currentSummary = versionSummaryText(contract.summary);
-  if (!historyCount) return `当前只有一个版本：${currentSummary}。`;
-  return `当前生效：${currentSummary}。可恢复 ${historyCount} 个历史版本，恢复后会发布为新的当前配置。`;
-}
-
-function versionSummaryNames(summary: BusinessConfigContractVersionsPayload['contracts'][number]['summary']) {
-  return {
-    form: (summary.form_field_labels && summary.form_field_labels.length ? summary.form_field_labels : summary.form_fields) || [],
-    list: summary.list_columns || [],
-    filter: summary.search_filters || [],
-    group: summary.search_group_by || [],
-    viewTypes: summary.view_types || [],
-    analysis: summary.analysis_items || [],
-  };
-}
-
-function versionDeltaText(
-  current: BusinessConfigContractVersionsPayload['contracts'][number]['summary'],
-  target: BusinessConfigContractVersionsPayload['contracts'][number]['summary'],
-  isCurrent: boolean,
-) {
-  if (isCurrent) return '当前版本';
-  const currentNames = versionSummaryNames(current);
-  const targetNames = versionSummaryNames(target);
-  const parts = [
-    { label: '字段', diff: countDiff(currentNames.form, targetNames.form) },
-    { label: '列', diff: countDiff(currentNames.list, targetNames.list) },
-    { label: '筛选', diff: countDiff(currentNames.filter, targetNames.filter) },
-    { label: '分组', diff: countDiff(currentNames.group, targetNames.group) },
-    { label: '分析项', diff: countDiff(currentNames.analysis, targetNames.analysis) },
-    { label: '视图', diff: countDiff(currentNames.viewTypes, targetNames.viewTypes) },
-  ]
-    .map((item) => {
-      const changes = [
-        item.diff.added.length ? `多 ${item.diff.added.length}：${formatDiffNames(item.diff.added)}` : '',
-        item.diff.removed.length ? `少 ${item.diff.removed.length}：${formatDiffNames(item.diff.removed)}` : '',
-      ].filter(Boolean).join('、');
-      return changes ? `${item.label}${changes}` : '';
-    })
-    .filter(Boolean);
-  return parts.length ? `与当前相比：${parts.join('；')}` : '与当前一致';
-}
-
-function versionSummaryText(summary: BusinessConfigContractVersionsPayload['contracts'][number]['summary']) {
-  const counts = [
-    summary.form_field_count ? `字段 ${summary.form_field_count}` : '',
-    summary.list_column_count ? `列 ${summary.list_column_count}` : '',
-    summary.search_filter_count ? `筛选 ${summary.search_filter_count}` : '',
-    summary.search_group_by_count ? `分组 ${summary.search_group_by_count}` : '',
-    summary.analysis_item_count ? `分析项 ${summary.analysis_item_count}` : '',
-  ].filter(Boolean);
-  if (counts.length) return counts.join(' / ');
-  const viewTypes = (summary.view_types || []).map(viewTypeLabel).filter(Boolean);
-  return viewTypes.length ? `视图 ${viewTypes.join('、')}` : '暂无配置项';
 }
 
 function deliveryReadinessItemMetaText(item: NonNullable<BusinessConfigSurfacePayload['delivery_readiness']>['items'][number]) {
@@ -2089,104 +2005,6 @@ async function previewAnalysisConfig() {
     if (!saved) return;
   }
   await previewSelectedRuntimeRoute();
-}
-
-function versionParams(viewType?: string) {
-  return {
-    model: currentModel.value,
-    view_type: viewType,
-    action_id: scopeAction.value,
-    view_id: scopeView.value,
-    role_key: scopeRole.value,
-  };
-}
-
-async function loadVersions(sectionKey: string) {
-  if (!currentModel.value) return;
-  activeVersionSection.value = sectionKey === 'form' || sectionKey === 'list_search' || sectionKey === 'analysis'
-    ? sectionKey
-    : '';
-  versionsLoading.value = true;
-  error.value = '';
-  clearMessage();
-  try {
-    if (sectionKey === 'form') {
-      const result = await loadBusinessConfigContractVersions(versionParams('form'));
-      versionTitle.value = '表单配置版本';
-      versionContracts.value = result.contracts || [];
-    } else if (sectionKey === 'list_search') {
-      const [treeResult, searchResult] = await Promise.all([
-        loadBusinessConfigContractVersions(versionParams('tree')),
-        loadBusinessConfigContractVersions(versionParams('search')),
-      ]);
-      versionTitle.value = '列表/搜索配置版本';
-      versionContracts.value = [...(treeResult.contracts || []), ...(searchResult.contracts || [])];
-    } else {
-      const results = await Promise.all(
-        ['pivot', 'graph', 'calendar', 'dashboard'].map((viewType) => (
-          loadBusinessConfigContractVersions(versionParams(viewType))
-        )),
-      );
-      versionTitle.value = '分析视图配置版本';
-      versionContracts.value = results.flatMap((result) => result.contracts || []);
-    }
-    versionsPanelOpen.value = true;
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : '配置版本读取失败';
-  } finally {
-    versionsLoading.value = false;
-  }
-}
-
-async function rollbackContractFromWorkbench(
-  contract: BusinessConfigContractVersionsPayload['contracts'][number],
-  versionNo?: number,
-) {
-  if (!contract?.name || (versionNo ? versionNo === contract.version_no : contract.versions.length < 2)) return;
-  const targetText = versionNo ? `v${versionNo}` : '上一版';
-  const confirmed = await rollbackConfirm.open({
-    title: '确认恢复配置版本',
-    message: [
-      `确认恢复${versionContractDisplayName(contract)}的${targetText}？`,
-      versionContractImpactText(contract),
-      '恢复后会立即发布为新的当前配置，刷新业务页面后生效。',
-    ].join('\n'),
-    confirmLabel: '恢复',
-    cancelLabel: '取消',
-    tone: 'danger',
-  });
-  if (!confirmed) return;
-  listSearchSaving.value = true;
-  error.value = '';
-  clearMessage();
-  try {
-    const result = await rollbackBusinessConfigContract({
-      name: contract.name,
-      model: contract.model,
-      view_type: contract.view_type,
-      action_id: contract.action_id || undefined,
-      view_id: contract.view_id || undefined,
-      role_key: contract.role_key || undefined,
-      version_no: versionNo,
-    });
-    await loadSurface();
-    await loadVersions(sectionKeyForViewType(contract.view_type));
-    if (coverageScan.value) {
-      await rescanCoverageAfterBootstrap();
-    }
-    setMessage('配置已回滚并发布', `已回滚到 v${result.rolled_back_to_version}，刷新页面后按该版本生效`);
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : '业务配置回滚失败';
-  } finally {
-    listSearchSaving.value = false;
-  }
-}
-
-function sectionKeyForViewType(viewType: string) {
-  if (viewType === 'form') return 'form';
-  if (viewType === 'tree' || viewType === 'list' || viewType === 'search') return 'list_search';
-  if (['pivot', 'graph', 'calendar', 'dashboard'].includes(viewType)) return 'analysis';
-  return 'list_search';
 }
 
 function menuConfigWorkbenchReturnQuery() {
