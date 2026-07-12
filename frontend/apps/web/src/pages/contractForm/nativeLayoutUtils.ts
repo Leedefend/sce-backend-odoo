@@ -60,6 +60,21 @@ export type NativeFieldPresentation = {
 };
 
 const CHILD_KEYS = ['children', 'pages', 'tabs', 'nodes', 'items'] as const;
+const CREATE_WORKFLOW_STATE_FIELD_NAMES = new Set([
+  'state',
+  'status',
+  'lifecycle_state',
+  'workflow_state',
+  'approval_state',
+  'tier_validation_state',
+  'validation_state',
+  'document_status',
+  'document_state',
+  'document_state_label',
+  'legacy_document_state',
+  'legacy_document_state_label',
+  'legacy_visible_document_state',
+]);
 
 export function nativeLayoutNodeType(node: NativeLayoutLikeNode) {
   return String(node?.type || (node as { containerType?: string })?.containerType || '').trim().toLowerCase();
@@ -283,6 +298,16 @@ export function nativeFieldPresentation(input: NativeFieldPresentationInput): Na
     nodeClass,
     spanClass: lowCodeFieldSizeClass(fieldSize) || nodeClass,
   };
+}
+
+export function isCreateWorkflowStateField(name: string, label = '', isCreate = false) {
+  const normalized = String(name || '').trim();
+  const normalizedLabel = String(label || '').replace(/\s+/g, '').trim();
+  return isCreate && (
+    CREATE_WORKFLOW_STATE_FIELD_NAMES.has(normalized)
+    || normalizedLabel === '状态'
+    || normalizedLabel.endsWith('状态')
+  );
 }
 
 function stringList(value: unknown): string[] {

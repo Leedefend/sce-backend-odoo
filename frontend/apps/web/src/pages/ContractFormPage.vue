@@ -552,6 +552,7 @@ import {
   nativeFieldSubview as nativeFieldSubviewFromTree,
   nativeFieldLabel,
   nativeFieldPresentation,
+  isCreateWorkflowStateField,
   nativeLayoutNodeType,
   nativeNodeFieldDescriptor as nativeNodeFieldDescriptorFromNode,
   nativeNodeWidget,
@@ -4190,22 +4191,6 @@ const contractVisibleFields = computed<string[]>(() => {
   return resolveUnifiedPageContractV2VisibleFields(source);
 });
 
-const CREATE_WORKFLOW_STATE_FIELD_NAMES = new Set([
-  'state',
-  'status',
-  'lifecycle_state',
-  'workflow_state',
-  'approval_state',
-  'tier_validation_state',
-  'validation_state',
-  'document_status',
-  'document_state',
-  'document_state_label',
-  'legacy_document_state',
-  'legacy_document_state_label',
-  'legacy_visible_document_state',
-]);
-
 const fieldModifierMap = computed<Record<string, Record<string, unknown>>>(() => {
   const formView = (contract.value?.views?.form || {}) as { field_modifiers?: Record<string, Record<string, unknown>> };
   const out: Record<string, Record<string, unknown>> = { ...(formView.field_modifiers || {}) };
@@ -4239,22 +4224,12 @@ function runtimeState(name: string) {
   return runtimeFieldStates.value[name] || { invisible: false, readonly: false, required: false };
 }
 
-function isCreateWorkflowStateField(name: string, label = '') {
-  const normalized = String(name || '').trim();
-  const normalizedLabel = String(label || '').replace(/\s+/g, '').trim();
-  return !recordId.value && (
-    CREATE_WORKFLOW_STATE_FIELD_NAMES.has(normalized)
-    || normalizedLabel === '状态'
-    || normalizedLabel.endsWith('状态')
-  );
-}
-
 function isFieldVisible(name: string) {
   if (isProjectQuickIntakeMode.value) {
     return ['name', 'manager_id', 'owner_id'].includes(String(name || '').trim());
   }
   const descriptor = contract.value?.fields?.[String(name || '').trim()];
-  if (isCreateWorkflowStateField(name, String(contractFieldLabel(name) || descriptor?.string || ''))) return false;
+  if (isCreateWorkflowStateField(name, String(contractFieldLabel(name) || descriptor?.string || ''), !recordId.value)) return false;
   const statusField = nativeStatusbar.value.field;
   if (statusField && String(name || '').trim() === statusField) return false;
   const semantic = fieldSemanticMeta(name);
@@ -4712,7 +4687,7 @@ function isNativeFieldVisible(name: string, nodeRaw?: NativeFormLayoutNode) {
     ? nativeNodeFieldDescriptor(nodeRaw, contract.value?.fields?.[normalized])
     : contract.value?.fields?.[normalized];
   if (!descriptor) return false;
-  if (isCreateWorkflowStateField(normalized, nativeFieldLabel(nodeRaw || {} as NativeFormLayoutNode, descriptor, contractFieldLabel))) return false;
+  if (isCreateWorkflowStateField(normalized, nativeFieldLabel(nodeRaw || {} as NativeFormLayoutNode, descriptor, contractFieldLabel), !recordId.value)) return false;
   const resolved = evaluateFieldPolicy(
     contract.value,
     normalized,
@@ -4896,7 +4871,7 @@ const layoutNodes = computed<LayoutNode[]>(() => {
     if (!name || used.has(name)) return;
     const descriptor = fieldMap[name];
     if (!descriptor) return;
-    if (isCreateWorkflowStateField(name, String(contractFieldLabel(name) || descriptor?.string || ''))) return;
+    if (isCreateWorkflowStateField(name, String(contractFieldLabel(name) || descriptor?.string || ''), !recordId.value)) return;
     const containerStatus = v2FieldContainerStatus[name];
     if (containerStatus?.visible === false) return;
     const resolved = evaluateFieldPolicy(
