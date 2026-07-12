@@ -34,7 +34,7 @@ concurrency:
 
 jobs:
   demo_ci:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     timeout-minutes: 45
 
     env:

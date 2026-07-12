@@ -120,7 +120,7 @@ Generated from repository source files. This report is informational during the 
 | 467 | Shell script | `scripts/audit/smoke_business_full.sh` |
 | 431 | Shell script | `scripts/migration/business_fact_upgrade_replay_flow.sh` |
 | 426 | Shell script | `scripts/demo/verify.sh` |
-| 318 | YAML workflow | `.github/workflows/infra-stage-gate.yml` |
+| 316 | YAML workflow | `.github/workflows/infra-stage-gate.yml` |
 | 302 | Shell script | `scripts/deploy/prod_sim_fresh_replay.sh` |
 
 ## Largest Files
