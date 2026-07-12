@@ -469,7 +469,6 @@ import {
 } from './contractForm/actionContract';
 import { normalizeContractAccessPolicy } from './contractForm/accessPolicy';
 import {
-  cleanRelationDisplayLabel,
   fieldInputType,
   fieldType,
   fromDatetimeInputValue,
@@ -604,7 +603,10 @@ import {
   relationReadFields,
   relationSearchColumnsFromContract,
   relationSearchDialogContract,
+  relationSearchLimit,
+  relationSearchOrder,
   relationSearchReadFields,
+  relationSearchRowsFromRecords,
   relationUiLabel,
   relationUiLabels,
   resolveRelationQuickFillOption,
@@ -2914,28 +2916,17 @@ async function fetchRelationSearchRows(name: string, keyword: string, limit = 12
   const domain = mergedRelationDomain(name, descriptor);
   const dialog = relationSearchDialogContract(descriptor);
   const columns = relationSearchDialog.columns.length ? relationSearchDialog.columns : relationSearchColumnsFromContract(dialog);
-  const limitValue = Number(dialog.limit || limit || 120);
-  const order = String(dialog.order || 'id desc').trim() || 'id desc';
   const listed = await listContractFormRecords({
     model: relation,
     fields: relationSearchReadFields(columns.length ? columns : fallbackRelationSearchColumns(descriptor), dialog),
-    limit: Number.isFinite(limitValue) && limitValue > 0 ? Math.min(Math.trunc(limitValue), 200) : 120,
-    order,
+    limit: relationSearchLimit(dialog, limit),
+    order: relationSearchOrder(dialog),
     domain,
     search_term: String(keyword || '').trim() || undefined,
     silentErrors: true,
   });
   const records = Array.isArray(listed?.records) ? listed.records : [];
-  return records
-    .map((row) => {
-      const values = row as Record<string, unknown>;
-      const id = Number(values.id);
-      if (!Number.isFinite(id) || id <= 0) return null;
-      const firstColumn = columns[0]?.name || '';
-      const label = cleanRelationDisplayLabel(values.display_name || values.name || values[firstColumn], id);
-      return { id: Math.trunc(id), label, values };
-    })
-    .filter((item): item is RelationSearchRow => Boolean(item));
+  return relationSearchRowsFromRecords(records, columns);
 }
 
 function closeRelationSearchDialog() {

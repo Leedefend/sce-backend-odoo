@@ -1,7 +1,7 @@
 import type { FieldDescriptor } from '@sc/schema';
 import { toPositiveInt } from '../../app/contractRuntime';
 import { cleanRelationDisplayLabel, fieldType, normalizeRelationIds } from './fieldUtils';
-import type { RelationOption, RelationSearchColumn, RelationUiLabels } from './types';
+import type { RelationOption, RelationSearchColumn, RelationSearchRow, RelationUiLabels } from './types';
 
 export function relationEntry(descriptor?: FieldDescriptor) {
   const entry = (descriptor as Record<string, unknown> | undefined)?.relation_entry;
@@ -421,6 +421,31 @@ export function relationSearchReadFields(columns: RelationSearchColumn[], dialog
     if (column.name) out.add(column.name);
   }
   return Array.from(out);
+}
+
+export function relationSearchLimit(dialog: Record<string, unknown>, fallback = 120) {
+  const limitValue = Number(dialog.limit || fallback || 120);
+  return Number.isFinite(limitValue) && limitValue > 0 ? Math.min(Math.trunc(limitValue), 200) : 120;
+}
+
+export function relationSearchOrder(dialog: Record<string, unknown>) {
+  return String(dialog.order || 'id desc').trim() || 'id desc';
+}
+
+export function relationSearchRowsFromRecords(
+  records: unknown[],
+  columns: RelationSearchColumn[],
+): RelationSearchRow[] {
+  return records
+    .map((row) => {
+      const values = row as Record<string, unknown>;
+      const id = Number(values.id);
+      if (!Number.isFinite(id) || id <= 0) return null;
+      const firstColumn = columns[0]?.name || '';
+      const label = cleanRelationDisplayLabel(values.display_name || values.name || values[firstColumn], id);
+      return { id: Math.trunc(id), label, values };
+    })
+    .filter((item): item is RelationSearchRow => Boolean(item));
 }
 
 export function closedRelationSearchDialogState() {
