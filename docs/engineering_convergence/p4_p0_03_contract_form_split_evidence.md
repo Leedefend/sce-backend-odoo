@@ -19,6 +19,8 @@ Extracted responsibilities:
 - One2many column value normalization, input/display helpers, required-value checks, and runtime line-patch labels moved to `frontend/apps/web/src/pages/contractForm/one2manyUtils.ts`.
 - Workflow action-row normalization, transition aliases, and evidence-gate row parsing moved to `frontend/apps/web/src/pages/contractForm/workflowContract.ts`.
 - Form UI labels, native chatter labels, activity field labels, attachment labels, and native-layout type lookup moved to `frontend/apps/web/src/pages/contractForm/uiLabels.ts`.
+- Form-configuration operation-log formatting, internal-field detection, and field-group title normalization moved to `frontend/apps/web/src/pages/contractForm/formConfigHelpers.ts`.
+- Native-layout node type detection, column normalization, node counting, and badge-field collection moved to `frontend/apps/web/src/pages/contractForm/nativeLayoutUtils.ts`.
 
 The route component remains the orchestration shell and still owns runtime state, navigation, persistence, and user interaction flow.
 
@@ -26,7 +28,7 @@ The route component remains the orchestration shell and still owns runtime state
 
 | File | Before | After |
 | --- | ---: | ---: |
-| `frontend/apps/web/src/pages/ContractFormPage.vue` | 13762 | 13051 |
+| `frontend/apps/web/src/pages/ContractFormPage.vue` | 13762 | 12904 |
 
 ## Boundary Decision
 

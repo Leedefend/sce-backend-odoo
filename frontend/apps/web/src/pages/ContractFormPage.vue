@@ -1279,7 +1279,27 @@ import {
   toDatetimeInputValue,
   viewTypeDisplayLabel,
 } from './contractForm/fieldUtils';
+import {
+  formConfigOperationCoalesceKey,
+  formConfigOperationStatusLabel,
+  formatFormConfigOperationSummary as formatFormConfigOperationSummaryText,
+  formatFormConfigOperationTime,
+  isReadableFieldGroupTitle,
+  isSuggestedInternalFormField,
+  normalizeFieldGroupTitle,
+  normalizeFormConfigOperationLogEntries,
+  readableFallbackFieldLabel,
+} from './contractForm/formConfigHelpers';
 import { dictOrEmpty, mergeFieldLabelsFromSource } from './contractForm/recordUtils';
+import {
+  collectContractActionBadgeCountFieldNames,
+  collectNativeLayoutBadgeCountFieldNames,
+  countNativeNodesByType,
+  isNativeFieldLayoutNode,
+  nativeLayoutNodeType,
+  normalizeNativeLayoutColumns,
+  type NativeLayoutLikeNode,
+} from './contractForm/nativeLayoutUtils';
 import {
   formRuntimeCommandHintLabel,
   formRuntimeReasonLabel,
@@ -2440,33 +2460,6 @@ const formConfigOperationLogStorageKey = computed(() => {
   return `sc_form_config_operation_log:${db}:${modelName}:action:${action}:view:${view}:page:${page}:user:${userId}`;
 });
 
-function normalizeFormConfigOperationLogEntries(raw: unknown) {
-  if (!Array.isArray(raw)) return [];
-  const allowedStatus = new Set<FormConfigOperationLogEntry['status']>(['pending', 'saved', 'reverted', 'done']);
-  return raw
-    .map((item) => {
-      const row = item && typeof item === 'object' && !Array.isArray(item)
-        ? item as Record<string, unknown>
-        : {};
-      const id = String(row.id || '').trim();
-      const at = String(row.at || '').trim();
-      const action = String(row.action || '').trim();
-      const summary = String(row.summary || '').trim();
-      if (!id || !at || !action || !summary) return null;
-      return {
-        id,
-        at,
-        operator: String(row.operator || formConfigOperatorName.value || '当前用户').trim(),
-        action,
-        summary,
-        status: allowedStatus.has(row.status as FormConfigOperationLogEntry['status'])
-          ? row.status as FormConfigOperationLogEntry['status']
-          : 'done',
-      };
-    })
-    .filter((item): item is FormConfigOperationLogEntry => Boolean(item));
-}
-
 function persistFormConfigOperationLog() {
   if (typeof window === 'undefined') return;
   const key = formConfigOperationLogStorageKey.value;
@@ -2484,27 +2477,10 @@ function hydrateFormConfigOperationLog() {
   if (!key) return;
   try {
     const raw = window.sessionStorage.getItem(key);
-    formConfigOperationLog.value = normalizeFormConfigOperationLogEntries(raw ? JSON.parse(raw) : []);
+    formConfigOperationLog.value = normalizeFormConfigOperationLogEntries(raw ? JSON.parse(raw) : [], formConfigOperatorName.value);
   } catch {
     formConfigOperationLog.value = [];
   }
-}
-
-function formConfigOperationSubject(action: string, summary: string) {
-  const normalizedAction = String(action || '').trim();
-  const normalizedSummary = String(summary || '').trim();
-  if (!normalizedSummary) return '';
-  if (normalizedAction === '调整页面列数') return '页面';
-  const match = normalizedSummary.match(/^(.+?)\s+(设置为|移动到|调整到|调整为|改为|添加到)/);
-  if (match?.[1]) return match[1].trim();
-  return normalizedSummary;
-}
-
-function formConfigOperationCoalesceKey(action: string, summary: string) {
-  const normalizedAction = String(action || '').trim();
-  const subject = formConfigOperationSubject(normalizedAction, summary);
-  if (!normalizedAction || !subject) return '';
-  return `${normalizedAction}:${subject}`;
 }
 
 function appendFormConfigOperation(
@@ -2556,23 +2532,6 @@ function clearFormConfigOperationLog() {
   persistFormConfigOperationLog();
 }
 
-function formatFormConfigOperationTime(value: string) {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
-}
-
-function formConfigOperationStatusLabel(status: FormConfigOperationLogEntry['status']) {
-  if (status === 'pending') return '待保存';
-  if (status === 'saved') return '已保存';
-  if (status === 'reverted') return '已撤销';
-  return '已执行';
-}
-
-function escapeFormConfigOperationRegExp(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}
-
 function formConfigFieldLabelReplacementEntries() {
   const labels = new Map<string, string>();
   const remember = (fieldKey: string, label: string) => {
@@ -2594,45 +2553,12 @@ function formConfigFieldLabelReplacementEntries() {
 }
 
 function formatFormConfigOperationSummary(summary: string) {
-  let text = String(summary || '').trim();
-  if (!text) return '';
-  formConfigFieldLabelReplacementEntries().forEach(([fieldKey, label]) => {
-    const pattern = new RegExp(`(^|[^A-Za-z0-9_])${escapeFormConfigOperationRegExp(fieldKey)}(?=$|[^A-Za-z0-9_])`, 'g');
-    text = text.replace(pattern, `$1${label}`);
-  });
-  return text;
-}
-
-function readableFallbackFieldLabel(fieldKey: string) {
-  const key = String(fieldKey || '').trim();
-  if (!key) return '';
-  return key
-    .replace(/[_-]+/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return formatFormConfigOperationSummaryText(summary, formConfigFieldLabelReplacementEntries());
 }
 
 watch(formConfigOperationLogStorageKey, () => {
   hydrateFormConfigOperationLog();
 }, { immediate: true });
-
-function isSuggestedInternalFormField(fieldKey: string, label = '') {
-  const name = String(fieldKey || '').trim();
-  const text = `${name} ${String(label || '').trim()}`.toLowerCase();
-  if (!name) return false;
-  if (name.startsWith('legacy_source_')) return true;
-  if (name.startsWith('activity_') || name.startsWith('alias_') || name.startsWith('message_') || name.startsWith('rating_')) return true;
-  if (['access_token', 'access_url', 'access_warning', 'website_message_ids'].includes(name)) return true;
-  return [
-    'last updated on',
-    'project manager',
-    '初始录入',
-    '录入时间',
-    '来源',
-    '协作成员',
-    'collaborator',
-  ].some((keyword) => text.includes(keyword));
-}
 
 function formDesignFieldLabel(fieldKey: string) {
   const key = String(fieldKey || '').trim();
@@ -2688,19 +2614,6 @@ function changedFieldVisibilityDraft() {
     }
     return acc;
   }, {});
-}
-
-function normalizeFieldGroupTitle(value: unknown) {
-  return String(value || '').trim();
-}
-
-function isReadableFieldGroupTitle(value: unknown) {
-  const text = normalizeFieldGroupTitle(value);
-  if (!text) return false;
-  if (['group', 'page', 'notebook', 'sheet', 'container'].includes(text.toLowerCase())) return false;
-  if (/^默认分组\s*\d*$/i.test(text)) return false;
-  if (/^[a-z][a-z0-9_:. -]*$/i.test(text) && /[_:.]/.test(text)) return false;
-  return true;
 }
 
 function layoutHasReadableFieldGroups(nodes: NativeFormLayoutNode[]) {
@@ -6515,14 +6428,6 @@ function filterVisibleNativeLayoutNodes(nodes: NativeFormLayoutNode[]): NativeFo
     });
 }
 
-function nativeLayoutNodeType(node: NativeFormLayoutNode) {
-  return String(node?.type || (node as { containerType?: string })?.containerType || '').trim().toLowerCase();
-}
-
-function isNativeFieldLayoutNode(node: NativeFormLayoutNode) {
-  return nativeLayoutNodeType(node) === 'field' && Boolean(String(node?.name || '').trim());
-}
-
 function applyNativeFieldOrderPreview(nodes: NativeFormLayoutNode[]): NativeFormLayoutNode[] {
   if (!fieldOrderDraft.value.length) return nodes;
   const rank = new Map(fieldOrderDraft.value.map((fieldName, index) => [fieldName, index]));
@@ -6784,11 +6689,6 @@ const nativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
   return nodes;
 });
 
-function normalizeNativeLayoutColumns(value: unknown): 1 | 2 | 3 | null {
-  const columns = Number(value);
-  return columns === 1 || columns === 2 || columns === 3 ? columns : null;
-}
-
 const nativeFormRootColumns = computed<1 | 2 | 3>(() => {
   if (isContractFieldOrderEditable.value) return formLayoutColumnsDraft.value;
   const walk = (nodes: NativeFormLayoutNode[]): 1 | 2 | 3 | null => {
@@ -6840,22 +6740,8 @@ watch(baseNativeFormLayoutNodes, (nodes) => {
   nativeFormDesignFieldLabels.value = labels;
 }, { immediate: true });
 
-function countNativeNodesByType(nodes: NativeFormLayoutNode[], targetType: string): number {
-  const target = String(targetType || '').trim().toLowerCase();
-  let count = 0;
-  nodes.forEach((node) => {
-    const type = String(node?.type || (node as { containerType?: string })?.containerType || '').trim().toLowerCase();
-    if (type === target) count += 1;
-    (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
-      const children = node?.[key];
-      if (Array.isArray(children)) count += countNativeNodesByType(children as NativeFormLayoutNode[], target);
-    });
-  });
-  return count;
-}
-
-const nativeNotebookPageCount = computed(() => countNativeNodesByType(nativeFormLayoutNodes.value, 'page'));
-const nativeGroupCount = computed(() => countNativeNodesByType(nativeFormLayoutNodes.value, 'group'));
+const nativeNotebookPageCount = computed(() => countNativeNodesByType(nativeFormLayoutNodes.value as NativeLayoutLikeNode[], 'page'));
+const nativeGroupCount = computed(() => countNativeNodesByType(nativeFormLayoutNodes.value as NativeLayoutLikeNode[], 'group'));
 const nativeVisibleSectionTitles = computed(() => {
   const titles: string[] = [];
   const titledContainerTypes = new Set(['group', 'page']);
@@ -6937,39 +6823,6 @@ function collectNativeLayoutFieldNames(nodes: NativeFormLayoutNode[], out: Set<s
   });
 }
 
-function collectNativeLayoutBadgeCountFieldNames(nodes: NativeFormLayoutNode[], out: Set<string>) {
-  nodes.forEach((node) => {
-    const type = String(node?.type || '').trim().toLowerCase();
-    if (type === 'button') {
-      const action = node?.action && typeof node.action === 'object' && !Array.isArray(node.action)
-        ? node.action as Record<string, unknown>
-        : {};
-      const badge = action.badge && typeof action.badge === 'object' && !Array.isArray(action.badge)
-        ? action.badge as Record<string, unknown>
-        : {};
-      const fieldName = String(badge.count_field || badge.field || '').trim();
-      if (fieldName) out.add(fieldName);
-    }
-    (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
-      const children = node?.[key];
-      if (Array.isArray(children)) collectNativeLayoutBadgeCountFieldNames(children as NativeFormLayoutNode[], out);
-    });
-  });
-}
-
-function collectContractActionBadgeCountFieldNames(actions: unknown, out: Set<string>) {
-  if (!Array.isArray(actions)) return;
-  actions.forEach((row) => {
-    if (!row || typeof row !== 'object' || Array.isArray(row)) return;
-    const action = row as Record<string, unknown>;
-    const badge = action.badge && typeof action.badge === 'object' && !Array.isArray(action.badge)
-      ? action.badge as Record<string, unknown>
-      : {};
-    const fieldName = String(badge.count_field || badge.field || '').trim();
-    if (fieldName) out.add(fieldName);
-  });
-}
-
 function formDataFieldNames() {
   const fieldMap = contract.value?.fields || {};
   const contractRecord = contract.value && typeof contract.value === 'object'
@@ -6986,7 +6839,7 @@ function formDataFieldNames() {
     : {};
   const names = new Set<string>();
   collectNativeLayoutFieldNames(rawNativeFormLayoutNodes.value, names);
-  collectNativeLayoutBadgeCountFieldNames(rawNativeFormLayoutNodes.value, names);
+  collectNativeLayoutBadgeCountFieldNames(rawNativeFormLayoutNodes.value as NativeLayoutLikeNode[], names);
   collectContractActionBadgeCountFieldNames(contractRecord.buttons, names);
   collectContractActionBadgeCountFieldNames(toolbar.header, names);
   collectContractActionBadgeCountFieldNames(toolbar.sidebar, names);
