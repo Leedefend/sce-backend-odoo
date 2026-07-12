@@ -22,6 +22,7 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 | P2-01 Test inventory summary | Done | `test_inventory_summary.md`, `scripts/ci/summarize_test_inventory.py` |
 | P2-02 Test asset triage baseline | Done | `decision_gate`, `disposition`, dedupe hotspots in `test_inventory_summary.md` |
 | P2-02 Unified page contract aggregate coverage | Done | 65 v2/lite assets marked `covered_by_aggregate` |
+| P2-02 Frontend page contract aggregate coverage | Done | 7 assets covered by `verify.frontend.product.ready` |
 | SEC-06 Secret scan gate | Done | `scripts/ci/secret_scan.py`, `make security.secrets.scan` |
 | P4-01 Module dependency map | Done | `module_dependency_map.md`, `scripts/ci/generate_module_dependency_map.py` |
 | P4-02 Domain boundary ADR | Done | `adr_0001_domain_boundaries.md` |
@@ -41,7 +42,7 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 | `make test.e2e.fixed_data.odoo` | Passed, 3 Odoo post-tests for E2E-02, E2E-03, and E2E-08 |
 | `make audit.boundary.smart_core.ci` | Passed, artifact-only output without rewriting tracked docs |
 | `python3 scripts/ci/generate_test_inventory.py` | Passed, 1120 inventory entries |
-| `python3 scripts/ci/summarize_test_inventory.py` | Passed, 1120 inventory entries, unknown runtime reduced to 3, aggregate-covered assets 69 |
+| `python3 scripts/ci/summarize_test_inventory.py` | Passed, 1120 inventory entries, unknown runtime reduced to 3, aggregate-covered assets 76 |
 | `python3 scripts/ci/generate_e2e_journey_matrix.py` | Passed, 38 E2E assets mapped to 12 journeys with 0 empty gaps |
 | `python3 scripts/ci/generate_module_dependency_map.py` | Passed, 14 modules and 0 circular dependencies |
 | `python3 scripts/ci/generate_complexity_budget_report.py` | Passed, 3785 files scanned |

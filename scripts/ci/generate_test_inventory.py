@@ -176,6 +176,8 @@ def decision_gate_for(path: Path, layer: str, runtime: str, status: str) -> str:
 
 def aggregate_target_for(path: Path, runtime: str) -> str:
     name = path.name.lower()
+    if name.startswith("frontend_page_contract_"):
+        return "verify.frontend.product.ready"
     if name == "web_unified_page_contract_v2_guard.py":
         return "verify.unified_page_contract.v2"
     if name.startswith("unified_page_contract_v2_"):

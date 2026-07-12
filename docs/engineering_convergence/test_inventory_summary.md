@@ -9,8 +9,8 @@ Generated from `test_inventory.csv`.
 - Unknown runtime: `3`
 - Long-running assets: `331`
 - Manual gate review: `4`
-- Aggregate-covered assets: `69`
-- PR dedupe candidates: `719`
+- Aggregate-covered assets: `76`
+- PR dedupe candidates: `712`
 
 ## By Layer
 
@@ -42,9 +42,9 @@ Generated from `test_inventory.csv`.
 
 | Disposition | Count |
 | --- | ---: |
-| deduplicate_before_required | 719 |
+| deduplicate_before_required | 712 |
 | keep_integration_or_release_only | 292 |
-| covered_by_aggregate | 65 |
+| covered_by_aggregate | 72 |
 | keep_release_only | 36 |
 | canonical_entry | 4 |
 | review_or_archive | 4 |
@@ -55,6 +55,7 @@ Generated from `test_inventory.csv`.
 | --- | ---: |
 | verify.unified_page_contract.lite | 54 |
 | verify.unified_page_contract.v2 | 11 |
+| verify.frontend.product.ready | 7 |
 | make ci | 1 |
 | make test.e2e | 1 |
 | make test.odoo.integration | 1 |
@@ -199,13 +200,12 @@ Generated from `test_inventory.csv`.
 | T-ASSET-344 | governance | `scripts/verify/business_form_productization_standard_guard.py` | architecture owner |
 | T-ASSET-345 | unit | `scripts/verify/business_form_user_perspective_acceptance.py` | test owner |
 | T-ASSET-346 | governance | `scripts/verify/business_list_config_boundary_audit.py` | architecture owner |
-| ... | ... | 639 more | ... |
+| ... | ... | 632 more | ... |
 
 ## Dedupe Hotspots
 
 | Family | Count |
 | --- | ---: |
-| `scripts/verify/frontend_page_contract` | 7 |
 | `scripts/verify/backend_contract_closure` | 5 |
 | `scripts/verify/scene_action_surface` | 5 |
 | `scripts/verify/company_contractor_responsibility` | 4 |
@@ -235,3 +235,4 @@ Generated from `test_inventory.csv`.
 | `scripts/verify/business_form_productization` | 2 |
 | `scripts/verify/contract_assembler_semantic` | 2 |
 | `scripts/verify/contract_business_category` | 2 |
+| `scripts/verify/fe_ar_ap` | 2 |
