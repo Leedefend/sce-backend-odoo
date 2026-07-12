@@ -1,6 +1,7 @@
 import { buildOne2ManyInlineCommands } from '../../app/x2manyCommands';
-import { fromDatetimeInputValue, toDateInputValue, toDatetimeInputValue } from './fieldUtils';
+import { fieldType, fromDatetimeInputValue, toDateInputValue, toDatetimeInputValue } from './fieldUtils';
 import type { One2ManyColumn, One2ManyInlineRow } from './types';
+import type { FieldDescriptor } from '@sc/schema';
 
 export function subviewColumnCount(subview: unknown): number {
   if (!subview || typeof subview !== 'object' || Array.isArray(subview)) return 0;
@@ -18,6 +19,68 @@ export function one2manySubviewPolicies(subview: unknown) {
   return policies && typeof policies === 'object'
     ? policies as Record<string, unknown>
     : {};
+}
+
+export function selectOne2manySubview(legacySubview: unknown, nativeSubview: unknown) {
+  const legacyColumns = subviewColumnCount(legacySubview);
+  const nativeColumns = subviewColumnCount(nativeSubview);
+  return nativeColumns > legacyColumns ? nativeSubview : (legacySubview || nativeSubview);
+}
+
+function one2manyColumnLabel(value: unknown, fallback: string) {
+  const label = String(value || '').trim();
+  if (label === 'display_name' || label === 'name') return '名称';
+  if (label) return label;
+  return fallback === 'display_name' || fallback === 'name' ? '名称' : fallback;
+}
+
+export function one2manyColumnsFromSubview(
+  subview: unknown,
+  resolveDescriptor: (column: string) => FieldDescriptor | null | undefined,
+) {
+  const tree = subview && typeof subview === 'object' && !Array.isArray(subview)
+    ? (subview as Record<string, unknown>).tree
+    : undefined;
+  const columnsRaw = tree && typeof tree === 'object' && !Array.isArray(tree)
+    ? (tree as Record<string, unknown>).columns
+    : undefined;
+  const out: One2ManyColumn[] = [];
+  if (Array.isArray(columnsRaw)) {
+    columnsRaw.forEach((item) => {
+      if (typeof item === 'string') {
+        const normalized = item.trim();
+        if (!normalized) return;
+        const descriptor = resolveDescriptor(normalized);
+        const ttype = fieldType(descriptor) || 'char';
+        out.push({
+          name: normalized,
+          label: one2manyColumnLabel(descriptor?.string, normalized),
+          ttype,
+          required: Boolean(descriptor?.required),
+          readonly: Boolean(descriptor?.readonly),
+          selection: Array.isArray(descriptor?.selection) ? descriptor?.selection : undefined,
+        });
+        return;
+      }
+      if (!item || typeof item !== 'object') return;
+      const row = item as Record<string, unknown>;
+      const colName = String(row.name || '').trim();
+      if (!colName) return;
+      const descriptor = resolveDescriptor(colName);
+      const ttype = String(row.ttype || fieldType(descriptor) || 'char').trim() || 'char';
+      out.push({
+        name: colName,
+        label: one2manyColumnLabel(row.label || row.string || descriptor?.string, colName),
+        ttype,
+        required: Boolean(row.required || descriptor?.required),
+        readonly: Boolean(row.readonly || descriptor?.readonly),
+        selection: Array.isArray(row.selection)
+          ? row.selection as Array<[string, string]>
+          : (Array.isArray(descriptor?.selection) ? descriptor?.selection : undefined),
+      });
+    });
+  }
+  return out;
 }
 
 export function one2manyCanCreateFromPolicies(policies: Record<string, unknown>) {

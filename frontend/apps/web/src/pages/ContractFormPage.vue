@@ -1360,12 +1360,13 @@ import {
   one2manyColumnDisplayValue,
   one2manyColumnInputType,
   one2manyCreateLabelFromPolicies,
+  one2manyColumnsFromSubview,
   one2manyDraftSummary,
   one2manyPrimaryColumnFromColumns,
   one2manyRowLabelFromPrimary,
   one2manyRowStateLabel,
+  selectOne2manySubview,
   one2manySubviewPolicies,
-  subviewColumnCount,
 } from './contractForm/one2manyUtils';
 import {
   relationEntry,
@@ -3456,61 +3457,8 @@ function one2manyColumns(name: string): One2ManyColumn[] {
     ? (subviews as Record<string, unknown>)[name]
     : undefined;
   const nativeSubview = nativeFieldSubview(name);
-  const legacyColumns = subviewColumnCount(legacySubview);
-  const nativeColumns = subviewColumnCount(nativeSubview);
-  const fieldSubview = nativeColumns > legacyColumns ? nativeSubview : (legacySubview || nativeSubview);
-  const tree = fieldSubview && typeof fieldSubview === 'object'
-    ? (fieldSubview as Record<string, unknown>).tree
-    : undefined;
-  const columnsRaw = tree && typeof tree === 'object'
-    ? (tree as Record<string, unknown>).columns
-    : undefined;
-  const out: One2ManyColumn[] = [];
-  const columnLabel = (value: unknown, fallback: string) => {
-    const label = String(value || '').trim();
-    if (label === 'display_name' || label === 'name') return '名称';
-    if (label) return label;
-    return fallback === 'display_name' || fallback === 'name' ? '名称' : fallback;
-  };
-  if (Array.isArray(columnsRaw)) {
-    columnsRaw.forEach((item) => {
-      if (typeof item === 'string') {
-        const normalized = item.trim();
-        if (!normalized) return;
-        const descriptor = one2manyRelationFieldDescriptor(name, normalized);
-        const ttype = fieldType(descriptor) || 'char';
-        out.push({
-          name: normalized,
-          label: columnLabel(descriptor?.string, normalized),
-          ttype,
-          required: Boolean(descriptor?.required),
-          readonly: Boolean(descriptor?.readonly),
-          selection: Array.isArray(descriptor?.selection) ? descriptor?.selection : undefined,
-        });
-        return;
-      }
-      if (!item || typeof item !== 'object') return;
-      const row = item as Record<string, unknown>;
-      const colName = String(row.name || '').trim();
-      if (!colName) return;
-      const descriptor = one2manyRelationFieldDescriptor(name, colName);
-      const ttype = String(row.ttype || fieldType(descriptor) || 'char').trim() || 'char';
-      out.push({
-        name: colName,
-        label: columnLabel(row.label || row.string || descriptor?.string, colName),
-        ttype,
-        required: Boolean(row.required || descriptor?.required),
-        readonly: Boolean(row.readonly || descriptor?.readonly),
-        selection: Array.isArray(row.selection)
-          ? row.selection as Array<[string, string]>
-          : (Array.isArray(descriptor?.selection) ? descriptor?.selection : undefined),
-      });
-    });
-  }
-  if (!out.length) {
-    return [];
-  }
-  return out;
+  const fieldSubview = selectOne2manySubview(legacySubview, nativeSubview);
+  return one2manyColumnsFromSubview(fieldSubview, (column) => one2manyRelationFieldDescriptor(name, column));
 }
 
 function one2manyPolicies(name: string) {
@@ -3519,7 +3467,7 @@ function one2manyPolicies(name: string) {
     ? (subviews as Record<string, unknown>)[name]
     : undefined;
   const nativeSubview = nativeFieldSubview(name);
-  const fieldSubview = nativeSubview || legacySubview;
+  const fieldSubview = selectOne2manySubview(legacySubview, nativeSubview);
   return one2manySubviewPolicies(fieldSubview);
 }
 
