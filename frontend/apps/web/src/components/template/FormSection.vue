@@ -208,7 +208,7 @@
                   </div>
                 </div>
                 <div v-else-if="isDateRangeWidget(field)" class="native-date-range">
-                  <span class="native-date-input-shell">
+                  <span :class="['native-date-input-shell', { 'native-date-input-shell--has-value': Boolean(String(field.inputValue ?? '')) }]">
                     <input
                       :value="String(field.inputValue ?? '')"
                       :class="['input', 'native-date-input', { 'native-date-input--empty': !String(field.inputValue ?? '') }]"
@@ -216,12 +216,13 @@
                       :placeholder="field.inputPlaceholder || inputPlaceholderText(field)"
                       @input="emitFieldChange(field, ($event.target as HTMLInputElement).value)"
                     />
+                    <span v-if="String(field.inputValue ?? '')" class="native-date-display">{{ formatDateInputDisplay(field.inputValue, 'date') }}</span>
                     <span v-if="!String(field.inputValue ?? '')" class="native-date-placeholder">请选择开始日期</span>
                   </span>
                   <span v-if="field.dateRangeEndField" class="native-date-range-separator" aria-hidden="true">→</span>
                   <span
                     v-if="field.dateRangeEndField"
-                    class="native-date-input-shell"
+                    :class="['native-date-input-shell', { 'native-date-input-shell--has-value': Boolean(String(field.dateRangeEndInputValue ?? '')) }]"
                   >
                     <input
                       :value="String(field.dateRangeEndInputValue ?? '')"
@@ -230,6 +231,7 @@
                       :placeholder="field.inputPlaceholder || inputPlaceholderText(field)"
                       @input="emitDateRangeEndChange(field, ($event.target as HTMLInputElement).value)"
                     />
+                    <span v-if="String(field.dateRangeEndInputValue ?? '')" class="native-date-display">{{ formatDateInputDisplay(field.dateRangeEndInputValue, 'date') }}</span>
                     <span v-if="!String(field.dateRangeEndInputValue ?? '')" class="native-date-placeholder">请选择结束日期</span>
                   </span>
                 </div>
@@ -241,7 +243,10 @@
                   rows="4"
                   @input="emitFieldChange(field, ($event.target as HTMLTextAreaElement).value)"
                 />
-                <span v-else-if="isDateLikeField(field.type)" class="native-date-input-shell">
+                <span
+                  v-else-if="isDateLikeField(field.type)"
+                  :class="['native-date-input-shell', { 'native-date-input-shell--has-value': Boolean(String(field.inputValue ?? '')) }]"
+                >
                   <input
                     :value="String(field.inputValue ?? '')"
                     :class="['input', 'native-date-input', { 'native-date-input--empty': !String(field.inputValue ?? '') }]"
@@ -249,6 +254,7 @@
                     :placeholder="field.inputPlaceholder || inputPlaceholderText(field)"
                     @input="emitFieldChange(field, ($event.target as HTMLInputElement).value)"
                   />
+                  <span v-if="String(field.inputValue ?? '')" class="native-date-display">{{ formatDateInputDisplay(field.inputValue, field.type) }}</span>
                   <span v-if="!String(field.inputValue ?? '')" class="native-date-placeholder">{{ localizedDatePlaceholder(field.type) }}</span>
                 </span>
                 <input
@@ -388,6 +394,18 @@ function isDateLikeField(type: TemplateFieldType) {
 
 function localizedDatePlaceholder(type: TemplateFieldType) {
   return String(type || '').trim().toLowerCase() === 'datetime' ? '请选择日期时间' : '请选择日期';
+}
+
+function formatDateInputDisplay(value: unknown, type: TemplateFieldType) {
+  const text = String(value ?? '').trim();
+  if (!text) return '';
+  const match = text.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2})(?::(\d{2}))?)?/);
+  if (!match) return text;
+  const [, year, month, day, hour = '', minute = ''] = match;
+  if (String(type || '').trim().toLowerCase() === 'datetime' && hour) {
+    return `${year}-${month}-${day} ${hour}:${minute || '00'}`;
+  }
+  return `${year}-${month}-${day}`;
 }
 
 function inputType(type: TemplateFieldType) {
@@ -1183,10 +1201,38 @@ select.input {
   min-width: 0;
 }
 
+.native-date-input-shell--has-value .native-date-input {
+  color: transparent;
+}
+
+.native-date-input-shell--has-value:focus-within .native-date-input {
+  color: var(--sc-app-text-primary);
+}
+
 .native-date-input[type='date'],
 .native-date-input[type='datetime-local'] {
   min-width: 0;
-  padding-right: 10px;
+  padding-right: 34px;
+}
+
+.native-date-display {
+  position: absolute;
+  left: 10px;
+  right: 34px;
+  top: 50%;
+  z-index: 1;
+  overflow: hidden;
+  color: var(--sc-app-text-primary);
+  font-size: 13px;
+  line-height: 1.35;
+  pointer-events: none;
+  text-overflow: ellipsis;
+  transform: translateY(-50%);
+  white-space: nowrap;
+}
+
+.native-date-input-shell--has-value:focus-within .native-date-display {
+  opacity: 0;
 }
 
 .native-date-input--empty::-webkit-datetime-edit {
