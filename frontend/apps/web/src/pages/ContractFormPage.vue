@@ -599,157 +599,57 @@
               </span>
             </template>
             <template #chatter>
-              <section v-if="(nativeChatterActions.length || nativeAttachments) && !isProjectIntakeCreateMode" class="block native-chatter-block">
-              <h3>{{ nativeCollaborationTitle }}</h3>
-              <p v-if="nativeCollaborationUnavailableMessage" class="native-chatter-empty">{{ nativeCollaborationUnavailableMessage }}</p>
-              <div v-else class="chips">
-                <button
-                  v-for="action in nativeChatterActions"
-                  :key="`chatter-${action.key}`"
-                  class="chip-btn"
-                  type="button"
-                  :disabled="busy || chatterPosting || !action.enabled"
-                  :title="action.hint"
-                  @click="openNativeChatterAction(action)"
-                >
-                  {{ action.label }}
-                </button>
-              </div>
-              <section v-if="!nativeCollaborationUnavailableMessage && activeChatterMode" class="native-chatter-compose">
-                <template v-if="activeChatterIsActivity">
-                  <label class="native-chatter-field">
-                    <span>{{ activityAssigneeLabel }}</span>
-                    <select class="input" :value="activityAssigneeId || ''" :disabled="chatterPosting || collaborationUsersLoading" @change="selectActivityAssignee">
-                      <option value="">当前用户</option>
-                      <option v-for="user in activityAssigneeOptions" :key="`activity-user-${user.id}`" :value="user.id">
-                        {{ collaborationUserLabel(user) }}
-                      </option>
-                    </select>
-                  </label>
-                  <label class="native-chatter-field">
-                    <span>{{ activitySummaryLabel }}</span>
-                    <input
-                      v-model="activitySummary"
-                      class="input"
-                      type="text"
-                      :placeholder="activitySummaryPlaceholder"
-                      :disabled="chatterPosting"
-                    />
-                  </label>
-                  <label class="native-chatter-field">
-                    <span>{{ activityDeadlineLabel }}</span>
-                    <input v-model="activityDeadline" class="input" type="date" :disabled="chatterPosting" />
-                  </label>
-                  <label class="native-chatter-field">
-                    <span>{{ activityNoteLabel }}</span>
-                    <textarea
-                      v-model="activityNote"
-                      class="native-chatter-input"
-                      :placeholder="activityNotePlaceholder"
-                      :disabled="chatterPosting"
-                    />
-                  </label>
-                </template>
-                <template v-else>
-                  <label class="native-chatter-field">
-                    <span>提醒对象</span>
-                    <input
-                      v-model="collaborationUserQuery"
-                      class="input"
-                      type="text"
-                      :disabled="chatterPosting || collaborationUsersLoading"
-                      placeholder="搜索姓名或账号"
-                      @input="() => loadCollaborationUsers(collaborationUserQuery)"
-                    />
-                  </label>
-                  <div v-if="selectedMentionUsers.length" class="native-collab-selected">
-                    <button
-                      v-for="user in selectedMentionUsers"
-                      :key="`mention-selected-${user.id}`"
-                      class="chip-btn"
-                      type="button"
-                      :disabled="chatterPosting"
-                      @click="removeMentionUser(user.id)"
-                    >
-                      @{{ collaborationUserLabel(user) }} ×
-                    </button>
-                  </div>
-                  <div v-if="collaborationUserChoices.length" class="native-collab-options">
-                    <button
-                      v-for="user in collaborationUserChoices.slice(0, 6)"
-                      :key="`mention-choice-${user.id}`"
-                      class="ghost mini"
-                      type="button"
-                      :disabled="chatterPosting"
-                      @click="selectMentionUser(user)"
-                    >
-                      @{{ collaborationUserLabel(user) }}
-                    </button>
-                  </div>
-                  <textarea
-                    v-model="chatterDraft"
-                    class="native-chatter-input"
-                    :placeholder="activeChatterPlaceholder"
-                    :disabled="chatterPosting"
-                  />
-                </template>
-                <div class="native-chatter-compose-actions">
-                  <button class="primary" type="button" :disabled="isNativeChatterSubmitDisabled" @click="sendNativeChatter">
-                    {{ chatterPosting ? activeChatterPostingLabel : activeChatterSubmitLabel }}
-                  </button>
-                  <button class="ghost" type="button" :disabled="chatterPosting" @click="closeNativeChatterComposer">取消</button>
-                </div>
-              </section>
-              <p v-if="chatterError" class="validation-error native-chatter-message">{{ chatterError }}</p>
-              <section v-if="nativeAttachments" class="native-attachment-tools">
-                <label class="chip-btn native-attachment-upload">
-                  {{ attachmentUploading ? nativeAttachmentUploadingLabel : nativeAttachmentUploadLabel }}
-                  <input type="file" :disabled="attachmentUploading" @change="onNativeAttachmentSelected" />
-                </label>
-                <p v-if="attachmentError" class="validation-error native-chatter-message">{{ attachmentError }}</p>
-              </section>
-              <ul v-if="pendingNativeAttachments.length" class="native-pending-attachments">
-                <li v-for="item in pendingNativeAttachments" :key="item.key">
-                  <span>{{ item.name }}</span>
-                  <button class="ghost native-attachment-download" type="button" :disabled="attachmentUploading" @click="removePendingNativeAttachment(item.key)">移除</button>
-                </li>
-              </ul>
-              <ul v-if="!nativeCollaborationUnavailableMessage && chatterTimeline.length" class="native-chatter-timeline">
-                <li v-for="entry in chatterTimeline" :key="entry.key" class="native-chatter-entry">
-                  <span class="native-chatter-type">{{ entry.typeLabel }}</span>
-                  <span class="native-chatter-body">{{ entry.type === 'activity' ? entry.title : (entry.body || entry.title) }}</span>
-                  <span class="native-chatter-meta">{{ entry.meta }}</span>
-                  <div v-if="entry.type === 'activity'" class="native-chatter-entry-actions">
-                    <button
-                      v-if="entry.activity?.can_complete"
-                      class="ghost native-chatter-entry-action"
-                      type="button"
-                      :disabled="isActivityUpdating(entry)"
-                      @click="updateNativeActivity(entry, 'done')"
-                    >
-                      完成
-                    </button>
-                    <button
-                      v-if="entry.activity?.can_cancel"
-                      class="ghost native-chatter-entry-action"
-                      type="button"
-                      :disabled="isActivityUpdating(entry)"
-                      @click="updateNativeActivity(entry, 'cancel')"
-                    >
-                      取消
-                    </button>
-                  </div>
-                  <button
-                    v-if="entry.type === 'attachment' && entry.attachment"
-                    class="ghost native-attachment-download"
-                    type="button"
-                    @click="openNativeAttachment(entry.attachment)"
-                  >
-                    {{ nativeAttachmentViewLabel }}
-                  </button>
-                </li>
-              </ul>
-            </section>
+              <NativeCollaborationPanel
+                v-if="(nativeChatterActions.length || nativeAttachments) && !isProjectIntakeCreateMode"
+                v-model:activity-deadline="activityDeadline"
+                v-model:activity-note="activityNote"
+                v-model:activity-summary="activitySummary"
+                v-model:chatter-draft="chatterDraft"
+                v-model:collaboration-user-query="collaborationUserQuery"
+                :actions="nativeChatterActions"
+                :activity-assignee-id="activityAssigneeId"
+                :activity-assignee-label="activityAssigneeLabel"
+                :activity-assignee-options="activityAssigneeOptions"
+                :activity-deadline-label="activityDeadlineLabel"
+                :activity-note-label="activityNoteLabel"
+                :activity-note-placeholder="activityNotePlaceholder"
+                :activity-summary-label="activitySummaryLabel"
+                :activity-summary-placeholder="activitySummaryPlaceholder"
+                :active-is-activity="activeChatterIsActivity"
+                :active-mode="activeChatterMode"
+                :active-placeholder="activeChatterPlaceholder"
+                :active-posting-label="activeChatterPostingLabel"
+                :active-submit-label="activeChatterSubmitLabel"
+                :activity-updating-ids="activityUpdatingIds"
+                :attachment-error="attachmentError"
+                :attachment-upload-label="nativeAttachmentUploadLabel"
+                :attachment-uploading="attachmentUploading"
+                :attachment-uploading-label="nativeAttachmentUploadingLabel"
+                :attachment-view-label="nativeAttachmentViewLabel"
+                :busy="busy"
+                :chatter-error="chatterError"
+                :collaboration-user-choices="collaborationUserChoices"
+                :has-attachments="Boolean(nativeAttachments)"
+                :pending-attachments="pendingNativeAttachments"
+                :posting="chatterPosting"
+                :selected-mention-users="selectedMentionUsers"
+                :submit-disabled="isNativeChatterSubmitDisabled"
+                :timeline="chatterTimeline"
+                :title="nativeCollaborationTitle"
+                :unavailable-message="nativeCollaborationUnavailableMessage"
+                :users-loading="collaborationUsersLoading"
+                @attachment-selected="onNativeAttachmentSelected"
+                @close-composer="closeNativeChatterComposer"
+                @load-users="loadCollaborationUsers"
+                @open-action="openNativeChatterAction"
+                @open-attachment="openNativeAttachment"
+                @remove-mention-user="removeMentionUser"
+                @remove-pending-attachment="removePendingNativeAttachment"
+                @select-activity-assignee="activityAssigneeId = $event"
+                @select-mention-user="selectMentionUser"
+                @send-chatter="sendNativeChatter"
+                @update-activity="updateNativeActivity"
+              />
             </template>
           </NativeFormTreeRenderer>
         </section>
@@ -873,157 +773,57 @@
         </div>
       </section>
 
-      <section v-if="(nativeChatterActions.length || nativeAttachments) && !isProjectIntakeCreateMode && !hasNativeChatterNode" class="block native-chatter-block">
-        <h3>{{ nativeCollaborationTitle }}</h3>
-        <p v-if="nativeCollaborationUnavailableMessage" class="native-chatter-empty">{{ nativeCollaborationUnavailableMessage }}</p>
-        <div v-else class="chips">
-          <button
-            v-for="action in nativeChatterActions"
-            :key="`chatter-${action.key}`"
-            class="chip-btn"
-            type="button"
-            :disabled="busy || chatterPosting || !action.enabled"
-            :title="action.hint"
-            @click="openNativeChatterAction(action)"
-          >
-            {{ action.label }}
-          </button>
-        </div>
-        <section v-if="!nativeCollaborationUnavailableMessage && activeChatterMode" class="native-chatter-compose">
-          <template v-if="activeChatterIsActivity">
-            <label class="native-chatter-field">
-              <span>{{ activityAssigneeLabel }}</span>
-              <select class="input" :value="activityAssigneeId || ''" :disabled="chatterPosting || collaborationUsersLoading" @change="selectActivityAssignee">
-                <option value="">当前用户</option>
-                <option v-for="user in activityAssigneeOptions" :key="`activity-user-fallback-${user.id}`" :value="user.id">
-                  {{ collaborationUserLabel(user) }}
-                </option>
-              </select>
-            </label>
-            <label class="native-chatter-field">
-              <span>{{ activitySummaryLabel }}</span>
-              <input
-                v-model="activitySummary"
-                class="input"
-                type="text"
-                :placeholder="activitySummaryPlaceholder"
-                :disabled="chatterPosting"
-              />
-            </label>
-            <label class="native-chatter-field">
-              <span>{{ activityDeadlineLabel }}</span>
-              <input v-model="activityDeadline" class="input" type="date" :disabled="chatterPosting" />
-            </label>
-            <label class="native-chatter-field">
-              <span>{{ activityNoteLabel }}</span>
-              <textarea
-                v-model="activityNote"
-                class="native-chatter-input"
-                :placeholder="activityNotePlaceholder"
-                :disabled="chatterPosting"
-              />
-            </label>
-          </template>
-          <template v-else>
-            <label class="native-chatter-field">
-              <span>提醒对象</span>
-              <input
-                v-model="collaborationUserQuery"
-                class="input"
-                type="text"
-                :disabled="chatterPosting || collaborationUsersLoading"
-                placeholder="搜索姓名或账号"
-                @input="() => loadCollaborationUsers(collaborationUserQuery)"
-              />
-            </label>
-            <div v-if="selectedMentionUsers.length" class="native-collab-selected">
-              <button
-                v-for="user in selectedMentionUsers"
-                :key="`mention-selected-fallback-${user.id}`"
-                class="chip-btn"
-                type="button"
-                :disabled="chatterPosting"
-                @click="removeMentionUser(user.id)"
-              >
-                @{{ collaborationUserLabel(user) }} ×
-              </button>
-            </div>
-            <div v-if="collaborationUserChoices.length" class="native-collab-options">
-              <button
-                v-for="user in collaborationUserChoices.slice(0, 6)"
-                :key="`mention-choice-fallback-${user.id}`"
-                class="ghost mini"
-                type="button"
-                :disabled="chatterPosting"
-                @click="selectMentionUser(user)"
-              >
-                @{{ collaborationUserLabel(user) }}
-              </button>
-            </div>
-            <textarea
-              v-model="chatterDraft"
-              class="native-chatter-input"
-              :placeholder="activeChatterPlaceholder"
-              :disabled="chatterPosting"
-            />
-          </template>
-          <div class="native-chatter-compose-actions">
-            <button class="primary" type="button" :disabled="isNativeChatterSubmitDisabled" @click="sendNativeChatter">
-              {{ chatterPosting ? activeChatterPostingLabel : activeChatterSubmitLabel }}
-            </button>
-            <button class="ghost" type="button" :disabled="chatterPosting" @click="closeNativeChatterComposer">取消</button>
-          </div>
-        </section>
-        <p v-if="chatterError" class="validation-error native-chatter-message">{{ chatterError }}</p>
-        <section v-if="nativeAttachments" class="native-attachment-tools">
-          <label class="chip-btn native-attachment-upload">
-            {{ attachmentUploading ? nativeAttachmentUploadingLabel : nativeAttachmentUploadLabel }}
-            <input type="file" :disabled="attachmentUploading" @change="onNativeAttachmentSelected" />
-          </label>
-          <p v-if="attachmentError" class="validation-error native-chatter-message">{{ attachmentError }}</p>
-        </section>
-        <ul v-if="pendingNativeAttachments.length" class="native-pending-attachments">
-          <li v-for="item in pendingNativeAttachments" :key="item.key">
-            <span>{{ item.name }}</span>
-            <button class="ghost native-attachment-download" type="button" :disabled="attachmentUploading" @click="removePendingNativeAttachment(item.key)">移除</button>
-          </li>
-        </ul>
-        <ul v-if="!nativeCollaborationUnavailableMessage && chatterTimeline.length" class="native-chatter-timeline">
-          <li v-for="entry in chatterTimeline" :key="entry.key" class="native-chatter-entry">
-            <span class="native-chatter-type">{{ entry.typeLabel }}</span>
-            <span class="native-chatter-body">{{ entry.type === 'activity' ? entry.title : (entry.body || entry.title) }}</span>
-            <span class="native-chatter-meta">{{ entry.meta }}</span>
-            <div v-if="entry.type === 'activity'" class="native-chatter-entry-actions">
-              <button
-                v-if="entry.activity?.can_complete"
-                class="ghost native-chatter-entry-action"
-                type="button"
-                :disabled="isActivityUpdating(entry)"
-                @click="updateNativeActivity(entry, 'done')"
-              >
-                完成
-              </button>
-              <button
-                v-if="entry.activity?.can_cancel"
-                class="ghost native-chatter-entry-action"
-                type="button"
-                :disabled="isActivityUpdating(entry)"
-                @click="updateNativeActivity(entry, 'cancel')"
-              >
-                取消
-              </button>
-            </div>
-            <button
-              v-if="entry.type === 'attachment' && entry.attachment"
-              class="ghost native-attachment-download"
-              type="button"
-              @click="openNativeAttachment(entry.attachment)"
-            >
-              {{ nativeAttachmentViewLabel }}
-            </button>
-          </li>
-        </ul>
-      </section>
+      <NativeCollaborationPanel
+        v-if="(nativeChatterActions.length || nativeAttachments) && !isProjectIntakeCreateMode && !hasNativeChatterNode"
+        v-model:activity-deadline="activityDeadline"
+        v-model:activity-note="activityNote"
+        v-model:activity-summary="activitySummary"
+        v-model:chatter-draft="chatterDraft"
+        v-model:collaboration-user-query="collaborationUserQuery"
+        :actions="nativeChatterActions"
+        :activity-assignee-id="activityAssigneeId"
+        :activity-assignee-label="activityAssigneeLabel"
+        :activity-assignee-options="activityAssigneeOptions"
+        :activity-deadline-label="activityDeadlineLabel"
+        :activity-note-label="activityNoteLabel"
+        :activity-note-placeholder="activityNotePlaceholder"
+        :activity-summary-label="activitySummaryLabel"
+        :activity-summary-placeholder="activitySummaryPlaceholder"
+        :active-is-activity="activeChatterIsActivity"
+        :active-mode="activeChatterMode"
+        :active-placeholder="activeChatterPlaceholder"
+        :active-posting-label="activeChatterPostingLabel"
+        :active-submit-label="activeChatterSubmitLabel"
+        :activity-updating-ids="activityUpdatingIds"
+        :attachment-error="attachmentError"
+        :attachment-upload-label="nativeAttachmentUploadLabel"
+        :attachment-uploading="attachmentUploading"
+        :attachment-uploading-label="nativeAttachmentUploadingLabel"
+        :attachment-view-label="nativeAttachmentViewLabel"
+        :busy="busy"
+        :chatter-error="chatterError"
+        :collaboration-user-choices="collaborationUserChoices"
+        :has-attachments="Boolean(nativeAttachments)"
+        :pending-attachments="pendingNativeAttachments"
+        :posting="chatterPosting"
+        :selected-mention-users="selectedMentionUsers"
+        :submit-disabled="isNativeChatterSubmitDisabled"
+        :timeline="chatterTimeline"
+        :title="nativeCollaborationTitle"
+        :unavailable-message="nativeCollaborationUnavailableMessage"
+        :users-loading="collaborationUsersLoading"
+        @attachment-selected="onNativeAttachmentSelected"
+        @close-composer="closeNativeChatterComposer"
+        @load-users="loadCollaborationUsers"
+        @open-action="openNativeChatterAction"
+        @open-attachment="openNativeAttachment"
+        @remove-mention-user="removeMentionUser"
+        @remove-pending-attachment="removePendingNativeAttachment"
+        @select-activity-assignee="activityAssigneeId = $event"
+        @select-mention-user="selectMentionUser"
+        @send-chatter="sendNativeChatter"
+        @update-activity="updateNativeActivity"
+      />
     </section>
 
     <DevContextPanel
@@ -1157,6 +957,7 @@ import PageHeaderTemplate from '../components/template/PageHeader.vue';
 import NativeFormTreeRenderer, { type NativeFormLayoutNode } from '../components/template/NativeFormTreeRenderer.vue';
 import SceneBlocksRenderer from '../components/scene/SceneBlocksRenderer.vue';
 import PageFooterTemplate from '../components/template/PageFooter.vue';
+import NativeCollaborationPanel from './contractForm/NativeCollaborationPanel.vue';
 import type {
   FormSectionFieldActionPayload,
   FormSectionFieldSchema,
