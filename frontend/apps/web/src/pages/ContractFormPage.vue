@@ -205,73 +205,49 @@
           @selected-group-title-change="onSelectedFormSettingsGroupTitleChange"
           @selected-group-visibility-change="onSelectedFormSettingsGroupVisibilityChange"
         />
-        <section v-if="showNativeDefaultSectionTitle" class="native-default-section-head">
-          <h3>基本信息</h3>
-        </section>
-        <section
-          v-if="useNativeFormTree"
-          class="contract-form-canvas-shell"
-          :class="{ 'contract-form-designer-canvas': showCurrentFormFieldConfigScope }"
-          aria-label="表单配置画布"
-        >
-          <header v-if="showCurrentFormFieldConfigScope" class="contract-form-canvas-head">
-            <div>
-              <strong>表单画布</strong>
-              <span>{{ selectedFormSettingsFieldRow ? `正在编辑：${selectedFormSettingsFieldRow.label}` : '点选字段后在右侧调整属性' }}</span>
-            </div>
-            <em>{{ nativeFormRootColumns }} 栏布局</em>
-          </header>
-          <NativeFormTreeRenderer
-            :key="nativeLayoutVisibilityRevision"
-            class="contract-form-canvas-body"
-            :nodes="nativeFormLayoutNodes"
-            :field-schemas-for-nodes="nativeFieldSchemasForNodes"
-            :is-node-visible="isNativeLayoutNodeVisible"
-            :button-label-resolver="resolveNativeButtonLabel"
-            :native-action-handler="runNativeLayoutAction"
-            :native-action-state-resolver="resolveNativeActionState"
-            :relation-adapter="relationFieldAdapter"
-            :field-actions="isContractFieldOrderEditable ? formSettingsFieldActions : contractFieldActions"
-            :field-order-editable="isContractFieldOrderEditable"
-            :field-order-index="contractInlineFieldOrderIndex"
-            :field-order-count="fieldOrderDraft.length"
-            :field-order-dragging-key="draggingFieldKey"
-            :field-order-drop-target-key="dropTargetFieldKey"
-            :field-order-drop-placement="dropTargetPlacement"
-            :field-config-editable="isContractFieldOrderEditable"
-            :field-selection-mode="isContractFieldOrderEditable"
-            :selected-field-key="selectedFormSettingsFieldKey"
-            :columns="nativeFormRootColumns"
-            @field-change="onTemplateFieldChange"
-            @field-action="onContractFieldAction"
-            @field-order-move="onContractInlineFieldOrderMove"
-            @field-order-drag-start="onContractInlineFieldOrderDragStart"
-            @field-order-drag-over="onContractInlineFieldOrderDragOver"
-            @field-order-drag-leave="onContractInlineFieldOrderDragLeave"
-            @field-order-drop="onContractInlineFieldOrderDrop"
-            @field-order-group-drop="onContractInlineFieldOrderGroupDrop"
-            @field-order-drag-end="onContractInlineFieldOrderDragEnd"
-            @field-label-change="onContractInlineFieldLabelChange"
-            @field-add-after="onContractInlineFieldAddAfter"
-            @field-select="onFormSettingsFieldSelect"
-            @group-rename="onContractInlineGroupRename"
-            @group-add-field="onContractInlineGroupAddField"
-            @native-action="runNativeLayoutAction"
-          >
-            <template #readonly="{ field }">
-              <span class="contract-readonly-value">
-                <FieldValue :value="field.value" :field="field.descriptor" />
-              </span>
-            </template>
-            <template #chatter>
-              <NativeCollaborationPanel
-                v-if="(nativeChatterActions.length || nativeAttachments) && !isProjectIntakeCreateMode"
-                v-bind="nativeCollaborationPanelProps"
-                v-on="nativeCollaborationPanelListeners"
-              />
-            </template>
-          </NativeFormTreeRenderer>
-        </section>
+        <ContractFormNativeCanvas
+          :button-label-resolver="resolveNativeButtonLabel"
+          :collaboration-panel-listeners="nativeCollaborationPanelListeners"
+          :collaboration-panel-props="nativeCollaborationPanelProps"
+          :designer-mode="showCurrentFormFieldConfigScope"
+          :field-actions="isContractFieldOrderEditable ? formSettingsFieldActions : contractFieldActions"
+          :field-config-editable="isContractFieldOrderEditable"
+          :field-order-count="fieldOrderDraft.length"
+          :field-order-dragging-key="draggingFieldKey"
+          :field-order-drop-placement="dropTargetPlacement"
+          :field-order-drop-target-key="dropTargetFieldKey"
+          :field-order-editable="isContractFieldOrderEditable"
+          :field-order-index="contractInlineFieldOrderIndex"
+          :field-schemas-for-nodes="nativeFieldSchemasForNodes"
+          :field-selection-mode="isContractFieldOrderEditable"
+          :is-node-visible="isNativeLayoutNodeVisible"
+          :layout-nodes="nativeFormLayoutNodes"
+          :layout-visibility-revision="nativeLayoutVisibilityRevision"
+          :native-action-handler="runNativeLayoutAction"
+          :native-action-state-resolver="resolveNativeActionState"
+          :relation-adapter="relationFieldAdapter"
+          :root-columns="nativeFormRootColumns"
+          :selected-field-key="selectedFormSettingsFieldKey"
+          :selected-field-row-label="selectedFormSettingsFieldRow?.label || ''"
+          :show-collaboration-panel="(nativeChatterActions.length || nativeAttachments) && !isProjectIntakeCreateMode"
+          :show-default-section-title="showNativeDefaultSectionTitle"
+          :use-native-form-tree="useNativeFormTree"
+          @field-action="onContractFieldAction"
+          @field-add-after="onContractInlineFieldAddAfter"
+          @field-change="onTemplateFieldChange"
+          @field-label-change="onContractInlineFieldLabelChange"
+          @field-order-drag-end="onContractInlineFieldOrderDragEnd"
+          @field-order-drag-leave="onContractInlineFieldOrderDragLeave"
+          @field-order-drag-over="onContractInlineFieldOrderDragOver"
+          @field-order-drag-start="onContractInlineFieldOrderDragStart"
+          @field-order-drop="onContractInlineFieldOrderDrop"
+          @field-order-group-drop="onContractInlineFieldOrderGroupDrop"
+          @field-order-move="onContractInlineFieldOrderMove"
+          @field-select="onFormSettingsFieldSelect"
+          @group-add-field="onContractInlineGroupAddField"
+          @group-rename="onContractInlineGroupRename"
+          @native-action="runNativeLayoutAction"
+        />
         <section v-if="activeContractModeActions.length" class="contract-mode-actions">
           <button
             v-for="action in activeContractModeActions"
@@ -374,7 +350,6 @@
 <script setup lang="ts">
 import { computed, nextTick, onActivated, onBeforeUnmount, onDeactivated, onErrorCaptured, onMounted, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import FieldValue from '../components/FieldValue.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import ProductConfirmDialog from '../components/ProductConfirmDialog.vue';
@@ -382,10 +357,14 @@ import ProductInputDialog from '../components/ProductInputDialog.vue';
 import AttachmentViewer from '../components/attachment/AttachmentViewer.vue';
 import LayoutShell from '../components/template/LayoutShell.vue';
 import PageHeaderTemplate from '../components/template/PageHeader.vue';
-import NativeFormTreeRenderer, { type NativeFormLayoutNode } from '../components/template/NativeFormTreeRenderer.vue';
+import { type NativeFormLayoutNode } from '../components/template/NativeFormTreeRenderer.vue';
 import SceneBlocksRenderer from '../components/scene/SceneBlocksRenderer.vue';
 import PageFooterTemplate from '../components/template/PageFooter.vue';
-import NativeCollaborationPanel from './contractForm/NativeCollaborationPanel.vue';
+import NativeCollaborationPanel, {
+  type NativeCollaborationPanelListeners,
+  type NativeCollaborationPanelProps,
+} from './contractForm/NativeCollaborationPanel.vue';
+import ContractFormNativeCanvas from './contractForm/ContractFormNativeCanvas.vue';
 import RelationSearchDialog, { type RelationSearchDialogState } from './contractForm/RelationSearchDialog.vue';
 import ContractPromptActionForm from './contractForm/ContractPromptActionForm.vue';
 import LowCodeFieldCreateDialog, { type LowCodeFieldCreateDialogState } from './contractForm/LowCodeFieldCreateDialog.vue';
@@ -606,6 +585,7 @@ import {
   one2manySubviewPolicies,
 } from './contractForm/one2manyUtils';
 import {
+  closedRelationSearchDialogState,
   relationEntry,
   dynamicDomainDependencyFields,
   fallbackRelationSearchColumns,
@@ -613,11 +593,15 @@ import {
   buildRelationDomainFromParts,
   isBlockAllDomain,
   mergeRelationDomains,
+  mergeRelationOptionRows,
   normalizeRelationSearchColumns,
+  normalizeRouteQueryValues,
+  openRelationSearchDialogState,
   relationCreateMode,
   relationInlineCreate,
   relationModel as relationModelFromDescriptor,
   relationOptionFromRow,
+  relationOptionsWithSelectedFallback,
   relationOrder,
   relationReadFields,
   relationSearchColumnsFromContract,
@@ -627,6 +611,8 @@ import {
   relationUiLabels,
   resolveRelationQuickFillOption,
   singleContainingRelationOption,
+  selectedRelationOptionsFromValue,
+  upsertRelationOptionRows,
 } from './contractForm/relationDescriptor';
 import {
   isWorkflowTransitionMethod,
@@ -2531,9 +2517,7 @@ function relationIds(name: string): number[] {
 }
 
 function selectedRelationOptions(name: string): RelationOption[] {
-  const options = relationOptionsForField(name);
-  const byId = new Map(options.map((option) => [option.id, option]));
-  return relationIds(name).map((id) => byId.get(id) || { id, label: `#${id}` });
+  return selectedRelationOptionsFromValue(relationOptions.value[name], formData[name]);
 }
 
 function many2oneValue(name: string) {
@@ -2542,30 +2526,20 @@ function many2oneValue(name: string) {
 }
 
 function relationOptionsForField(name: string) {
-  const rows = relationOptions.value[name];
-  if (Array.isArray(rows) && rows.length) return rows;
-  const ids = relationIds(name);
-  if (!ids.length) return [];
-  return ids.map((id) => ({ id, label: `#${id}` }));
+  return relationOptionsWithSelectedFallback(relationOptions.value[name], formData[name]);
 }
 
 function upsertRelationOption(fieldName: string, option: RelationOption | null) {
-  if (!option) return;
-  const current = Array.isArray(relationOptions.value[fieldName]) ? relationOptions.value[fieldName] : [];
-  if (current.some((item) => item.id === option.id)) return;
+  const merged = upsertRelationOptionRows(relationOptions.value[fieldName], option);
+  if (merged === relationOptions.value[fieldName]) return;
   relationOptions.value = {
     ...relationOptions.value,
-    [fieldName]: [option, ...current],
+    [fieldName]: merged,
   };
 }
 
 function mergeRelationOptions(fieldName: string, options: RelationOption[]) {
-  const current = Array.isArray(relationOptions.value[fieldName]) ? relationOptions.value[fieldName] : [];
-  const incomingIds = new Set(options.map((item) => item.id));
-  const merged = [
-    ...options,
-    ...current.filter((item) => !incomingIds.has(item.id)),
-  ];
+  const merged = mergeRelationOptionRows(relationOptions.value[fieldName], options);
   relationOptions.value = {
     ...relationOptions.value,
     [fieldName]: merged,
@@ -3157,10 +3131,7 @@ async function fetchRelationSearchRows(name: string, keyword: string, limit = 12
 }
 
 function closeRelationSearchDialog() {
-  relationSearchDialog.open = false;
-  relationSearchDialog.fieldName = '';
-  relationSearchDialog.error = '';
-  relationSearchDialog.selectedId = null;
+  Object.assign(relationSearchDialog, closedRelationSearchDialogState());
 }
 
 function onRelationDialogDocumentKeydown(event: KeyboardEvent) {
@@ -3173,21 +3144,15 @@ async function openRelationSearchDialog(fieldName: string, descriptor?: FieldDes
   const relation = relationModel(fieldName);
   if (!relation) return;
   const labels = relationUiLabels(descriptor);
-  relationSearchDialog.open = true;
-  relationSearchDialog.fieldName = fieldName;
-  relationSearchDialog.labels = labels;
-  const descriptorLabel = descriptor && typeof descriptor === 'object'
-    ? String((descriptor as Record<string, unknown>).string || (descriptor as Record<string, unknown>).label || fieldName).trim()
-    : fieldName;
-  relationSearchDialog.title = labels.dialog_title || `${descriptorLabel}：搜索更多`;
-  relationSearchDialog.keyword = relationKeyword(fieldName);
-  relationSearchDialog.error = '';
-  relationSearchDialog.options = [];
-  relationSearchDialog.rows = [];
   const resolvedDescriptor = effectiveFieldDescriptor(fieldName);
-  relationSearchDialog.columns = relationSearchColumnsFromContract(relationSearchDialogContract(resolvedDescriptor));
-  relationSearchDialog.selectedId = null;
-  relationSearchDialog.createMode = relationCreateMode(resolvedDescriptor);
+  Object.assign(relationSearchDialog, openRelationSearchDialogState({
+    fieldName,
+    descriptor,
+    labels,
+    keyword: relationKeyword(fieldName),
+    columns: relationSearchColumnsFromContract(relationSearchDialogContract(resolvedDescriptor)),
+    createMode: relationCreateMode(resolvedDescriptor),
+  }));
   relationSearchDialog.columns = await loadRelationSearchColumns(fieldName);
   await runRelationSearch();
 }
@@ -3246,17 +3211,6 @@ function setMany2oneOption(fieldName: string, option: RelationOption) {
   void switchFormByRelationOption(fieldName, option);
 }
 
-function normalizedRouteQuery(): Record<string, string | string[]> {
-  return Object.fromEntries(
-    Object.entries(route.query).map(([key, value]) => [
-      key,
-      Array.isArray(value)
-        ? value.filter((item): item is string => typeof item === 'string')
-        : String(value || ''),
-    ]),
-  );
-}
-
 async function switchFormByRelationOption(fieldName: string, option: RelationOption) {
   if (recordId.value) return;
   const descriptor = contract.value?.fields?.[fieldName];
@@ -3265,7 +3219,7 @@ async function switchFormByRelationOption(fieldName: string, option: RelationOpt
   const nextCode = option.switchContext.code;
   const currentCode = String(route.query.current_business_category_code || route.query.default_business_category_code || '').trim();
   if (currentCode === nextCode) return;
-  const query = normalizedRouteQuery();
+  const query = normalizeRouteQueryValues(route.query as Record<string, unknown>);
   for (const key of entry.switchContext.defaultClearFields || []) {
     delete query[`default_${key}`];
   }
@@ -4032,7 +3986,7 @@ const nativeAttachmentUploadingLabel = computed(() => resolveNativeAttachmentLab
 const nativeAttachmentViewLabel = computed(() => resolveNativeAttachmentLabel('view', '查看'));
 const nativeAttachmentMaxBytes = computed(() => nativeAttachmentMaxBytesFromContract(nativeAttachments.value));
 
-const nativeCollaborationPanelProps = computed(() => ({
+const nativeCollaborationPanelProps = computed<NativeCollaborationPanelProps>(() => ({
   actions: nativeChatterActions.value,
   activityAssigneeId: activityAssigneeId.value,
   activityAssigneeLabel: activityAssigneeLabel.value,
@@ -4072,7 +4026,7 @@ const nativeCollaborationPanelProps = computed(() => ({
   usersLoading: collaborationUsersLoading.value,
 }));
 
-const nativeCollaborationPanelListeners = {
+const nativeCollaborationPanelListeners: NativeCollaborationPanelListeners = {
   'attachment-selected': onNativeAttachmentSelected,
   'close-composer': closeNativeChatterComposer,
   'load-users': loadCollaborationUsers,
@@ -7035,7 +6989,7 @@ async function onNativeAttachmentSelected(event: Event) {
   if (!file || !model.value || attachmentUploading.value) return;
   attachmentError.value = '';
   if (file.size > nativeAttachmentMaxBytes.value) {
-    attachmentError.value = nativeAttachmentLabel('size_exceeded', '文件过大');
+    attachmentError.value = resolveNativeAttachmentLabel('size_exceeded', '文件过大');
     input.value = '';
     return;
   }
@@ -7064,7 +7018,7 @@ async function onNativeAttachmentSelected(event: Event) {
     });
     await loadNativeChatterTimeline();
   } catch (err) {
-    attachmentError.value = err instanceof Error ? err.message : nativeAttachmentLabel('upload_failed', '附件上传失败');
+    attachmentError.value = err instanceof Error ? err.message : resolveNativeAttachmentLabel('upload_failed', '附件上传失败');
   } finally {
     attachmentUploading.value = false;
     input.value = '';
@@ -7094,7 +7048,7 @@ async function uploadPendingNativeAttachments(resId: number): Promise<boolean> {
     await loadNativeChatterTimeline(resId, model.value);
     return true;
   } catch (err) {
-    attachmentError.value = err instanceof Error ? err.message : nativeAttachmentLabel('upload_failed', '附件上传失败');
+    attachmentError.value = err instanceof Error ? err.message : resolveNativeAttachmentLabel('upload_failed', '附件上传失败');
     validationErrors.value = [attachmentError.value];
     submissionFeedback.value = { kind: 'error', message: attachmentError.value };
     status.value = 'error';
@@ -7110,7 +7064,7 @@ async function openNativeAttachment(att: { id?: number; name?: string; mimetype?
   try {
     await attachmentViewerRef.value?.open({ id: Number(att.id) }, att.name);
   } catch (err) {
-    attachmentError.value = err instanceof Error ? err.message : nativeAttachmentLabel('download_failed', '附件下载失败');
+    attachmentError.value = err instanceof Error ? err.message : resolveNativeAttachmentLabel('download_failed', '附件下载失败');
   }
 }
 

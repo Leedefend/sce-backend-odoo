@@ -408,7 +408,7 @@ import {
   sectionPrimaryCopy,
   sectionTaskKindLabel,
   severityLabel,
-  versionStatusLabel,
+  versionStatusLabel, viewTypeLabel,
   visibleRowRemediationActions,
 } from './businessConfigSurface/formatters';
 import { findMenuConfigNavigationEntry } from './businessConfigSurface/navigation';
@@ -731,7 +731,7 @@ const {
   analysisEditorState,
   analysisEditorLabel,
   setAnalysisDraft,
-  analysisEditorCount,
+  analysisEditorCount, analysisFieldOptionCandidates,
   fieldDisplayLabel,
   fieldOptionHelpText,
   fieldOptionLabel,

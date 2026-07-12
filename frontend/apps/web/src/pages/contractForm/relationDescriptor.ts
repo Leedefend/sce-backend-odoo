@@ -1,6 +1,6 @@
 import type { FieldDescriptor } from '@sc/schema';
 import { toPositiveInt } from '../../app/contractRuntime';
-import { cleanRelationDisplayLabel } from './fieldUtils';
+import { cleanRelationDisplayLabel, normalizeRelationIds } from './fieldUtils';
 import type { RelationOption, RelationSearchColumn, RelationUiLabels } from './types';
 
 export function relationEntry(descriptor?: FieldDescriptor) {
@@ -126,6 +126,46 @@ export function relationOptionFromRow(row: Record<string, unknown>, descriptor?:
     ...(switchCode ? { switchContext: { code: switchCode, label: switchLabel || label, defaultValues } } : {}),
     ...(Number.isFinite(colorValue) ? { color: Math.trunc(colorValue) } : {}),
   };
+}
+
+export function relationOptionsWithSelectedFallback(options: RelationOption[] | undefined, value: unknown): RelationOption[] {
+  const rows = Array.isArray(options) ? options : [];
+  if (rows.length) return rows;
+  const ids = normalizeRelationIds(value);
+  return ids.map((id) => ({ id, label: `#${id}` }));
+}
+
+export function selectedRelationOptionsFromValue(options: RelationOption[] | undefined, value: unknown): RelationOption[] {
+  const rows = relationOptionsWithSelectedFallback(options, value);
+  const byId = new Map(rows.map((option) => [option.id, option]));
+  return normalizeRelationIds(value).map((id) => byId.get(id) || { id, label: `#${id}` });
+}
+
+export function mergeRelationOptionRows(current: RelationOption[] | undefined, incoming: RelationOption[]) {
+  const currentRows = Array.isArray(current) ? current : [];
+  const incomingIds = new Set(incoming.map((item) => item.id));
+  return [
+    ...incoming,
+    ...currentRows.filter((item) => !incomingIds.has(item.id)),
+  ];
+}
+
+export function upsertRelationOptionRows(current: RelationOption[] | undefined, option: RelationOption | null) {
+  if (!option) return Array.isArray(current) ? current : [];
+  const currentRows = Array.isArray(current) ? current : [];
+  if (currentRows.some((item) => item.id === option.id)) return currentRows;
+  return [option, ...currentRows];
+}
+
+export function normalizeRouteQueryValues(query: Record<string, unknown>): Record<string, string | string[]> {
+  return Object.fromEntries(
+    Object.entries(query).map(([key, value]) => [
+      key,
+      Array.isArray(value)
+        ? value.filter((item): item is string => typeof item === 'string')
+        : String(value || ''),
+    ]),
+  );
 }
 
 export function exactRelationOption(rows: RelationOption[], keyword: string) {
@@ -336,4 +376,48 @@ export function relationSearchReadFields(columns: RelationSearchColumn[], dialog
     if (column.name) out.add(column.name);
   }
   return Array.from(out);
+}
+
+export function closedRelationSearchDialogState() {
+  return {
+    open: false,
+    fieldName: '',
+    title: '',
+    keyword: '',
+    loading: false,
+    error: '',
+    options: [] as RelationOption[],
+    rows: [],
+    columns: [] as RelationSearchColumn[],
+    selectedId: null,
+    createMode: 'none' as const,
+    labels: {} as RelationUiLabels,
+  };
+}
+
+export function openRelationSearchDialogState(params: {
+  fieldName: string;
+  descriptor?: FieldDescriptor;
+  labels: RelationUiLabels;
+  keyword: string;
+  columns: RelationSearchColumn[];
+  createMode: 'none' | 'quick' | 'page';
+}) {
+  const descriptorRecord = params.descriptor && typeof params.descriptor === 'object'
+    ? params.descriptor as Record<string, unknown>
+    : {};
+  const descriptorLabel = String(descriptorRecord.string || descriptorRecord.label || params.fieldName).trim();
+  return {
+    open: true,
+    fieldName: params.fieldName,
+    labels: params.labels,
+    title: params.labels.dialog_title || `${descriptorLabel}：搜索更多`,
+    keyword: String(params.keyword || ''),
+    error: '',
+    options: [] as RelationOption[],
+    rows: [],
+    columns: params.columns,
+    selectedId: null,
+    createMode: params.createMode,
+  };
 }

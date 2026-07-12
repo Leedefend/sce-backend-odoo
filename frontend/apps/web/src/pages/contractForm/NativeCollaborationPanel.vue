@@ -184,7 +184,7 @@ type PendingNativeAttachment = {
   file: File;
 };
 
-const props = defineProps<{
+export type NativeCollaborationPanelProps = {
   title: string;
   unavailableMessage: string;
   actions: NativeChatterAction[];
@@ -222,7 +222,28 @@ const props = defineProps<{
   pendingAttachments: PendingNativeAttachment[];
   timeline: ChatterTimelineEntry[];
   activityUpdatingIds: number[];
-}>();
+};
+
+export type NativeCollaborationPanelListeners = {
+  'open-action': (action: NativeChatterAction) => void;
+  'update:chatterDraft': (value: string) => void;
+  'update:collaborationUserQuery': (value: string) => void;
+  'load-users': (query: string) => void;
+  'select-mention-user': (user: CollaborationUserOption) => void;
+  'remove-mention-user': (id: number) => void;
+  'select-activity-assignee': (id: number) => void;
+  'update:activitySummary': (value: string) => void;
+  'update:activityDeadline': (value: string) => void;
+  'update:activityNote': (value: string) => void;
+  'send-chatter': () => void;
+  'close-composer': () => void;
+  'attachment-selected': (event: Event) => void;
+  'remove-pending-attachment': (key: string) => void;
+  'update-activity': (entry: ChatterTimelineEntry, action: 'done' | 'cancel') => void;
+  'open-attachment': (attachment: NonNullable<ChatterTimelineEntry['attachment']>) => void;
+};
+
+const props = defineProps<NativeCollaborationPanelProps>();
 
 const emit = defineEmits<{
   'open-action': [action: NativeChatterAction];

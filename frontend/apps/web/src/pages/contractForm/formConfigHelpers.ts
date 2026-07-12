@@ -755,6 +755,6 @@ export function mergeLowCodeLayoutWithRuntimeGroupShells<T extends NativeLayoutL
       string: title,
       label: title,
       children: [],
-    } as T)),
+    } as unknown as T)),
   ];
 }

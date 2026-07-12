@@ -504,6 +504,7 @@ export function useBusinessConfigFieldEditors(options: UseBusinessConfigFieldEdi
     analysisEditorLabel,
     setAnalysisDraft,
     analysisEditorCount,
+    analysisFieldOptionCandidates,
     fieldDisplayLabel,
     fieldOptionHelpText,
     fieldOptionLabel,
