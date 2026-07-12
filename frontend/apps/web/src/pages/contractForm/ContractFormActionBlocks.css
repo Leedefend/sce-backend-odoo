@@ -1,0 +1,71 @@
+.block {
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
+  background: var(--sc-app-muted-bg);
+  min-width: 0;
+}
+
+.block.warn {
+  border-color: var(--sc-app-warning-border);
+  background: var(--sc-app-warning-bg);
+}
+
+.workflow-evidence-block {
+  border-color: var(--sc-app-warning-border);
+  background: var(--sc-app-warning-bg);
+}
+
+.workflow-evidence-list {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  color: var(--sc-app-text-secondary);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.workflow-evidence-list__item--block {
+  color: var(--sc-app-warning-text);
+}
+
+.contract-missing-block {
+  border-color: var(--sc-app-danger-border);
+  background: var(--sc-app-danger-bg);
+}
+
+.contract-missing-summary,
+.contract-missing-defaults {
+  margin: 4px 0 0;
+  color: var(--sc-app-danger-text);
+  font-size: 12px;
+}
+
+.block h3 {
+  margin: 0 0 8px;
+  font-size: 12px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip-btn {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--sc-app-border-strong);
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
+  cursor: pointer;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.chip-btn.active {
+  border-color: var(--sc-semantic-surface-interactive);
+  box-shadow: inset 0 0 0 1px var(--sc-semantic-surface-interactive);
+}

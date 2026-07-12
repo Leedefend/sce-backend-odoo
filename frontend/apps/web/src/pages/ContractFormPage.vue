@@ -111,61 +111,23 @@
     <StatusPanel v-else-if="status === 'error'" title="页面加载失败" :message="errorMessage" variant="error" :on-retry="reload" />
 
     <section v-else :class="['card', 'sc-panel', 'sc-product-main-surface', { 'card--flow': isProjectIntakeCreateMode }]">
-      <section v-if="warnings.length && !isProjectIntakeCreateMode" class="block warn">
-        <h3>提示信息</h3>
-        <ul>
-          <li v-for="item in warnings" :key="item">{{ item }}</li>
-        </ul>
-      </section>
-      <section v-if="workflowEvidenceGateRows.length && !isProjectIntakeCreateMode" class="block workflow-evidence-block">
-        <h3>办理前置条件</h3>
-        <ul class="workflow-evidence-list">
-          <li
-            v-for="item in workflowEvidenceGateRows"
-            :key="item.reasonCode"
-            :class="{ 'workflow-evidence-list__item--block': item.blocking }"
-          >
-            {{ item.message }}
-          </li>
-        </ul>
-      </section>
-      <section v-if="strictContractMissingSummary && !isProjectIntakeCreateMode" class="block contract-missing-block">
-        <h3>配置状态提示</h3>
-        <p class="contract-missing-summary">{{ strictContractMissingSummary }}</p>
-        <p v-if="strictContractDefaultsSummary" class="contract-missing-defaults">{{ strictContractDefaultsSummary }}</p>
-      </section>
-
-      <section v-if="workflowTransitions.length && !isProjectIntakeCreateMode && !useNativeFormTree" class="block">
-        <h3>流程操作</h3>
-        <div class="chips">
-          <button
-            v-for="item in workflowTransitions"
-            :key="item.key"
-            class="chip-btn"
-            :disabled="busy || !item.action"
-            :title="item.notes || ''"
-            @click="item.action && runAction(item.action)"
-          >
-            {{ item.label }}
-          </button>
-        </div>
-      </section>
-
-      <section v-if="showSearchFilters && searchFilters.length && !isProjectIntakeCreateMode" class="block">
-        <h3>快捷筛选</h3>
-        <div class="chips">
-          <button
-            v-for="item in searchFilters"
-            :key="`flt-${item.key}`"
-            class="chip-btn"
-            :class="{ active: activeFilterKey === item.key }"
-            :disabled="busy || !item.key"
-            @click="openFilter(item.key)"
-          >
-            {{ item.label }}
-          </button>
-        </div>
-      </section>
+      <ContractFormActionBlocks
+        :active-filter-key="activeFilterKey"
+        :body-actions="bodyActions"
+        :busy="busy"
+        :is-project-intake-create-mode="isProjectIntakeCreateMode"
+        :search-filters="searchFilters"
+        :show-hud="showHud"
+        :show-search-filters="showSearchFilters"
+        :strict-contract-defaults-summary="strictContractDefaultsSummary"
+        :strict-contract-missing-summary="strictContractMissingSummary"
+        :use-native-form-tree="useNativeFormTree"
+        :warnings="warnings"
+        :workflow-evidence-gate-rows="workflowEvidenceGateRows"
+        :workflow-transitions="workflowTransitions"
+        @open-filter="openFilter"
+        @run-action="runAction"
+      />
 
       <section class="form-grid" :class="{ 'form-grid--designer-workspace': showCurrentFormFieldConfigScope }">
         <StatusPanel
@@ -360,22 +322,6 @@
         </template>
       </PageFooterTemplate>
 
-      <section v-if="bodyActions.length && !isProjectIntakeCreateMode && !useNativeFormTree" class="block">
-        <h3>可执行操作</h3>
-        <div class="chips">
-          <button
-            v-for="action in bodyActions"
-            :key="`body-${action.key}`"
-            class="chip-btn"
-            :disabled="busy || !action.enabled"
-            :title="action.hint"
-            @click="runAction(action)"
-          >
-            {{ action.label }}<template v-if="showHud"> · {{ action.kind }}</template>
-          </button>
-        </div>
-      </section>
-
       <NativeCollaborationPanel
         v-if="(nativeChatterActions.length || nativeAttachments) && !isProjectIntakeCreateMode && !hasNativeChatterNode"
         v-bind="nativeCollaborationPanelProps"
@@ -444,6 +390,7 @@ import RelationSearchDialog, { type RelationSearchDialogState } from './contract
 import ContractPromptActionForm from './contractForm/ContractPromptActionForm.vue';
 import LowCodeFieldCreateDialog, { type LowCodeFieldCreateDialogState } from './contractForm/LowCodeFieldCreateDialog.vue';
 import CurrentFormFieldSettingsPanel from './contractForm/CurrentFormFieldSettingsPanel.vue';
+import ContractFormActionBlocks from './contractForm/ContractFormActionBlocks.vue';
 import type {
   FormSectionFieldActionPayload,
   FormSectionFieldSchema,
