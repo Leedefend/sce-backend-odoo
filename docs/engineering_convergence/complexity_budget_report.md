@@ -4,7 +4,7 @@ Generated from repository source files. This report is informational during the 
 
 ## Summary
 
-- Scanned files: `3790`
+- Scanned files: `3793`
 - Files requiring split plan: `44`
 - Files above warning threshold: `60`
 
@@ -13,7 +13,6 @@ Generated from repository source files. This report is informational during the 
 | Lines | Category | File |
 | ---: | --- | --- |
 | 13762 | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
-| 5447 | Vue source | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` |
 | 4820 | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 4491 | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 4400 | Python source | `addons/smart_construction_core/core_extension.py` |
@@ -21,6 +20,7 @@ Generated from repository source files. This report is informational during the 
 | 3747 | Vue source | `frontend/apps/web/src/views/MenuConfigView.vue` |
 | 3633 | Python source | `addons/smart_core/handlers/form_field_configuration.py` |
 | 3525 | Vue source | `frontend/apps/web/src/views/HomeView.vue` |
+| 3334 | Vue source | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` |
 | 3323 | Python source | `addons/smart_construction_core/tests/test_p0_state_closure.py` |
 | 3317 | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
 | 3202 | Python source | `addons/smart_core/tests/test_form_field_configuration_params.py` |
@@ -127,7 +127,6 @@ Generated from repository source files. This report is informational during the 
 | Lines | Status | Category | File |
 | ---: | --- | --- | --- |
 | 13762 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
-| 5447 | split_plan_required | Vue source | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` |
 | 4820 | split_plan_required | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 4491 | split_plan_required | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 4400 | split_plan_required | Python source | `addons/smart_construction_core/core_extension.py` |
@@ -135,6 +134,7 @@ Generated from repository source files. This report is informational during the 
 | 3747 | split_plan_required | Vue source | `frontend/apps/web/src/views/MenuConfigView.vue` |
 | 3633 | split_plan_required | Python source | `addons/smart_core/handlers/form_field_configuration.py` |
 | 3525 | split_plan_required | Vue source | `frontend/apps/web/src/views/HomeView.vue` |
+| 3334 | split_plan_required | Vue source | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` |
 | 3323 | split_plan_required | Python source | `addons/smart_construction_core/tests/test_p0_state_closure.py` |
 | 3317 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
 | 3202 | split_plan_required | Python source | `addons/smart_core/tests/test_form_field_configuration_params.py` |
