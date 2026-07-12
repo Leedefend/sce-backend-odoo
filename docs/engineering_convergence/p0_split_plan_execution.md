@@ -54,6 +54,6 @@ All P0 split-plan work has one accountable owner:
 
 | File | Next Step | Owner | Status |
 | --- | --- | --- | --- |
-| `Makefile` | Open PR P4-P0-01 and move CI/security/report implementation bodies into included fragments without changing target names. | `@Leedefend` | Ready |
+| `Makefile` | Continue PR P4-P0-01 and move CI/security/report implementation bodies into included fragments without changing target names. First pass extracted guards, contract, help, and dev targets. | `@Leedefend` | In progress |
 | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` | Open PR P4-P0-02 after P4-P0-01 and extract workbench state/actions/panels behind stable UI behavior. | `@Leedefend` | Ready after P4-P0-01 |
 | `frontend/apps/web/src/pages/ContractFormPage.vue` | Open PR P4-P0-03 after P4-P0-02 and extract form shell responsibilities with targeted create/edit/save browser evidence. | `@Leedefend` | Ready after P4-P0-02 |

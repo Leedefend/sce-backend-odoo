@@ -91,7 +91,9 @@ cat
 
 
 # accidental terminal output
-make
+/make
+!/make/
+!/make/*.mk
 artifacts/*
 !artifacts/migration/
 !artifacts/migration/**
