@@ -9,8 +9,8 @@ Generated from `test_inventory.csv`.
 - Unknown runtime: `3`
 - Long-running assets: `331`
 - Manual gate review: `4`
-- Aggregate-covered assets: `175`
-- PR dedupe candidates: `614`
+- Aggregate-covered assets: `178`
+- PR dedupe candidates: `611`
 
 ## By Layer
 
@@ -42,9 +42,9 @@ Generated from `test_inventory.csv`.
 
 | Disposition | Count |
 | --- | ---: |
-| deduplicate_before_required | 614 |
+| deduplicate_before_required | 611 |
 | keep_integration_or_release_only | 291 |
-| covered_by_aggregate | 171 |
+| covered_by_aggregate | 174 |
 | keep_release_only | 36 |
 | canonical_entry | 4 |
 | review_or_archive | 4 |
@@ -63,6 +63,7 @@ Generated from `test_inventory.csv`.
 | verify.lowcode_config.customer_module_asset.pipeline | 4 |
 | verify.backend.architecture.full.report.guard.schema.guard | 3 |
 | verify.boundary.import_guard.strict.guard | 3 |
+| verify.frontend.grouped_drift_summary.baseline.guard | 3 |
 | verify.frontend.grouped_governance_brief.baseline.guard | 3 |
 | verify.frontend.grouped_governance_trend_consistency.baseline.guard | 3 |
 | verify.portal.payment_request_approval_all_smoke.container | 3 |
@@ -251,7 +252,7 @@ Generated from `test_inventory.csv`.
 | T-ASSET-377 | contract | `scripts/verify/contract_form_handling_policy_audit.py` | platform owner |
 | T-ASSET-378 | contract | `scripts/verify/contract_form_lowcode_orchestration_smoke.js` | platform owner |
 | T-ASSET-379 | contract | `scripts/verify/contract_form_view_orchestration_hud_smoke.js` | platform owner |
-| ... | ... | 534 more | ... |
+| ... | ... | 531 more | ... |
 
 ## Dedupe Hotspots
 
@@ -263,7 +264,6 @@ Generated from `test_inventory.csv`.
 | `scripts/verify/form_m3_purchase` | 2 |
 | `scripts/verify/form_view_scope` | 2 |
 | `scripts/verify/frontend_scene_contract` | 2 |
-| `scripts/verify/grouped_drift_summary` | 2 |
 | `scripts/verify/grouped_pagination_semantic` | 2 |
 | `scripts/verify/intent_canonical_alias` | 2 |
 | `scripts/verify/intent_smoke_utils` | 2 |
@@ -287,3 +287,4 @@ Generated from `test_inventory.csv`.
 | `scripts/verify/scene_governance_history` | 2 |
 | `scripts/verify/scene_provider_registry` | 2 |
 | `scripts/verify/scene_ready_strict` | 2 |
+| `scripts/verify/scene_sample_registry` | 2 |

@@ -295,6 +295,8 @@ def aggregate_target_for(path: Path, runtime: str) -> str:
         }.get(name, "")
     if name.startswith("grouped_governance_brief_"):
         return "verify.frontend.grouped_governance_brief.baseline.guard"
+    if name.startswith("grouped_drift_summary_"):
+        return "verify.frontend.grouped_drift_summary.baseline.guard"
     if name.startswith("grouped_governance_trend_consistency_"):
         return "verify.frontend.grouped_governance_trend_consistency.baseline.guard"
     if name in {
