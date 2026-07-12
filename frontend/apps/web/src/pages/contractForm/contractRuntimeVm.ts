@@ -1,3 +1,5 @@
+import type { ContractAction } from './types';
+
 export function collectRuntimeCapabilities(session: {
   capabilities?: unknown[];
   capabilityCatalog?: Record<string, { key?: unknown; state?: unknown; capability_state?: unknown }>;
@@ -53,4 +55,50 @@ export function normalizeSearchFilters(rows: unknown) {
       };
     })
     .filter((row) => row.key && row.label);
+}
+
+export function buildWorkflowTransitions(params: {
+  rows: unknown;
+  actions: ContractAction[];
+  profile: 'create' | 'edit' | 'readonly';
+  showHud: boolean;
+}) {
+  if (!Array.isArray(params.rows)) return [];
+  if (params.profile === 'create') return [];
+  const headerActionKeys = new Set(
+    params.actions
+      .filter((item) => item.level === 'header' || item.level === 'toolbar')
+      .map((item) => item.key),
+  );
+  const transitions = params.rows.map((raw, idx) => {
+    const row = raw && typeof raw === 'object' && !Array.isArray(raw)
+      ? raw as Record<string, { label?: unknown; name?: unknown; kind?: unknown } | unknown>
+      : {};
+    const trigger = row.trigger && typeof row.trigger === 'object' && !Array.isArray(row.trigger)
+      ? row.trigger as Record<string, unknown>
+      : {};
+    const triggerLabel = String(trigger.label || '').trim();
+    const triggerName = String(trigger.name || '').trim();
+    const triggerKind = String(trigger.kind || '').trim().toLowerCase();
+    const action = params.actions.find((item) => {
+      if (triggerKind && item.kind && item.kind !== triggerKind) return false;
+      if (triggerName && (item.methodName === triggerName || item.key.includes(triggerName))) return true;
+      if (triggerLabel && item.label === triggerLabel) return true;
+      return false;
+    }) || null;
+    return {
+      key: `wf_${idx}`,
+      label: triggerLabel || triggerName || `transition_${idx + 1}`,
+      notes: String(row.notes || ''),
+      action,
+    };
+  });
+  if (params.showHud) return transitions;
+  return transitions.filter((item) => {
+    const label = String(item.label || '').trim();
+    if (!item.action) return false;
+    if (item.action?.key && headerActionKeys.has(item.action.key)) return false;
+    if (/^\d+$/.test(label)) return false;
+    return true;
+  });
 }

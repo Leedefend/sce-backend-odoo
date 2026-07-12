@@ -1445,6 +1445,7 @@ import {
   restoreIntakeAutosavePayload,
 } from './contractForm/intakeAutosave';
 import {
+  buildWorkflowTransitions,
   collectRuntimeCapabilities,
   collectRuntimeUserGroups,
   normalizeContractWarnings,
@@ -3284,42 +3285,12 @@ const contractAccessPolicy = computed<ContractAccessPolicy>(() => {
   return normalizeContractAccessPolicy(raw);
 });
 
-const workflowTransitions = computed(() => {
-  const rows = contract.value?.workflow?.transitions;
-  if (!Array.isArray(rows)) return [];
-  // Create profile only keeps primary create action in header; hide workflow transitions to avoid duplicated semantics.
-  if (renderProfile.value === 'create') return [];
-  const headerActionKeys = new Set(
-    contractActions.value
-      .filter((item) => item.level === 'header' || item.level === 'toolbar')
-      .map((item) => item.key),
-  );
-  const transitions = rows.map((row, idx) => {
-    const triggerLabel = String(row.trigger?.label || '').trim();
-    const triggerName = String(row.trigger?.name || '').trim();
-    const triggerKind = String(row.trigger?.kind || '').trim().toLowerCase();
-    const action = contractActions.value.find((item) => {
-      if (triggerKind && item.kind && item.kind !== triggerKind) return false;
-      if (triggerName && (item.methodName === triggerName || item.key.includes(triggerName))) return true;
-      if (triggerLabel && item.label === triggerLabel) return true;
-      return false;
-    }) || null;
-    return {
-      key: `wf_${idx}`,
-      label: triggerLabel || triggerName || `transition_${idx + 1}`,
-      notes: String(row.notes || ''),
-      action,
-    };
-  });
-  if (showHud.value) return transitions;
-  return transitions.filter((item) => {
-    const label = String(item.label || '').trim();
-    if (!item.action) return false;
-    if (item.action?.key && headerActionKeys.has(item.action.key)) return false;
-    if (/^\d+$/.test(label)) return false;
-    return true;
-  });
-});
+const workflowTransitions = computed(() => buildWorkflowTransitions({
+  rows: contract.value?.workflow?.transitions,
+  actions: contractActions.value,
+  profile: renderProfile.value,
+  showHud: showHud.value,
+}));
 
 const searchFilters = computed(() => normalizeSearchFilters(contract.value?.search?.filters));
 
