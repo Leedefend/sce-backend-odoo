@@ -186,11 +186,35 @@ def aggregate_target_for(path: Path, runtime: str) -> str:
     if name == "config_workbench_operation_acceptance.mjs":
         return "verify.business_config.config_workbench_operation_acceptance"
     if name in {
+        "business_form_user_perspective_acceptance.mjs",
+        "business_form_user_perspective_summary_guard.mjs",
+        "system_user_experience_shell_acceptance.mjs",
+        "system_user_experience_shell_summary_guard.mjs",
+        "system_user_experience_coverage_guard.py",
+    }:
+        return "verify.system_user_experience.full_browser"
+    if name in {
         "backend_architecture_full_report_guard.py",
         "backend_architecture_full_report_guard_schema_guard.py",
         "backend_architecture_full_report_schema_guard.py",
     }:
         return "verify.backend.architecture.full.report.guard.schema.guard"
+    if name in {
+        "backend_evidence_manifest_guard.py",
+        "backend_evidence_manifest_schema_guard.py",
+    }:
+        return "verify.backend.evidence.manifest.guard"
+    if name.startswith("boundary_import_guard"):
+        return "verify.boundary.import_guard.strict.guard"
+    if name.startswith("business_capability_baseline_report_"):
+        return "verify.business.capability_baseline.guard"
+    if name.startswith("business_form_productization_"):
+        return "verify.business_form.productization.audit"
+    if name in {
+        "contract_assembler_semantic_schema_guard.py",
+        "contract_assembler_semantic_smoke.py",
+    }:
+        return "verify.contract.assembler.semantic.schema.guard"
     if name.startswith("backend_contract_closure_"):
         return "verify.backend.contract.closure.mainline"
     if name in {
@@ -218,6 +242,36 @@ def aggregate_target_for(path: Path, runtime: str) -> str:
         return "verify.portal.scene_contract_export_smoke.container"
     if name == "fe_scene_contract_export.js":
         return "scene.contract.export"
+    if name == "fe_ar_ap_company_summary_smoke.js":
+        return "verify.portal.ar_ap_company_summary_smoke.container"
+    if name == "fe_ar_ap_project_summary_smoke.js":
+        return "verify.portal.ar_ap_project_summary_smoke.container"
+    if name == "fe_list_shell_no_meta_smoke.js":
+        return "verify.portal.list_shell_no_meta_smoke.container"
+    if name == "fe_list_shell_title_smoke.js":
+        return "verify.portal.list_shell_title_smoke.container"
+    if name == "fe_menu_scene_key_smoke.js":
+        return "verify.portal.menu_scene_key_smoke.container"
+    if name == "fe_menu_scene_resolve_smoke.js":
+        return "verify.menu.scene_resolve.container"
+    if name == "fe_portal_scene_governance_action_smoke.js":
+        return "verify.portal.scene_governance_action_strict.container"
+    if name == "fe_portal_scene_package_ui_smoke.js":
+        return "verify.portal.scene_package_ui_smoke.container"
+    if name == "fe_scene_auto_degrade_notify_smoke.js":
+        return "verify.portal.scene_auto_degrade_notify_strict.container"
+    if name == "fe_scene_auto_degrade_smoke.js":
+        return "verify.portal.scene_auto_degrade_strict.container"
+    if name == "fe_scene_health_contract_smoke.js":
+        return "verify.portal.scene_health_contract_smoke.container"
+    if name == "fe_scene_health_pagination_smoke.js":
+        return "verify.portal.scene_health_pagination_smoke.container"
+    if name == "fe_scene_registry_validate_smoke.js":
+        return "verify.portal.scene_registry"
+    if name == "fe_view_contract_coverage_smoke.js":
+        return "verify.portal.view_contract_coverage_smoke.container"
+    if name == "fe_view_contract_shape_smoke.js":
+        return "verify.portal.view_contract_shape.container"
     if name == "formal_list_surface_no_test_placeholder_guard.py":
         return "verify.formal_list_surface.no_test_placeholder_guard"
     if name == "smart_core_boundary_guard.py":
@@ -251,6 +305,11 @@ def aggregate_target_for(path: Path, runtime: str) -> str:
         return "verify.portal.payment_request_approval_all_smoke.container"
     if name == "material_settlement_payment_execution_traceability_audit.py":
         return "verify.delivery.material.cross_document_progress"
+    if name in {
+        "finance_business_fact_projection_audit.py",
+        "finance_business_fact_scope_audit.py",
+    }:
+        return "verify.finance_interfund.position.all"
     if name.startswith("release_v2_0_0_"):
         return "verify.release.v2_0_0.governance.guard"
     if name.startswith("scene_contract_coverage_"):
