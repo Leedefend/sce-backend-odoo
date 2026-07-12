@@ -1,5 +1,74 @@
 import { fromDatetimeInputValue, toDateInputValue, toDatetimeInputValue } from './fieldUtils';
-import type { One2ManyColumn } from './types';
+import type { One2ManyColumn, One2ManyInlineRow } from './types';
+
+export function subviewColumnCount(subview: unknown): number {
+  if (!subview || typeof subview !== 'object' || Array.isArray(subview)) return 0;
+  const tree = (subview as Record<string, unknown>).tree;
+  if (!tree || typeof tree !== 'object' || Array.isArray(tree)) return 0;
+  const columns = (tree as Record<string, unknown>).columns;
+  if (!Array.isArray(columns)) return 0;
+  return columns.length;
+}
+
+export function one2manySubviewPolicies(subview: unknown) {
+  const policies = subview && typeof subview === 'object' && !Array.isArray(subview)
+    ? (subview as Record<string, unknown>).policies
+    : undefined;
+  return policies && typeof policies === 'object'
+    ? policies as Record<string, unknown>
+    : {};
+}
+
+export function one2manyCanCreateFromPolicies(policies: Record<string, unknown>) {
+  return policies.can_create !== false;
+}
+
+export function one2manyCreateLabelFromPolicies(
+  policies: Record<string, unknown>,
+  fallbackLabel: string,
+) {
+  const labels = policies.ui_labels && typeof policies.ui_labels === 'object' && !Array.isArray(policies.ui_labels)
+    ? policies.ui_labels as Record<string, unknown>
+    : {};
+  const explicit = String(labels.add_row || labels.create || '').trim();
+  if (explicit && explicit !== '添加行') return explicit;
+  const label = String(fallbackLabel || '').trim();
+  return label ? `添加${label}` : (explicit || '添加行');
+}
+
+export function one2manyPrimaryColumnFromColumns(columns: One2ManyColumn[]) {
+  return columns.length ? columns[0].name : 'name';
+}
+
+export function one2manyRowLabelFromPrimary(primary: string, row: One2ManyInlineRow) {
+  const value = String(row.values?.[primary] ?? row.values?.name ?? '').trim();
+  if (value) return value;
+  if (row.id) return `#${row.id}`;
+  return '未命名';
+}
+
+export function one2manyDraftSummary(rows: One2ManyInlineRow[]) {
+  if (!rows.length) return '';
+  let created = 0;
+  let updated = 0;
+  let removed = 0;
+  rows.forEach((row) => {
+    if (row.removed) {
+      removed += 1;
+      return;
+    }
+    if (row.isNew) {
+      created += 1;
+      return;
+    }
+    if (row.dirty) updated += 1;
+  });
+  const parts: string[] = [];
+  if (created) parts.push(`新增 ${created}`);
+  if (updated) parts.push(`修改 ${updated}`);
+  if (removed) parts.push(`删除 ${removed}`);
+  return parts.length ? `待提交：${parts.join(' / ')}` : '待提交：无变更';
+}
 
 export function normalizeOne2manyColumnValue(column: One2ManyColumn, value: unknown) {
   const ttype = String(column.ttype || '').trim().toLowerCase();

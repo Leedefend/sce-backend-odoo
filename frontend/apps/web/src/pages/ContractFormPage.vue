@@ -1327,8 +1327,15 @@ import {
   formRuntimeRowStateLabel,
   isOne2manyEmptyValue,
   normalizeOne2manyColumnValue,
+  one2manyCanCreateFromPolicies,
   one2manyColumnDisplayValue,
   one2manyColumnInputType,
+  one2manyCreateLabelFromPolicies,
+  one2manyDraftSummary,
+  one2manyPrimaryColumnFromColumns,
+  one2manyRowLabelFromPrimary,
+  one2manySubviewPolicies,
+  subviewColumnCount,
 } from './contractForm/one2manyUtils';
 import {
   relationEntry,
@@ -4063,15 +4070,6 @@ function nativeFieldSubview(name: string): Record<string, unknown> | null {
   return walk(nativeFormLayoutNodes.value);
 }
 
-function subviewColumnCount(subview: unknown): number {
-  if (!subview || typeof subview !== 'object' || Array.isArray(subview)) return 0;
-  const tree = (subview as Record<string, unknown>).tree;
-  if (!tree || typeof tree !== 'object' || Array.isArray(tree)) return 0;
-  const columns = (tree as Record<string, unknown>).columns;
-  if (!Array.isArray(columns)) return 0;
-  return columns.length;
-}
-
 function one2manyColumns(name: string): One2ManyColumn[] {
   const subviews = (contract.value?.views?.form as Record<string, unknown> | undefined)?.subviews;
   const legacySubview = subviews && typeof subviews === 'object'
@@ -4142,40 +4140,24 @@ function one2manyPolicies(name: string) {
     : undefined;
   const nativeSubview = nativeFieldSubview(name);
   const fieldSubview = nativeSubview || legacySubview;
-  const policies = fieldSubview && typeof fieldSubview === 'object'
-    ? (fieldSubview as Record<string, unknown>).policies
-    : undefined;
-  return policies && typeof policies === 'object'
-    ? policies as Record<string, unknown>
-    : {};
+  return one2manySubviewPolicies(fieldSubview);
 }
 
 function one2manyCanCreate(name: string) {
-  return one2manyPolicies(name).can_create !== false;
+  return one2manyCanCreateFromPolicies(one2manyPolicies(name));
 }
 
 function one2manyCreateLabel(name: string, fieldLabel = '') {
-  const policies = one2manyPolicies(name);
-  const labels = policies.ui_labels && typeof policies.ui_labels === 'object' && !Array.isArray(policies.ui_labels)
-    ? policies.ui_labels as Record<string, unknown>
-    : {};
-  const explicit = String(labels.add_row || labels.create || '').trim();
-  if (explicit && explicit !== '添加行') return explicit;
   const label = String(fieldLabel || contractFieldLabel(name) || contract.value?.fields?.[name]?.string || '').trim();
-  return label ? `添加${label}` : (explicit || '添加行');
+  return one2manyCreateLabelFromPolicies(one2manyPolicies(name), label);
 }
 
 function one2manyPrimaryColumn(name: string) {
-  const cols = one2manyColumns(name);
-  return cols.length ? cols[0].name : 'name';
+  return one2manyPrimaryColumnFromColumns(one2manyColumns(name));
 }
 
 function one2manyRowLabel(fieldName: string, row: One2ManyInlineRow) {
-  const primary = one2manyPrimaryColumn(fieldName);
-  const value = String(row.values?.[primary] ?? row.values?.name ?? '').trim();
-  if (value) return value;
-  if (row.id) return `#${row.id}`;
-  return '未命名';
+  return one2manyRowLabelFromPrimary(one2manyPrimaryColumn(fieldName), row);
 }
 
 function one2manyRowStateLabel(row: One2ManyInlineRow) {
@@ -4186,27 +4168,7 @@ function one2manyRowStateLabel(row: One2ManyInlineRow) {
 }
 
 function one2manySummary(name: string) {
-  const rows = one2manyFieldRows(name);
-  if (!rows.length) return '';
-  let created = 0;
-  let updated = 0;
-  let removed = 0;
-  rows.forEach((row) => {
-    if (row.removed) {
-      removed += 1;
-      return;
-    }
-    if (row.isNew) {
-      created += 1;
-      return;
-    }
-    if (row.dirty) updated += 1;
-  });
-  const parts: string[] = [];
-  if (created) parts.push(`新增 ${created}`);
-  if (updated) parts.push(`修改 ${updated}`);
-  if (removed) parts.push(`删除 ${removed}`);
-  return parts.length ? `待提交：${parts.join(' / ')}` : '待提交：无变更';
+  return one2manyDraftSummary(one2manyFieldRows(name));
 }
 
 function visibleOne2manyRows(name: string) {
