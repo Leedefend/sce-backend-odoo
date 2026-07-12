@@ -172,9 +172,10 @@
             {{ adapter.one2manyRowHints(field.name, row).join('；') }}
           </p>
         </div>
-        <p v-if="!adapter.visibleOne2manyRows(field.name).length" class="o2m-empty">
-          暂无{{ field.label }}，点击上方按钮添加明细。
-        </p>
+        <div v-if="!adapter.visibleOne2manyRows(field.name).length" class="o2m-empty">
+          <strong>暂无{{ field.label }}</strong>
+          <span>点击上方按钮添加明细。</span>
+        </div>
       </div>
     </div>
     <div v-if="adapter.removedOne2manyRows(field.name).length" class="o2m-removed">
@@ -571,15 +572,28 @@ function localizedDateColumnPlaceholder(type: unknown) {
 
 .o2m-empty {
   margin: 0;
-  min-height: 42px;
-  display: flex;
+  min-height: 72px;
+  display: grid;
   align-items: center;
-  padding: 10px 12px;
+  justify-items: center;
+  gap: 4px;
+  padding: 16px 12px;
   border-top: 1px solid var(--sc-app-border);
   background: var(--sc-app-panel-muted);
   color: var(--sc-app-text-secondary);
   font-size: 12px;
   line-height: 1.4;
+  text-align: center;
+}
+
+.o2m-empty strong {
+  color: var(--sc-app-text-primary);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.o2m-empty span {
+  color: var(--sc-app-text-secondary);
 }
 
 .relation-search {
