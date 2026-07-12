@@ -6,12 +6,13 @@ MILESTONE='v1.1 Engineering Convergence'
 echo "[github-remote] preflight"
 gh auth status
 gh repo view --json nameWithOwner,viewerPermission
+REPO=$(gh repo view --json nameWithOwner --jq .nameWithOwner)
 
 echo "[github-remote] milestone"
-if gh milestone list --state all --json title --jq '.[].title' | grep -Fxq "$MILESTONE"; then
+if gh api "repos/$REPO/milestones?state=all" --jq '.[].title' | grep -Fxq "$MILESTONE"; then
   echo "[github-remote] milestone exists: $MILESTONE"
 else
-  gh milestone create "$MILESTONE" --description '6-week engineering convergence, production validation, and pilot-readiness milestone.'
+  gh api --method POST "repos/$REPO/milestones" -f title="$MILESTONE" -f description='6-week engineering convergence, production validation, and pilot-readiness milestone.'
 fi
 
 echo "[github-remote] labels"

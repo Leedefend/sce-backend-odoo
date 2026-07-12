@@ -7,6 +7,7 @@ Generated from `github_governance_runbook.md`, `github_labels.tsv`, and `github_
 ```bash
 gh auth status
 gh repo view --json nameWithOwner,viewerPermission
+REPO=$(gh repo view --json nameWithOwner --jq .nameWithOwner)
 ```
 
 Required permission: repository admin for branch protection and required check settings.
@@ -14,7 +15,7 @@ Required permission: repository admin for branch protection and required check s
 ## Milestone
 
 ```bash
-gh milestone create 'v1.1 Engineering Convergence' --description '6-week engineering convergence, production validation, and pilot-readiness milestone.' || true
+gh api --method POST "repos/$REPO/milestones" -f title='v1.1 Engineering Convergence' -f description='6-week engineering convergence, production validation, and pilot-readiness milestone.'
 ```
 
 ## Labels

@@ -92,12 +92,15 @@ def render_shell(milestone: str, issues: list[dict[str, object]], labels: list[t
         'echo "[github-remote] preflight"',
         "gh auth status",
         "gh repo view --json nameWithOwner,viewerPermission",
+        "REPO=$(gh repo view --json nameWithOwner --jq .nameWithOwner)",
         "",
         'echo "[github-remote] milestone"',
-        "if gh milestone list --state all --json title --jq '.[].title' | grep -Fxq \"$MILESTONE\"; then",
+        "if gh api \"repos/$REPO/milestones?state=all\" --jq '.[].title' | grep -Fxq \"$MILESTONE\"; then",
         '  echo "[github-remote] milestone exists: $MILESTONE"',
         "else",
-        "  gh milestone create \"$MILESTONE\" --description '6-week engineering convergence, production validation, and pilot-readiness milestone.'",
+        "  gh api --method POST \"repos/$REPO/milestones\" "
+        "-f title=\"$MILESTONE\" "
+        "-f description='6-week engineering convergence, production validation, and pilot-readiness milestone.'",
         "fi",
         "",
         'echo "[github-remote] labels"',
@@ -169,6 +172,7 @@ def render_markdown(milestone: str, issues: list[dict[str, object]], labels: lis
         "```bash",
         "gh auth status",
         "gh repo view --json nameWithOwner,viewerPermission",
+        "REPO=$(gh repo view --json nameWithOwner --jq .nameWithOwner)",
         "```",
         "",
         "Required permission: repository admin for branch protection and required check settings.",
@@ -176,11 +180,11 @@ def render_markdown(milestone: str, issues: list[dict[str, object]], labels: lis
         "## Milestone",
         "",
         "```bash",
-        "gh milestone create "
+        "gh api --method POST \"repos/$REPO/milestones\" "
+        + "-f title="
         + shlex.quote(milestone)
-        + " --description "
-        + shlex.quote("6-week engineering convergence, production validation, and pilot-readiness milestone.")
-        + " || true",
+        + " -f description="
+        + shlex.quote("6-week engineering convergence, production validation, and pilot-readiness milestone."),
         "```",
         "",
         "## Labels",
