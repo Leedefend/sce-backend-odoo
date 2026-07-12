@@ -18,11 +18,13 @@ Duration: 6 weeks
 - `release_scope_v1.1.md`
 - `baseline_report_v1.1.md`
 - `engineering_risk_ledger.md`
+- `phase0_phase1_status.md`
 - GitHub Issue and PR templates.
 - CODEOWNERS.
 - Unified Makefile quality entries.
 - CI workflow calling the unified quality entries.
 - Initial `test_inventory.csv`.
+- `commit_convention.md`
 
 ## Issue Labels
 
