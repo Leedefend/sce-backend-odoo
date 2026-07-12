@@ -4,12 +4,12 @@ Generated from `test_inventory.csv`.
 
 ## Totals
 
-- Total assets: `1120`
+- Total assets: `1121`
 - Review queue: `4`
 - Unknown runtime: `3`
 - Long-running assets: `331`
 - Manual gate review: `4`
-- Aggregate-covered assets: `229`
+- Aggregate-covered assets: `230`
 - PR dedupe candidates: `560`
 
 ## By Layer
@@ -24,7 +24,7 @@ Generated from `test_inventory.csv`.
 | e2e | 38 |
 | security | 20 |
 | frontend_acceptance | 17 |
-| gate | 1 |
+| gate | 2 |
 
 ## By Decision Gate
 
@@ -35,6 +35,7 @@ Generated from `test_inventory.csv`.
 | release_candidate | 36 |
 | manual_review | 4 |
 | release_required | 2 |
+| local_iteration | 1 |
 | pr_required | 1 |
 | integration_required | 1 |
 
@@ -46,7 +47,7 @@ Generated from `test_inventory.csv`.
 | keep_integration_or_release_only | 291 |
 | covered_by_aggregate | 225 |
 | keep_release_only | 36 |
-| canonical_entry | 4 |
+| canonical_entry | 5 |
 | review_or_archive | 4 |
 
 ## By Aggregate Target
@@ -92,6 +93,7 @@ Generated from `test_inventory.csv`.
 | verify.e2e.scene_admin | 2 |
 | verify.e2e.subscription_smoke | 2 |
 | verify.formal_business.release_gate | 2 |
+| make ci.local.quick | 1 |
 | make ci | 1 |
 | make test.e2e | 1 |
 | make test.odoo.integration | 1 |
@@ -144,7 +146,7 @@ Generated from `test_inventory.csv`.
 
 | Runtime | Count |
 | --- | ---: |
-| <5m | 785 |
+| <5m | 786 |
 | 10-30m | 293 |
 | 30-60m | 38 |
 | unknown | 3 |
@@ -161,7 +163,7 @@ Generated from `test_inventory.csv`.
 | backend owner | 56 |
 | qa owner | 38 |
 | security owner | 20 |
-| frontend owner | 17 |
+| frontend owner | 18 |
 
 ## By Directory
 
@@ -172,8 +174,8 @@ Generated from `test_inventory.csv`.
 | scripts/ops | 37 |
 | frontend/apps/web/scripts | 22 |
 | scripts/ci | 7 |
+| make | 5 |
 | scripts/e2e | 5 |
-| make | 4 |
 | scripts/audit | 4 |
 | scripts/diag | 4 |
 | scripts/prod | 2 |

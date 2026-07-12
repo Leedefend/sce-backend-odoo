@@ -1,4 +1,5 @@
 id,layer,entrypoint,purpose,estimated_runtime,owner,status,decision_gate,disposition,aggregate_target,notes
+T-GATE-000,gate,make ci.local.quick,"Local inner-loop gate for frontend and architecture-boundary iteration, covering split-plan growth locks, frontend contract boundary guards, lint, strict typecheck, and whitespace checks.",<5m,frontend owner,active,local_iteration,canonical_entry,make ci.local.quick,Use during small local iterations; does not replace the full PR gate.
 T-GATE-001,gate,make ci,"PR quality gate combining secret scan, Python syntax, frontend checks, and contract checks.",10-15m,test owner,active,pr_required,canonical_entry,make ci,Mandatory local and GitHub PR gate.
 T-GATE-002,e2e,make test.e2e,Full browser productization acceptance.,30-60m,qa owner,active,release_required,canonical_entry,make test.e2e,"Release/full verification gate, not required for every small PR."
 T-ODOO-001,odoo_integration,make test.odoo.integration,Odoo smoke and runtime integration gate through existing ci.smoke target.,30-60m,backend owner,active,integration_required,canonical_entry,make test.odoo.integration,Requires Docker/Odoo runtime.

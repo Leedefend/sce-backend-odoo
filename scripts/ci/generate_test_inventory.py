@@ -34,6 +34,23 @@ KEYWORDS = (
 
 MANUAL_ENTRIES = [
     {
+        "id": "T-GATE-000",
+        "layer": "gate",
+        "entrypoint": "make ci.local.quick",
+        "purpose": (
+            "Local inner-loop gate for frontend and architecture-boundary iteration, "
+            "covering split-plan growth locks, frontend contract boundary guards, lint, "
+            "strict typecheck, and whitespace checks."
+        ),
+        "estimated_runtime": "<5m",
+        "owner": "frontend owner",
+        "status": "active",
+        "decision_gate": "local_iteration",
+        "disposition": "canonical_entry",
+        "aggregate_target": "make ci.local.quick",
+        "notes": "Use during small local iterations; does not replace the full PR gate.",
+    },
+    {
         "id": "T-GATE-001",
         "layer": "gate",
         "entrypoint": "make ci",

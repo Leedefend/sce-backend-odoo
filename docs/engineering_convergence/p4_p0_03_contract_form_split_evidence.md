@@ -59,11 +59,11 @@ Local verification completed:
 - `scripts/dev/pnpm_exec.sh -C frontend/apps/web build`
 - `make ci`
 
-Remote verification completed:
+Remote verification:
 
-- GitHub Actions `v1.1 quality gate`: run `29192606652`, passed on commit `bc4f270bc`.
-- GitHub Actions `v1.1 quality gate`: run `29192995214`, passed on commit `11c9be05f`.
-- GitHub Actions `v1.1 quality gate`: run `29193447131`, passed on commit `cc958066b`.
+- Current HEAD remote verification is pending until PR/merge readiness.
+- Historical GitHub Actions `v1.1 quality gate` runs passed on earlier slice commits:
+  `29192606652` on `bc4f270bc`, `29192995214` on `11c9be05f`, and `29193447131` on `cc958066b`.
 
 ## Rollback
 
