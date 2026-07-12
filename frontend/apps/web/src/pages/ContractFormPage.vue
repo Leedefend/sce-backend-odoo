@@ -853,92 +853,17 @@
       @confirm="actionInputDialog.confirm"
       @cancel="actionInputDialog.cancel"
     />
-
-    <div
-      v-if="relationSearchDialog.open"
-      class="relation-dialog-backdrop"
-      role="dialog"
-      aria-modal="true"
-      @keydown.esc="closeRelationSearchDialog"
-    >
-      <section class="relation-dialog">
-        <header class="relation-dialog-head">
-          <h3>{{ relationSearchDialog.title }}</h3>
-          <button class="relation-dialog-close" type="button" :disabled="busy" :aria-label="relationSearchDialog.labels.close || '关闭'" @click="closeRelationSearchDialog">×</button>
-        </header>
-        <div class="relation-dialog-search">
-          <input
-            ref="relationSearchInputRef"
-            class="input"
-            type="text"
-            :value="relationSearchDialog.keyword"
-            :placeholder="relationSearchDialog.labels.search_placeholder || '输入名称搜索'"
-            @input="setRelationSearchKeyword(($event.target as HTMLInputElement).value)"
-            @keydown.enter.prevent="runRelationSearch"
-          />
-          <button class="chip-btn" type="button" :disabled="relationSearchDialog.loading" @click="runRelationSearch">{{ relationSearchDialog.labels.search || '搜索' }}</button>
-        </div>
-        <p v-if="relationSearchDialog.error" class="validation-error">{{ relationSearchDialog.error }}</p>
-        <div class="relation-dialog-table-wrap">
-          <table class="relation-dialog-table">
-            <thead>
-              <tr>
-                <th class="relation-dialog-select-col"></th>
-                <th v-for="column in relationSearchDialog.columns" :key="column.name">
-                  {{ column.label }}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="row in relationSearchDialog.rows"
-                :key="`rel-${row.id}`"
-                :class="{ 'relation-dialog-row--active': relationSearchDialog.selectedId === row.id }"
-                @click="selectRelationSearchRow(row)"
-                @dblclick="confirmRelationSearchSelection(row)"
-              >
-                <td class="relation-dialog-select-col">
-                  <input
-                    type="radio"
-                    name="relation-search-select"
-                    :checked="relationSearchDialog.selectedId === row.id"
-                    @change="selectRelationSearchRow(row)"
-                  />
-                </td>
-                <td v-for="column in relationSearchDialog.columns" :key="`${row.id}-${column.name}`">
-                  {{ relationSearchCell(row, column.name) }}
-                </td>
-              </tr>
-            </tbody>
-          </table>
-          <p v-if="!relationSearchDialog.loading && !relationSearchDialog.rows.length" class="relation-dialog-empty">
-            {{ relationSearchDialog.labels.empty || '未找到匹配记录' }}
-          </p>
-        </div>
-        <footer class="relation-dialog-footer">
-          <span class="relation-dialog-count">{{ relationRecordCountLabel }}</span>
-          <span class="relation-dialog-footer-spacer"></span>
-          <button
-            class="primary"
-            type="button"
-            :disabled="busy || relationSearchDialog.loading || !relationSearchDialog.selectedId"
-            @click="() => confirmRelationSearchSelection()"
-          >
-            {{ relationSearchDialog.labels.select || '选择' }}
-          </button>
-          <button
-            v-if="relationSearchDialog.createMode !== 'none'"
-            class="ghost"
-            type="button"
-            :disabled="busy || relationSearchDialog.loading"
-            @click="createRelationFromSearchDialog"
-          >
-            {{ relationSearchDialog.labels.create || '新建' }}
-          </button>
-          <button class="ghost" type="button" :disabled="busy" @click="closeRelationSearchDialog">{{ relationSearchDialog.labels.cancel || '取消' }}</button>
-        </footer>
-      </section>
-    </div>
+    <RelationSearchDialog
+      :busy="busy"
+      :dialog="relationSearchDialog"
+      :record-count-label="relationRecordCountLabel"
+      @close="closeRelationSearchDialog"
+      @confirm="confirmRelationSearchSelection"
+      @create="createRelationFromSearchDialog"
+      @keyword-change="setRelationSearchKeyword"
+      @search="runRelationSearch"
+      @select-row="selectRelationSearchRow"
+    />
     <AttachmentViewer ref="attachmentViewerRef" />
   </LayoutShell>
 </template>
@@ -958,6 +883,7 @@ import NativeFormTreeRenderer, { type NativeFormLayoutNode } from '../components
 import SceneBlocksRenderer from '../components/scene/SceneBlocksRenderer.vue';
 import PageFooterTemplate from '../components/template/PageFooter.vue';
 import NativeCollaborationPanel from './contractForm/NativeCollaborationPanel.vue';
+import RelationSearchDialog, { type RelationSearchDialogState } from './contractForm/RelationSearchDialog.vue';
 import type {
   FormSectionFieldActionPayload,
   FormSectionFieldSchema,
@@ -1374,20 +1300,7 @@ const relationFieldDescriptors = ref<Record<string, Record<string, FieldDescript
 const relationKeywords = reactive<Record<string, string>>({});
 const invalidatedRelationKeywords = reactive<Record<string, string>>({});
 const clearedDynamicRelationFields = reactive<Record<string, boolean>>({});
-const relationSearchDialog = reactive<{
-  open: boolean;
-  fieldName: string;
-  title: string;
-  keyword: string;
-  loading: boolean;
-  error: string;
-  options: RelationOption[];
-  rows: RelationSearchRow[];
-  columns: RelationSearchColumn[];
-  selectedId: number | null;
-  createMode: 'none' | 'quick' | 'page';
-  labels: RelationUiLabels;
-}>({
+const relationSearchDialog = reactive<RelationSearchDialogState>({
   open: false,
   fieldName: '',
   title: '',
@@ -1401,7 +1314,6 @@ const relationSearchDialog = reactive<{
   createMode: 'none',
   labels: {},
 });
-const relationSearchInputRef = ref<HTMLInputElement | null>(null);
 const deniedRelationModels = new Set<string>();
 const one2manyRows = reactive<Record<string, One2ManyInlineRow[]>>({});
 const relationQueryTimers: Record<string, ReturnType<typeof setTimeout>> = {};
@@ -3826,8 +3738,6 @@ async function openRelationSearchDialog(fieldName: string, descriptor?: FieldDes
   relationSearchDialog.createMode = relationCreateMode(resolvedDescriptor);
   relationSearchDialog.columns = await loadRelationSearchColumns(fieldName);
   await runRelationSearch();
-  await nextTick();
-  relationSearchInputRef.value?.focus();
 }
 
 function setRelationSearchKeyword(keyword: string) {
@@ -3856,21 +3766,6 @@ async function runRelationSearch() {
   } finally {
     relationSearchDialog.loading = false;
   }
-}
-
-function relationSearchCell(row: RelationSearchRow, columnName: string) {
-  const value = row.values[columnName];
-  if (value === null || value === undefined || value === false) return '';
-  if (Array.isArray(value)) {
-    if (value.length >= 2) return String(value[1] ?? '');
-    return value.map((item) => String(item ?? '')).filter(Boolean).join(', ');
-  }
-  if (typeof value === 'object') {
-    const rec = value as Record<string, unknown>;
-    return String(rec.display_name || rec.name || rec.id || '');
-  }
-  if (typeof value === 'boolean') return value ? '是' : '否';
-  return String(value);
 }
 
 function selectRelationSearchRow(row: RelationSearchRow) {
