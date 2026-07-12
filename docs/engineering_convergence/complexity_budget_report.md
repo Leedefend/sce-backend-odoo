@@ -5,7 +5,7 @@ Generated from repository source files. This report is informational during the 
 ## Summary
 
 - Scanned files: `3790`
-- Files requiring split plan: `45`
+- Files requiring split plan: `44`
 - Files above warning threshold: `60`
 
 ## Split Plan Required
@@ -13,7 +13,6 @@ Generated from repository source files. This report is informational during the 
 | Lines | Category | File |
 | ---: | --- | --- |
 | 13762 | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
-| 5679 | Makefile | `Makefile` |
 | 5447 | Vue source | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` |
 | 4820 | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 4491 | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
@@ -128,7 +127,6 @@ Generated from repository source files. This report is informational during the 
 | Lines | Status | Category | File |
 | ---: | --- | --- | --- |
 | 13762 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
-| 5679 | split_plan_required | Makefile | `Makefile` |
 | 5447 | split_plan_required | Vue source | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` |
 | 4820 | split_plan_required | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 4491 | split_plan_required | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
@@ -207,9 +205,10 @@ Generated from repository source files. This report is informational during the 
 | 966 | warning | Python source | `addons/smart_core/handlers/load_contract.py` |
 | 966 | warning | Python source | `scripts/verify/scbsly_direct_project_strict_visible_acceptance.py` |
 | 944 | warning | Python source | `scripts/ops/scbs_55_user_acceptance_menu_policy_apply.py` |
+| 915 | within_budget | XML data/view | `addons/smart_construction_core/views/core/material_acceptance_views.xml` |
 
 ## Interpretation
 
 - Split-plan files are allowed to remain during the first pass, but must receive an owner and decomposition direction.
 - New feature work should not add unrelated code to split-plan files.
-- The root `Makefile` is already beyond the split-plan threshold and should be delegated into smaller scripts/fragments over time.
+- The root `Makefile` is within budget; keep it as a thin variable and include entrypoint.
