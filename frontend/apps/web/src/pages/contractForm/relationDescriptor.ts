@@ -56,6 +56,16 @@ export function relationEntry(descriptor?: FieldDescriptor) {
   };
 }
 
+export function relationModel(descriptor?: FieldDescriptor) {
+  const entry = relationEntry(descriptor);
+  return String((descriptor as Record<string, unknown> | undefined)?.relation || entry?.model || '').trim();
+}
+
+export function relationOrder(descriptor?: FieldDescriptor) {
+  const entry = relationEntry(descriptor);
+  return String(entry?.order || '').trim() || 'id desc';
+}
+
 export function relationColorField(descriptor?: FieldDescriptor) {
   const row = descriptor && typeof descriptor === 'object' ? descriptor as Record<string, unknown> : {};
   const options = row.widget_options && typeof row.widget_options === 'object' && !Array.isArray(row.widget_options)

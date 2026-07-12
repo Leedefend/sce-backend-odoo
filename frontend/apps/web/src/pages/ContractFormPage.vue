@@ -1258,6 +1258,8 @@ import {
   resolveUnifiedPageContractV2VisibleFields,
 } from '../app/contracts/unifiedPageContractV2';
 import {
+  actionResponseNavQuery as actionResponseNavQueryFromResult,
+  actionResponseRouteTarget as actionResponseRouteTargetFromResult,
   normalizeActionSafety,
   normalizeActionLabel,
   normalizeRequiredParams,
@@ -1337,7 +1339,9 @@ import {
   normalizeRelationSearchColumns,
   relationCreateMode,
   relationInlineCreate,
+  relationModel as relationModelFromDescriptor,
   relationOptionFromRow,
+  relationOrder,
   relationReadFields,
   relationSearchColumnsFromContract,
   relationSearchDialogContract,
@@ -4481,11 +4485,7 @@ function filteredRelationOptions(name: string) {
 }
 
 function relationModel(name: string) {
-  const descriptor = effectiveFieldDescriptor(name) as Record<string, unknown> | undefined;
-  const entry = descriptor?.relation_entry && typeof descriptor.relation_entry === 'object' && !Array.isArray(descriptor.relation_entry)
-    ? descriptor.relation_entry as Record<string, unknown>
-    : {};
-  return String(descriptor?.relation || entry.model || '').trim();
+  return relationModelFromDescriptor(effectiveFieldDescriptor(name));
 }
 
 function formUiLabels(): Record<string, string> {
@@ -4606,11 +4606,6 @@ function relationDomain(descriptor?: FieldDescriptor) {
   const type = String(entry?.defaultVals?.type || '').trim();
   if (type) out.push(['type', '=', type]);
   return out.length ? out : undefined;
-}
-
-function relationOrder(descriptor?: FieldDescriptor) {
-  const entry = relationEntry(descriptor);
-  return String(entry?.order || '').trim() || 'id desc';
 }
 
 function runtimeRelationDomain(name: string) {
@@ -5855,40 +5850,11 @@ const primaryCreateFooterAction = computed<ContractAction | null>(() => {
 });
 
 function actionResponseNavQuery(result: object | null | undefined, extra?: Record<string, unknown>) {
-  const payload = (result && typeof result === 'object' && !Array.isArray(result))
-    ? result as Record<string, unknown>
-    : {};
-  const rawAction = (payload.raw_action && typeof payload.raw_action === 'object' && !Array.isArray(payload.raw_action))
-    ? payload.raw_action as Record<string, unknown>
-    : {};
-  const entryTarget = (payload.entry_target && typeof payload.entry_target === 'object' && !Array.isArray(payload.entry_target))
-    ? payload.entry_target as Record<string, unknown>
-    : {};
-  const refs = (entryTarget.compatibility_refs && typeof entryTarget.compatibility_refs === 'object' && !Array.isArray(entryTarget.compatibility_refs))
-    ? entryTarget.compatibility_refs as Record<string, unknown>
-    : {};
-  return pickContractNavQuery(route.query as Record<string, unknown>, {
-    action_id: payload.action_id || rawAction.id || rawAction.action_id || refs.action_id,
-    domain_raw: payload.domain_raw || rawAction.domain_raw || refs.domain_raw,
-    context_raw: payload.context_raw || rawAction.context_raw || refs.context_raw,
-    ...(extra || {}),
-  });
+  return actionResponseNavQueryFromResult(route.query as Record<string, unknown>, result, extra);
 }
 
 function actionResponseRouteTarget(target: unknown, result: object | null | undefined, extra?: Record<string, unknown>) {
-  const routeTarget = (target && typeof target === 'object' && !Array.isArray(target))
-    ? target as Record<string, unknown>
-    : {};
-  const currentQuery = (routeTarget.query && typeof routeTarget.query === 'object' && !Array.isArray(routeTarget.query))
-    ? routeTarget.query as Record<string, unknown>
-    : {};
-  return {
-    ...routeTarget,
-    query: {
-      ...currentQuery,
-      ...actionResponseNavQuery(result, extra),
-    },
-  };
+  return actionResponseRouteTargetFromResult(route.query as Record<string, unknown>, target, result, extra);
 }
 
 async function runNativeLayoutAction(row: Record<string, unknown>) {

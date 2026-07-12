@@ -1,4 +1,5 @@
 import type { ContractV2ButtonStatus } from '../../app/contracts/v2';
+import { pickContractNavQuery } from '../../app/navigationContext';
 import type { ContractAction } from './types';
 
 export function normalizeActionSafety(value: unknown): ContractAction['actionSafety'] | undefined {
@@ -56,4 +57,50 @@ export function resolveV2ButtonStatus(
     if (statusById[candidate]) return statusById[candidate];
   }
   return null;
+}
+
+export function actionResponseNavQuery(
+  currentQuery: Record<string, unknown>,
+  result: object | null | undefined,
+  extra?: Record<string, unknown>,
+) {
+  const payload = (result && typeof result === 'object' && !Array.isArray(result))
+    ? result as Record<string, unknown>
+    : {};
+  const rawAction = (payload.raw_action && typeof payload.raw_action === 'object' && !Array.isArray(payload.raw_action))
+    ? payload.raw_action as Record<string, unknown>
+    : {};
+  const entryTarget = (payload.entry_target && typeof payload.entry_target === 'object' && !Array.isArray(payload.entry_target))
+    ? payload.entry_target as Record<string, unknown>
+    : {};
+  const refs = (entryTarget.compatibility_refs && typeof entryTarget.compatibility_refs === 'object' && !Array.isArray(entryTarget.compatibility_refs))
+    ? entryTarget.compatibility_refs as Record<string, unknown>
+    : {};
+  return pickContractNavQuery(currentQuery, {
+    action_id: payload.action_id || rawAction.id || rawAction.action_id || refs.action_id,
+    domain_raw: payload.domain_raw || rawAction.domain_raw || refs.domain_raw,
+    context_raw: payload.context_raw || rawAction.context_raw || refs.context_raw,
+    ...(extra || {}),
+  });
+}
+
+export function actionResponseRouteTarget(
+  currentQuery: Record<string, unknown>,
+  target: unknown,
+  result: object | null | undefined,
+  extra?: Record<string, unknown>,
+) {
+  const routeTarget = (target && typeof target === 'object' && !Array.isArray(target))
+    ? target as Record<string, unknown>
+    : {};
+  const targetQuery = (routeTarget.query && typeof routeTarget.query === 'object' && !Array.isArray(routeTarget.query))
+    ? routeTarget.query as Record<string, unknown>
+    : {};
+  return {
+    ...routeTarget,
+    query: {
+      ...targetQuery,
+      ...actionResponseNavQuery(currentQuery, result, extra),
+    },
+  };
 }

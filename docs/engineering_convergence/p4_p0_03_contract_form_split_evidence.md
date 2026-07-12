@@ -11,11 +11,11 @@ This first P4-P0-03 slice starts decomposing `frontend/apps/web/src/pages/Contra
 Extracted responsibilities:
 
 - Shared contract form types and constants moved to `frontend/apps/web/src/pages/contractForm/types.ts`.
-- Action-contract parsing helpers moved to `frontend/apps/web/src/pages/contractForm/actionContract.ts`.
+- Action-contract parsing helpers and action-response navigation normalization moved to `frontend/apps/web/src/pages/contractForm/actionContract.ts`.
 - Generic contract record helpers moved to `frontend/apps/web/src/pages/contractForm/recordUtils.ts`.
 - Field, relation-display, date-input, input-type, view-label, and UI-error helpers moved to `frontend/apps/web/src/pages/contractForm/fieldUtils.ts`.
 - Access-policy normalization moved to `frontend/apps/web/src/pages/contractForm/accessPolicy.ts`.
-- Relation descriptor parsing, create/inline-create rules, option-match rules, dynamic-domain dependency detection, blocked-domain checks, relation-search dialog/column normalization, and relation search read-field assembly moved to `frontend/apps/web/src/pages/contractForm/relationDescriptor.ts`.
+- Relation descriptor parsing, model/order lookup, create/inline-create rules, option-match rules, dynamic-domain dependency detection, blocked-domain checks, relation-search dialog/column normalization, and relation search read-field assembly moved to `frontend/apps/web/src/pages/contractForm/relationDescriptor.ts`.
 - One2many column value normalization, input/display helpers, required-value checks, and runtime line-patch labels moved to `frontend/apps/web/src/pages/contractForm/one2manyUtils.ts`.
 - Workflow action-row normalization, transition aliases, and evidence-gate row parsing moved to `frontend/apps/web/src/pages/contractForm/workflowContract.ts`.
 - Form UI labels, native chatter labels, activity field labels, attachment labels, and native-layout type lookup moved to `frontend/apps/web/src/pages/contractForm/uiLabels.ts`.
@@ -30,7 +30,7 @@ The route component remains the orchestration shell and still owns runtime state
 
 | File | Before | After |
 | --- | ---: | ---: |
-| `frontend/apps/web/src/pages/ContractFormPage.vue` | 13762 | 12542 |
+| `frontend/apps/web/src/pages/ContractFormPage.vue` | 13762 | 12508 |
 
 ## Boundary Decision
 
