@@ -566,6 +566,7 @@ import {
   semanticFieldNamesBySurfaceRole,
   buildLegacyLayoutNodes,
   buildNativeFieldSchemas,
+  applyReadonlyFieldValues,
   type FieldSemanticMeta,
   type NativeLayoutLikeNode,
   type SemanticFieldGroup,
@@ -4769,7 +4770,7 @@ function nativeFieldSchemasForNodes(nodes: NativeFormLayoutNode[]): FormSectionF
     nodes: nodes as NativeLayoutLikeNode[],
     mapNode: (node, index) => nativeLayoutNodeToFieldNode(node as NativeFormLayoutNode, index),
     buildSchemas: buildSectionFieldSchemas,
-    applyReadonlyValues: applyV2ReadonlyFieldValues,
+    applyReadonlyValues: (schemas) => applyReadonlyFieldValues(schemas, v2FieldValue),
     orderActive: isContractFieldOrderEditable.value && fieldOrderPreviewActive.value,
     fieldOrder: fieldOrderDraft.value,
     favoriteActive: (fieldName) => Boolean(formData[fieldName]),
@@ -4787,32 +4788,6 @@ function v2FieldValue(name: string) {
     return { found: false, value: undefined };
   }
   return { found: true, value: source[normalized] };
-}
-
-function schemaInputValueFromRaw(fieldName: string, fieldType: string, raw: unknown) {
-  const type = String(fieldType || '').trim().toLowerCase();
-  if (type === 'many2one') {
-    const id = normalizeRelationIds(raw)[0];
-    return id ? String(id) : '';
-  }
-  if (raw === null || raw === undefined || raw === false) return '';
-  if (type === 'date') return toDateInputValue(raw);
-  if (type === 'datetime') return toDatetimeInputValue(raw);
-  if (typeof raw === 'number' || typeof raw === 'boolean') return raw;
-  return String(raw);
-}
-
-function applyV2ReadonlyFieldValues(schemas: FormSectionFieldSchema[]): FormSectionFieldSchema[] {
-  return schemas.map((field) => {
-    if (!field.readonly) return field;
-    const resolved = v2FieldValue(field.name);
-    if (!resolved.found) return field;
-    return {
-      ...field,
-      value: resolved.value,
-      inputValue: schemaInputValueFromRaw(field.name, String(field.type || ''), resolved.value),
-    };
-  });
 }
 
 function shouldShowRequiredMark(node: LayoutNode) {

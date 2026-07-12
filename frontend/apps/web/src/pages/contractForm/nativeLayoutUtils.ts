@@ -1,6 +1,12 @@
 import type { FieldDescriptor } from '@sc/schema';
 import type { FormSectionFieldSchema } from '../../components/template/formSection.types';
-import { lowCodeFieldSizeClass, normalizeLowCodeFieldSize } from './fieldUtils';
+import {
+  lowCodeFieldSizeClass,
+  normalizeLowCodeFieldSize,
+  normalizeRelationIds,
+  toDateInputValue,
+  toDatetimeInputValue,
+} from './fieldUtils';
 import type { LayoutNode, LowCodeFieldSize } from './types';
 
 export type NativeLayoutLikeNode = Record<string, unknown> & {
@@ -95,6 +101,8 @@ export type NativeFieldSchemasInput = {
   favoriteActive: (fieldName: string) => boolean;
   favoriteReadonly: (field: LayoutNode) => boolean;
 };
+
+export type ReadonlyFieldValueResolver = (fieldName: string) => { found: boolean; value: unknown };
 
 const CHILD_KEYS = ['children', 'pages', 'tabs', 'nodes', 'items'] as const;
 const CREATE_WORKFLOW_STATE_FIELD_NAMES = new Set([
@@ -446,6 +454,35 @@ export function buildNativeFieldSchemas(input: NativeFieldSchemasInput): FormSec
     };
   }
   return schemas;
+}
+
+export function schemaInputValueFromRaw(fieldType: string, raw: unknown) {
+  const type = String(fieldType || '').trim().toLowerCase();
+  if (type === 'many2one') {
+    const id = normalizeRelationIds(raw)[0];
+    return id ? String(id) : '';
+  }
+  if (raw === null || raw === undefined || raw === false) return '';
+  if (type === 'date') return toDateInputValue(raw);
+  if (type === 'datetime') return toDatetimeInputValue(raw);
+  if (typeof raw === 'number' || typeof raw === 'boolean') return raw;
+  return String(raw);
+}
+
+export function applyReadonlyFieldValues(
+  schemas: FormSectionFieldSchema[],
+  resolveFieldValue: ReadonlyFieldValueResolver,
+): FormSectionFieldSchema[] {
+  return schemas.map((field) => {
+    if (!field.readonly) return field;
+    const resolved = resolveFieldValue(field.name);
+    if (!resolved.found) return field;
+    return {
+      ...field,
+      value: resolved.value,
+      inputValue: schemaInputValueFromRaw(String(field.type || ''), resolved.value),
+    };
+  });
 }
 
 function stringList(value: unknown): string[] {

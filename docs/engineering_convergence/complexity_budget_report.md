@@ -12,7 +12,7 @@ Generated from repository source files. This report is informational during the 
 
 | Lines | Category | File |
 | ---: | --- | --- |
-| 8200 | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
+| 8175 | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
 | 4820 | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 4491 | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 4400 | Python source | `addons/smart_construction_core/core_extension.py` |
@@ -104,12 +104,12 @@ Generated from repository source files. This report is informational during the 
 | 879 | Python source | `scripts/verify/business_oca_runtime_smoke.py` |
 | 874 | TypeScript source | `frontend/apps/web/src/pages/contractForm/formConfigHelpers.ts` |
 | 869 | Python source | `addons/smart_construction_core/handlers/my_work_summary.py` |
+| 868 | TypeScript source | `frontend/apps/web/src/pages/contractForm/nativeLayoutUtils.ts` |
 | 867 | Python source | `addons/smart_construction_core/models/support/scene_orchestration.py` |
 | 860 | Python source | `addons/smart_core/core/view_orchestrator.py` |
 | 857 | JavaScript source | `scripts/verify/scbs55_last6_strict_visible_acceptance.js` |
 | 846 | Python source | `scripts/migration/fresh_db_legacy_account_transaction_replay_adapter.py` |
 | 843 | Python source | `scripts/verify/contract_evidence_guard.py` |
-| 831 | TypeScript source | `frontend/apps/web/src/pages/contractForm/nativeLayoutUtils.ts` |
 | 829 | Python source | `addons/smart_construction_core/models/support/tender.py` |
 | 828 | Python source | `scripts/verify/form_orchestration_business_usability_audit.py` |
 | 827 | Python source | `addons/smart_construction_core/models/support/partner_legacy.py` |
@@ -128,7 +128,7 @@ Generated from repository source files. This report is informational during the 
 
 | Lines | Status | Category | File |
 | ---: | --- | --- | --- |
-| 8200 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
+| 8175 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
 | 4820 | split_plan_required | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 4491 | split_plan_required | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 4400 | split_plan_required | Python source | `addons/smart_construction_core/core_extension.py` |
