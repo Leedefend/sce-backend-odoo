@@ -232,7 +232,7 @@ const autoDegradeLabel = computed(() => {
   const value = health.value?.auto_degrade;
   if (!value) return '未触发';
   const reasonCount = Array.isArray(value.reason_codes) ? value.reason_codes.filter(Boolean).length : 0;
-  return `${Boolean(value.triggered) ? '已触发' : '未触发'}；处理动作：${degradeActionLabel(value.action_taken)}；治理项：${reasonCount}`;
+  return `${value.triggered ? '已触发' : '未触发'}；处理动作：${degradeActionLabel(value.action_taken)}；治理项：${reasonCount}`;
 });
 
 const healthSchemaVersionLabel = computed(() => {
@@ -286,11 +286,11 @@ const governanceGatesLabel = computed(() => {
   if (!gates || typeof gates !== 'object') return '-';
   const row = gates as Record<string, unknown>;
   return [
-    `编排：${Boolean(row.orchestrator_applied) ? '已应用' : '未应用'}`,
-    `治理：${Boolean(row.governance_applied) ? '已应用' : '未应用'}`,
-    `交付策略：${Boolean(row.delivery_policy_applied) ? '已应用' : '未应用'}`,
-    `导航策略：${Boolean(row.nav_policy_validation_ok) ? '通过' : '未通过'}`,
-    `自动降级：${Boolean(row.auto_degrade_triggered) ? '已触发' : '未触发'}`,
+    `编排：${row.orchestrator_applied ? '已应用' : '未应用'}`,
+    `治理：${row.governance_applied ? '已应用' : '未应用'}`,
+    `交付策略：${row.delivery_policy_applied ? '已应用' : '未应用'}`,
+    `导航策略：${row.nav_policy_validation_ok ? '通过' : '未通过'}`,
+    `自动降级：${row.auto_degrade_triggered ? '已触发' : '未触发'}`,
   ].join('；');
 });
 

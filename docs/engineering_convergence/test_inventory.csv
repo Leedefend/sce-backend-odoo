@@ -1,0 +1,7 @@
+id,layer,entrypoint,purpose,estimated_runtime,owner,status,notes
+T-UNIT-001,unit,make test.unit,Python syntax/compile health for core addons and scripts,<5m,test owner,active,Initial convergence wrapper
+T-ODOO-001,odoo_integration,make test.odoo.integration,Odoo smoke and permission gate through existing ci.smoke,30-60m,backend owner,active,Requires Docker/Odoo runtime
+T-CONTRACT-001,contract,make test.contract,Contract/static frontend guard and productization quick checks,<10m,platform owner,active,Uses existing verify.system_user_experience.quick
+T-E2E-001,e2e,make test.e2e,Full browser productization acceptance,30-60m,qa owner,active,Requires running backend/frontend
+T-FE-001,unit,make test.frontend,Frontend lint/typecheck/build,<10m,frontend owner,active,Uses pnpm scripts
+T-SEC-001,security,make security.secrets.scan,Secret pattern scan for high-confidence tokens,<2m,devops owner,active,SEC-06 initial gate

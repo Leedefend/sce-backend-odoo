@@ -1,0 +1,53 @@
+name: v1.1 quality gate
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: v1-1-quality-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality_gate:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ github.workspace }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - name: Install frontend dependencies
+        run: |
+          pnpm --dir frontend/apps/web install --frozen-lockfile=false
+
+      - name: Run unified PR quality gate
+        run: |
+          make ci
+
+      - name: Publish convergence summary
+        if: always()
+        run: |
+          {
+            echo "## v1.1 Quality Gate"
+            echo ""
+            echo "- entry: \`make ci\`"
+            echo "- scope: static, frontend, contract syntax, secret scan"
+            echo "- heavier gates: \`make test.odoo.integration\`, \`make test.e2e\`"
+          } >> "$GITHUB_STEP_SUMMARY"
