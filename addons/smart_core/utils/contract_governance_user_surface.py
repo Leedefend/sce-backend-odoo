@@ -280,3 +280,105 @@ def apply_user_surface_noise_reduction(data: dict) -> None:
         data["toolbar"] = toolbar
     if action_rows and not isinstance(data.get("action_groups"), list):
         data["action_groups"] = build_user_surface_action_groups(action_rows)
+
+
+def _as_dict(value: Any) -> dict:
+    return dict(value) if isinstance(value, dict) else {}
+
+
+def view_type_tokens(*values: Any) -> set[str]:
+    tokens: set[str] = set()
+    for value in values:
+        for item in safe_lower(value).replace(";", ",").split(","):
+            token = item.strip()
+            if token:
+                tokens.add(token)
+    return tokens
+
+
+def apply_user_surface_policies(
+    data: dict,
+    *,
+    primary_model: str,
+    record_context_clear_models: set[str],
+    delete_only_models: set[str],
+    mark_model_policy: Any,
+    filter_max: int,
+    action_max: int,
+    primary_filter_max: int,
+    primary_action_max: int,
+) -> None:
+    head = _as_dict(data.get("head"))
+    view_types = view_type_tokens(head.get("view_type"), data.get("view_type"))
+    model = safe_text(head.get("model") or data.get("model"))
+    fields_map = _as_dict(data.get("fields"))
+    views = _as_dict(data.get("views"))
+    has_list_view = bool(_as_dict(views.get("tree") or views.get("list")))
+    active_field = "active" if "active" in fields_map else ""
+    filters_primary_max = primary_filter_max
+    actions_primary_max = primary_action_max
+    record_open_policy = {
+        "carry_query_mode": "preserve",
+    }
+    batch_policy = {
+        "enabled": False,
+        "active_field": "",
+        "archive_value": None,
+        "activate_value": None,
+        "delete_allowed": False,
+        "delete_only_mode": False,
+        "delete_mode": "none",
+        "available_actions": [],
+    }
+    if "form" in view_types and not (view_types & {"tree", "list"} or has_list_view):
+        filters_primary_max = 0
+        actions_primary_max = 3
+    if view_types & {"tree", "list"} or has_list_view:
+        permissions = _as_dict(data.get("permissions"))
+        effective = _as_dict(permissions.get("effective"))
+        rights = _as_dict(effective.get("rights"))
+        write_allowed = bool(rights.get("write"))
+        unlink_right_allowed = bool(rights.get("unlink"))
+        delete_policy = _as_dict(data.get("delete_policy"))
+        unlink_allowed = bool(delete_policy.get("allowed")) and safe_lower(delete_policy.get("delete_mode")) == "unlink"
+        if model in record_context_clear_models:
+            mark_model_policy(data, f"{model}.record_open_context")
+        if model in delete_only_models:
+            mark_model_policy(data, f"{model}.delete_only")
+        delete_allowed = bool(unlink_right_allowed and unlink_allowed)
+        delete_only_mode = bool(delete_allowed and model in delete_only_models)
+        available_actions = []
+        if write_allowed and active_field and not delete_only_mode:
+            available_actions.extend(["archive", "activate"])
+        if delete_allowed:
+            available_actions.append("delete")
+        if model in record_context_clear_models:
+            record_open_policy = {
+                "carry_query_mode": "clear_scene_context",
+            }
+        batch_policy = {
+            "enabled": bool(available_actions),
+            "active_field": active_field,
+            "archive_value": False if active_field else None,
+            "activate_value": True if active_field else None,
+            "delete_allowed": delete_allowed,
+            "delete_only_mode": delete_only_mode,
+            "delete_mode": "unlink" if delete_allowed and "delete" in available_actions else "none",
+            "available_actions": available_actions,
+        }
+        if not write_allowed and not unlink_right_allowed:
+            batch_policy["available_actions"] = []
+            batch_policy["enabled"] = False
+            batch_policy["delete_mode"] = "none"
+    if model and primary_model and model == primary_model:
+        filters_primary_max = min(filters_primary_max, 4)
+        actions_primary_max = min(actions_primary_max, 3)
+    data["surface_policies"] = {
+        "filters_primary_max": filters_primary_max,
+        "actions_primary_max": actions_primary_max,
+        "filters_max": filter_max,
+        "actions_max": action_max,
+        "delete_mode": batch_policy.get("delete_mode") or "none",
+        "batch_policy": batch_policy,
+        "record_open_policy": record_open_policy,
+    }

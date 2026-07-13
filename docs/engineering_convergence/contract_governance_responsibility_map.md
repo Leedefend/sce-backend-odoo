@@ -3,7 +3,7 @@
 Date: 2026-07-13
 Owner: Platform owner
 Target file: `addons/smart_core/utils/contract_governance.py`
-Current size: 1,899 lines
+Current size: 1,812 lines
 Phase: staged responsibility split
 
 ## Purpose
@@ -523,3 +523,17 @@ Stage 29 is complete when:
 - the extracted module remains read-only: no ORM calls, HTTP calls, routing,
   file IO, environment access, or registry mutation;
 - `contract_governance.py` is locked at `<=1899` lines for this stage.
+
+## Stage 30 Target
+
+Stage 30 is complete when:
+
+- `contract_governance_user_surface.py` also owns user-surface policy
+  projection: primary filter/action limits, list batch action derivation,
+  delete-only policy, and record-open context behavior;
+- `contract_governance.py` keeps primary-model derivation, legacy model policy
+  registries, and the policy marker callback in the facade and passes them into
+  the extracted function;
+- the extracted module remains pure projection-only: no ORM calls, HTTP calls,
+  routing, file IO, environment access, or direct registry mutation;
+- `contract_governance.py` is locked at `<=1812` lines for this stage.
