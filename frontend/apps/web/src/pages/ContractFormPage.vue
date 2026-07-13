@@ -643,6 +643,9 @@ import {
   buildSceneValidationPanel,
   collectSceneValidationPrecheckErrors as collectSceneValidationPrecheckErrorsFromRules,
   sceneValidationErrorPrefix,
+  strictContractDefaultsSummary as strictContractDefaultsSummaryFromGuard,
+  strictContractGuardFromSceneReadyEntry,
+  strictContractMissingSummary as strictContractMissingSummaryFromGuard,
 } from './contractForm/sceneValidation';
 import {
   isWorkflowTransitionMethod,
@@ -706,6 +709,7 @@ import {
 } from './contractForm/intakeAutosave';
 import {
   buildWorkflowTransitions,
+  collectPrimaryActionRequiredFields,
   collectRuntimeCapabilities,
   collectRuntimeUserGroups,
   normalizeContractWarnings,
@@ -3902,22 +3906,7 @@ const advancedFieldNames = computed<string[]>(() => {
   return semanticFieldNamesBySurfaceRole(contract.value?.fields, contractFieldSemantics.value, semanticFieldGroups.value, 'advanced');
 });
 const hasAdvancedFields = computed(() => advancedFieldNames.value.length > 0);
-const policyRequiredFields = computed(() => {
-  const out = new Set<string>();
-  const map = (contract.value?.action_policies || {}) as Record<string, { semantic?: string; enabled_when?: { required_fields?: string[] } }>;
-  Object.values(map).forEach((policy) => {
-    const semantic = String(policy?.semantic || '').trim().toLowerCase();
-    if (semantic !== 'primary_action') return;
-    const requiredFields = Array.isArray(policy?.enabled_when?.required_fields)
-      ? policy.enabled_when?.required_fields
-      : [];
-    requiredFields.forEach((field) => {
-      const normalized = String(field || '').trim();
-      if (normalized) out.add(normalized);
-    });
-  });
-  return out;
-});
+const policyRequiredFields = computed(() => collectPrimaryActionRequiredFields(contract.value?.action_policies));
 const sceneReadySceneKey = computed(() => String(
   route.query.scene_key
   || route.params.sceneKey
@@ -3938,35 +3927,9 @@ const sceneReadyEntry = computed<Record<string, unknown> | null>(() => {
   return key ? findSceneReadyEntry(session.sceneReadyContractV1, key) : null;
 });
 const strictContractMode = computed(() => isCoreSceneStrictMode(sceneReadySceneKey.value, sceneReadyEntry.value));
-const strictContractGuard = computed<Record<string, unknown>>(() => {
-  const entry = (sceneReadyEntry.value && typeof sceneReadyEntry.value === 'object')
-    ? (sceneReadyEntry.value as Record<string, unknown>)
-    : {};
-  const direct = entry.contract_guard;
-  if (direct && typeof direct === 'object' && !Array.isArray(direct)) return direct as Record<string, unknown>;
-  const meta = (entry.meta && typeof entry.meta === 'object' && !Array.isArray(entry.meta))
-    ? (entry.meta as Record<string, unknown>)
-    : {};
-  const nested = meta.contract_guard;
-  if (nested && typeof nested === 'object' && !Array.isArray(nested)) return nested as Record<string, unknown>;
-  return {};
-});
-const strictContractMissingSummary = computed(() => {
-  if (!strictContractMode.value) return '';
-  const raw = strictContractGuard.value.missing;
-  if (!Array.isArray(raw) || !raw.length) return '';
-  const missing = raw.map((item) => String(item || '').trim()).filter(Boolean);
-  if (!missing.length) return '';
-  return `严格模式检测到页面配置不完整：${missing.join(', ')}`;
-});
-const strictContractDefaultsSummary = computed(() => {
-  if (!strictContractMode.value) return '';
-  const raw = strictContractGuard.value.defaults_applied;
-  if (!Array.isArray(raw) || !raw.length) return '';
-  const defaults = raw.map((item) => String(item || '').trim()).filter(Boolean);
-  if (!defaults.length) return '';
-  return `系统已自动补齐：${defaults.join(', ')}`;
-});
+const strictContractGuard = computed<Record<string, unknown>>(() => strictContractGuardFromSceneReadyEntry(sceneReadyEntry.value));
+const strictContractMissingSummary = computed(() => strictContractMissingSummaryFromGuard(strictContractMode.value, strictContractGuard.value));
+const strictContractDefaultsSummary = computed(() => strictContractDefaultsSummaryFromGuard(strictContractMode.value, strictContractGuard.value));
 const sceneValidationRequiredFields = computed<string[]>(() => {
   if (!useSceneFormAugmentations.value) return [];
   return resolveFormSceneReady(sceneReadyEntry.value).requiredFields;

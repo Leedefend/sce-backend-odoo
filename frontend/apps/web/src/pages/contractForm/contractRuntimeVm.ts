@@ -63,6 +63,23 @@ export function normalizeSearchFilters(rows: unknown) {
     .filter((row) => row.key && row.label);
 }
 
+export function collectPrimaryActionRequiredFields(actionPolicies: unknown) {
+  const out = new Set<string>();
+  const map = recordOrEmpty(actionPolicies) as Record<string, { semantic?: string; enabled_when?: { required_fields?: string[] } }>;
+  Object.values(map).forEach((policy) => {
+    const semantic = String(policy?.semantic || '').trim().toLowerCase();
+    if (semantic !== 'primary_action') return;
+    const requiredFields = Array.isArray(policy?.enabled_when?.required_fields)
+      ? policy.enabled_when.required_fields
+      : [];
+    requiredFields.forEach((field) => {
+      const normalized = String(field || '').trim();
+      if (normalized) out.add(normalized);
+    });
+  });
+  return out;
+}
+
 export function resolveBusinessCategoryContext(params: {
   contractRecord: unknown;
   routeQuery: Record<string, unknown>;
