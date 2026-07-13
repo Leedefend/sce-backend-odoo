@@ -52,6 +52,14 @@ export type NativeActionVisibilityInput = {
   resolveAction: (row: Record<string, unknown>) => unknown;
 };
 
+export type VisibleNativeLayoutFilterInput<T extends NativeLayoutLikeNode> = {
+  nodes: T[];
+  isNodeVisible: (node: T) => boolean;
+  groupVisibilityEditable: boolean;
+  normalizeGroupTitle: (value: unknown) => string;
+  isGroupVisible: (title: string) => boolean;
+};
+
 export type NativeFieldPresentationInput = {
   node: NativeLayoutLikeNode;
   descriptor?: FieldDescriptor;
@@ -77,6 +85,31 @@ export type FieldPolicyLike = {
   readonly?: boolean;
   required?: boolean;
 };
+
+export function filterVisibleNativeLayoutNodes<T extends NativeLayoutLikeNode>(
+  params: VisibleNativeLayoutFilterInput<T>,
+): T[] {
+  return params.nodes
+    .filter((node) => params.isNodeVisible(node))
+    .map((node) => {
+      const next = { ...node } as Record<string, unknown>;
+      const nodeType = String(next.type || '').trim().toLowerCase();
+      if (params.groupVisibilityEditable && nodeType === 'group') {
+        const title = params.normalizeGroupTitle(next.string || next.label || next.title);
+        if (title && !params.isGroupVisible(title)) next.visible = false;
+      }
+      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
+        const value = next[key];
+        if (Array.isArray(value)) {
+          next[key] = filterVisibleNativeLayoutNodes({
+            ...params,
+            nodes: value as T[],
+          });
+        }
+      });
+      return next as T;
+    });
+}
 
 export type LegacyLayoutNodeInput = {
   fields: Record<string, FieldDescriptor>;

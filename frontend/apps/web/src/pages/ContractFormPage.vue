@@ -577,6 +577,7 @@ import {
   shouldShowRequiredMark as shouldShowRequiredMarkFromNativeLayout,
   isNativeFieldVisible as isNativeFieldVisibleFromNativeLayout,
   isNativeLayoutNodeVisible as isNativeLayoutNodeVisibleFromNativeLayout,
+  filterVisibleNativeLayoutNodes as filterVisibleNativeLayoutNodesFromTree,
   type FieldSemanticMeta,
   type NativeLayoutLikeNode,
   type SemanticFieldGroup,
@@ -4120,25 +4121,13 @@ const useNativeFormTree = computed(() => {
 });
 
 function filterVisibleNativeLayoutNodes(nodes: NativeFormLayoutNode[]): NativeFormLayoutNode[] {
-  return nodes
-    .filter((node) => isNativeLayoutNodeVisible(node))
-    .map((node) => {
-      const next = { ...(node as Record<string, unknown>) } as Record<string, unknown>;
-      const nodeType = String(next.type || '').trim().toLowerCase();
-      if (isContractFieldOrderEditable.value && nodeType === 'group') {
-        const title = normalizeFieldGroupTitle(next.string || next.label || next.title);
-        if (title && !effectiveGroupVisible(title)) {
-          next.visible = false;
-        }
-      }
-      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
-        const value = next[key];
-        if (Array.isArray(value)) {
-          next[key] = filterVisibleNativeLayoutNodes(value as NativeFormLayoutNode[]);
-        }
-      });
-      return next as NativeFormLayoutNode;
-    });
+  return filterVisibleNativeLayoutNodesFromTree({
+    nodes,
+    isNodeVisible: isNativeLayoutNodeVisible,
+    groupVisibilityEditable: isContractFieldOrderEditable.value,
+    normalizeGroupTitle: normalizeFieldGroupTitle,
+    isGroupVisible: effectiveGroupVisible,
+  });
 }
 
 function applyNativeFieldOrderPreview(nodes: NativeFormLayoutNode[]): NativeFormLayoutNode[] {
