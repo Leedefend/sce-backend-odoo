@@ -490,6 +490,7 @@ import {
   buildFormDesignerGroupNavigatorItems,
   buildFormDesignerSearchableFieldRows,
   buildLowCodeApplyBaseParams,
+  buildLowCodePreviewQuery,
   buildLowCodeReturnQuery,
   buildLowCodeViewOrchestration as buildLowCodeViewOrchestrationFromDraft,
   changedFieldGroupFromDrafts,
@@ -7052,19 +7053,11 @@ function lowCodeReturnQuery() {
 }
 
 function previewLowCodeConfiguredPage() {
-  const query: Record<string, string | string[]> = {};
-  Object.entries(route.query as Record<string, unknown>).forEach(([key, raw]) => {
-    if (['config_mode', 'activity_page_id'].includes(key)) return;
-    if (Array.isArray(raw)) {
-      const values = raw.map((item) => String(item || '').trim()).filter(Boolean);
-      if (values.length) query[key] = values;
-      return;
-    }
-    const value = String(raw || '').trim();
-    if (value) query[key] = value;
+  const query = buildLowCodePreviewQuery({
+    routeQuery: route.query as Record<string, unknown>,
+    returnToBusinessConfigFlag: BUSINESS_CONFIG_ROUTE_FLAGS.returnToBusinessConfig,
+    openPagesFlag: BUSINESS_CONFIG_ROUTE_FLAGS.openPages,
   });
-  query[BUSINESS_CONFIG_ROUTE_FLAGS.returnToBusinessConfig] = '1';
-  query[BUSINESS_CONFIG_ROUTE_FLAGS.openPages] = '1';
   router.push({ path: route.path, query });
 }
 

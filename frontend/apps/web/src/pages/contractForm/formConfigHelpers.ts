@@ -993,6 +993,27 @@ export function buildLowCodeReturnQuery(params: {
   return query;
 }
 
+export function buildLowCodePreviewQuery(params: {
+  routeQuery: Record<string, unknown>;
+  returnToBusinessConfigFlag: string;
+  openPagesFlag: string;
+}) {
+  const query: Record<string, string | string[]> = {};
+  Object.entries(params.routeQuery).forEach(([key, raw]) => {
+    if (['config_mode', 'activity_page_id'].includes(key)) return;
+    if (Array.isArray(raw)) {
+      const values = raw.map((item) => String(item || '').trim()).filter(Boolean);
+      if (values.length) query[key] = values;
+      return;
+    }
+    const value = String(raw || '').trim();
+    if (value) query[key] = value;
+  });
+  query[params.returnToBusinessConfigFlag] = '1';
+  query[params.openPagesFlag] = '1';
+  return query;
+}
+
 export function lowCodeScopedContractName(modelName: string, params: Record<string, unknown>) {
   const actionId = Number(params.action_id || params.actionId || 0);
   const viewId = Number(params.view_id || params.viewId || 0);
