@@ -137,3 +137,98 @@ FILE_ATTACHMENT_EXCLUDED_MODEL_PREFIXES = (
 )
 FILE_UPLOAD_ALLOWED_MODELS = ["project.project", "project.task", "payment.request"]
 FILE_DOWNLOAD_ALLOWED_MODELS = ["project.project", "project.task", "payment.request"]
+
+LEGACY_VISIBLE_BUSINESS_COLUMN_LABELS_BY_MODEL = {
+    "project.material.plan": {
+        "legacy_visible_01": "单据状态",
+        "legacy_visible_02": "单据编号",
+        "legacy_visible_03": "单据日期",
+        "legacy_visible_04": "到货时间",
+        "legacy_visible_05": "采购材料名称",
+        "legacy_visible_06": "规格型号",
+        "legacy_visible_07": "单位",
+        "legacy_visible_08": "数量",
+        "legacy_visible_09": "材料别名(设计/清单)",
+        "legacy_visible_10": "备注",
+        "legacy_visible_11": "附件",
+        "legacy_visible_12": "项目名称",
+        "legacy_visible_13": "录入人",
+        "legacy_visible_14": "录入时间",
+        "source_created_by": "录入人",
+        "source_created_at": "录入时间",
+    },
+    "sc.material.inbound": {
+        "legacy_visible_01": "单据状态",
+        "legacy_visible_02": "入库单号",
+        "legacy_visible_03": "单据日期",
+        "legacy_visible_04": "供应商名称",
+        "legacy_visible_05": "材料名称",
+        "legacy_visible_06": "规格型号",
+        "legacy_visible_07": "数量",
+        "legacy_visible_08": "单价",
+        "legacy_visible_09": "税率",
+        "legacy_visible_10": "含税金额",
+        "legacy_visible_11": "入库总数量",
+        "legacy_visible_12": "付款状态",
+        "legacy_visible_13": "已付款金额",
+        "legacy_visible_14": "未付款金额",
+        "legacy_visible_15": "结算状态",
+        "legacy_visible_16": "已结算金额",
+        "legacy_visible_17": "项目名称",
+        "legacy_visible_18": "备注",
+        "legacy_visible_19": "附件",
+        "legacy_visible_20": "录入人",
+        "legacy_visible_21": "录入时间",
+        "legacy_visible_22": "采购人",
+        "source_created_by": "录入人",
+        "source_created_at": "录入时间",
+    },
+}
+
+MODEL_CODE_MAPPING = {
+    "project": "project.project",
+    "task": "project.task",
+}
+
+CRITICAL_SCENE_TARGET_OVERRIDES = {
+    "projects.list",
+    "projects.detail",
+    "projects.intake",
+    "projects.ledger",
+    "projects.execution",
+    "projects.dashboard",
+    "project.management",
+    "my_work.workspace",
+    "portal.dashboard",
+    "finance.payment_requests",
+}
+
+CRITICAL_SCENE_TARGET_ROUTE_OVERRIDES = {
+    "my_work.workspace": "/my-work",
+}
+
+INDUSTRY_CREATE_FIELD_FALLBACKS = {
+    "project.project": {
+        "selection_defaults": {
+            "privacy_visibility": "followers",
+            "rating_status": "stage",
+            "last_update_status": "to_define",
+            "rating_status_period": "monthly",
+        }
+    }
+}
+
+USER_CONFIRMED_FORMAL_LIST_ACTION_XMLIDS = {
+    "smart_construction_core.action_project_material_plan",
+    "smart_construction_core.action_sc_labor_usage_ticket",
+    "smart_construction_core.action_sc_labor_usage_casual",
+    "smart_construction_core.action_sc_equipment_usage_shift_user_confirmed",
+    "smart_construction_core.action_sc_material_quote_user_confirmed",
+    "smart_construction_core.action_sc_subcontract_request_user_confirmed",
+    "smart_construction_core.action_payment_request_user_payment_apply",
+    "smart_construction_core.action_sc_payment_execution_partner_payment",
+    "smart_construction_core.action_sc_legacy_fuel_card_fact",
+    "smart_construction_core.action_sc_legacy_fuel_card_recharge_fact",
+    "smart_construction_core.action_sc_expense_claim_deduction_paid",
+    "smart_construction_core.action_sc_expense_claim_deduction_paid_refund",
+}
