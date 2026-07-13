@@ -131,3 +131,4 @@ check-external-addons:
 check-odoo-conf:
 	@test "$(ODOO_CONF)" = "/var/lib/odoo/odoo.conf" || \
 	  (echo "❌ ODOO_CONF must be /var/lib/odoo/odoo.conf" && exit 1)
+

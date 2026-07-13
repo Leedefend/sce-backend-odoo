@@ -12,9 +12,9 @@
       "reason": "Application shell is a split-plan layout file and must not absorb page-specific behavior."
     },
     "frontend/apps/web/src/pages/ContractFormPage.vue": {
-      "max_lines": 13410,
+      "max_lines": 5947,
       "owner": "Frontend owner",
-      "reason": "Contract form route shell is under active decomposition and must not absorb new responsibilities."
+      "reason": "Contract form route shell completed the P4-P0 split baseline and must not grow above the mainline extraction result."
     },
     "frontend/apps/web/src/pages/ListPage.vue": {
       "max_lines": 3317,
@@ -32,7 +32,7 @@
       "reason": "Action view shell is a split-plan file and should remain a contract orchestration surface."
     },
     "frontend/apps/web/src/views/BusinessConfigSurfaceView.vue": {
-      "max_lines": 5428,
+      "max_lines": 1486,
       "owner": "Frontend owner",
       "reason": "Business configuration surface is a P0 split-plan file and must not grow during convergence."
     },

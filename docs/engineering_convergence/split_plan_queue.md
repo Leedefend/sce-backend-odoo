@@ -4,8 +4,8 @@ Generated from `complexity_budget_report.md` split-plan-required files.
 
 ## Summary
 
-- Split-plan files: `43`
-- P0: `2`
+- Split-plan files: `42`
+- P0: `1`
 - P1: `23`
 - P2: `18`
 
@@ -13,8 +13,7 @@ Generated from `complexity_budget_report.md` split-plan-required files.
 
 | Priority | Lines | Owner | File | Decomposition Direction |
 | --- | ---: | --- | --- | --- |
-| P0 | 13410 | Frontend owner | `frontend/apps/web/src/pages/ContractFormPage.vue` | Extract composables, child panels, data adapters, and action handlers; keep the route component as orchestration shell. |
-| P0 | 5428 | Frontend owner | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` | Extract composables, child panels, data adapters, and action handlers; keep the route component as orchestration shell. |
+| P0 | 5947 | Frontend owner | `frontend/apps/web/src/pages/ContractFormPage.vue` | Extract composables, child panels, data adapters, and action handlers; keep the route component as orchestration shell. |
 | P1 | 4820 | Platform owner | `addons/smart_core/utils/contract_governance.py` | Define owner-specific decomposition plan before adding unrelated behavior. |
 | P1 | 4372 | Construction backend owner | `addons/smart_construction_core/core_extension.py` | Define owner-specific decomposition plan before adding unrelated behavior. |
 | P1 | 3849 | Platform owner | `addons/smart_core/handlers/ui_contract_v2.py` | Extract parsing, validation, assembly, and response mapping into owned services. |

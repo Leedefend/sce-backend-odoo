@@ -4,16 +4,15 @@ Generated from repository source files. This report is informational during the 
 
 ## Summary
 
-- Scanned files: `3773`
-- Files requiring split plan: `43`
-- Files above warning threshold: `61`
+- Scanned files: `3841`
+- Files requiring split plan: `42`
+- Files above warning threshold: `64`
 
 ## Split Plan Required
 
 | Lines | Category | File |
 | ---: | --- | --- |
-| 13410 | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
-| 5428 | Vue source | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` |
+| 5947 | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
 | 4820 | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 4372 | Python source | `addons/smart_construction_core/core_extension.py` |
 | 3849 | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
@@ -65,6 +64,7 @@ Generated from repository source files. This report is informational during the 
 | 1499 | Vue source | `frontend/apps/web/src/views/RecordView.vue` |
 | 1490 | Python source | `addons/smart_construction_core/models/support/workflow_contract_service.py` |
 | 1488 | JavaScript source | `addons/smart_construction_core/static/src/js/sc_sidebar.js` |
+| 1486 | Vue source | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` |
 | 1444 | Python source | `addons/smart_construction_custom/models/user_preferences.py` |
 | 1432 | Python source | `scripts/product/build_capability_productization_v1.py` |
 | 1405 | Python source | `scripts/migration/scbs_visible_hr_tender_strict_fields_backfill_write.py` |
@@ -82,12 +82,14 @@ Generated from repository source files. This report is informational during the 
 | 1256 | Python source | `addons/smart_construction_scene/tests/test_action_only_scene_semantic_supply.py` |
 | 1252 | Python source | `addons/smart_construction_core/models/core/settlement_order.py` |
 | 1251 | Python source | `addons/smart_construction_core/models/core/expense_claim.py` |
+| 1228 | TypeScript source | `frontend/apps/web/src/pages/contractForm/nativeLayoutUtils.ts` |
 | 1153 | Python source | `addons/smart_construction_custom/models/user_formal_visible_fields.py` |
 | 1145 | Python source | `scripts/verify/visible_data_usability_matrix_probe.py` |
 | 1134 | Vue source | `frontend/apps/web/src/components/template/NativeFormTreeRenderer.vue` |
 | 1113 | Python source | `scripts/verify/lowcode_config_boundary_guard.py` |
 | 1093 | Vue source | `frontend/apps/web/src/components/template/FormSection.vue` |
 | 1093 | JavaScript source | `scripts/verify/list_search_group_usability_audit.js` |
+| 1090 | TypeScript source | `frontend/apps/web/src/pages/contractForm/formConfigHelpers.ts` |
 | 1058 | Python source | `addons/smart_core/tests/test_unified_page_contract_v2_mobile_compact.py` |
 | 1011 | Python source | `scripts/migration/fresh_db_legacy_payment_residual_replay_adapter.py` |
 | 1005 | Python source | `addons/smart_core/core/scene_dsl_compiler.py` |
@@ -126,8 +128,7 @@ Generated from repository source files. This report is informational during the 
 
 | Lines | Status | Category | File |
 | ---: | --- | --- | --- |
-| 13410 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
-| 5428 | split_plan_required | Vue source | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` |
+| 5947 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
 | 4820 | split_plan_required | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 4372 | split_plan_required | Python source | `addons/smart_construction_core/core_extension.py` |
 | 3849 | split_plan_required | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
@@ -172,6 +173,7 @@ Generated from repository source files. This report is informational during the 
 | 1499 | warning | Vue source | `frontend/apps/web/src/views/RecordView.vue` |
 | 1490 | warning | Python source | `addons/smart_construction_core/models/support/workflow_contract_service.py` |
 | 1488 | warning | JavaScript source | `addons/smart_construction_core/static/src/js/sc_sidebar.js` |
+| 1486 | warning | Vue source | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` |
 | 1444 | warning | Python source | `addons/smart_construction_custom/models/user_preferences.py` |
 | 1432 | warning | Python source | `scripts/product/build_capability_productization_v1.py` |
 | 1405 | warning | Python source | `scripts/migration/scbs_visible_hr_tender_strict_fields_backfill_write.py` |
@@ -189,6 +191,7 @@ Generated from repository source files. This report is informational during the 
 | 1256 | warning | Python source | `addons/smart_construction_scene/tests/test_action_only_scene_semantic_supply.py` |
 | 1252 | warning | Python source | `addons/smart_construction_core/models/core/settlement_order.py` |
 | 1251 | warning | Python source | `addons/smart_construction_core/models/core/expense_claim.py` |
+| 1228 | warning | TypeScript source | `frontend/apps/web/src/pages/contractForm/nativeLayoutUtils.ts` |
 | 1153 | warning | Python source | `addons/smart_construction_custom/models/user_formal_visible_fields.py` |
 | 1145 | warning | Python source | `scripts/verify/visible_data_usability_matrix_probe.py` |
 | 1134 | warning | Vue source | `frontend/apps/web/src/components/template/NativeFormTreeRenderer.vue` |
@@ -196,6 +199,7 @@ Generated from repository source files. This report is informational during the 
 | 1113 | warning | Python source | `scripts/verify/lowcode_config_boundary_guard.py` |
 | 1093 | warning | Vue source | `frontend/apps/web/src/components/template/FormSection.vue` |
 | 1093 | warning | JavaScript source | `scripts/verify/list_search_group_usability_audit.js` |
+| 1090 | warning | TypeScript source | `frontend/apps/web/src/pages/contractForm/formConfigHelpers.ts` |
 | 1058 | warning | Python source | `addons/smart_core/tests/test_unified_page_contract_v2_mobile_compact.py` |
 | 1011 | warning | Python source | `scripts/migration/fresh_db_legacy_payment_residual_replay_adapter.py` |
 | 1005 | warning | Python source | `addons/smart_core/core/scene_dsl_compiler.py` |
@@ -204,8 +208,6 @@ Generated from repository source files. This report is informational during the 
 | 985 | warning | Python source | `scripts/migration/history_business_usable_probe.py` |
 | 966 | warning | Python source | `addons/smart_core/handlers/load_contract.py` |
 | 966 | warning | Python source | `scripts/verify/scbsly_direct_project_strict_visible_acceptance.py` |
-| 944 | warning | Python source | `scripts/ops/scbs_55_user_acceptance_menu_policy_apply.py` |
-| 915 | within_budget | XML data/view | `addons/smart_construction_core/views/core/material_acceptance_views.xml` |
 
 ## Interpretation
 

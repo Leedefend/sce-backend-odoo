@@ -1,0 +1,196 @@
+.relation-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--sc-semantic-backdrop);
+}
+
+.relation-dialog {
+  width: min(920px, 100%);
+  max-height: min(760px, calc(100vh - 48px));
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr) auto;
+  gap: 0;
+  border-radius: 8px;
+  background: var(--sc-app-panel);
+  border: 1px solid var(--sc-app-border);
+  box-shadow: 0 18px 50px var(--sc-app-shadow);
+  overflow: hidden;
+}
+
+.relation-dialog-head,
+.relation-dialog-search,
+.relation-dialog-footer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.relation-dialog-head {
+  justify-content: space-between;
+  min-height: 50px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--sc-app-border);
+  background: var(--sc-app-panel);
+}
+
+.relation-dialog-head h3 {
+  margin: 0;
+  font-size: 16px;
+  color: var(--sc-app-text-primary);
+  font-weight: 600;
+}
+
+.relation-dialog-close {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--sc-app-text-secondary);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.relation-dialog-close:hover:not(:disabled) {
+  background: var(--sc-app-hover-bg);
+  color: var(--sc-app-text-primary);
+}
+
+.relation-dialog-search {
+  align-items: stretch;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--sc-app-border);
+  background: var(--sc-app-panel);
+}
+
+.relation-dialog-search .input {
+  flex: 1 1 auto;
+}
+
+.relation-dialog-table-wrap {
+  overflow: auto;
+  min-height: 160px;
+  border: 0;
+  border-radius: 0;
+}
+
+.relation-dialog-table {
+  width: max(100%, 720px);
+  min-width: 720px;
+  border-collapse: collapse;
+  background: var(--sc-app-panel);
+  font-size: 13px;
+}
+
+.relation-dialog-table th,
+.relation-dialog-table td {
+  border-bottom: 1px solid var(--sc-app-border);
+  padding: 8px 10px;
+  text-align: left;
+  vertical-align: middle;
+  color: var(--sc-app-text-primary);
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.relation-dialog-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--sc-app-muted-bg);
+  color: var(--sc-app-text-secondary);
+  font-weight: 600;
+}
+
+.relation-dialog-table tbody tr {
+  cursor: pointer;
+}
+
+.relation-dialog-table tbody tr:hover,
+.relation-dialog-row--active {
+  background: var(--sc-app-hover-bg);
+}
+
+.relation-dialog-select-col {
+  width: 34px;
+  text-align: center !important;
+}
+
+.relation-dialog-empty {
+  margin: 12px;
+  color: var(--sc-app-text-secondary);
+  font-size: 13px;
+}
+
+.relation-dialog-footer {
+  min-height: 54px;
+  padding: 10px 16px;
+  border-top: 1px solid var(--sc-app-border);
+  background: var(--sc-app-panel);
+}
+
+.relation-dialog-count {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.relation-dialog-footer-spacer {
+  flex: 1 1 auto;
+}
+
+.chip-btn {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--sc-app-border-strong);
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
+  cursor: pointer;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.validation-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--sc-app-danger-text);
+  font-size: 12px;
+}
+
+.ghost,
+.primary {
+  border-radius: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--sc-app-border);
+  background: var(--sc-app-panel);
+  font-weight: 500;
+}
+
+.primary {
+  background: var(--sc-semantic-surface-interactive);
+  color: var(--sc-semantic-text-on-interactive);
+  border-color: var(--sc-semantic-surface-interactive);
+}
+
+.ghost {
+  color: var(--sc-app-text-secondary);
+}
+
+@media (max-width: 860px) {
+  .relation-dialog-backdrop {
+    padding: 12px;
+  }
+
+  .relation-dialog-search,
+  .relation-dialog-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}

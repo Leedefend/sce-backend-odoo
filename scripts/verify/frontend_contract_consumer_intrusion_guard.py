@@ -274,7 +274,7 @@ def _write_md(payload: dict[str, object]) -> None:
         "",
         f"- total_findings: {payload['total_findings']}",
         f"- files_scanned: {payload['files_scanned']}",
-        f"- scopes: {', '.join(payload['scopes'])}",
+        f"- scopes: {', '.join(payload['scopes']) or 'none'}",
         "",
         "## Summary",
         "",
@@ -283,6 +283,8 @@ def _write_md(payload: dict[str, object]) -> None:
     assert isinstance(by_scope, dict)
     for scope, count in sorted(by_scope.items()):
         lines.append(f"- {scope}: {count}")
+    if not by_scope:
+        lines.append("- No findings.")
     lines.extend(["", "## Findings", ""])
     for item in findings:
         assert isinstance(item, dict)
@@ -292,6 +294,8 @@ def _write_md(payload: dict[str, object]) -> None:
         lines.append(f"  match: `{item['match']}`")
         lines.append(f"  rationale: {item['rationale']}")
         lines.append(f"  suggestion: {item['suggestion']}")
+    if not findings:
+        lines.append("- No findings.")
     REPORT_MD.parent.mkdir(parents=True, exist_ok=True)
     REPORT_MD.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
