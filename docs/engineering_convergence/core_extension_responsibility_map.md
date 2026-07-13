@@ -2,7 +2,7 @@
 
 Target file: `addons/smart_construction_core/core_extension.py`
 
-Current line budget: `<=3955`.
+Current line budget: `<=3875`.
 
 ## Role
 
@@ -117,3 +117,15 @@ Stage 2 is complete when:
 - the facade hooks still own registry loading, timing payload return shape, and
   exception boundaries;
 - `core_extension.py` is locked at `<=3955` lines for this stage.
+
+## Stage 3 Form Action Builder
+
+Stage 3 is complete when:
+
+- `core_extension_form_actions.py` owns pure normalization from payment available
+  action handler data into form business action contracts;
+- `smart_core_form_business_actions` keeps model filtering, record lookup,
+  handler invocation, and exception boundaries in the facade;
+- the extracted builder does not import Odoo, read ORM state, perform IO, or
+  trigger notifications/routing;
+- `core_extension.py` is locked at `<=3875` lines for this stage.

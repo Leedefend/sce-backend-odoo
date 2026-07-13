@@ -8,8 +8,9 @@ ROOT = Path(__file__).resolve().parents[2]
 TARGET = ROOT / "addons/smart_construction_core/core_extension.py"
 CATALOG = ROOT / "addons/smart_construction_core/core_extension_policy_catalog.py"
 CAPABILITIES = ROOT / "addons/smart_construction_core/core_extension_capabilities.py"
+FORM_ACTIONS = ROOT / "addons/smart_construction_core/core_extension_form_actions.py"
 DOC = ROOT / "docs/engineering_convergence/core_extension_responsibility_map.md"
-MAX_LINES = 3955
+MAX_LINES = 3875
 
 
 def _line_count(path: Path) -> int:
@@ -67,13 +68,24 @@ def main() -> int:
             if token in capabilities_text:
                 errors.append(f"capability helper module must remain pure; found token: {token}")
 
+    if not FORM_ACTIONS.is_file():
+        errors.append("core_extension_form_actions.py missing")
+    else:
+        form_actions_text = FORM_ACTIONS.read_text(encoding="utf-8")
+        if "def build_payment_form_business_action_contract(" not in form_actions_text:
+            errors.append("form action module missing build_payment_form_business_action_contract")
+        forbidden_tokens = ("odoo.", "env[", ".search(", ".write(", "http", "requests.", "Path(")
+        for token in forbidden_tokens:
+            if token in form_actions_text:
+                errors.append(f"form action module must remain pure; found token: {token}")
+
     if not DOC.is_file():
         errors.append("core_extension responsibility map missing")
     else:
         text = DOC.read_text(encoding="utf-8")
         required_tokens = [
             "Target file: `addons/smart_construction_core/core_extension.py`",
-            "Current line budget: `<=3955`.",
+            "Current line budget: `<=3875`.",
             "`core_extension.py` is the construction-industry contribution facade",
             "`smart_core_register(registry)`",
             "`smart_core_extend_system_init(data, env, user)`",
@@ -93,6 +105,10 @@ def main() -> int:
             "`core_extension_capabilities.py` owns the pure capability contribution payload",
             "the facade hooks still own registry loading",
             "`core_extension.py` is locked at `<=3955` lines",
+            "Stage 3 Form Action Builder",
+            "`core_extension_form_actions.py` owns pure normalization",
+            "`smart_core_form_business_actions` keeps model filtering",
+            "`core_extension.py` is locked at `<=3875` lines",
             "future PRs from this branch should include multiple commits",
             "open only when",
         ]
