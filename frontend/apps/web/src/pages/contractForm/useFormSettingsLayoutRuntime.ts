@@ -7,7 +7,7 @@ import {
   lowCodeFieldSizeLabel,
   normalizeFieldGroupTitle,
 } from './formConfigHelpers';
-import type { FormConfigAuditResult, LowCodeFieldSize } from './types';
+import type { FormConfigAuditResult, FormConfigOperationLogEntry, LowCodeFieldSize } from './types';
 
 type LowCodeColumns = 1 | 2 | 3;
 
@@ -24,6 +24,20 @@ export function useFormSettingsLayoutRuntime(params: {
   fieldSizeBase: Ref<Record<string, LowCodeFieldSize>>;
   fieldSizeDraft: Record<string, LowCodeFieldSize>;
   fieldLayoutDirtyKeys: Record<string, boolean>;
+  fieldOrderDraft: Ref<string[]>;
+  fieldOrderPreviewActive: Ref<boolean>;
+  fieldGroupBase: Ref<Record<string, string>>;
+  fieldGroupSavedBase: Ref<Record<string, string>>;
+  fieldGroupDraft: Record<string, string>;
+  fieldMoveTargetDraft: Record<string, string>;
+  fieldVisibilityBase: Ref<Record<string, boolean>>;
+  fieldVisibilityDraft: Record<string, boolean>;
+  fieldVisibilityDirty: Ref<boolean>;
+  fieldVisibilityDirtyKeys: Record<string, boolean>;
+  contractModeFeedback: Ref<string>;
+  currentDesignFieldKeys: () => string[];
+  visibilityDraftFieldKeys: () => string[];
+  baseFieldRows: () => Array<{ fieldKey: string; actions: Array<{ checked?: boolean; value?: string }> }>;
   currentGroupOptions: () => string[];
   groupNavigatorItems: () => Array<{ title: string }>;
   selectedGroupTitle: () => string;
@@ -32,7 +46,8 @@ export function useFormSettingsLayoutRuntime(params: {
   effectiveGroupColumns: (key: string) => LowCodeColumns;
   effectiveFieldSize: (fieldKey: string) => LowCodeFieldSize;
   formDesignFieldLabel: (fieldKey: string) => string;
-  appendOperation: (action: string, summary: string) => void;
+  appendOperation: (action: string, summary: string, status?: FormConfigOperationLogEntry['status']) => void;
+  markPendingOperations: (status: 'saved' | 'reverted') => void;
 }) {
   function baseGroupVisible(key: string) {
     return Object.prototype.hasOwnProperty.call(params.groupVisibilityBase.value, key)
@@ -134,10 +149,54 @@ export function useFormSettingsLayoutRuntime(params: {
     params.appendOperation('调整字段尺寸', `${params.formDesignFieldLabel(fieldKey)} 设置为${lowCodeFieldSizeLabel(size)}`);
   }
 
+  function resetContractFieldOrder() {
+    params.fieldOrderDraft.value = params.currentDesignFieldKeys();
+    params.fieldOrderPreviewActive.value = false;
+    Object.keys(params.fieldGroupDraft).forEach((key) => delete params.fieldGroupDraft[key]);
+    Object.keys(params.fieldMoveTargetDraft).forEach((key) => delete params.fieldMoveTargetDraft[key]);
+    Object.entries({ ...params.fieldGroupBase.value, ...params.fieldGroupSavedBase.value }).forEach(([key, value]) => {
+      if (value) params.fieldGroupDraft[key] = value;
+    });
+    params.formLayoutColumnsDraft.value = params.formLayoutColumnsBase.value;
+    Object.keys(params.groupVisibilityDraft).forEach((key) => delete params.groupVisibilityDraft[key]);
+    Object.entries(params.groupVisibilityBase.value).forEach(([key, value]) => {
+      params.groupVisibilityDraft[key] = value;
+    });
+    Object.keys(params.groupColumnsDraft).forEach((key) => delete params.groupColumnsDraft[key]);
+    Object.entries(params.groupColumnsBase.value).forEach(([key, value]) => {
+      params.groupColumnsDraft[key] = value;
+    });
+    Object.keys(params.fieldSizeDraft).forEach((key) => delete params.fieldSizeDraft[key]);
+    Object.entries(params.fieldSizeBase.value).forEach(([key, value]) => {
+      params.fieldSizeDraft[key] = value;
+    });
+    params.formLayoutDirty.value = false;
+    Object.keys(params.groupLayoutDirtyKeys).forEach((key) => delete params.groupLayoutDirtyKeys[key]);
+    Object.keys(params.fieldLayoutDirtyKeys).forEach((key) => delete params.fieldLayoutDirtyKeys[key]);
+    params.visibilityDraftFieldKeys().forEach((fieldKey) => {
+      if (Object.prototype.hasOwnProperty.call(params.fieldVisibilityBase.value, fieldKey)) {
+        params.fieldVisibilityDraft[fieldKey] = params.fieldVisibilityBase.value[fieldKey];
+        return;
+      }
+      const row = params.baseFieldRows().find((item) => item.fieldKey === fieldKey);
+      const selected = row?.actions.find((action) => Boolean(action.checked));
+      params.fieldVisibilityDraft[fieldKey] = selected ? selected.value === 'show' : true;
+    });
+    params.fieldVisibilityDirty.value = false;
+    Object.keys(params.fieldVisibilityDirtyKeys).forEach((key) => {
+      delete params.fieldVisibilityDirtyKeys[key];
+    });
+    params.formConfigAuditResult.value = null;
+    params.markPendingOperations('reverted');
+    params.appendOperation('放弃表单调整', '撤销当前页面未保存的表单配置调整', 'done');
+    params.contractModeFeedback.value = '';
+  }
+
   return {
     onFormLayoutColumnsChange,
     onSelectedFormSettingsGroupVisibilityChange,
     onSelectedFormSettingsGroupColumnsChange,
     onSelectedFormSettingsFieldSizeChange,
+    resetContractFieldOrder,
   };
 }

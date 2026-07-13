@@ -540,7 +540,6 @@ import {
   isStaticTruthyModifier,
   nativeModifierValue,
   nativeFieldSubview as nativeFieldSubviewFromTree,
-  nativeFieldLabel,
   nativeFieldPresentation,
   isCreateWorkflowStateField,
   nativeLayoutNodeType,
@@ -698,6 +697,7 @@ import { useNativeChatterRuntime } from './contractForm/useNativeChatterRuntime'
 import { useFieldOrderDragRuntime } from './contractForm/useFieldOrderDragRuntime';
 import { useLowCodeFieldCreateRuntime } from './contractForm/useLowCodeFieldCreateRuntime';
 import { useFormSettingsLayoutRuntime } from './contractForm/useFormSettingsLayoutRuntime';
+import { useFormSettingsGroupRuntime } from './contractForm/useFormSettingsGroupRuntime';
 import {
   buildWorkflowTransitions,
   analyzeFormContractReadiness,
@@ -1397,6 +1397,7 @@ const {
   onSelectedFormSettingsGroupVisibilityChange,
   onSelectedFormSettingsGroupColumnsChange,
   onSelectedFormSettingsFieldSizeChange,
+  resetContractFieldOrder,
 } = useFormSettingsLayoutRuntime({
   formLayoutColumnsBase,
   formLayoutColumnsDraft,
@@ -1410,6 +1411,20 @@ const {
   fieldSizeBase,
   fieldSizeDraft,
   fieldLayoutDirtyKeys,
+  fieldOrderDraft,
+  fieldOrderPreviewActive,
+  fieldGroupBase,
+  fieldGroupSavedBase,
+  fieldGroupDraft,
+  fieldMoveTargetDraft,
+  fieldVisibilityBase,
+  fieldVisibilityDraft,
+  fieldVisibilityDirty,
+  fieldVisibilityDirtyKeys,
+  contractModeFeedback,
+  currentDesignFieldKeys: () => currentFormDesignFieldKeys.value,
+  visibilityDraftFieldKeys: () => formVisibilityDraftFieldKeys.value,
+  baseFieldRows: () => contractModeBaseFieldRows.value,
   currentGroupOptions: () => currentFormGroupOptions.value,
   groupNavigatorItems: () => formDesignerGroupNavigatorItems.value,
   selectedGroupTitle: () => selectedFormSettingsFieldGroupTitle.value,
@@ -1418,6 +1433,24 @@ const {
   effectiveGroupColumns: (key) => effectiveGroupColumns(key),
   effectiveFieldSize: (fieldKey) => effectiveFieldSize(fieldKey),
   formDesignFieldLabel: (fieldKey) => formDesignFieldLabel(fieldKey),
+  appendOperation: appendFormConfigOperation,
+  markPendingOperations: markPendingFormConfigOperations,
+});
+const {
+  onContractInlineGroupRename,
+} = useFormSettingsGroupRuntime({
+  busy: () => busy.value,
+  nativeFormLayoutNodes: () => nativeFormLayoutNodes.value,
+  contractFields: () => (contract.value?.fields || {}) as Record<string, FieldDescriptor>,
+  currentOrderedFieldKeys: () => currentFormOrderedFieldKeys.value,
+  effectiveFieldGroupTitle: (fieldKey) => effectiveFieldGroupTitleForDraft(fieldKey),
+  formDesignFieldLabel: (fieldKey) => formDesignFieldLabel(fieldKey),
+  contractFieldLabel: (fieldKey) => contractFieldLabel(fieldKey),
+  fieldGroupDraft,
+  selectedGroupTitleDraft: selectedFormSettingsFieldGroupTitleDraft,
+  selectedGroupTitleEdit: selectedFormSettingsFieldGroupTitleEdit,
+  formConfigAuditResult,
+  contractModeFeedback,
   appendOperation: appendFormConfigOperation,
 });
 const {
@@ -5808,54 +5841,6 @@ async function onContractInlineFieldLabelChange(payload: { field: FormSectionFie
   await setInlineFieldPolicy(fieldKey, { label });
 }
 
-function fieldsInNativeGroup(groupTitle: string) {
-  const out = new Map<string, string>();
-  const targetTitle = String(groupTitle || '').trim();
-  const walk = (nodes: NativeFormLayoutNode[], activeGroup = '') => {
-    nodes.forEach((node) => {
-      const type = String(node?.type || (node as { containerType?: string })?.containerType || '').trim().toLowerCase();
-      const title = String(node?.string || node?.label || '').trim();
-      const nextGroup = title && ['group', 'page'].includes(type) ? title : activeGroup;
-      const name = String(node?.name || '').trim();
-      if (type === 'field' && name && nextGroup === targetTitle) {
-        const descriptor = contract.value?.fields?.[name];
-        out.set(name, nativeFieldLabel(node, descriptor, contractFieldLabel));
-      }
-      (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
-        const children = node?.[key];
-        if (Array.isArray(children)) walk(children as NativeFormLayoutNode[], nextGroup);
-      });
-    });
-  };
-  walk(nativeFormLayoutNodes.value);
-  return Array.from(out.entries()).map(([fieldKey, label]) => ({ fieldKey, label }));
-}
-
-function fieldsInConfiguredGroup(groupTitle: string) {
-  const targetTitle = normalizeFieldGroupTitle(groupTitle);
-  if (!targetTitle) return [];
-  const rows = currentFormOrderedFieldKeys.value
-    .filter((fieldKey) => fieldGroupTitleMatches(effectiveFieldGroupTitleForDraft(fieldKey), targetTitle))
-    .map((fieldKey) => ({ fieldKey, label: formDesignFieldLabel(fieldKey) }));
-  return rows.length ? rows : fieldsInNativeGroup(targetTitle);
-}
-
-async function onContractInlineGroupRename(payload: { oldTitle: string; newTitle: string }) {
-  const oldTitle = String(payload.oldTitle || '').trim();
-  const newTitle = String(payload.newTitle || '').trim();
-  if (!oldTitle || !newTitle || oldTitle === newTitle || busy.value) return;
-  const fields = fieldsInConfiguredGroup(oldTitle);
-  if (!fields.length) return;
-  fields.forEach((row) => {
-    fieldGroupDraft[row.fieldKey] = newTitle;
-  });
-  selectedFormSettingsFieldGroupTitleDraft.value = newTitle;
-  selectedFormSettingsFieldGroupTitleEdit.value = newTitle;
-  formConfigAuditResult.value = null;
-  appendFormConfigOperation('修改分组名称', `${oldTitle} 改为 ${newTitle}`);
-  contractModeFeedback.value = '分组名称已调整，保存表单设置后生效';
-}
-
 function onFieldOrderDrop(targetFieldKey: string, targetGroupTitle = '', requestedPlacement?: 'before' | 'after' | '') {
   if (!isContractFieldOrderEditable.value || !draggingFieldKey.value || draggingFieldKey.value === targetFieldKey) return;
   const sourceFieldKey = draggingFieldKey.value;
@@ -5912,49 +5897,6 @@ function moveFieldOrder(fieldKey: string, delta: number) {
   fieldOrderDraft.value = draft;
   fieldOrderPreviewActive.value = true;
   formConfigAuditResult.value = null;
-}
-
-function resetContractFieldOrder() {
-  fieldOrderDraft.value = currentFormDesignFieldKeys.value;
-  fieldOrderPreviewActive.value = false;
-  Object.keys(fieldGroupDraft).forEach((key) => delete fieldGroupDraft[key]);
-  Object.keys(fieldMoveTargetDraft).forEach((key) => delete fieldMoveTargetDraft[key]);
-  Object.entries({ ...fieldGroupBase.value, ...fieldGroupSavedBase.value }).forEach(([key, value]) => {
-    if (value) fieldGroupDraft[key] = value;
-  });
-  formLayoutColumnsDraft.value = formLayoutColumnsBase.value;
-  Object.keys(groupVisibilityDraft).forEach((key) => delete groupVisibilityDraft[key]);
-  Object.entries(groupVisibilityBase.value).forEach(([key, value]) => {
-    groupVisibilityDraft[key] = value;
-  });
-  Object.keys(groupColumnsDraft).forEach((key) => delete groupColumnsDraft[key]);
-  Object.entries(groupColumnsBase.value).forEach(([key, value]) => {
-    groupColumnsDraft[key] = value;
-  });
-  Object.keys(fieldSizeDraft).forEach((key) => delete fieldSizeDraft[key]);
-  Object.entries(fieldSizeBase.value).forEach(([key, value]) => {
-    fieldSizeDraft[key] = value;
-  });
-  formLayoutDirty.value = false;
-  Object.keys(groupLayoutDirtyKeys).forEach((key) => delete groupLayoutDirtyKeys[key]);
-  Object.keys(fieldLayoutDirtyKeys).forEach((key) => delete fieldLayoutDirtyKeys[key]);
-  formVisibilityDraftFieldKeys.value.forEach((fieldKey) => {
-    if (Object.prototype.hasOwnProperty.call(fieldVisibilityBase.value, fieldKey)) {
-      fieldVisibilityDraft[fieldKey] = fieldVisibilityBase.value[fieldKey];
-      return;
-    }
-    const row = contractModeBaseFieldRows.value.find((item) => item.fieldKey === fieldKey);
-    const selected = row?.actions.find((action) => Boolean(action.checked));
-    fieldVisibilityDraft[fieldKey] = selected ? selected.value === 'show' : true;
-  });
-  fieldVisibilityDirty.value = false;
-  Object.keys(fieldVisibilityDirtyKeys).forEach((key) => {
-    delete fieldVisibilityDirtyKeys[key];
-  });
-  formConfigAuditResult.value = null;
-  markPendingFormConfigOperations('reverted');
-  appendFormConfigOperation('放弃表单调整', '撤销当前页面未保存的表单配置调整', 'done');
-  contractModeFeedback.value = '';
 }
 
 function routeQueryText(key: string) {
