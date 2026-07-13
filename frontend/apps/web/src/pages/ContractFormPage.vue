@@ -709,8 +709,15 @@ async function collectActionParams(action: ContractAction): Promise<Record<strin
   if (!action.requiresReason && !requiredParams.has('reason')) return {};
   const reason = window.prompt(`${action.label || '操作'}原因`)?.trim() || '';
   if (!reason) {
-    errorMessage.value = '请填写操作原因';
-    status.value = 'error';
+    applyFormRuntimeStatusEvent({
+      status,
+      errorMessage,
+    }, {
+      kind: 'status',
+      transaction: 'runAction',
+      status: 'error',
+      errorMessage: '请填写操作原因',
+    });
     return null;
   }
   return { reason };
@@ -4048,8 +4055,15 @@ async function runNativeLayoutAction(row: Record<string, unknown>) {
       await reload();
       return;
     } catch (err) {
-      errorMessage.value = err instanceof Error ? err.message : '操作执行失败';
-      status.value = 'error';
+      applyFormRuntimeStatusEvent({
+        status,
+        errorMessage,
+      }, {
+        kind: 'status',
+        transaction: 'runAction',
+        status: 'error',
+        errorMessage: err instanceof Error ? err.message : '操作执行失败',
+      });
       return;
     } finally {
       busyKind.value = null;
