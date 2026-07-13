@@ -4,9 +4,9 @@ Generated from repository source files. This report is informational during the 
 
 ## Summary
 
-- Scanned files: `3871`
-- Files requiring split plan: `42`
-- Files above warning threshold: `64`
+- Scanned files: `3872`
+- Files requiring split plan: `41`
+- Files above warning threshold: `65`
 
 ## Split Plan Required
 
@@ -51,7 +51,6 @@ Generated from repository source files. This report is informational during the 
 | 1552 | Python source | `addons/smart_core/tests/test_odoo_native_alignment_boundaries.py` |
 | 1546 | Python source | `addons/smart_core/app_config_engine/services/view_Parser/parsers Tree Form.py` |
 | 1523 | Python source | `addons/smart_construction_core/wizard/project_boq_import_wizard.py` |
-| 1517 | Python source | `addons/smart_construction_core/core_extension.py` |
 | 599 | Shell script | `scripts/audit/smoke_role_matrix.sh` |
 | 551 | Shell script | `scripts/ops/audit_project_actions.sh` |
 
@@ -67,6 +66,7 @@ Generated from repository source files. This report is informational during the 
 | 1486 | Vue source | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` |
 | 1444 | Python source | `addons/smart_construction_custom/models/user_preferences.py` |
 | 1432 | Python source | `scripts/product/build_capability_productization_v1.py` |
+| 1422 | Python source | `addons/smart_construction_core/core_extension.py` |
 | 1405 | Python source | `scripts/migration/scbs_visible_hr_tender_strict_fields_backfill_write.py` |
 | 1400 | Python source | `addons/smart_core/handlers/business_config_surface.py` |
 | 1396 | XML data/view | `addons/smart_construction_core/data/view_orchestration_contract_generated_data.xml` |
@@ -169,13 +169,13 @@ Generated from repository source files. This report is informational during the 
 | 1552 | split_plan_required | Python source | `addons/smart_core/tests/test_odoo_native_alignment_boundaries.py` |
 | 1546 | split_plan_required | Python source | `addons/smart_core/app_config_engine/services/view_Parser/parsers Tree Form.py` |
 | 1523 | split_plan_required | Python source | `addons/smart_construction_core/wizard/project_boq_import_wizard.py` |
-| 1517 | split_plan_required | Python source | `addons/smart_construction_core/core_extension.py` |
 | 1499 | warning | Vue source | `frontend/apps/web/src/views/RecordView.vue` |
 | 1490 | warning | Python source | `addons/smart_construction_core/models/support/workflow_contract_service.py` |
 | 1488 | warning | JavaScript source | `addons/smart_construction_core/static/src/js/sc_sidebar.js` |
 | 1486 | warning | Vue source | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` |
 | 1444 | warning | Python source | `addons/smart_construction_custom/models/user_preferences.py` |
 | 1432 | warning | Python source | `scripts/product/build_capability_productization_v1.py` |
+| 1422 | warning | Python source | `addons/smart_construction_core/core_extension.py` |
 | 1405 | warning | Python source | `scripts/migration/scbs_visible_hr_tender_strict_fields_backfill_write.py` |
 | 1400 | warning | Python source | `addons/smart_core/handlers/business_config_surface.py` |
 | 1396 | warning | XML data/view | `addons/smart_construction_core/data/view_orchestration_contract_generated_data.xml` |

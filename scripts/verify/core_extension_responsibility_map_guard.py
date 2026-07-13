@@ -15,8 +15,9 @@ WORKSPACE_FACTS = ROOT / "addons/smart_construction_core/core_extension_workspac
 NAVIGATION_POLICY = ROOT / "addons/smart_construction_core/core_extension_navigation_policy.py"
 CONTRACT_PROJECTION = ROOT / "addons/smart_construction_core/core_extension_contract_projection.py"
 PROJECTED_CONTRACTS = ROOT / "addons/smart_construction_core/core_extension_projected_contracts.py"
+SERVICES = ROOT / "addons/smart_construction_core/core_extension_services.py"
 DOC = ROOT / "docs/engineering_convergence/core_extension_responsibility_map.md"
-MAX_LINES = 1517
+MAX_LINES = 1422
 
 
 def _line_count(path: Path) -> int:
@@ -199,13 +200,32 @@ def main() -> int:
             if token in projected_text:
                 errors.append(f"projected contracts module must not mutate records/registry; found token: {token}")
 
+    if not SERVICES.is_file():
+        errors.append("core_extension_services.py missing")
+    else:
+        services_text = SERVICES.read_text(encoding="utf-8")
+        required_services_tokens = [
+            "def smart_core_scene_package_service_class(",
+            "def smart_core_build_portal_dashboard(",
+            "def smart_core_build_capability_matrix(",
+            "def smart_core_build_project_execution_service(",
+            "def smart_core_build_settlement_slice_service(",
+        ]
+        for token in required_services_tokens:
+            if token not in services_text:
+                errors.append(f"service hook module missing token: {token}")
+        forbidden_tokens = (".write(", "registry[")
+        for token in forbidden_tokens:
+            if token in services_text:
+                errors.append(f"service hook module must not mutate records/registry; found token: {token}")
+
     if not DOC.is_file():
         errors.append("core_extension responsibility map missing")
     else:
         text = DOC.read_text(encoding="utf-8")
         required_tokens = [
             "Target file: `addons/smart_construction_core/core_extension.py`",
-            "Current line budget: `<=1517`.",
+            "Current line budget: `<=1422`.",
             "`core_extension.py` is the construction-industry contribution facade",
             "`smart_core_register(registry)`",
             "`smart_core_extend_system_init(data, env, user)`",
@@ -253,6 +273,10 @@ def main() -> int:
             "`core_extension_projected_contracts.py` owns user-confirmed formal list action",
             "`core_extension.py` imports `smart_core_finalize_projected_contract_data`",
             "`core_extension.py` is locked at `<=1517` lines",
+            "Stage 10 Service Hook Builders",
+            "`core_extension_services.py` owns scene service class hooks",
+            "`core_extension.py` imports those public hook names directly",
+            "`core_extension.py` is locked at `<=1422` lines",
             "future PRs from this branch should include multiple commits",
             "open only when",
         ]

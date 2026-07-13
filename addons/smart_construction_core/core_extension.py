@@ -103,6 +103,21 @@ from odoo.addons.smart_construction_core.core_extension_workspace_facts import (
     _build_role_entry_contract_rows,
     _build_task_action_rows,
 )
+from odoo.addons.smart_construction_core.core_extension_services import (
+    smart_core_scene_package_service_class,
+    smart_core_scene_governance_service_class,
+    smart_core_describe_project_capabilities,
+    smart_core_build_portal_dashboard,
+    smart_core_build_capability_matrix,
+    smart_core_get_project_insight,
+    smart_core_build_portal_execute_button_contract,
+    smart_core_build_project_execution_service,
+    smart_core_build_project_dashboard_service,
+    smart_core_build_project_plan_bootstrap_service,
+    smart_core_build_cost_tracking_service,
+    smart_core_build_payment_slice_service,
+    smart_core_build_settlement_slice_service,
+)
 from odoo.addons.smart_construction_core.core_extension_projected_contracts import (
     smart_core_finalize_projected_contract_data,
 )
@@ -1405,113 +1420,3 @@ def smart_core_api_data_search_fields(env, model_name: str):
 
 def smart_core_model_code_mapping(env):
     return get_model_code_mapping_contributions(env)
-
-
-def smart_core_scene_package_service_class(env):
-    del env
-    from odoo.addons.smart_construction_scene.services.scene_package_service import (
-        ScenePackageService,
-    )
-
-    return ScenePackageService
-
-
-def smart_core_scene_governance_service_class(env):
-    del env
-    from odoo.addons.smart_construction_scene.services.scene_governance_service import (
-        SceneGovernanceService,
-    )
-
-    return SceneGovernanceService
-
-
-def smart_core_describe_project_capabilities(env, project):
-    from odoo.addons.smart_construction_core.services.lifecycle_capability_service import (
-        LifecycleCapabilityService,
-    )
-
-    return LifecycleCapabilityService(env).describe_project(project)
-
-
-def smart_core_build_portal_dashboard(env):
-    from odoo.addons.smart_construction_core.services.portal_dashboard_service import (
-        PortalDashboardService,
-    )
-
-    return PortalDashboardService(env).build_dashboard()
-
-
-def smart_core_build_capability_matrix(env):
-    from odoo.addons.smart_construction_core.services.capability_matrix_service import (
-        CapabilityMatrixService,
-    )
-
-    return CapabilityMatrixService(env).build_matrix()
-
-
-def smart_core_get_project_insight(env, record, scene):
-    from odoo.addons.smart_construction_core.services.insight.project_insight_service import (
-        ProjectInsightService,
-    )
-
-    return ProjectInsightService(env).get_insight(record, scene=scene)
-
-
-def smart_core_build_portal_execute_button_contract(env, model, res_id, method):
-    from odoo.addons.smart_construction_core.services.portal_execute_button_service import (
-        PortalExecuteButtonService,
-    )
-
-    return PortalExecuteButtonService(env).build_contract(
-        model=model,
-        res_id=res_id,
-        method=method,
-    )
-
-
-def smart_core_build_project_execution_service(env):
-    from odoo.addons.smart_construction_core.services.project_execution_service import (
-        ProjectExecutionService,
-    )
-
-    return ProjectExecutionService(env)
-
-
-def smart_core_build_project_dashboard_service(env):
-    from odoo.addons.smart_construction_core.services.project_dashboard_service import (
-        ProjectDashboardService,
-    )
-
-    return ProjectDashboardService(env)
-
-
-def smart_core_build_project_plan_bootstrap_service(env):
-    from odoo.addons.smart_construction_core.services.project_plan_bootstrap_service import (
-        ProjectPlanBootstrapService,
-    )
-
-    return ProjectPlanBootstrapService(env)
-
-
-def smart_core_build_cost_tracking_service(env):
-    from odoo.addons.smart_construction_core.services.cost_tracking_service import (
-        CostTrackingService,
-    )
-
-    return CostTrackingService(env)
-
-
-def smart_core_build_payment_slice_service(env):
-    from odoo.addons.smart_construction_core.services.payment_slice_service import (
-        PaymentSliceService,
-    )
-
-    return PaymentSliceService(env)
-
-
-def smart_core_build_settlement_slice_service(env):
-    from odoo.addons.smart_construction_core.services.settlement_slice_service import (
-        SettlementSliceService,
-    )
-
-    return SettlementSliceService(env)

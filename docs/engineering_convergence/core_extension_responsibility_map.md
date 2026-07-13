@@ -2,7 +2,7 @@
 
 Target file: `addons/smart_construction_core/core_extension.py`
 
-Current line budget: `<=1517`.
+Current line budget: `<=1422`.
 
 ## Role
 
@@ -211,3 +211,15 @@ Stage 9 is complete when:
 - the extracted module may read views, actions, and generated contracts, but
   must not write records or mutate registries;
 - `core_extension.py` is locked at `<=1517` lines for this stage.
+
+## Stage 10 Service Hook Builders
+
+Stage 10 is complete when:
+
+- `core_extension_services.py` owns scene service class hooks, portal/dashboard
+  builders, capability matrix/insight hooks, execute-button contract builder,
+  and project/cost/payment/settlement service factories;
+- `core_extension.py` imports those public hook names directly so existing
+  exports keep working;
+- lazy service imports remain inside hook functions;
+- `core_extension.py` is locked at `<=1422` lines for this stage.
