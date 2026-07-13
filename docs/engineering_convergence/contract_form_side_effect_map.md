@@ -155,6 +155,34 @@ Must stay in page transaction for now:
 | relation caches | Resolves pending creates before save | Indirect | Reads and writes relation options/keywords |
 | one2many rows | Validates and serializes | Indirect | Applies line patches |
 
+## Behavior Regression Matrix
+
+This matrix is the minimum baseline for the post-split ContractForm phase. It
+does not authorize moving transaction owners out of the page/runtime; it records
+which behavior must stay covered while pure builders and protocol helpers evolve.
+
+| Scenario | Required behavior | Current coverage |
+| --- | --- | --- |
+| Edit existing record | Save writes dirty editable values, clears dirty state only after confirmed write, then refreshes projection according to policy | `contract_form_save_payload_builder_guard.py`; manual form regression |
+| Create record | Create sends normalized values, uploads pending attachments after create, clears autosave state, then navigates through created-record runtime | `contract_form_save_payload_builder_guard.py`; manual form regression |
+| Save validation failure | Local and one2many validation return before `busyKind = 'save'`; validation errors remain visible | `contract_form_side_effect_regression_guard.py`; manual form regression |
+| Save API failure | API failures clear `busyKind` in `finally` and write user-visible feedback without throwing to callers | `contract_form_side_effect_regression_guard.py`; manual form regression |
+| Normal action | Action plan classification stays pure; object/server calls use action busy lifecycle and clear it in `finally` | `contract_form_action_plan_builder_guard.py`; manual form regression |
+| Tier or prompt action | Prompt validation failures return before remote execution; object/server failures write status through runtime state protocol | `contract_form_runtime_state_protocol_guard.py`; manual form regression |
+| Config save | `formConfig` uses `begin/end` busy events around API work and keeps reload/feedback ordering in the runtime | `contract_form_runtime_state_behavior_guard.sh`; manual form regression |
+| Inline field policy | Busy precheck prevents duplicate policy writes; `inlinePolicy` clears busy in `finally` | `contract_form_runtime_state_behavior_guard.sh`; manual form regression |
+| Contract mode action | `contractMode` uses shared busy/status events without changing page navigation semantics | `contract_form_runtime_state_behavior_guard.sh`; manual form regression |
+| Onchange field patch | Request payload and response patch normalization remain pure; failed onchange is best-effort and silent | `contract_form_onchange_normalization_guard.py`; manual form regression |
+| Relation onchange | Relation display/id normalization stays in helper; cache/query side effects stay in page transaction | `contract_form_onchange_normalization_guard.py`; manual form regression |
+| Native structures | group, notebook, statusbar, and x2many behavior remain governed by native contract/runtime guards | `frontend_page_contract_boundary_guard.py`; `frontend_page_contract_orchestration_consumption_guard.py`; manual form regression |
+| Duplicate click | Existing global busy guard remains the concurrency boundary; no new parallel transaction state is introduced | `contract_form_runtime_state_behavior_guard.sh`; `contract_form_side_effect_regression_guard.py` |
+| Network or action error | Busy/status do not remain stuck after failed save/action/config calls | `contract_form_runtime_state_behavior_guard.sh`; `contract_form_side_effect_regression_guard.py`; manual form regression |
+
+Manual form regression means exercising the path in a browser or containerized
+acceptance run before a release. The quick gate enforces that each scenario has
+an explicit owner and at least one code-level guard where the repository can
+verify it without a live Odoo database.
+
 ## Interface Candidates
 
 These interfaces can be introduced before moving any transaction owner:
