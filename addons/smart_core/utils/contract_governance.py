@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import importlib
 import importlib.util
 from pathlib import Path
 from typing import Any
@@ -74,21 +75,25 @@ _REGISTRY_EXPORTS = (
 )
 
 
-def _load_registry_module() -> Any:
+def _load_sibling_module(module_name: str, file_name: str) -> Any:
     try:
-        from . import contract_governance_registry as registry
-
-        return registry
+        if __package__:
+            return importlib.import_module(f"{__package__}.{module_name}")
     except ImportError:
-        spec = importlib.util.spec_from_file_location(
-            "contract_governance_registry",
-            Path(__file__).with_name("contract_governance_registry.py"),
-        )
-        if spec is None or spec.loader is None:
-            raise
-        registry = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(registry)
-        return registry
+        pass
+    spec = importlib.util.spec_from_file_location(
+        module_name,
+        Path(__file__).with_name(file_name),
+    )
+    if spec is None or spec.loader is None:
+        raise ImportError(f"unable to load {file_name}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _load_registry_module() -> Any:
+    return _load_sibling_module("contract_governance_registry", "contract_governance_registry.py")
 
 
 _registry = _load_registry_module()
@@ -98,40 +103,14 @@ globals().update({name: getattr(_registry, name) for name in _REGISTRY_EXPORTS})
 
 
 def _load_user_surface_module() -> Any:
-    try:
-        from . import contract_governance_user_surface as user_surface
-
-        return user_surface
-    except ImportError:
-        spec = importlib.util.spec_from_file_location(
-            "contract_governance_user_surface",
-            Path(__file__).with_name("contract_governance_user_surface.py"),
-        )
-        if spec is None or spec.loader is None:
-            raise
-        user_surface = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(user_surface)
-        return user_surface
+    return _load_sibling_module("contract_governance_user_surface", "contract_governance_user_surface.py")
 
 
 _user_surface = _load_user_surface_module()
 
 
 def _load_capabilities_module() -> Any:
-    try:
-        from . import contract_governance_capabilities as capabilities
-
-        return capabilities
-    except ImportError:
-        spec = importlib.util.spec_from_file_location(
-            "contract_governance_capabilities",
-            Path(__file__).with_name("contract_governance_capabilities.py"),
-        )
-        if spec is None or spec.loader is None:
-            raise
-        capabilities = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(capabilities)
-        return capabilities
+    return _load_sibling_module("contract_governance_capabilities", "contract_governance_capabilities.py")
 
 
 _capabilities = _load_capabilities_module()
@@ -147,20 +126,7 @@ def normalize_capabilities(capabilities: list) -> list[dict]:
 
 
 def _load_scenes_module() -> Any:
-    try:
-        from . import contract_governance_scenes as scenes
-
-        return scenes
-    except ImportError:
-        spec = importlib.util.spec_from_file_location(
-            "contract_governance_scenes",
-            Path(__file__).with_name("contract_governance_scenes.py"),
-        )
-        if spec is None or spec.loader is None:
-            raise
-        scenes = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(scenes)
-        return scenes
+    return _load_sibling_module("contract_governance_scenes", "contract_governance_scenes.py")
 
 
 _scenes = _load_scenes_module()
@@ -174,40 +140,14 @@ def normalize_scenes(scenes: list) -> list[dict]:
 
 
 def _load_list_surface_module() -> Any:
-    try:
-        from . import contract_governance_list_surface as list_surface
-
-        return list_surface
-    except ImportError:
-        spec = importlib.util.spec_from_file_location(
-            "contract_governance_list_surface",
-            Path(__file__).with_name("contract_governance_list_surface.py"),
-        )
-        if spec is None or spec.loader is None:
-            raise
-        list_surface = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(list_surface)
-        return list_surface
+    return _load_sibling_module("contract_governance_list_surface", "contract_governance_list_surface.py")
 
 
 _list_surface = _load_list_surface_module()
 
 
 def _load_native_bridge_module() -> Any:
-    try:
-        from . import contract_governance_native_bridge as native_bridge
-
-        return native_bridge
-    except ImportError:
-        spec = importlib.util.spec_from_file_location(
-            "contract_governance_native_bridge",
-            Path(__file__).with_name("contract_governance_native_bridge.py"),
-        )
-        if spec is None or spec.loader is None:
-            raise
-        native_bridge = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(native_bridge)
-        return native_bridge
+    return _load_sibling_module("contract_governance_native_bridge", "contract_governance_native_bridge.py")
 
 
 _native_bridge = _load_native_bridge_module()
@@ -215,20 +155,7 @@ _native_bridge._USER_SURFACE_ACTION_MAX = _USER_SURFACE_ACTION_MAX
 
 
 def _load_labels_module() -> Any:
-    try:
-        from . import contract_governance_labels as labels
-
-        return labels
-    except ImportError:
-        spec = importlib.util.spec_from_file_location(
-            "contract_governance_labels",
-            Path(__file__).with_name("contract_governance_labels.py"),
-        )
-        if spec is None or spec.loader is None:
-            raise
-        labels = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(labels)
-        return labels
+    return _load_sibling_module("contract_governance_labels", "contract_governance_labels.py")
 
 
 _labels = _load_labels_module()
@@ -237,40 +164,14 @@ _labels._LEGACY_FIELD_PRESENTATION_REGISTRY = _LEGACY_FIELD_PRESENTATION_REGISTR
 
 
 def _load_access_policy_module() -> Any:
-    try:
-        from . import contract_governance_access_policy as access_policy
-
-        return access_policy
-    except ImportError:
-        spec = importlib.util.spec_from_file_location(
-            "contract_governance_access_policy",
-            Path(__file__).with_name("contract_governance_access_policy.py"),
-        )
-        if spec is None or spec.loader is None:
-            raise
-        access_policy = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(access_policy)
-        return access_policy
+    return _load_sibling_module("contract_governance_access_policy", "contract_governance_access_policy.py")
 
 
 _access_policy = _load_access_policy_module()
 
 
 def _load_canonicalization_module() -> Any:
-    try:
-        from . import contract_governance_canonicalization as canonicalization
-
-        return canonicalization
-    except ImportError:
-        spec = importlib.util.spec_from_file_location(
-            "contract_governance_canonicalization",
-            Path(__file__).with_name("contract_governance_canonicalization.py"),
-        )
-        if spec is None or spec.loader is None:
-            raise
-        canonicalization = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(canonicalization)
-        return canonicalization
+    return _load_sibling_module("contract_governance_canonicalization", "contract_governance_canonicalization.py")
 
 
 _canonicalization = _load_canonicalization_module()
@@ -278,60 +179,21 @@ _canonicalization._CONTRACT_KEY_CANONICAL_MAP = _CONTRACT_KEY_CANONICAL_MAP
 
 
 def _load_domain_overrides_module() -> Any:
-    try:
-        from . import contract_governance_domain_overrides as domain_overrides
-
-        return domain_overrides
-    except ImportError:
-        spec = importlib.util.spec_from_file_location(
-            "contract_governance_domain_overrides",
-            Path(__file__).with_name("contract_governance_domain_overrides.py"),
-        )
-        if spec is None or spec.loader is None:
-            raise
-        domain_overrides = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(domain_overrides)
-        return domain_overrides
+    return _load_sibling_module("contract_governance_domain_overrides", "contract_governance_domain_overrides.py")
 
 
 _domain_overrides = _load_domain_overrides_module()
 
 
 def _load_surface_mapping_module() -> Any:
-    try:
-        from . import contract_governance_surface_mapping as surface_mapping
-
-        return surface_mapping
-    except ImportError:
-        spec = importlib.util.spec_from_file_location(
-            "contract_governance_surface_mapping",
-            Path(__file__).with_name("contract_governance_surface_mapping.py"),
-        )
-        if spec is None or spec.loader is None:
-            raise
-        surface_mapping = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(surface_mapping)
-        return surface_mapping
+    return _load_sibling_module("contract_governance_surface_mapping", "contract_governance_surface_mapping.py")
 
 
 _surface_mapping = _load_surface_mapping_module()
 
 
 def _load_create_profile_module() -> Any:
-    try:
-        from . import contract_governance_create_profile as create_profile
-
-        return create_profile
-    except ImportError:
-        spec = importlib.util.spec_from_file_location(
-            "contract_governance_create_profile",
-            Path(__file__).with_name("contract_governance_create_profile.py"),
-        )
-        if spec is None or spec.loader is None:
-            raise
-        create_profile = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(create_profile)
-        return create_profile
+    return _load_sibling_module("contract_governance_create_profile", "contract_governance_create_profile.py")
 
 
 _create_profile = _load_create_profile_module()
@@ -339,20 +201,7 @@ _create_profile._RENDER_PROFILE_CREATE = _RENDER_PROFILE_CREATE
 
 
 def _load_field_semantics_module() -> Any:
-    try:
-        from . import contract_governance_field_semantics as field_semantics
-
-        return field_semantics
-    except ImportError:
-        spec = importlib.util.spec_from_file_location(
-            "contract_governance_field_semantics",
-            Path(__file__).with_name("contract_governance_field_semantics.py"),
-        )
-        if spec is None or spec.loader is None:
-            raise
-        field_semantics = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(field_semantics)
-        return field_semantics
+    return _load_sibling_module("contract_governance_field_semantics", "contract_governance_field_semantics.py")
 
 
 _field_semantics = _load_field_semantics_module()
@@ -365,20 +214,7 @@ _field_semantics._RENDER_PROFILE_READONLY = _RENDER_PROFILE_READONLY
 
 
 def _load_form_layout_module() -> Any:
-    try:
-        from . import contract_governance_form_layout as form_layout
-
-        return form_layout
-    except ImportError:
-        spec = importlib.util.spec_from_file_location(
-            "contract_governance_form_layout",
-            Path(__file__).with_name("contract_governance_form_layout.py"),
-        )
-        if spec is None or spec.loader is None:
-            raise
-        form_layout = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(form_layout)
-        return form_layout
+    return _load_sibling_module("contract_governance_form_layout", "contract_governance_form_layout.py")
 
 
 _form_layout = _load_form_layout_module()
@@ -387,20 +223,7 @@ _form_layout._ENTERPRISE_USER_FIELD_LABELS = _ENTERPRISE_USER_FIELD_LABELS
 
 
 def _load_form_actions_module() -> Any:
-    try:
-        from . import contract_governance_form_actions as form_actions
-
-        return form_actions
-    except ImportError:
-        spec = importlib.util.spec_from_file_location(
-            "contract_governance_form_actions",
-            Path(__file__).with_name("contract_governance_form_actions.py"),
-        )
-        if spec is None or spec.loader is None:
-            raise
-        form_actions = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(form_actions)
-        return form_actions
+    return _load_sibling_module("contract_governance_form_actions", "contract_governance_form_actions.py")
 
 
 _form_actions = _load_form_actions_module()
@@ -419,20 +242,7 @@ _form_actions._FORM_SCENE_PROFILE_PROJECT = _FORM_SCENE_PROFILE_PROJECT
 
 
 def _load_form_render_module() -> Any:
-    try:
-        from . import contract_governance_form_render as form_render
-
-        return form_render
-    except ImportError:
-        spec = importlib.util.spec_from_file_location(
-            "contract_governance_form_render",
-            Path(__file__).with_name("contract_governance_form_render.py"),
-        )
-        if spec is None or spec.loader is None:
-            raise
-        form_render = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(form_render)
-        return form_render
+    return _load_sibling_module("contract_governance_form_render", "contract_governance_form_render.py")
 
 
 _form_render = _load_form_render_module()
@@ -443,20 +253,7 @@ _form_render._RENDER_PROFILES = _RENDER_PROFILES
 
 
 def _load_form_validation_module() -> Any:
-    try:
-        from . import contract_governance_form_validation as form_validation
-
-        return form_validation
-    except ImportError:
-        spec = importlib.util.spec_from_file_location(
-            "contract_governance_form_validation",
-            Path(__file__).with_name("contract_governance_form_validation.py"),
-        )
-        if spec is None or spec.loader is None:
-            raise
-        form_validation = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(form_validation)
-        return form_validation
+    return _load_sibling_module("contract_governance_form_validation", "contract_governance_form_validation.py")
 
 
 _form_validation = _load_form_validation_module()
@@ -467,20 +264,7 @@ _form_validation._RENDER_PROFILES = _RENDER_PROFILES
 
 
 def _load_form_fields_module() -> Any:
-    try:
-        from . import contract_governance_form_fields as form_fields
-
-        return form_fields
-    except ImportError:
-        spec = importlib.util.spec_from_file_location(
-            "contract_governance_form_fields",
-            Path(__file__).with_name("contract_governance_form_fields.py"),
-        )
-        if spec is None or spec.loader is None:
-            raise
-        form_fields = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(form_fields)
-        return form_fields
+    return _load_sibling_module("contract_governance_form_fields", "contract_governance_form_fields.py")
 
 
 _form_fields = _load_form_fields_module()
@@ -492,60 +276,21 @@ _form_fields._RENDER_PROFILE_READONLY = _RENDER_PROFILE_READONLY
 
 
 def _load_project_form_module() -> Any:
-    try:
-        from . import contract_governance_project_form as project_form
-
-        return project_form
-    except ImportError:
-        spec = importlib.util.spec_from_file_location(
-            "contract_governance_project_form",
-            Path(__file__).with_name("contract_governance_project_form.py"),
-        )
-        if spec is None or spec.loader is None:
-            raise
-        project_form = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(project_form)
-        return project_form
+    return _load_sibling_module("contract_governance_project_form", "contract_governance_project_form.py")
 
 
 _project_form = _load_project_form_module()
 
 
 def _load_enterprise_forms_module() -> Any:
-    try:
-        from . import contract_governance_enterprise_forms as enterprise_forms
-
-        return enterprise_forms
-    except ImportError:
-        spec = importlib.util.spec_from_file_location(
-            "contract_governance_enterprise_forms",
-            Path(__file__).with_name("contract_governance_enterprise_forms.py"),
-        )
-        if spec is None or spec.loader is None:
-            raise
-        enterprise_forms = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(enterprise_forms)
-        return enterprise_forms
+    return _load_sibling_module("contract_governance_enterprise_forms", "contract_governance_enterprise_forms.py")
 
 
 _enterprise_forms = _load_enterprise_forms_module()
 
 
 def _load_contract_detection_module() -> Any:
-    try:
-        from . import contract_governance_contract_detection as contract_detection
-
-        return contract_detection
-    except ImportError:
-        spec = importlib.util.spec_from_file_location(
-            "contract_governance_contract_detection",
-            Path(__file__).with_name("contract_governance_contract_detection.py"),
-        )
-        if spec is None or spec.loader is None:
-            raise
-        contract_detection = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(contract_detection)
-        return contract_detection
+    return _load_sibling_module("contract_governance_contract_detection", "contract_governance_contract_detection.py")
 
 
 _contract_detection = _load_contract_detection_module()

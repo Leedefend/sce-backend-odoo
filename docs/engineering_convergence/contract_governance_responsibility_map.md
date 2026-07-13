@@ -3,7 +3,7 @@
 Date: 2026-07-13
 Owner: Platform owner
 Target file: `addons/smart_core/utils/contract_governance.py`
-Current size: 1,792 lines
+Current size: 1,537 lines
 Phase: staged responsibility split
 
 ## Purpose
@@ -553,3 +553,17 @@ Stage 31 is complete when:
 - the extracted modules remain projection-only: no ORM calls, HTTP calls,
   routing, file IO, environment access, or backend permission inference;
 - `contract_governance.py` is locked at `<=1792` lines for this stage.
+
+## Stage 32 Target
+
+Stage 32 is complete when:
+
+- `contract_governance.py` uses one shared sibling-module loader for all
+  extracted governance modules, while preserving every `_load_*_module()` facade
+  and direct-file fallback for standalone guard execution;
+- extracted module filename tokens remain visible in the facade so existing
+  split guards continue to lock module boundaries;
+- this stage changes import/loading mechanics only and does not move projection
+  behavior, domain override ordering, or `apply_contract_governance` pipeline
+  order;
+- `contract_governance.py` is locked at `<=1537` lines for this stage.

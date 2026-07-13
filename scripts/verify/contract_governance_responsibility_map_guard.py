@@ -98,7 +98,7 @@ def main() -> int:
 
     for token in [
         "Contract Governance Responsibility Map",
-        "Current size: 1,792 lines",
+        "Current size: 1,537 lines",
         "projection-only",
         "Do not start mechanical extraction",
         "## Public Entry Points",
@@ -202,6 +202,9 @@ def main() -> int:
         "`contract_governance_surface_mapping.py` also owns JSON-like deep cloning",
         "`contract_governance_domain_overrides.py` owns domain override registration",
         "`contract_governance.py` is locked at `<=1792` lines",
+        "## Stage 32 Target",
+        "`contract_governance.py` uses one shared sibling-module loader",
+        "`contract_governance.py` is locked at `<=1537` lines",
     ]:
         if token not in doc:
             errors.append(f"responsibility map missing token: {token}")
@@ -233,6 +236,10 @@ def main() -> int:
             errors.append("apply_contract_governance must still emit surface_mapping")
         if "if normalized_surface == \"native\":" not in governance:
             errors.append("apply_contract_governance must retain native surface branch")
+        if "def _load_sibling_module(module_name: str, file_name: str) -> Any:" not in governance:
+            errors.append("contract_governance.py must keep the shared sibling module loader")
+        if "return _load_sibling_module(\"contract_governance_registry\", \"contract_governance_registry.py\")" not in governance:
+            errors.append("contract_governance.py must route registry loading through the shared loader")
 
     split_queue_token = (
         "`addons/smart_core/utils/contract_governance.py` | Extract constants/registries, "
