@@ -400,7 +400,6 @@ import { buildCanonicalSceneRouteTarget, buildEntryTargetRouteTarget } from '../
 import { readWorkspaceContext } from '../app/workspaceContext';
 import { collectPolicyValidationErrors, evaluateActionPolicy, evaluateFieldPolicy } from '../app/contractPolicies';
 import { buildRuntimeFieldStates } from '../app/modifierEngine';
-import { buildX2ManyCommands } from '../app/x2manyCommands';
 import { resolveSceneValidationSuggestedAction } from '../app/sceneValidationRecoveryStrategy';
 import { findSceneReadyEntry, resolveFormSceneReady } from '../app/resolvers/sceneReadyResolver';
 import { normalizeSceneActionProtocol } from '../app/sceneActionProtocol';
@@ -473,7 +472,6 @@ import { normalizeContractAccessPolicy } from './contractForm/accessPolicy';
 import {
   fieldInputType,
   fieldType,
-  fromDatetimeInputValue,
   normalizeLowCodeColumns,
   normalizeLowCodeFieldSize,
   normalizeRelationIds,
@@ -537,9 +535,9 @@ import {
 import {
   isMissingRequiredValue,
   isRequiredFieldEmptyByType,
+  normalizeContractFieldValue,
   normalizeComparable,
   normalizeRouteDefault,
-  parseNumeric,
   resolveNavigationUrl as resolveNavigationUrlFromOrigin,
 } from './contractForm/valueUtils';
 import { dictOrEmpty, mergeFieldLabelsFromSource } from './contractForm/recordUtils';
@@ -4771,47 +4769,13 @@ function isFieldWritable(name: string) {
 }
 
 function normalizeFieldValue(name: string, value: unknown) {
-  const descriptor = contract.value?.fields?.[name];
-  const ttype = fieldType(descriptor);
-  if (ttype === 'boolean') {
-    return Boolean(value);
-  }
-  if (ttype === 'integer') {
-    const parsed = parseNumeric(value);
-    return parsed === null ? false : Math.trunc(parsed);
-  }
-  if (ttype === 'float' || ttype === 'monetary') {
-    const parsed = parseNumeric(value);
-    return parsed === null ? false : parsed;
-  }
-  if (ttype === 'many2one') {
-    if (Array.isArray(value) && typeof value[0] === 'number') return value[0];
-    if (typeof value === 'number') return value;
-    const parsed = parseNumeric(value);
-    return parsed === null ? false : Math.trunc(parsed);
-  }
-  if (ttype === 'many2many') {
-    return buildX2ManyCommands({
-      kind: 'many2many',
-      current: value,
-      original: originalValues.value[name],
-      mode: 'write',
-    });
-  }
-  if (ttype === 'one2many') {
-    return buildOne2manyCommandValue(name, 'write');
-  }
-  if (ttype === 'date') {
-    const normalized = toDateInputValue(value);
-    return normalized || false;
-  }
-  if (ttype === 'datetime') {
-    return fromDatetimeInputValue(value);
-  }
-  if (ttype === 'char' || ttype === 'text' || ttype === 'html') {
-    return String(value ?? '');
-  }
-  return value;
+  return normalizeContractFieldValue({
+    name,
+    value,
+    descriptor: contract.value?.fields?.[name],
+    originalValue: originalValues.value[name],
+    buildOne2manyValue: buildOne2manyCommandValue,
+  });
 }
 
 function inputFieldValue(name: string) {
@@ -5145,21 +5109,14 @@ function buildOnchangeValues() {
   const out: Record<string, unknown> = {};
   Object.keys(contract.value?.fields || {}).forEach((name) => {
     const descriptor = contract.value?.fields?.[name];
-    const ttype = fieldType(descriptor);
-    if (ttype === 'many2many') {
-      out[name] = buildX2ManyCommands({
-        kind: ttype,
-        current: formData[name],
-        original: originalValues.value[name],
-        mode: 'onchange',
-      });
-      return;
-    }
-    if (ttype === 'one2many') {
-      out[name] = buildOne2manyCommandValue(name, 'onchange');
-      return;
-    }
-    out[name] = normalizeFieldValue(name, formData[name]);
+    out[name] = normalizeContractFieldValue({
+      name,
+      value: formData[name],
+      descriptor,
+      originalValue: originalValues.value[name],
+      mode: 'onchange',
+      buildOne2manyValue: buildOne2manyCommandValue,
+    });
   });
   if (recordId.value) out.id = recordId.value;
   return out;

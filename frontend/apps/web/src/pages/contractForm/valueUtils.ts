@@ -1,3 +1,7 @@
+import type { FieldDescriptor } from '@sc/schema';
+import { buildX2ManyCommands } from '../../app/x2manyCommands';
+import { fieldType, fromDatetimeInputValue, toDateInputValue } from './fieldUtils';
+
 export function isMissingRequiredValue(value: unknown) {
   if (value === null || value === undefined) return true;
   if (typeof value === 'string') return value.trim().length === 0;
@@ -51,4 +55,46 @@ export function resolveNavigationUrl(url: string, origin: string) {
   if (/^https?:\/\//i.test(raw)) return raw;
   if (raw.startsWith('/')) return `${origin}${raw}`;
   return raw;
+}
+
+export function normalizeContractFieldValue(params: {
+  name: string;
+  value: unknown;
+  descriptor?: FieldDescriptor;
+  originalValue: unknown;
+  mode?: 'write' | 'onchange';
+  buildOne2manyValue: (name: string, mode: 'write' | 'onchange') => unknown;
+}) {
+  const ttype = fieldType(params.descriptor);
+  if (ttype === 'boolean') return Boolean(params.value);
+  if (ttype === 'integer') {
+    const parsed = parseNumeric(params.value);
+    return parsed === null ? false : Math.trunc(parsed);
+  }
+  if (ttype === 'float' || ttype === 'monetary') {
+    const parsed = parseNumeric(params.value);
+    return parsed === null ? false : parsed;
+  }
+  if (ttype === 'many2one') {
+    if (Array.isArray(params.value) && typeof params.value[0] === 'number') return params.value[0];
+    if (typeof params.value === 'number') return params.value;
+    const parsed = parseNumeric(params.value);
+    return parsed === null ? false : Math.trunc(parsed);
+  }
+  if (ttype === 'many2many') {
+    return buildX2ManyCommands({
+      kind: 'many2many',
+      current: params.value,
+      original: params.originalValue,
+      mode: params.mode || 'write',
+    });
+  }
+  if (ttype === 'one2many') return params.buildOne2manyValue(params.name, params.mode || 'write');
+  if (ttype === 'date') {
+    const normalized = toDateInputValue(params.value);
+    return normalized || false;
+  }
+  if (ttype === 'datetime') return fromDatetimeInputValue(params.value);
+  if (ttype === 'char' || ttype === 'text' || ttype === 'html') return String(params.value ?? '');
+  return params.value;
 }
