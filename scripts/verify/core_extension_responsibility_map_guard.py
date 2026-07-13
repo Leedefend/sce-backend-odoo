@@ -7,8 +7,9 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 TARGET = ROOT / "addons/smart_construction_core/core_extension.py"
 CATALOG = ROOT / "addons/smart_construction_core/core_extension_policy_catalog.py"
+CAPABILITIES = ROOT / "addons/smart_construction_core/core_extension_capabilities.py"
 DOC = ROOT / "docs/engineering_convergence/core_extension_responsibility_map.md"
-MAX_LINES = 4146
+MAX_LINES = 3955
 
 
 def _line_count(path: Path) -> int:
@@ -55,13 +56,24 @@ def main() -> int:
             if token in catalog_text:
                 errors.append(f"policy catalog must remain static; found token: {token}")
 
+    if not CAPABILITIES.is_file():
+        errors.append("core_extension_capabilities.py missing")
+    else:
+        capabilities_text = CAPABILITIES.read_text(encoding="utf-8")
+        if "def build_capability_contribution_item(" not in capabilities_text:
+            errors.append("capability helper module missing build_capability_contribution_item")
+        forbidden_tokens = ("odoo.", "env[", ".search(", ".write(", "http", "requests.", "Path(")
+        for token in forbidden_tokens:
+            if token in capabilities_text:
+                errors.append(f"capability helper module must remain pure; found token: {token}")
+
     if not DOC.is_file():
         errors.append("core_extension responsibility map missing")
     else:
         text = DOC.read_text(encoding="utf-8")
         required_tokens = [
             "Target file: `addons/smart_construction_core/core_extension.py`",
-            "Current line budget: `<=4146`.",
+            "Current line budget: `<=3955`.",
             "`core_extension.py` is the construction-industry contribution facade",
             "`smart_core_register(registry)`",
             "`smart_core_extend_system_init(data, env, user)`",
@@ -77,6 +89,10 @@ def main() -> int:
             "Stage 1c API Catalog Extraction",
             "`core_extension_policy_catalog.py` owns API write allowlists",
             "`core_extension.py` is locked at `<=4146` lines",
+            "Stage 2 Capability Payload Builder",
+            "`core_extension_capabilities.py` owns the pure capability contribution payload",
+            "the facade hooks still own registry loading",
+            "`core_extension.py` is locked at `<=3955` lines",
             "future PRs from this branch should include multiple commits",
             "open only when",
         ]

@@ -2,7 +2,7 @@
 
 Target file: `addons/smart_construction_core/core_extension.py`
 
-Current line budget: `<=4146`.
+Current line budget: `<=3955`.
 
 ## Role
 
@@ -35,7 +35,7 @@ cross-industry policy.
 | 1782-2101 | Workspace collection builders | Safe ORM reads and construction workspace row builders for task, payment, risk, and project action surfaces. | `core_extension_workspace_facts.py`. |
 | 2104-2436 | Basic contribution hooks | Identity, scene maps, surface aliases, record context, file/api policy contributions, role entries, and home blocks. | `core_extension_contributions.py`. |
 | 2439-2659 | Intent handler registration | Import-tolerant handler mapping and registry compatibility loader. | `core_extension_intents.py`. |
-| 2662-3043 | Capability and form action contributions | Capability payload normalization, group contributions, create fallbacks, and payment form business actions. | `core_extension_capabilities.py` and `core_extension_form_actions.py`. |
+| 2461-2938 | Capability and form action contributions | Capability payload normalization, group contributions, create fallbacks, and payment form business actions. | `core_extension_capabilities.py` and `core_extension_form_actions.py`. |
 | 3046-3423 | System-init facade and wrapper hooks | Build `ext_facts`, page profile overrides, and thin `smart_core_*` wrappers for server action/file/API/model hooks. | `core_extension_system_init.py` plus wrappers retained in facade. |
 | 3442-3586 | Projected contract finalization | User-confirmed action ids and final projected contract shaping. | `core_extension_projected_contracts.py`. |
 | 3589-4372 | Service/menu/navigation policy hooks | Scene service classes, portal builders, business config refs, relation policy, menu token policy, role resolution, app shell, scene entry specs, acceptance nav. | `core_extension_navigation_policy.py` and service hook modules. |
@@ -104,3 +104,16 @@ Stage 1c is complete when:
   `API_DATA_UNLINK_POLICIES` remain in the facade until the policy builder is
   extracted with focused behavior tests;
 - `core_extension.py` is locked at `<=4146` lines for this stage.
+
+## Stage 2 Capability Payload Builder
+
+Stage 2 is complete when:
+
+- `core_extension_capabilities.py` owns the pure capability contribution payload
+  builder shared by `get_capability_contributions` and
+  `get_capability_contributions_with_timings`;
+- the extracted builder does not import Odoo, read ORM state, perform IO, or
+  swallow registry exceptions;
+- the facade hooks still own registry loading, timing payload return shape, and
+  exception boundaries;
+- `core_extension.py` is locked at `<=3955` lines for this stage.
