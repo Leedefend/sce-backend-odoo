@@ -2,7 +2,7 @@
 
 Target file: `addons/smart_construction_core/core_extension.py`
 
-Current line budget: `<=4372`.
+Current line budget: `<=4251`.
 
 ## Role
 
@@ -31,7 +31,7 @@ cross-industry policy.
 | ---: | --- | --- | --- |
 | 1-409 | Imports and eager registrations | Register project scope, reason metadata, capability groups, semantic scene profiles, and legacy governance profiles. | `core_extension_bootstrap.py` or declarative registration specs. |
 | 410-1120 | Contract projection helpers | Project field labeling, responsibility groups, v2 container/status patches, diary/company/tax form normalization, workflow injection. | `core_extension_contract_projection.py`. |
-| 1121-1781 | Static policy/catalog data | Large dictionaries and state policy tables consumed by later hooks. | `core_extension_policy_catalog.py`. |
+| 1121-1660 | Static policy/catalog data | Large dictionaries and state policy tables consumed by later hooks. | `core_extension_policy_catalog.py`. |
 | 1782-2101 | Workspace collection builders | Safe ORM reads and construction workspace row builders for task, payment, risk, and project action surfaces. | `core_extension_workspace_facts.py`. |
 | 2104-2436 | Basic contribution hooks | Identity, scene maps, surface aliases, record context, file/api policy contributions, role entries, and home blocks. | `core_extension_contributions.py`. |
 | 2439-2659 | Intent handler registration | Import-tolerant handler mapping and registry compatibility loader. | `core_extension_intents.py`. |
@@ -68,3 +68,15 @@ The Stage 0 baseline is intentionally documentation and guard only:
 - future PRs from this branch should include multiple commits and open only when
   the branch-level split target is complete.
 
+## Stage 1a Catalog Extraction
+
+Stage 1a is complete when:
+
+- `core_extension_policy_catalog.py` owns role surface overrides, role/group
+  mappings, navigation scene maps, server action window maps, and file
+  attachment allowlists;
+- `core_extension.py` imports those names directly so legacy module-level
+  consumers keep working;
+- the extracted catalog remains pure static data: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `core_extension.py` is locked at `<=4251` lines for this stage.

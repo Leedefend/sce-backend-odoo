@@ -6,8 +6,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 TARGET = ROOT / "addons/smart_construction_core/core_extension.py"
+CATALOG = ROOT / "addons/smart_construction_core/core_extension_policy_catalog.py"
 DOC = ROOT / "docs/engineering_convergence/core_extension_responsibility_map.md"
-MAX_LINES = 4372
+MAX_LINES = 4251
 
 
 def _line_count(path: Path) -> int:
@@ -20,6 +21,31 @@ def main() -> int:
         errors.append("core_extension.py missing")
     elif _line_count(TARGET) > MAX_LINES:
         errors.append(f"core_extension.py line budget exceeded: {_line_count(TARGET)} > {MAX_LINES}")
+    elif "from odoo.addons.smart_construction_core.core_extension_policy_catalog import (" not in TARGET.read_text(
+        encoding="utf-8"
+    ):
+        errors.append("core_extension.py must import the policy catalog facade names")
+
+    if not CATALOG.is_file():
+        errors.append("core_extension_policy_catalog.py missing")
+    else:
+        catalog_text = CATALOG.read_text(encoding="utf-8")
+        required_catalog_tokens = [
+            "ROLE_SURFACE_OVERRIDES = {",
+            "ROLE_GROUPS_EXPLICIT = {",
+            "NAV_MENU_SCENE_MAP = {",
+            "NAV_ACTION_SCENE_MAP = {",
+            "FILE_ATTACHMENT_ALLOWED_MODEL_EXACT = {",
+            "FILE_UPLOAD_ALLOWED_MODELS =",
+            "FILE_DOWNLOAD_ALLOWED_MODELS =",
+        ]
+        for token in required_catalog_tokens:
+            if token not in catalog_text:
+                errors.append(f"policy catalog missing token: {token}")
+        forbidden_tokens = ("env[", ".search(", ".write(", "http", "requests.", "Path(")
+        for token in forbidden_tokens:
+            if token in catalog_text:
+                errors.append(f"policy catalog must remain static; found token: {token}")
 
     if not DOC.is_file():
         errors.append("core_extension responsibility map missing")
@@ -27,12 +53,15 @@ def main() -> int:
         text = DOC.read_text(encoding="utf-8")
         required_tokens = [
             "Target file: `addons/smart_construction_core/core_extension.py`",
-            "Current line budget: `<=4372`.",
+            "Current line budget: `<=4251`.",
             "`core_extension.py` is the construction-industry contribution facade",
             "`smart_core_register(registry)`",
             "`smart_core_extend_system_init(data, env, user)`",
             "`smart_core_finalize_projected_contract_data(env, data, context)`",
             "no extraction in this stage",
+            "Stage 1a Catalog Extraction",
+            "`core_extension_policy_catalog.py` owns role surface overrides",
+            "`core_extension.py` is locked at `<=4251` lines",
             "future PRs from this branch should include multiple commits",
             "open only when",
         ]
