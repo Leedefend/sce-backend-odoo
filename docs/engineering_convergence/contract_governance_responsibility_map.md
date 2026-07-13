@@ -3,7 +3,7 @@
 Date: 2026-07-13
 Owner: Platform owner
 Target file: `addons/smart_core/utils/contract_governance.py`
-Current size: 3,830 lines
+Current size: 3,780 lines
 Phase: staged responsibility split
 
 ## Purpose
@@ -37,7 +37,7 @@ and by a smaller public module layout.
 | imported + 595-670 | User surface normalization | Capability and scene normalization are delegated; scene sanitization, search/action noise reduction, and user-surface policies remain in facade/user-surface helpers. | `contract_governance_capabilities.py`, `contract_governance_scenes.py`, and `contract_governance_user_surface.py`. |
 | 1267-2178 | Project and enterprise governance | Scene list metadata, project form/list/kanban/task transforms, enterprise company/department/user forms. | `contract_governance_project_profiles.py` and `contract_governance_enterprise_profiles.py`. |
 | 1591-1965 + imported | Standard list governance | Standard list profile application, delegated toolbar labels, tier-review list shaping. | `contract_governance_list_surface.py` plus future standard-list policy module. |
-| 1938-2101 + imported | Native surface and scene bridge | Visible-field access realignment remains in facade; native surface normalization, scene semantic surface normalization, scene contract v1 envelope, search/action bridge, business labels, native labels, and relation semantics are delegated. | `contract_governance_native_bridge.py` and `contract_governance_labels.py`. |
+| imported | Native surface and scene bridge | Visible-field access realignment, native surface normalization, scene semantic surface normalization, scene contract v1 envelope, search/action bridge, business labels, native labels, and relation semantics are delegated. | `contract_governance_access_policy.py`, `contract_governance_native_bridge.py`, and `contract_governance_labels.py`. |
 | 3047-4499 | Form policy and render semantics | Render profile, view capabilities, field groups, layout backfill, action policies, validation rules, create-profile noise hiding, canonical key mapping. | `contract_governance_form_policy.py`. |
 | 4502-4742 | Domain override and diagnostics | Domain override registry/application, diagnostics, snapshots, surface mapping. | `contract_governance_diagnostics.py`. |
 | 4745-4820 | Main pipeline | Orchestrates all projection transforms and attaches metadata. | Keep as thin facade in `contract_governance.py`. |
@@ -62,6 +62,7 @@ and by a smaller public module layout.
 | `contract_governance_list_surface_split_guard.py` | Standard list toolbar label extraction compatibility and row-open action behavior lock. |
 | `contract_governance_native_bridge_split_guard.py` | Native/scene bridge extraction compatibility, envelope derivation, search surface, and action bridge behavior lock. |
 | `contract_governance_labels_split_guard.py` | Business label normalization, shared field presentation registry, native layout labels, and relation-entry semantics lock. |
+| `contract_governance_access_policy_split_guard.py` | Access policy visible-field realignment and warning marker behavior lock. |
 
 ## Extraction Order
 
@@ -228,3 +229,16 @@ Stage 8 is complete when:
 - the extracted module remains projection-only: no ORM calls, HTTP calls,
   routing, file IO, or environment access;
 - `contract_governance.py` is locked at `<=3830` lines for this stage.
+
+## Stage 9 Target
+
+Stage 9 is complete when:
+
+- `contract_governance_access_policy.py` owns access policy realignment against
+  visible fields, blocked/degraded field filtering, mode/reason/message
+  derivation, and warning marker refresh;
+- `contract_governance.py` keeps `_realign_access_policy_with_visible_fields`
+  as a wrapper so the main pipeline order remains stable;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=3780` lines for this stage.
