@@ -264,7 +264,7 @@
           @field-create-label-change="setFieldCreateLabel"
           @field-create-type-change="setFieldCreateType"
           @open-mode-action="openContractModeAction"
-          @prompt-value-change="contractPromptValues[$event.fieldName] = $event.value"
+          @prompt-value-change="setContractPromptValue($event.fieldName, $event.value)"
           @submit-field-create="submitInlineCustomFieldCreate"
           @submit-prompt="submitContractPromptAction"
           @toggle-advanced="advancedExpanded = !advancedExpanded"
@@ -447,8 +447,6 @@ import {
   contractActionRuleClientMode,
   contractActionRuleControl,
   contractActionRuleKey,
-  contractPromptParamsFromRule,
-  contractPromptFieldsFromRule,
   isTierValidationActionHidden as isTierValidationActionHiddenFromState,
   normalizeActionSafety,
   normalizeActionLabel,
@@ -698,6 +696,7 @@ import { useFormSettingsGroupRuntime } from './contractForm/useFormSettingsGroup
 import { useFieldOrderMutationRuntime } from './contractForm/useFieldOrderMutationRuntime';
 import { useFieldVisibilityDraftRuntime } from './contractForm/useFieldVisibilityDraftRuntime';
 import { useInlineFieldPolicyRuntime } from './contractForm/useInlineFieldPolicyRuntime';
+import { useContractModeActionRuntime } from './contractForm/useContractModeActionRuntime';
 import {
   buildWorkflowTransitions,
   analyzeFormContractReadiness,
@@ -753,8 +752,6 @@ const busyKind = ref<BusyKind>(null);
 const activeContractMode = ref('');
 const formSettingsActiveTab = ref<'structure' | 'fields' | 'details' | 'actions'>('fields');
 const contractModeFeedback = ref('');
-const contractPromptRule = ref<Record<string, unknown> | null>(null);
-const contractPromptValues = reactive<Record<string, string>>({});
 const actionSafetyConfirm = useProductConfirmDialog();
 const actionInputDialog = useProductInputDialog();
 const contract = ref<ActionContract | null>(null);
@@ -1306,8 +1303,6 @@ function formSettingsFieldActions(field: FormSectionFieldSchema) {
   });
 }
 
-const contractPromptFields = computed(() => (contractPromptRule.value ? contractPromptFieldsFromRule(contractPromptRule.value) : []));
-
 const activeContractModeActions = computed(() => {
   return buildActiveContractModeActions({
     rules: contractV2ActionRules(),
@@ -1509,6 +1504,23 @@ const {
   contractFieldSequence: (fieldKey) => contractFieldSequence(fieldKey),
   formDesignFieldLabel: (fieldKey) => formDesignFieldLabel(fieldKey),
   appendOperation: appendFormConfigOperation,
+  reload: () => reload(),
+});
+const {
+  closeContractPromptAction,
+  contractPromptFields,
+  contractPromptRule,
+  contractPromptValues,
+  openContractModeAction,
+  runContractRuleAction,
+  setContractPromptValue,
+  submitContractPromptAction,
+} = useContractModeActionRuntime({
+  busyKind,
+  errorMessage,
+  status,
+  contractModeFeedback,
+  applyClientMode: (mode, toggle) => applyClientMode(mode, toggle),
   reload: () => reload(),
 });
 const {
@@ -5553,70 +5565,6 @@ function applyRouteConfigMode(rawMode: unknown) {
   }
   if (isBusinessConfigMode(mode)) {
     applyClientMode(mode, false);
-  }
-}
-
-function openContractModeAction(rule: Record<string, unknown>) {
-  const promptFields = contractPromptFieldsFromRule(rule);
-  if (!promptFields.length) {
-    void runContractRuleAction(rule);
-    return;
-  }
-  Object.keys(contractPromptValues).forEach((key) => {
-    delete contractPromptValues[key];
-  });
-  promptFields.forEach((field) => {
-    contractPromptValues[field.name] = field.defaultValue;
-  });
-  contractPromptRule.value = rule;
-  contractModeFeedback.value = '';
-}
-
-function closeContractPromptAction() {
-  contractPromptRule.value = null;
-  Object.keys(contractPromptValues).forEach((key) => {
-    delete contractPromptValues[key];
-  });
-}
-
-async function submitContractPromptAction() {
-  const rule = contractPromptRule.value;
-  if (!rule) return;
-  const params = contractPromptParamsFromRule(rule, contractPromptValues);
-  if (params === null) return;
-  await runContractRuleAction(rule, params);
-  closeContractPromptAction();
-}
-
-async function runContractRuleAction(rule: Record<string, unknown>, providedParams?: Record<string, unknown>) {
-  const target = parseMaybeJsonRecord(rule.target);
-  const mode = contractActionRuleClientMode(rule);
-  const intent = String(rule.intent || target.intent || '').trim();
-  if (intent === 'ui.local_mode' || intent === 'ui.mode' || (!intent && mode)) {
-    applyClientMode(mode, target.toggle !== false);
-    return;
-  }
-  if (!intent) return;
-  if (!providedParams && contractPromptFieldsFromRule(rule).length) {
-    openContractModeAction(rule);
-    return;
-  }
-  const params = providedParams || contractPromptParamsFromRule(rule);
-  if (params === null) return;
-  busyKind.value = 'action';
-  try {
-    await intentRequest({
-      intent,
-      params,
-      context: parseMaybeJsonRecord(target.context),
-    });
-    contractModeFeedback.value = String(target.success_message || '已更新').trim();
-    await reload();
-  } catch (err) {
-    errorMessage.value = err instanceof Error ? err.message : '表单配置操作失败';
-    status.value = 'error';
-  } finally {
-    busyKind.value = null;
   }
 }
 
