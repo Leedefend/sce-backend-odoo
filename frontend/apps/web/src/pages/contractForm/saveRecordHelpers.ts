@@ -149,7 +149,7 @@ export function collectRequiredFieldIssues(params: {
   return [`保存前请填写：${Array.from(new Set(missing)).slice(0, 5).join('、')}`];
 }
 
-export function collectRecordSaveValues(params: {
+export type SaveRecordPayloadBuildInput = {
   comparableFieldValue: (name: string, value: unknown) => unknown;
   contract: ActionContract | null;
   dirtyFieldSet: Set<string>;
@@ -157,7 +157,9 @@ export function collectRecordSaveValues(params: {
   formData: Record<string, unknown>;
   originalValues: Record<string, unknown>;
   recordId: number | null;
-}) {
+};
+
+export function buildSaveRecordPayload(params: SaveRecordPayloadBuildInput) {
   return Object.entries(params.editableMap).reduce<Record<string, unknown>>((acc, [key, value]) => {
     if (!params.recordId) {
       acc[key] = value;
@@ -178,4 +180,8 @@ export function collectRecordSaveValues(params: {
     }
     return acc;
   }, {});
+}
+
+export function collectRecordSaveValues(params: SaveRecordPayloadBuildInput) {
+  return buildSaveRecordPayload(params);
 }

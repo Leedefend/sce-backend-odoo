@@ -674,7 +674,7 @@ import { useProjectContextChangeRuntime } from './contractForm/useProjectContext
 import { useFormPageLifecycleRuntime } from './contractForm/useFormPageLifecycleRuntime';
 import { useFormAuxiliaryWatchersRuntime } from './contractForm/useFormAuxiliaryWatchersRuntime';
 import {
-  collectRecordSaveValues,
+  buildSaveRecordPayload,
   validateBeforeSaveRecord,
 } from './contractForm/saveRecordHelpers';
 import { useCreatedRecordNavigationRuntime } from './contractForm/useCreatedRecordNavigationRuntime';
@@ -5837,7 +5837,7 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']): Prom
   const editableMap = validation.editableMap;
   busyKind.value = 'save';
   try {
-    const values = collectRecordSaveValues({
+    const values = buildSaveRecordPayload({
       comparableFieldValue: (name, value) => comparableFieldValue(name, value),
       contract: contract.value,
       dirtyFieldSet,

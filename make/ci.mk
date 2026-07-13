@@ -680,6 +680,7 @@ ci: guard.prod.forbid security.secrets.scan test.inventory test.inventory.summar
 
 ci.local.quick: guard.prod.forbid architecture.complexity_baseline_lock verify.unified_page_contract.v2.web_architecture
 	@python3 scripts/ci/verify_contract_form_split_evidence.py
+	@python3 scripts/verify/contract_form_save_payload_builder_guard.py
 	@python3 scripts/verify/frontend_page_contract_boundary_guard.py
 	@python3 scripts/verify/frontend_page_contract_orchestration_consumption_guard.py
 	@python3 scripts/verify/frontend_contract_consumer_intrusion_guard.py
