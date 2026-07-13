@@ -5,6 +5,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 PROTOCOL = ROOT / "frontend/apps/web/src/pages/contractForm/runtimeStateProtocol.ts"
+REDUCER = ROOT / "frontend/apps/web/src/pages/contractForm/runtimeStateReducer.ts"
 TYPES = ROOT / "frontend/apps/web/src/pages/contractForm/types.ts"
 PAGE = ROOT / "frontend/apps/web/src/pages/ContractFormPage.vue"
 SAVE_HELPER = ROOT / "frontend/apps/web/src/pages/contractForm/saveRecordHelpers.ts"
@@ -20,6 +21,7 @@ def _read(path: Path) -> str:
 def main() -> int:
     errors: list[str] = []
     protocol = _read(PROTOCOL)
+    reducer = _read(REDUCER)
     types = _read(TYPES)
     page = _read(PAGE)
     save_helper = _read(SAVE_HELPER)
@@ -29,6 +31,8 @@ def main() -> int:
 
     if not protocol:
         errors.append(f"missing protocol: {PROTOCOL.relative_to(ROOT)}")
+    if not reducer:
+        errors.append(f"missing reducer: {REDUCER.relative_to(ROOT)}")
 
     required_protocol_tokens = [
         "export type FormRuntimeStatus = 'loading' | 'ok' | 'error';",
@@ -64,12 +68,46 @@ def main() -> int:
         if token in protocol:
             errors.append(f"runtimeStateProtocol.ts must stay interface-only; forbidden token: {token}")
 
+    required_reducer_tokens = [
+        "export type FormRuntimeStateSnapshot",
+        "export const INITIAL_FORM_RUNTIME_STATE",
+        "export function reduceFormRuntimeState",
+        "export function reduceFormRuntimeStateEvents",
+        "event.kind === 'begin'",
+        "event.kind === 'end'",
+        "event.kind === 'status'",
+        "event.kind === 'validation'",
+        "event.kind === 'feedback'",
+    ]
+    for token in required_reducer_tokens:
+        if token not in reducer:
+            errors.append(f"runtimeStateReducer.ts missing token: {token}")
+
+    forbidden_reducer_tokens = [
+        "await ",
+        "async ",
+        "intentRequest",
+        "triggerOnchange",
+        "executeButton",
+        "router.",
+        "window.",
+        "createContractFormRecord",
+        "writeContractFormRecord",
+        "queryRelationOptions",
+        "reload(",
+        ".value =",
+    ]
+    for token in forbidden_reducer_tokens:
+        if token in reducer:
+            errors.append(f"runtimeStateReducer.ts must stay pure; forbidden token: {token}")
+
     required_type_exports = [
         "FormRuntimeBusyKind as BusyKind",
         "FormRuntimeStatus as UiStatus",
         "FormSubmissionFeedback as SubmissionFeedback",
         "FormRuntimeStateRefs",
         "FormRuntimeStateEvent",
+        "FormRuntimeStateSnapshot",
     ]
     for token in required_type_exports:
         if token not in types:
