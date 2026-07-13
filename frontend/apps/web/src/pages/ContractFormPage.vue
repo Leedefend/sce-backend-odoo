@@ -850,6 +850,8 @@ const {
   runRelationSearch: runRelationSearchFromRuntime,
   confirmRelationSearchSelection: confirmRelationSearchSelectionFromRuntime,
   selectRelationSearchOption: selectRelationSearchOptionFromRuntime,
+  queryRelationOptions: queryRelationOptionsFromRuntime,
+  fetchRelationOptions: fetchRelationOptionsFromRuntime,
 } = useRelationRuntime();
 const onchangeModifiersPatch = ref<Record<string, Record<string, unknown>>>({});
 const onchangeWarnings = ref<Array<{ title?: string; message?: string; reason_code?: string }>>([]);
@@ -2637,67 +2639,56 @@ function mergedRelationDomain(name: string, descriptor?: FieldDescriptor) {
 async function queryRelationOptions(name: string, keyword: string): Promise<RelationOption[]> {
   const descriptor = effectiveFieldDescriptor(name);
   const relation = relationModel(name);
-  if (!relation) return [];
   const entry = relationEntry(descriptor);
-  if (entry && entry.canRead === false) {
-    deniedRelationModels.add(relation);
-    return [];
-  }
-  if (deniedRelationModels.has(relation)) return [];
-  let search = String(keyword || '').trim();
-  if (search && invalidatedRelationKeywords[name] === search && !formData[name]) {
-    search = '';
-    relationKeywords[name] = '';
-  }
   const domain = mergedRelationDomain(name, descriptor);
-  try {
-    const listed = await listContractFormRecords({
-      model: relation,
-      fields: relationReadFields(descriptor),
-      limit: search ? 40 : 80,
-      order: relationOrder(descriptor),
-      domain,
-      search_term: search || undefined,
-      silentErrors: true,
-    });
-    const mapped = relationOptionsFromRecords(listed?.records, descriptor);
-    if (search && !mapped.length && (dynamicDomainDependencyFields(descriptor).length || runtimeRelationDomain(name).length)) {
-      return queryRelationOptions(name, '');
-    }
-    if (mapped.length || !search) {
-      relationOptions.value = {
-        ...relationOptions.value,
-        [name]: mapped,
-      };
-    }
-    return mapped;
-  } catch (err) {
-    if (err instanceof ApiError) {
-      const denied = err.status === 403 || String(err.reasonCode || '').toUpperCase() === 'PERMISSION_DENIED';
-      if (denied) deniedRelationModels.add(relation);
-    }
-    // keep existing options if remote query fails
-    return [];
-  }
+  return queryRelationOptionsFromRuntime({
+    fieldName: name,
+    keyword,
+    relation,
+    canRead: entry?.canRead !== false,
+    hasDynamicFallback: Boolean(dynamicDomainDependencyFields(descriptor).length || runtimeRelationDomain(name).length),
+    currentValue: formData[name],
+    isDeniedError: (err) => err instanceof ApiError && (
+      err.status === 403 || String(err.reasonCode || '').toUpperCase() === 'PERMISSION_DENIED'
+    ),
+    fetchOptions: async (search, limit) => {
+      const listed = await listContractFormRecords({
+        model: relation,
+        fields: relationReadFields(descriptor),
+        limit,
+        order: relationOrder(descriptor),
+        domain,
+        search_term: search || undefined,
+        silentErrors: true,
+      });
+      return relationOptionsFromRecords(listed?.records, descriptor);
+    },
+  });
 }
 
 async function fetchRelationOptions(name: string, keyword: string, limit = 80): Promise<RelationOption[]> {
   const descriptor = effectiveFieldDescriptor(name);
   const relation = relationModel(name);
-  if (!relation) return [];
   const entry = relationEntry(descriptor);
-  if (entry && entry.canRead === false) return [];
   const domain = mergedRelationDomain(name, descriptor);
-  const listed = await listContractFormRecords({
-    model: relation,
-    fields: relationReadFields(descriptor),
+  return fetchRelationOptionsFromRuntime({
+    relation,
+    canRead: entry?.canRead !== false,
+    keyword,
     limit,
-    order: relationOrder(descriptor),
-    domain,
-    search_term: String(keyword || '').trim() || undefined,
-    silentErrors: true,
+    fetchOptions: async (search, limitValue) => {
+      const listed = await listContractFormRecords({
+        model: relation,
+        fields: relationReadFields(descriptor),
+        limit: limitValue,
+        order: relationOrder(descriptor),
+        domain,
+        search_term: search || undefined,
+        silentErrors: true,
+      });
+      return relationOptionsFromRecords(listed?.records, descriptor);
+    },
   });
-  return relationOptionsFromRecords(listed?.records, descriptor);
 }
 
 async function loadRelationSearchColumns(fieldName: string): Promise<RelationSearchColumn[]> {

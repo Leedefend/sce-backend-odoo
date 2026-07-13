@@ -33,6 +33,7 @@ Extracted responsibilities:
 - One2many inline rows, draft mutation, command value, validation, hydration merge, and onchange line patch runtime moved to `frontend/apps/web/src/pages/contractForm/useOne2manyRuntime.ts`.
 - Field-order drag state, drop-target state, and drag auto-scroll runtime moved to `frontend/apps/web/src/pages/contractForm/useFieldOrderDragRuntime.ts`.
 - Relation search dialog open, search execution, selection confirmation, and option application state flow moved to `frontend/apps/web/src/pages/contractForm/useRelationRuntime.ts`.
+- Relation option querying, denied-model cache handling, invalidated keyword fallback, and option result writeback moved to `frontend/apps/web/src/pages/contractForm/useRelationRuntime.ts`.
 - The Web Contract V2 frontend architecture guard is now part of the local `make ci` gate through `verify.unified_page_contract.v2.web_architecture`.
 - High-risk split-plan file growth is now locked by `docs/engineering_convergence/complexity_baseline_lock.json` and `scripts/ci/enforce_complexity_baseline_lock.py`.
 - Frontend page contract boundary, orchestration-consumption, and consumer-intrusion guards are now part of `make ci.local.quick`.
@@ -44,7 +45,7 @@ The route component remains the orchestration shell and still owns runtime state
 
 | File | Before | After |
 | --- | ---: | ---: |
-| `frontend/apps/web/src/pages/ContractFormPage.vue` | 13762 | 6872 |
+| `frontend/apps/web/src/pages/ContractFormPage.vue` | 13762 | 6863 |
 
 ## Boundary Decision
 
@@ -53,7 +54,7 @@ The route component remains the orchestration shell and still owns runtime state
 - No frontend fallback menu, permission, action, or form policy was introduced.
 - No data migration, backend endpoint change, or visual redesign is included in this slice.
 - Existing `groups_xmlids` usage in `ContractFormPage.vue` is locked at 1 occurrence by `scripts/verify/web_contract_v2_frontend_architecture_guard.py`; the next cleanup must remove the final entitlement read fully behind backend contracts.
-- `ContractFormPage.vue` is line-count locked at 6872 lines. Future work must continue extracting or modifying existing owned modules instead of adding new responsibilities to the route component.
+- `ContractFormPage.vue` is line-count locked at 6863 lines. Future work must continue extracting or modifying existing owned modules instead of adding new responsibilities to the route component.
 
 ## Verification
 

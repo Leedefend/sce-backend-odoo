@@ -151,6 +151,58 @@ export function useRelationRuntime() {
     closeRelationSearchDialog();
   }
 
+  async function queryRelationOptions(params: {
+    fieldName: string;
+    keyword: string;
+    relation: string;
+    canRead: boolean;
+    hasDynamicFallback: boolean;
+    currentValue: unknown;
+    fetchOptions: (keyword: string, limit: number) => Promise<RelationOption[]>;
+    isDeniedError: (error: unknown) => boolean;
+  }): Promise<RelationOption[]> {
+    const relation = String(params.relation || '').trim();
+    if (!relation) return [];
+    if (!params.canRead) {
+      deniedRelationModels.add(relation);
+      return [];
+    }
+    if (deniedRelationModels.has(relation)) return [];
+    let search = String(params.keyword || '').trim();
+    if (search && invalidatedRelationKeywords[params.fieldName] === search && !params.currentValue) {
+      search = '';
+      relationKeywords[params.fieldName] = '';
+    }
+    try {
+      const mapped = await params.fetchOptions(search, search ? 40 : 80);
+      if (search && !mapped.length && params.hasDynamicFallback) {
+        return queryRelationOptions({ ...params, keyword: '' });
+      }
+      if (mapped.length || !search) {
+        relationOptions.value = {
+          ...relationOptions.value,
+          [params.fieldName]: mapped,
+        };
+      }
+      return mapped;
+    } catch (err) {
+      if (params.isDeniedError(err)) deniedRelationModels.add(relation);
+      return [];
+    }
+  }
+
+  async function fetchRelationOptions(params: {
+    relation: string;
+    canRead: boolean;
+    keyword: string;
+    limit?: number;
+    fetchOptions: (keyword: string, limit: number) => Promise<RelationOption[]>;
+  }): Promise<RelationOption[]> {
+    const relation = String(params.relation || '').trim();
+    if (!relation || !params.canRead || deniedRelationModels.has(relation)) return [];
+    return params.fetchOptions(String(params.keyword || '').trim(), params.limit || 80);
+  }
+
   return {
     relationOptions,
     relationFieldDescriptors,
@@ -174,6 +226,8 @@ export function useRelationRuntime() {
     runRelationSearch,
     confirmRelationSearchSelection,
     selectRelationSearchOption,
+    queryRelationOptions,
+    fetchRelationOptions,
     clearRelationRuntime,
   };
 }
