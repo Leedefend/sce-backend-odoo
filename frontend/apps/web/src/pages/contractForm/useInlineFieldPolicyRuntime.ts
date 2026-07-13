@@ -2,7 +2,7 @@ import type { Ref } from 'vue';
 import { intentRequest } from '../../api/intents';
 import { FORM_FIELD_CONFIG_INTENTS } from '../../app/businessConfigBoundaries';
 import { normalizeFieldGroupTitle } from './formConfigHelpers';
-import { applyFormRuntimeStatusEvent } from './runtimeStateApplier';
+import { applyFormRuntimeBusyEvent, applyFormRuntimeStatusEvent } from './runtimeStateApplier';
 import type { BusyKind, FormConfigOperationLogEntry, UiStatus } from './types';
 
 export function useInlineFieldPolicyRuntime(params: {
@@ -22,7 +22,11 @@ export function useInlineFieldPolicyRuntime(params: {
     if (!fieldKey || params.busy()) return;
     const label = String(policyParams.label || '').trim();
     const groupTitle = normalizeFieldGroupTitle(policyParams.group_title);
-    params.busyKind.value = 'action';
+    applyFormRuntimeBusyEvent(params, {
+      kind: 'begin',
+      transaction: 'inlinePolicy',
+      busyKind: 'action',
+    });
     try {
       await intentRequest({
         intent: FORM_FIELD_CONFIG_INTENTS.policySet,
@@ -50,7 +54,10 @@ export function useInlineFieldPolicyRuntime(params: {
         errorMessage: err instanceof Error ? err.message : '字段显示规则更新失败',
       });
     } finally {
-      params.busyKind.value = null;
+      applyFormRuntimeBusyEvent(params, {
+        kind: 'end',
+        transaction: 'inlinePolicy',
+      });
     }
   }
 
