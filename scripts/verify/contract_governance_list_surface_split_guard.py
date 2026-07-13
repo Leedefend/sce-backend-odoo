@@ -9,7 +9,7 @@ GOVERNANCE = ROOT / "addons/smart_core/utils/contract_governance.py"
 LIST_SURFACE = ROOT / "addons/smart_core/utils/contract_governance_list_surface.py"
 CI = ROOT / "make/ci.mk"
 
-MAX_GOVERNANCE_LINES = 2898
+MAX_GOVERNANCE_LINES = 1973
 
 
 def _read(path: Path) -> str:
@@ -43,6 +43,7 @@ def main() -> int:
         for token in [
             "def _load_list_surface_module()",
             "contract_governance_list_surface.py",
+            "_list_surface.govern_standard_list_for_user(",
             "def _apply_standard_search_toolbar_labels(data: dict) -> None:",
             "_list_surface.apply_standard_search_toolbar_labels(data)",
             "def _govern_tier_review_list_for_user(data: dict) -> None:",
@@ -55,7 +56,10 @@ def main() -> int:
     if list_surface_text:
         for token in [
             "def apply_standard_search_toolbar_labels(",
+            "def govern_standard_list_for_user(",
             "def govern_tier_review_list_for_user(",
+            "\"source\": \"contract_governance.curated_list_facts\"",
+            "\"owner_layer\"] = \"scene_orchestration\"",
             "\"row_open\": \"打开\"",
             "payload[\"view_mode\"] = payload.get(\"view_mode\") or \"form\"",
             "mark_legacy_industry_governance_profile(data, \"tier.review.list\")",
@@ -173,6 +177,65 @@ def main() -> int:
             errors.append("tier review list action groups must drop empty navigation-only groups")
         if marked != ["tier.review.list"]:
             errors.append("tier review list direct module path must invoke profile marker callback")
+
+        list_data = {
+            "head": {"model": "project.project", "view_type": "tree"},
+            "model": "project.project",
+            "governance": {"primary_model": "project.project"},
+            "views": {
+                "tree": {
+                    "columns": [{"name": "name"}, {"name": "amount_total"}],
+                    "columns_schema": [
+                        {"name": "name", "label": "Native Name"},
+                        {"name": "stage_id", "label": "Native Stage"},
+                    ],
+                    "row_actions": [{"name": "open_form", "payload": {}}],
+                }
+            },
+            "fields": {
+                "name": {"type": "char", "string": "Name"},
+                "amount_total": {"type": "float", "string": "Amount"},
+                "stage_id": {"type": "selection", "string": "Stage", "selection": [("draft", "Draft")]},
+                "active": {"type": "boolean", "string": "Active"},
+                "user_id": {"type": "many2one", "string": "Assignee"},
+            },
+            "permissions": {"effective": {"rights": {"write": True, "unlink": True}}},
+            "delete_policy": {"delete_mode": "unlink"},
+            "search": {},
+        }
+        list_surface.govern_standard_list_for_user(
+            list_data,
+            model_name="project.project",
+            columns_order=["name", "stage_id", "amount_total"],
+            column_labels={"amount_total": "Total"},
+            row_primary="name",
+            row_secondary="stage_id",
+            status_field="stage_id",
+            is_model_tree_contract=lambda data, model: model == "project.project",
+            legacy_field_presentation=lambda model, name: {"widget": "monetary"} if name == "amount_total" else {},
+            deep_clone_json_like=lambda value: dict(value) if isinstance(value, dict) else value,
+            apply_standard_search_toolbar_labels=list_surface.apply_standard_search_toolbar_labels,
+        )
+        tree = (list_data.get("views") or {}).get("tree") or {}
+        if tree.get("columns") != ["name", "stage_id", "amount_total"]:
+            errors.append("standard list must merge configured columns with native columns")
+        schema_by_name = {row.get("name"): row for row in tree.get("columns_schema", []) if isinstance(row, dict)}
+        if schema_by_name.get("amount_total", {}).get("widget") != "monetary":
+            errors.append("standard list must apply field presentation widgets")
+        if schema_by_name.get("stage_id", {}).get("cell_role") != "status":
+            errors.append("standard list must mark status column schema")
+        batch_policy = ((list_data.get("surface_policies") or {}).get("batch_policy")) or {}
+        if batch_policy.get("available_actions") != ["archive", "activate", "delete"]:
+            errors.append("standard list batch policy must derive archive/activate/delete actions")
+        list_profile = list_data.get("list_profile") or {}
+        if list_profile.get("primary_field") != "name" or list_profile.get("status_field") != "stage_id":
+            errors.append("standard list profile must expose primary/status fields")
+        semantics = ((list_data.get("semantic_page") or {}).get("list_semantics")) or {}
+        if semantics.get("owner_layer") != "scene_orchestration":
+            errors.append("standard list semantics must stay scene_orchestration owned")
+        labels = ((list_data.get("search") or {}).get("ui_labels")) or {}
+        if labels.get("row_open") != "打开":
+            errors.append("standard list must keep toolbar/search label normalization")
 
     if errors:
         print("[contract_governance_list_surface_split_guard] FAIL")

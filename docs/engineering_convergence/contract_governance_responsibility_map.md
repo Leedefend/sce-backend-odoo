@@ -3,7 +3,7 @@
 Date: 2026-07-13
 Owner: Platform owner
 Target file: `addons/smart_core/utils/contract_governance.py`
-Current size: 2,207 lines
+Current size: 1,973 lines
 Phase: staged responsibility split
 
 ## Purpose
@@ -59,7 +59,7 @@ and by a smaller public module layout.
 | `contract_governance_user_surface_split_guard.py` | User-surface sanitizer/action grouping extraction compatibility and purity lock. |
 | `contract_governance_capabilities_split_guard.py` | Capability normalization extraction compatibility, shared registry behavior, and purity lock. |
 | `contract_governance_scenes_split_guard.py` | Scene normalization extraction compatibility, shared semantic-profile registry behavior, and purity lock. |
-| `contract_governance_list_surface_split_guard.py` | Standard list toolbar label and tier-review list action filtering behavior lock. |
+| `contract_governance_list_surface_split_guard.py` | Standard list projection, toolbar labels, batch policy, semantic list surface, and tier-review list action filtering behavior lock. |
 | `contract_governance_native_bridge_split_guard.py` | Native/scene bridge extraction compatibility, envelope derivation, search surface, and action bridge behavior lock. |
 | `contract_governance_labels_split_guard.py` | Business label normalization, shared field presentation registry, native layout labels, and relation-entry semantics lock. |
 | `contract_governance_access_policy_split_guard.py` | Access policy visible-field realignment and warning marker behavior lock. |
@@ -494,3 +494,17 @@ Stage 27 is complete when:
 - the extracted module remains projection-only: no ORM calls, HTTP calls,
   routing, file IO, or environment access;
 - `contract_governance.py` is locked at `<=2207` lines for this stage.
+
+## Stage 28 Target
+
+Stage 28 is complete when:
+
+- `contract_governance_list_surface.py` owns standard list projection:
+  selected/native column merging, schema enrichment, batch policy derivation,
+  list profile projection, semantic list surface projection, and toolbar/search
+  label normalization;
+- `contract_governance.py` keeps tree-contract model detection, legacy field
+  presentation lookup, and JSON cloning callbacks in the facade;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=1973` lines for this stage.
