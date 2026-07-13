@@ -27,18 +27,95 @@ jobs:
       - name: Checkout from CI mirror
         run: |
           set -euo pipefail
-          git --git-dir="$CI_CACHE_REPO" remote set-url origin https://github.com/Leedefend/sce-backend-odoo.git
-          if git --git-dir="$CI_CACHE_REPO" cat-file -e "$HEAD_SHA^{commit}" 2>/dev/null; then
-            echo "Using cached commit $HEAD_SHA"
-          else
-            timeout 180 git --git-dir="$CI_CACHE_REPO" fetch --no-tags --prune origin "+refs/heads/${HEAD_REF}:refs/remotes/origin/${HEAD_REF}" \
-              || timeout 180 git --git-dir="$CI_CACHE_REPO" fetch --no-tags origin "$HEAD_SHA"
-          fi
-          find "$GITHUB_WORKSPACE" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
-          git clone --reference-if-able "$CI_CACHE_REPO" "$CI_CACHE_REPO" "$GITHUB_WORKSPACE"
-          git remote set-url origin https://github.com/Leedefend/sce-backend-odoo.git
-          git checkout --force "$HEAD_SHA"
-          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+          REMOTE_URL="${CI_REMOTE_URL:-https://github.com/Leedefend/sce-backend-odoo.git}"
+          FETCH_TIMEOUT_SECONDS="${CI_FETCH_TIMEOUT_SECONDS:-180}"
+          FETCH_ATTEMPTS="${CI_FETCH_ATTEMPTS:-4}"
+          FETCH_BACKOFF_BASE_SECONDS="${CI_FETCH_BACKOFF_BASE_SECONDS:-15}"
+
+          network_diag() {
+            echo "::group::CI checkout network diagnostics"
+            date -Is || true
+            echo "remote=${REMOTE_URL}"
+            echo "head_ref=${HEAD_REF}"
+            echo "head_sha=${HEAD_SHA}"
+            getent hosts github.com || true
+            getent hosts api.github.com || true
+            timeout 20 curl -I --connect-timeout 8 --max-time 20 https://github.com 2>&1 | sed -n '1,12p' || true
+            timeout 20 git --git-dir="${CI_CACHE_REPO}" ls-remote --heads origin "${HEAD_REF}" 2>&1 | sed -n '1,12p' || true
+            echo "::endgroup::"
+          }
+
+          configure_git_transport() {
+            git config --global protocol.version 2
+            git config --global http.version HTTP/1.1
+            git config --global http.lowSpeedLimit 1000
+            git config --global http.lowSpeedTime 60
+          }
+
+          ensure_cache_repo() {
+            mkdir -p "$(dirname "${CI_CACHE_REPO}")"
+            if [ ! -d "${CI_CACHE_REPO}" ]; then
+              git init --bare "${CI_CACHE_REPO}"
+            fi
+            if git --git-dir="${CI_CACHE_REPO}" remote get-url origin >/dev/null 2>&1; then
+              git --git-dir="${CI_CACHE_REPO}" remote set-url origin "${REMOTE_URL}"
+            else
+              git --git-dir="${CI_CACHE_REPO}" remote add origin "${REMOTE_URL}"
+            fi
+          }
+
+          fetch_head_sha() {
+            if git --git-dir="${CI_CACHE_REPO}" cat-file -e "${HEAD_SHA}^{commit}" 2>/dev/null; then
+              echo "Using cached commit ${HEAD_SHA}"
+              return 0
+            fi
+
+            for attempt in $(seq 1 "${FETCH_ATTEMPTS}"); do
+              echo "Fetching ${HEAD_REF}/${HEAD_SHA} from origin (attempt ${attempt}/${FETCH_ATTEMPTS})"
+              set +e
+              timeout "${FETCH_TIMEOUT_SECONDS}" git --git-dir="${CI_CACHE_REPO}" fetch --no-tags --prune origin \
+                "+refs/heads/${HEAD_REF}:refs/remotes/origin/${HEAD_REF}"
+              branch_status=$?
+              if [ "${branch_status}" -eq 0 ] && git --git-dir="${CI_CACHE_REPO}" cat-file -e "${HEAD_SHA}^{commit}" 2>/dev/null; then
+                set -e
+                return 0
+              fi
+
+              timeout "${FETCH_TIMEOUT_SECONDS}" git --git-dir="${CI_CACHE_REPO}" fetch --no-tags origin "${HEAD_SHA}"
+              sha_status=$?
+              if [ "${sha_status}" -eq 0 ] && git --git-dir="${CI_CACHE_REPO}" cat-file -e "${HEAD_SHA}^{commit}" 2>/dev/null; then
+                set -e
+                return 0
+              fi
+              set -e
+
+              echo "Fetch attempt ${attempt} failed: branch_status=${branch_status} sha_status=${sha_status}"
+              network_diag
+              if [ "${attempt}" -lt "${FETCH_ATTEMPTS}" ]; then
+                sleep_seconds=$((FETCH_BACKOFF_BASE_SECONDS * attempt))
+                echo "Retrying checkout fetch after ${sleep_seconds}s"
+                sleep "${sleep_seconds}"
+              fi
+            done
+
+            echo "Unable to fetch ${HEAD_SHA} after ${FETCH_ATTEMPTS} attempts"
+            return 1
+          }
+
+          checkout_workspace() {
+            find "${GITHUB_WORKSPACE}" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+            git clone --reference-if-able "${CI_CACHE_REPO}" "${CI_CACHE_REPO}" "${GITHUB_WORKSPACE}"
+            cd "${GITHUB_WORKSPACE}"
+            git remote set-url origin "${REMOTE_URL}"
+            git checkout --force "${HEAD_SHA}"
+            git config --global --add safe.directory "${GITHUB_WORKSPACE}"
+          }
+
+          configure_git_transport
+          ensure_cache_repo
+          fetch_head_sha
+          checkout_workspace
 
       - name: Verify runner tools
         run: |
