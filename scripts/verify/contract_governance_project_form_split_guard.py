@@ -9,7 +9,7 @@ GOVERNANCE = ROOT / "addons/smart_core/utils/contract_governance.py"
 PROJECT_FORM = ROOT / "addons/smart_core/utils/contract_governance_project_form.py"
 CI = ROOT / "make/ci.mk"
 
-MAX_GOVERNANCE_LINES = 2708
+MAX_GOVERNANCE_LINES = 2616
 
 
 def _read(path: Path) -> str:
@@ -46,6 +46,10 @@ def main() -> int:
             "return _project_form.normalize_legacy_project_form_profile(",
             "return _project_form.pick_project_form_fields(",
             "_project_form.filter_project_form_layout(",
+            "_project_form.trim_contract_field_maps(data, selected_fields)",
+            "_project_form.govern_project_form_search(data, profile=_legacy_project_form_profile(data))",
+            "return _project_form.build_project_action_groups(",
+            "_project_form.emit_scene_action_semantics(",
             "def _build_project_lifecycle_summary(data: dict) -> None:",
             "_project_form.build_project_lifecycle_summary(data)",
         ]:
@@ -57,9 +61,14 @@ def main() -> int:
             "def normalize_legacy_project_form_profile(",
             "def pick_project_form_fields(",
             "def filter_project_form_layout(",
+            "def trim_contract_field_maps(",
+            "def govern_project_form_search(",
+            "def build_project_action_groups(",
+            "def emit_scene_action_semantics(",
             "def build_project_lifecycle_summary(",
             "\"action_noise_markers\"",
             "for key in (\"children\", \"tabs\", \"pages\", \"nodes\", \"items\")",
+            "actions[\"source\"] = \"contract_governance.curated_action_facts\"",
             "\"owner_layer\": \"business_fact\"",
             "\"source\": \"contract_governance.workflow_facts\"",
             "\"progress_percent\": 0 if state_keys else None",
@@ -171,6 +180,75 @@ def main() -> int:
             "state",
         ]:
             errors.append("project form layout must backfill selected fields missing from native layout")
+        trim_data = {
+            "fields": {"code": {}, "manager_id": {}, "noise": {}},
+            "field_policies": {"code": {}, "manager_id": {}, "noise": {}},
+            "field_semantics": {"code": {}, "manager_id": {}, "noise": {}},
+            "validation_rules": [
+                {"field": "code"},
+                {"field": "noise"},
+                {"kind": "global"},
+            ],
+        }
+        governance._trim_contract_field_maps(trim_data, ["manager_id", "code"])
+        if list(trim_data.get("fields") or {}) != ["manager_id", "code"]:
+            errors.append("project field-map trimming must preserve selected field order")
+        if [row.get("field") for row in trim_data.get("validation_rules", []) if isinstance(row, dict)] != [
+            "code",
+            None,
+        ]:
+            errors.append("project field-map trimming must drop rules for hidden fields and keep global rules")
+
+        search_data = {
+            **profile_data,
+            "search": {
+                "filters": [
+                    {"key": "a", "label": "Active"},
+                    {"key": "a", "label": "Duplicate"},
+                    {"key": "noise", "label": "Filter by score"},
+                    {"key": "", "label": "Missing key"},
+                    {"key": "b", "label": "Budget"},
+                ]
+            },
+        }
+        governance._govern_project_form_search(search_data)
+        if [row.get("key") for row in (search_data.get("search") or {}).get("filters", [])] != ["a", "b"]:
+            errors.append("project form search must deduplicate filters and remove configured noise")
+
+        action_data = {**profile_data}
+        low_priority = {"key": "open", "label": "Open Dashboard", "level": "smart"}
+        high_priority = {"key": "submit", "label": "submit now", "level": "header"}
+        workflow_action = {"key": "workflow_submit", "label": "提交审批", "level": "header"}
+        noisy_action = {"key": "rating_action", "label": "Rating", "level": "header"}
+        if governance._action_priority(high_priority, action_data) >= governance._action_priority(low_priority, action_data):
+            errors.append("project action priority must honor configured profile priorities")
+        if not governance._is_noisy_project_action(noisy_action, action_data):
+            errors.append("project action noise must honor configured profile markers")
+        groups = governance._build_project_action_groups(
+            [
+                workflow_action,
+                low_priority,
+                {"key": "other", "label": "Other", "level": "smart"},
+                {"key": "more", "label": "Other 2", "level": "smart"},
+                {"key": "more3", "label": "Other 3", "level": "smart"},
+                {"key": "more4", "label": "Other 4", "level": "smart"},
+                {"key": "more5", "label": "Other 5", "level": "smart"},
+                {"key": "more6", "label": "Other 6", "level": "smart"},
+            ],
+            action_data,
+        )
+        if [row.get("key") for row in groups] != ["workflow", "drilldown", "other"]:
+            errors.append("project action groups must classify workflow, drilldown, and other actions")
+        other_group = next((row for row in groups if row.get("key") == "other"), {})
+        if other_group.get("overflow_count") != 1:
+            errors.append("project action groups must keep overflow action counts")
+        semantic_data = {"semantic_page": {"actions": {"toolbar_actions": [{"key": "existing"}]}}}
+        governance._emit_scene_action_semantics(semantic_data, header_rows=[high_priority], record_rows=[low_priority])
+        scene_actions = (semantic_data.get("semantic_page") or {}).get("actions") or {}
+        if scene_actions.get("owner_layer") != "scene_orchestration":
+            errors.append("project scene action semantics must keep scene_orchestration ownership")
+        if [row.get("key") for row in scene_actions.get("toolbar_actions", [])] != ["existing"]:
+            errors.append("project scene action semantics must preserve existing toolbar actions")
 
         transitions = [
             {"trigger": {"label": f"Transition {idx}", "kind": "server"}}

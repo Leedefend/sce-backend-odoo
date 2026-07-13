@@ -212,6 +212,137 @@ def filter_project_form_layout(data: dict, selected_fields: list[str], *, profil
     data["views"] = views
 
 
+def trim_contract_field_maps(data: dict, selected_fields: list[str]) -> None:
+    selected = [_safe_text(name) for name in selected_fields if _safe_text(name)]
+    if not selected:
+        return
+    allowed = set(selected)
+    fields_map = _as_dict(data.get("fields"))
+    if fields_map:
+        data["fields"] = {name: fields_map[name] for name in selected if name in fields_map}
+    field_policies = _as_dict(data.get("field_policies"))
+    if field_policies:
+        data["field_policies"] = {name: field_policies[name] for name in selected if name in field_policies}
+    field_semantics = _as_dict(data.get("field_semantics"))
+    if field_semantics:
+        data["field_semantics"] = {name: field_semantics[name] for name in selected if name in field_semantics}
+    validation_rules = data.get("validation_rules")
+    if isinstance(validation_rules, list):
+        data["validation_rules"] = [
+            row
+            for row in validation_rules
+            if not isinstance(row, dict) or not _safe_text(row.get("field")) or _safe_text(row.get("field")) in allowed
+        ]
+
+
+def govern_project_form_search(data: dict, *, profile: dict) -> None:
+    search = _as_dict(data.get("search"))
+    filters = search.get("filters")
+    if not isinstance(filters, list):
+        return
+    noise_markers = profile.get("search_noise_markers") or []
+    cleaned = []
+    seen: set[str] = set()
+    for row in filters:
+        if not isinstance(row, dict):
+            continue
+        key = _safe_text(row.get("key"))
+        label = _safe_text(row.get("label"))
+        if not key or key in seen:
+            continue
+        if not label:
+            continue
+        if any(marker in _safe_lower(label) for marker in noise_markers):
+            continue
+        cleaned.append(row)
+        seen.add(key)
+        if len(cleaned) >= 8:
+            break
+    search["filters"] = cleaned
+    data["search"] = search
+
+
+def action_priority(action: dict, *, profile: dict) -> int:
+    label = _safe_text(action.get("label"))
+    priorities = profile.get("action_priorities") or []
+    for idx, key in enumerate(priorities):
+        if key and key in label:
+            return idx
+    return len(priorities) + 1
+
+
+def is_noisy_project_action(action: dict, *, profile: dict) -> bool:
+    key = _safe_lower(action.get("key"))
+    label = _safe_lower(action.get("label"))
+    if not label and not key:
+        return True
+    if label.isdigit():
+        return True
+    markers = profile.get("action_noise_markers") or []
+    for marker in markers:
+        if marker in key or marker in label:
+            return True
+    return False
+
+
+def classify_project_action_group(action: dict) -> str:
+    key = _safe_lower(action.get("key"))
+    label = _safe_lower(action.get("label"))
+    merged = f"{key} {label}"
+    if any(marker in merged for marker in ("阶段", "提交", "审批", "transition", "workflow", "lifecycle")):
+        return "workflow"
+    if any(marker in merged for marker in ("查看", "open", "dashboard", "看板", "列表")):
+        return "drilldown"
+    if any(marker in merged for marker in ("创建", "保存", "提交")):
+        return "basic"
+    return "other"
+
+
+def build_project_action_groups(
+    rows: list[dict],
+    *,
+    profile: dict,
+    default_group_labels: dict[str, str],
+    action_group_limit: int,
+) -> list[dict]:
+    grouped: dict[str, list[dict]] = {"basic": [], "workflow": [], "drilldown": [], "other": []}
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        group_key = classify_project_action_group(row)
+        grouped.setdefault(group_key, []).append(row)
+
+    result: list[dict] = []
+    group_labels = dict(default_group_labels)
+    group_labels.update(profile.get("action_group_labels") or {})
+    for key in ("basic", "workflow", "drilldown", "other"):
+        actions = grouped.get(key) or []
+        if not actions:
+            continue
+        primary = actions[:action_group_limit]
+        overflow = actions[action_group_limit:]
+        result.append({
+            "key": key,
+            "label": group_labels.get(key, key),
+            "actions": primary,
+            "overflow_actions": overflow,
+            "overflow_count": len(overflow),
+        })
+    return result
+
+
+def emit_scene_action_semantics(data: dict, *, header_rows: list[dict], record_rows: list[dict]) -> None:
+    semantic_page = _as_dict(data.get("semantic_page"))
+    actions = _as_dict(semantic_page.get("actions"))
+    actions["header_actions"] = [dict(row) for row in header_rows if isinstance(row, dict)]
+    actions["record_actions"] = [dict(row) for row in record_rows if isinstance(row, dict)]
+    actions.setdefault("toolbar_actions", [])
+    actions["owner_layer"] = "scene_orchestration"
+    actions["source"] = "contract_governance.curated_action_facts"
+    semantic_page["actions"] = actions
+    data["semantic_page"] = semantic_page
+
+
 def build_project_lifecycle_summary(data: dict) -> None:
     workflow = _as_dict(data.get("workflow"))
     states = workflow.get("states")
