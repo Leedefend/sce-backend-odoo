@@ -3,7 +3,7 @@
 Date: 2026-07-13
 Owner: Platform owner
 Target file: `addons/smart_core/utils/contract_governance.py`
-Current size: 2,616 lines
+Current size: 2,559 lines
 Phase: staged responsibility split
 
 ## Purpose
@@ -72,7 +72,7 @@ and by a smaller public module layout.
 | `contract_governance_form_render_split_guard.py` | Form render profile resolution, boolean coercion, and form capability permission projection lock. |
 | `contract_governance_form_validation_split_guard.py` | Form validation rule assembly, profile normalization, and business form policy merge behavior lock. |
 | `contract_governance_form_fields_split_guard.py` | Form field ordering, core/advanced group derivation, required-field resolution, and field policy behavior lock. |
-| `contract_governance_project_form_split_guard.py` | Project form profile normalization, field selection, layout filtering, search/action helpers, lifecycle summary, and workflow surface projection lock. |
+| `contract_governance_project_form_split_guard.py` | Project form/profile/task projection, field selection, layout filtering, search/action helpers, lifecycle summary, and workflow surface projection lock. |
 
 ## Extraction Order
 
@@ -436,3 +436,17 @@ Stage 23 is complete when:
 - the extracted module remains projection-only: no ORM calls, HTTP calls,
   routing, file IO, or environment access;
 - `contract_governance.py` is locked at `<=2616` lines for this stage.
+
+## Stage 24 Target
+
+Stage 24 is complete when:
+
+- `contract_governance_project_form.py` also owns project task form projection:
+  configured field selection, core/description grouping, and generated form
+  sheet layout;
+- `contract_governance.py` keeps task-form model detection and task profile
+  registry lookup in the facade, and passes the labeled-field-node callback into
+  the extracted module;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=2559` lines for this stage.

@@ -9,7 +9,7 @@ GOVERNANCE = ROOT / "addons/smart_core/utils/contract_governance.py"
 PROJECT_FORM = ROOT / "addons/smart_core/utils/contract_governance_project_form.py"
 CI = ROOT / "make/ci.mk"
 
-MAX_GOVERNANCE_LINES = 2616
+MAX_GOVERNANCE_LINES = 2559
 
 
 def _read(path: Path) -> str:
@@ -50,6 +50,7 @@ def main() -> int:
             "_project_form.govern_project_form_search(data, profile=_legacy_project_form_profile(data))",
             "return _project_form.build_project_action_groups(",
             "_project_form.emit_scene_action_semantics(",
+            "_project_form.govern_project_task_form(",
             "def _build_project_lifecycle_summary(data: dict) -> None:",
             "_project_form.build_project_lifecycle_summary(data)",
         ]:
@@ -65,9 +66,11 @@ def main() -> int:
             "def govern_project_form_search(",
             "def build_project_action_groups(",
             "def emit_scene_action_semantics(",
+            "def govern_project_task_form(",
             "def build_project_lifecycle_summary(",
             "\"action_noise_markers\"",
             "for key in (\"children\", \"tabs\", \"pages\", \"nodes\", \"items\")",
+            "\"project_task_form_sheet\"",
             "actions[\"source\"] = \"contract_governance.curated_action_facts\"",
             "\"owner_layer\": \"business_fact\"",
             "\"source\": \"contract_governance.workflow_facts\"",
@@ -249,6 +252,45 @@ def main() -> int:
             errors.append("project scene action semantics must keep scene_orchestration ownership")
         if [row.get("key") for row in scene_actions.get("toolbar_actions", [])] != ["existing"]:
             errors.append("project scene action semantics must preserve existing toolbar actions")
+
+        governance.register_legacy_project_task_form_governance_model("project.task")
+        governance.register_legacy_project_task_form_profile(
+            "project.task",
+            {
+                "fields": ["name", "project_id", "description", "missing"],
+                "field_labels": {"name": "任务名称", "description": "任务说明"},
+                "description_fields": ["description"],
+                "core_group_label": "任务基础",
+                "description_group_label": "任务说明",
+            },
+        )
+        task_data = {
+            "head": {"model": "project.task", "view_type": "form"},
+            "model": "project.task",
+            "governance": {"primary_model": "project.task"},
+            "views": {"form": {"model": "project.task"}},
+            "fields": {
+                "name": {"type": "char", "string": "Name"},
+                "project_id": {"type": "many2one", "string": "Project"},
+                "description": {"type": "text", "string": "Description"},
+            },
+        }
+        governance._govern_project_task_form_for_user(task_data)
+        if task_data.get("visible_fields") != ["name", "project_id", "description"]:
+            errors.append("project task form must select configured fields present in fields map")
+        task_groups = task_data.get("field_groups") or []
+        if [group.get("name") for group in task_groups] != ["core", "advanced"]:
+            errors.append("project task form must emit core and advanced field groups")
+        if (task_groups[0] or {}).get("fields") != ["name", "project_id"]:
+            errors.append("project task core group must exclude description fields")
+        task_layout = (((task_data.get("views") or {}).get("form") or {}).get("layout")) or []
+        sheet = task_layout[0] if task_layout and isinstance(task_layout[0], dict) else {}
+        if sheet.get("name") != "project_task_form_sheet":
+            errors.append("project task form must emit the expected sheet layout")
+        first_group = (sheet.get("children") or [{}])[0]
+        first_node = (first_group.get("children") or [{}])[0]
+        if first_node.get("string") != "任务名称":
+            errors.append("project task form must use configured field labels in layout nodes")
 
         transitions = [
             {"trigger": {"label": f"Transition {idx}", "kind": "server"}}

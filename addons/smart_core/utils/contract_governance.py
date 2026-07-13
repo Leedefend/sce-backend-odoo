@@ -1512,68 +1512,11 @@ def _govern_project_task_form_for_user(data: dict) -> None:
         return
     primary_model = _governance_primary_model(data)
     profile = _LEGACY_PROJECT_TASK_FORM_PROFILE_REGISTRY.get(primary_model) or {}
-    if not profile:
-        return
-    fields_map = _as_dict(data.get("fields"))
-    configured_fields = [_safe_text(name) for name in (profile.get("fields") or []) if _safe_text(name)]
-    selected = [name for name in configured_fields if name in fields_map]
-    if not selected:
-        return
-    label_map = _as_dict(profile.get("field_labels"))
-    description_fields = set(profile.get("description_fields") or [])
-    core_group_label = _safe_text(profile.get("core_group_label")) or "基础信息"
-    description_group_label = _safe_text(profile.get("description_group_label")) or "说明"
-
-    data["visible_fields"] = selected
-    data["field_groups"] = [
-        {
-            "name": "core",
-            "label": core_group_label,
-            "priority": 1,
-            "collapsible": False,
-            "fields": [name for name in selected if name not in description_fields],
-        },
-        {
-            "name": "advanced",
-            "label": description_group_label,
-            "priority": 2,
-            "collapsible": True,
-            "fields": [name for name in selected if name in description_fields],
-        },
-    ]
-
-    views = _as_dict(data.get("views"))
-    form = _as_dict(views.get("form"))
-    form["layout"] = [
-        {
-            "type": "sheet",
-            "name": "project_task_form_sheet",
-            "children": [
-                {
-                    "type": "group",
-                    "name": "project_task_core_group",
-                    "string": core_group_label,
-                    "children": [
-                        _make_labeled_field_node(name, fields_map, label_map)
-                        for name in selected
-                        if name not in description_fields
-                    ],
-                },
-                {
-                    "type": "group",
-                    "name": "project_task_description_group",
-                    "string": description_group_label,
-                    "children": [
-                        _make_labeled_field_node(name, fields_map, label_map)
-                        for name in selected
-                        if name in description_fields
-                    ],
-                },
-            ],
-        }
-    ]
-    views["form"] = form
-    data["views"] = views
+    _project_form.govern_project_task_form(
+        data,
+        profile=profile,
+        make_labeled_field_node=_make_labeled_field_node,
+    )
 
 
 def _govern_standard_list_for_user(
