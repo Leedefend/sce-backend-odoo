@@ -45,6 +45,7 @@ REQUIRED_GUARDS = [
     "contract_governance_registry_split_guard.py",
     "contract_governance_user_surface_split_guard.py",
     "contract_governance_capabilities_split_guard.py",
+    "contract_governance_scenes_split_guard.py",
 ]
 
 INVARIANTS = [
@@ -80,7 +81,7 @@ def main() -> int:
 
     for token in [
         "Contract Governance Responsibility Map",
-        "Current size: 4,272 lines",
+        "Current size: 4,213 lines",
         "projection-only",
         "Do not start mechanical extraction",
         "## Public Entry Points",
@@ -102,6 +103,9 @@ def main() -> int:
         "## Stage 4 Target",
         "`contract_governance_capabilities.py` owns capability normalization",
         "`contract_governance.py` is locked at `<=4272` lines",
+        "## Stage 5 Target",
+        "`contract_governance_scenes.py` owns scene normalization",
+        "`contract_governance.py` is locked at `<=4213` lines",
     ]:
         if token not in doc:
             errors.append(f"responsibility map missing token: {token}")
