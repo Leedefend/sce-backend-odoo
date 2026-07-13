@@ -1,7 +1,13 @@
 import type { FieldDescriptor } from '@sc/schema';
 
-export type UiStatus = 'loading' | 'ok' | 'error';
-export type BusyKind = 'save' | 'action' | null;
+export type {
+  FormRuntimeBusyKind as BusyKind,
+  FormRuntimeStateEvent,
+  FormRuntimeStateRefs,
+  FormRuntimeStatus as UiStatus,
+  FormRuntimeTransactionName,
+  FormSubmissionFeedback as SubmissionFeedback,
+} from './runtimeStateProtocol';
 
 export const MANY2ONE_CREATE_OPTION = '__create__';
 export const MANY2ONE_SEARCH_MORE_OPTION = '__search_more__';

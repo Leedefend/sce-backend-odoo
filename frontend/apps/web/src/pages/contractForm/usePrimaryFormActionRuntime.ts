@@ -1,9 +1,7 @@
 import { nextTick, type Ref } from 'vue';
 import { executeButton } from '../../api/executeButton';
 import { sanitizeUiErrorMessage } from './fieldUtils';
-import type { BusyKind, ContractAction } from './types';
-
-type SubmissionFeedback = { kind: 'success' | 'warn' | 'error'; message: string } | null;
+import type { BusyKind, ContractAction, SubmissionFeedback } from './types';
 
 export function usePrimaryFormActionRuntime(params: {
   actionId: () => number;
