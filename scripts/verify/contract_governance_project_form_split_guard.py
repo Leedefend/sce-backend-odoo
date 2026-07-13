@@ -9,7 +9,7 @@ GOVERNANCE = ROOT / "addons/smart_core/utils/contract_governance.py"
 PROJECT_FORM = ROOT / "addons/smart_core/utils/contract_governance_project_form.py"
 CI = ROOT / "make/ci.mk"
 
-MAX_GOVERNANCE_LINES = 2424
+MAX_GOVERNANCE_LINES = 2207
 
 
 def _read(path: Path) -> str:
@@ -43,6 +43,8 @@ def main() -> int:
         for token in [
             "def _load_project_form_module()",
             "contract_governance_project_form.py",
+            "_project_form.govern_project_form_actions(",
+            "_project_form.govern_project_form_contract(",
             "return _project_form.normalize_legacy_project_form_profile(",
             "return _project_form.pick_project_form_fields(",
             "_project_form.govern_project_kanban_contract(",
@@ -61,6 +63,8 @@ def main() -> int:
     if project_form_text:
         for token in [
             "def normalize_legacy_project_form_profile(",
+            "def govern_project_form_actions(",
+            "def govern_project_form_contract(",
             "def pick_project_form_fields(",
             "def govern_project_kanban_contract(",
             "def filter_project_form_layout(",

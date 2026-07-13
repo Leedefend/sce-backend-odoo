@@ -496,6 +496,106 @@ def emit_scene_action_semantics(data: dict, *, header_rows: list[dict], record_r
     data["semantic_page"] = semantic_page
 
 
+def govern_project_form_actions(
+    data: dict,
+    *,
+    profile: dict,
+    default_group_labels: dict[str, str],
+    action_group_limit: int,
+    header_action_max: int,
+    smart_action_max: int,
+) -> None:
+    toolbar = _as_dict(data.get("toolbar"))
+    if isinstance(toolbar.get("header"), list):
+        toolbar["header"] = []
+    data["toolbar"] = toolbar
+
+    rows = data.get("buttons")
+    if not isinstance(rows, list):
+        return
+    header_rows: list[dict] = []
+    smart_rows: list[dict] = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        if is_noisy_project_action(row, profile=profile):
+            continue
+        level = _safe_lower(row.get("level"))
+        if level == "header":
+            header_rows.append(row)
+        elif level in {"smart", "row"}:
+            smart_rows.append(row)
+
+    header_rows = sorted(header_rows, key=lambda item: (action_priority(item, profile=profile), _safe_text(item.get("label"))))
+    smart_rows = sorted(smart_rows, key=lambda item: (action_priority(item, profile=profile), _safe_text(item.get("label"))))
+    curated = header_rows[:header_action_max] + smart_rows[:smart_action_max]
+    data["buttons"] = curated
+    emit_scene_action_semantics(
+        data,
+        header_rows=header_rows[:header_action_max],
+        record_rows=smart_rows[:smart_action_max],
+    )
+    data["action_groups"] = build_project_action_groups(
+        curated,
+        profile=profile,
+        default_group_labels=default_group_labels,
+        action_group_limit=action_group_limit,
+    )
+
+
+def govern_project_form_contract(
+    data: dict,
+    *,
+    selected_fields: list[str],
+    profile: dict,
+    collect_layout_field_names: Any,
+    backfill_form_layout_from_visible_fields: Any,
+    govern_project_form_search: Any,
+    build_project_lifecycle_summary: Any,
+    realign_access_policy_with_visible_fields: Any,
+    default_max_fields: int,
+    default_group_labels: dict[str, str],
+    action_group_limit: int,
+    header_action_max: int,
+    smart_action_max: int,
+) -> None:
+    trim_contract_field_maps(data, selected_fields)
+    data["visible_fields"] = selected_fields
+    views = _as_dict(data.get("views"))
+    form = _as_dict(views.get("form"))
+    native_layout_fields = collect_layout_field_names(form.get("layout"))
+    if not native_layout_fields:
+        backfill_form_layout_from_visible_fields(data)
+    data["form_profile"] = {
+        "core_fields": selected_fields[:8],
+        "advanced_fields": selected_fields[8:],
+        "max_fields": int(profile.get("max_fields") or default_max_fields),
+    }
+    views = _as_dict(data.get("views"))
+    form = _as_dict(views.get("form"))
+    form["form_profile"] = _as_dict(data.get("form_profile"))
+    views["form"] = form
+    data["views"] = views
+
+    permissions = _as_dict(data.get("permissions"))
+    field_groups = _as_dict(permissions.get("field_groups"))
+    if field_groups:
+        permissions["field_groups"] = field_groups
+    data["permissions"] = permissions
+
+    govern_project_form_actions(
+        data,
+        profile=profile,
+        default_group_labels=default_group_labels,
+        action_group_limit=action_group_limit,
+        header_action_max=header_action_max,
+        smart_action_max=smart_action_max,
+    )
+    govern_project_form_search(data)
+    build_project_lifecycle_summary(data)
+    realign_access_policy_with_visible_fields(data)
+
+
 def govern_project_task_form(
     data: dict,
     *,

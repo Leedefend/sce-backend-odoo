@@ -3,7 +3,7 @@
 Date: 2026-07-13
 Owner: Platform owner
 Target file: `addons/smart_core/utils/contract_governance.py`
-Current size: 2,245 lines
+Current size: 2,207 lines
 Phase: staged responsibility split
 
 ## Purpose
@@ -72,7 +72,7 @@ and by a smaller public module layout.
 | `contract_governance_form_render_split_guard.py` | Form render profile resolution, boolean coercion, and form capability permission projection lock. |
 | `contract_governance_form_validation_split_guard.py` | Form validation rule assembly, profile normalization, and business form policy merge behavior lock. |
 | `contract_governance_form_fields_split_guard.py` | Form field ordering, core/advanced group derivation, required-field resolution, and field policy behavior lock. |
-| `contract_governance_project_form_split_guard.py` | Project form/profile/task/kanban projection, field selection, layout filtering, search/action helpers, lifecycle summary, and workflow surface projection lock. |
+| `contract_governance_project_form_split_guard.py` | Project form/profile/task/kanban projection, project form orchestration, field selection, layout filtering, search/action helpers, lifecycle summary, and workflow surface projection lock. |
 | `contract_governance_enterprise_forms_split_guard.py` | Enterprise company, department, and user form projection, action cleanup, governance next-action, and user field-policy behavior lock. |
 
 ## Extraction Order
@@ -480,3 +480,17 @@ Stage 26 is complete when:
 - the extracted module remains projection-only: no ORM calls, HTTP calls,
   routing, file IO, or environment access;
 - `contract_governance.py` is locked at `<=2245` lines for this stage.
+
+## Stage 27 Target
+
+Stage 27 is complete when:
+
+- `contract_governance_project_form.py` also owns project form action
+  orchestration and project form contract orchestration using callbacks for
+  layout collection, layout backfill, lifecycle summary, search cleanup, and
+  access-policy realignment;
+- `contract_governance.py` keeps project form model detection, profile lookup,
+  selected-field derivation, and callback wiring in the facade;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=2207` lines for this stage.

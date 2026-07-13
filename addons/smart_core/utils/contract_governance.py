@@ -1320,37 +1320,14 @@ def _emit_scene_action_semantics(data: dict, *, header_rows: list[dict], record_
 
 
 def _govern_project_form_actions(data: dict) -> None:
-    toolbar = _as_dict(data.get("toolbar"))
-    if isinstance(toolbar.get("header"), list):
-        toolbar["header"] = []
-    data["toolbar"] = toolbar
-
-    rows = data.get("buttons")
-    if not isinstance(rows, list):
-        return
-    header_rows: list[dict] = []
-    smart_rows: list[dict] = []
-    for row in rows:
-        if not isinstance(row, dict):
-            continue
-        if _is_noisy_project_action(row, data):
-            continue
-        level = _safe_lower(row.get("level"))
-        if level == "header":
-            header_rows.append(row)
-        elif level in {"smart", "row"}:
-            smart_rows.append(row)
-
-    header_rows = sorted(header_rows, key=lambda item: (_action_priority(item, data), _safe_text(item.get("label"))))
-    smart_rows = sorted(smart_rows, key=lambda item: (_action_priority(item, data), _safe_text(item.get("label"))))
-    curated = header_rows[:_PROJECT_FORM_HEADER_ACTION_MAX] + smart_rows[:_PROJECT_FORM_SMART_ACTION_MAX]
-    data["buttons"] = curated
-    _emit_scene_action_semantics(
+    _project_form.govern_project_form_actions(
         data,
-        header_rows=header_rows[:_PROJECT_FORM_HEADER_ACTION_MAX],
-        record_rows=smart_rows[:_PROJECT_FORM_SMART_ACTION_MAX],
+        profile=_legacy_project_form_profile(data),
+        default_group_labels=_PROJECT_FORM_DEFAULT_ACTION_GROUP_LABELS,
+        action_group_limit=_PROJECT_FORM_ACTION_GROUP_LIMIT,
+        header_action_max=_PROJECT_FORM_HEADER_ACTION_MAX,
+        smart_action_max=_PROJECT_FORM_SMART_ACTION_MAX,
     )
-    data["action_groups"] = _build_project_action_groups(curated, data)
 
 
 def _build_project_lifecycle_summary(data: dict) -> None:
@@ -1360,36 +1337,21 @@ def _build_project_lifecycle_summary(data: dict) -> None:
 def _govern_project_form_contract_for_user(data: dict) -> None:
     selected = _pick_project_form_fields(data)
     profile = _legacy_project_form_profile(data)
-    _trim_contract_field_maps(data, selected)
-    data["visible_fields"] = selected
-    views = _as_dict(data.get("views"))
-    form = _as_dict(views.get("form"))
-    native_layout_fields = _collect_layout_field_names(form.get("layout"))
-    if not native_layout_fields:
-        _backfill_form_layout_from_visible_fields(data)
-    data["form_profile"] = {
-        "core_fields": selected[:8],
-        "advanced_fields": selected[8:],
-        "max_fields": int(profile.get("max_fields") or _PROJECT_FORM_FIELD_MAX),
-    }
-    # Keep parser-native notebook/page tree intact for project form alignment.
-    # Do not prune form layout by selected fields in user mode.
-    views = _as_dict(data.get("views"))
-    form = _as_dict(views.get("form"))
-    form["form_profile"] = _as_dict(data.get("form_profile"))
-    views["form"] = form
-    data["views"] = views
-
-    permissions = _as_dict(data.get("permissions"))
-    field_groups = _as_dict(permissions.get("field_groups"))
-    if field_groups:
-        permissions["field_groups"] = field_groups
-    data["permissions"] = permissions
-
-    _govern_project_form_actions(data)
-    _govern_project_form_search(data)
-    _build_project_lifecycle_summary(data)
-    _realign_access_policy_with_visible_fields(data)
+    _project_form.govern_project_form_contract(
+        data,
+        selected_fields=selected,
+        profile=profile,
+        collect_layout_field_names=_collect_layout_field_names,
+        backfill_form_layout_from_visible_fields=_backfill_form_layout_from_visible_fields,
+        govern_project_form_search=_govern_project_form_search,
+        build_project_lifecycle_summary=_build_project_lifecycle_summary,
+        realign_access_policy_with_visible_fields=_realign_access_policy_with_visible_fields,
+        default_max_fields=_PROJECT_FORM_FIELD_MAX,
+        default_group_labels=_PROJECT_FORM_DEFAULT_ACTION_GROUP_LABELS,
+        action_group_limit=_PROJECT_FORM_ACTION_GROUP_LIMIT,
+        header_action_max=_PROJECT_FORM_HEADER_ACTION_MAX,
+        smart_action_max=_PROJECT_FORM_SMART_ACTION_MAX,
+    )
 
 
 def _govern_project_task_form_for_user(data: dict) -> None:

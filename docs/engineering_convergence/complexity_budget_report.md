@@ -34,7 +34,7 @@ Generated from repository source files. This report is informational during the 
 | 2306 | Python source | `addons/smart_core/handlers/system_init.py` |
 | 2289 | Python source | `addons/smart_construction_core/models/core/project_core.py` |
 | 2267 | Vue source | `frontend/apps/web/src/layouts/AppShell.vue` |
-| 2245 | Python source | `addons/smart_core/utils/contract_governance.py` |
+| 2207 | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 2193 | Python source | `addons/smart_core/handlers/api_data.py` |
 | 2051 | Python source | `scripts/verify/backend_business_fact_model_audit.py` |
 | 1974 | Python source | `addons/smart_construction_core/models/core/payment_request.py` |
@@ -150,7 +150,7 @@ Generated from repository source files. This report is informational during the 
 | 2306 | split_plan_required | Python source | `addons/smart_core/handlers/system_init.py` |
 | 2289 | split_plan_required | Python source | `addons/smart_construction_core/models/core/project_core.py` |
 | 2267 | split_plan_required | Vue source | `frontend/apps/web/src/layouts/AppShell.vue` |
-| 2245 | split_plan_required | Python source | `addons/smart_core/utils/contract_governance.py` |
+| 2207 | split_plan_required | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 2193 | split_plan_required | Python source | `addons/smart_core/handlers/api_data.py` |
 | 2051 | split_plan_required | Python source | `scripts/verify/backend_business_fact_model_audit.py` |
 | 2010 | warning | XML data/view | `addons/smart_construction_core/security/sc_record_rules.xml` |
