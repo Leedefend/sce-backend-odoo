@@ -56,6 +56,7 @@ and by a smaller public module layout.
 | `test_odoo_native_alignment_boundaries.py` | Source authority and native alignment boundaries. |
 | `list_batch_action_closure_guard.py` | Batch action policy behavior through governed list contracts. |
 | `contract_governance_registry_split_guard.py` | Constants/registry extraction compatibility and line-budget lock. |
+| `contract_governance_user_surface_split_guard.py` | User-surface sanitizer/action grouping extraction compatibility and purity lock. |
 
 ## Extraction Order
 
@@ -112,3 +113,20 @@ Stage 1 is complete when:
 - registry mutation through `contract_governance.py` updates the loaded registry
   storage object;
 - `contract_governance.py` is locked at `<=4655` lines for this stage.
+
+## Stage 2 Target
+
+Stage 2 is complete when:
+
+- `contract_governance_user_surface.py` owns recursive user-mode field stripping,
+  allowed-key picking, user capability/scene sanitizers, noisy filter/action
+  detection, action grouping, action-row trimming, and user-surface noise
+  reduction;
+- `contract_governance.py` keeps the old private helper names as compatibility
+  wrappers;
+- the extracted module remains pure: no ORM calls, HTTP calls, routing, file IO,
+  or environment access;
+- `normalize_capabilities`, `normalize_scenes`, and `_apply_user_surface_policies`
+  remain in the facade until their registry and model-policy dependencies are
+  isolated separately;
+- `contract_governance.py` is locked at `<=4535` lines for this stage.

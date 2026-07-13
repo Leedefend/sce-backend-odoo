@@ -43,6 +43,7 @@ REQUIRED_GUARDS = [
     "test_odoo_native_alignment_boundaries.py",
     "list_batch_action_closure_guard.py",
     "contract_governance_registry_split_guard.py",
+    "contract_governance_user_surface_split_guard.py",
 ]
 
 INVARIANTS = [
@@ -91,6 +92,9 @@ def main() -> int:
         "## Stage 1 Target",
         "`contract_governance_registry.py` owns source authority constants",
         "`contract_governance.py` is locked at `<=4655` lines",
+        "## Stage 2 Target",
+        "`contract_governance_user_surface.py` owns recursive user-mode field stripping",
+        "`contract_governance.py` is locked at `<=4535` lines",
     ]:
         if token not in doc:
             errors.append(f"responsibility map missing token: {token}")
