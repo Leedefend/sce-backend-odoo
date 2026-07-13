@@ -4,7 +4,7 @@ Generated from repository source files. This report is informational during the 
 
 ## Summary
 
-- Scanned files: `3885`
+- Scanned files: `3887`
 - Files requiring split plan: `42`
 - Files above warning threshold: `64`
 
@@ -20,9 +20,9 @@ Generated from repository source files. This report is informational during the 
 | 3633 | Python source | `addons/smart_core/handlers/form_field_configuration.py` |
 | 3525 | Vue source | `frontend/apps/web/src/views/HomeView.vue` |
 | 3323 | Python source | `addons/smart_construction_core/tests/test_p0_state_closure.py` |
-| 3212 | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 3202 | Python source | `addons/smart_core/tests/test_form_field_configuration_params.py` |
 | 3187 | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
+| 3169 | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 3092 | Python source | `addons/smart_construction_core/models/support/p1_daily_business_visible_alias_fields.py` |
 | 3041 | Python source | `addons/smart_core/core/workspace_home_contract_builder.py` |
 | 3013 | Python source | `addons/smart_core/app_config_engine/services/assemblers/page_assembler.py` |
@@ -136,9 +136,9 @@ Generated from repository source files. This report is informational during the 
 | 3633 | split_plan_required | Python source | `addons/smart_core/handlers/form_field_configuration.py` |
 | 3525 | split_plan_required | Vue source | `frontend/apps/web/src/views/HomeView.vue` |
 | 3323 | split_plan_required | Python source | `addons/smart_construction_core/tests/test_p0_state_closure.py` |
-| 3212 | split_plan_required | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 3202 | split_plan_required | Python source | `addons/smart_core/tests/test_form_field_configuration_params.py` |
 | 3187 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
+| 3169 | split_plan_required | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 3092 | split_plan_required | Python source | `addons/smart_construction_core/models/support/p1_daily_business_visible_alias_fields.py` |
 | 3041 | split_plan_required | Python source | `addons/smart_core/core/workspace_home_contract_builder.py` |
 | 3013 | split_plan_required | Python source | `addons/smart_core/app_config_engine/services/assemblers/page_assembler.py` |
