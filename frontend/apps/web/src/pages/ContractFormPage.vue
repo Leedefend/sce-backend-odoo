@@ -508,9 +508,6 @@ import {
   normalizeLowCodeApplyParams,
   normalizeLowCodeContractListRows,
   contractFieldSequenceFromOrder,
-  moveFieldOrderByDelta,
-  moveFieldOrderRelative,
-  moveFieldOrderToGroupEnd,
   readableFallbackFieldLabel,
   resolveFormDesignFieldLabel,
   resolveSelectedFormSettingsFieldGroupTitle,
@@ -698,6 +695,7 @@ import { useFieldOrderDragRuntime } from './contractForm/useFieldOrderDragRuntim
 import { useLowCodeFieldCreateRuntime } from './contractForm/useLowCodeFieldCreateRuntime';
 import { useFormSettingsLayoutRuntime } from './contractForm/useFormSettingsLayoutRuntime';
 import { useFormSettingsGroupRuntime } from './contractForm/useFormSettingsGroupRuntime';
+import { useFieldOrderMutationRuntime } from './contractForm/useFieldOrderMutationRuntime';
 import {
   buildWorkflowTransitions,
   analyzeFormContractReadiness,
@@ -1452,6 +1450,34 @@ const {
   formConfigAuditResult,
   contractModeFeedback,
   appendOperation: appendFormConfigOperation,
+});
+const {
+  moveFieldOrder,
+  moveSelectedFormSettingsFieldToOrderTarget,
+  onSelectedFormSettingsFieldGroupMoveChange,
+  onFieldOrderDrop,
+  onFieldOrderGroupDrop,
+} = useFieldOrderMutationRuntime({
+  isEditable: () => isContractFieldOrderEditable.value,
+  ensureDraftStartsFromCurrentLayout: () => ensureFieldOrderDraftStartsFromCurrentLayout(),
+  fieldOrderDraft,
+  fieldOrderPreviewActive,
+  currentOrderedFieldKeys: () => currentFormOrderedFieldKeys.value,
+  fieldGroupBase,
+  fieldGroupDraft,
+  fieldMoveTargetDraft,
+  selectedFieldKey: selectedFormSettingsFieldKey,
+  selectedFieldLabel: selectedFormSettingsFieldLabel,
+  selectedGroupTitleDraft: selectedFormSettingsFieldGroupTitleDraft,
+  selectedGroupTitleEdit: selectedFormSettingsFieldGroupTitleEdit,
+  selectedOrderTargetKey: selectedFormSettingsOrderTargetKey,
+  selectedOrderPlacement: selectedFormSettingsOrderPlacement,
+  draggingFieldKey,
+  draggingFieldLabel,
+  formConfigAuditResult,
+  formDesignFieldLabel: (fieldKey) => formDesignFieldLabel(fieldKey),
+  appendOperation: appendFormConfigOperation,
+  resetDropTarget: resetFieldOrderDropTarget,
 });
 const {
   lowCodeFieldCreateDialog,
@@ -5643,44 +5669,6 @@ function selectFormDesignerField(fieldKey: string) {
   });
 }
 
-function moveFieldToGroupEnd(fieldKey: string, groupTitle: string) {
-  const sourceFieldKey = String(fieldKey || '').trim();
-  if (!sourceFieldKey) return;
-  ensureFieldOrderDraftStartsFromCurrentLayout();
-  const moved = moveFieldOrderToGroupEnd({
-    order: fieldOrderDraft.value,
-    fieldKey: sourceFieldKey,
-    groupTitle,
-    resolveFieldGroupTitle: (key) => fieldGroupBase.value[key] || fieldGroupDraft[key],
-  });
-  if (!moved) return;
-  fieldOrderDraft.value = moved.order;
-  fieldOrderPreviewActive.value = true;
-  fieldGroupDraft[sourceFieldKey] = moved.groupTitle;
-  fieldMoveTargetDraft[sourceFieldKey] = moved.anchorFieldKey;
-  selectedFormSettingsFieldKey.value = sourceFieldKey;
-  selectedFormSettingsFieldLabel.value = draggingFieldLabel.value || formDesignFieldLabel(sourceFieldKey);
-  selectedFormSettingsFieldGroupTitleDraft.value = moved.groupTitle;
-  selectedFormSettingsFieldGroupTitleEdit.value = moved.groupTitle;
-  formConfigAuditResult.value = null;
-  appendFormConfigOperation('移动分组', `${formDesignFieldLabel(sourceFieldKey)} 移动到 ${moved.groupTitle}`);
-}
-
-function moveSelectedFormSettingsFieldToGroup(groupTitle: string) {
-  const fieldKey = selectedFormSettingsFieldKey.value;
-  if (!fieldKey) return;
-  moveFieldToGroupEnd(fieldKey, groupTitle);
-}
-
-function onSelectedFormSettingsFieldGroupMoveChange(event: Event) {
-  const target = event.target;
-  const targetInput = target as unknown as { value?: unknown };
-  const value = target && typeof targetInput.value === 'string'
-    ? targetInput.value
-    : '';
-  moveSelectedFormSettingsFieldToGroup(value);
-}
-
 async function onSelectedFormSettingsGroupTitleChange(event: Event) {
   const oldTitle = selectedFormSettingsFieldGroupTitle.value;
   const target = event.target as HTMLInputElement | null;
@@ -5690,23 +5678,6 @@ async function onSelectedFormSettingsGroupTitleChange(event: Event) {
     return;
   }
   await onContractInlineGroupRename({ oldTitle, newTitle });
-}
-
-function moveSelectedFormSettingsFieldToOrderTarget() {
-  const fieldKey = selectedFormSettingsFieldKey.value;
-  const targetFieldKey = selectedFormSettingsOrderTargetKey.value;
-  if (!fieldKey || !targetFieldKey || fieldKey === targetFieldKey) return;
-  const moved = moveFieldOrderTo(fieldKey, targetFieldKey, selectedFormSettingsOrderPlacement.value, '调整位置');
-  if (!moved) return;
-  const targetGroup = normalizeFieldGroupTitle(fieldGroupBase.value[targetFieldKey] || fieldGroupDraft[targetFieldKey]);
-  if (targetGroup) {
-    fieldGroupDraft[fieldKey] = targetGroup;
-    fieldMoveTargetDraft[fieldKey] = targetFieldKey;
-    selectedFormSettingsFieldGroupTitleDraft.value = targetGroup;
-    selectedFormSettingsFieldGroupTitleEdit.value = targetGroup;
-  }
-  selectedFormSettingsFieldKey.value = fieldKey;
-  selectedFormSettingsFieldLabel.value = formDesignFieldLabel(fieldKey);
 }
 
 function onSelectedFormSettingsFieldVisibilityChange(value: string) {
@@ -5841,62 +5812,8 @@ async function onContractInlineFieldLabelChange(payload: { field: FormSectionFie
   await setInlineFieldPolicy(fieldKey, { label });
 }
 
-function onFieldOrderDrop(targetFieldKey: string, targetGroupTitle = '', requestedPlacement?: 'before' | 'after' | '') {
-  if (!isContractFieldOrderEditable.value || !draggingFieldKey.value || draggingFieldKey.value === targetFieldKey) return;
-  const sourceFieldKey = draggingFieldKey.value;
-  const currentOrder = fieldOrderDraft.value.length ? fieldOrderDraft.value : currentFormOrderedFieldKeys.value;
-  const sourceIndex = currentOrder.indexOf(sourceFieldKey);
-  const targetIndex = currentOrder.indexOf(targetFieldKey);
-  const placement = requestedPlacement || (sourceIndex >= 0 && targetIndex >= 0 && sourceIndex < targetIndex ? 'after' : 'before');
-  moveFieldOrderTo(draggingFieldKey.value, targetFieldKey, placement, '拖拽排序');
-  const normalizedTargetGroup = normalizeFieldGroupTitle(fieldGroupBase.value[targetFieldKey] || fieldGroupDraft[targetFieldKey] || targetGroupTitle);
-  if (normalizedTargetGroup) {
-    fieldGroupDraft[sourceFieldKey] = normalizedTargetGroup;
-    fieldMoveTargetDraft[sourceFieldKey] = targetFieldKey;
-    selectedFormSettingsFieldGroupTitleDraft.value = normalizedTargetGroup;
-  }
-  selectedFormSettingsFieldKey.value = sourceFieldKey;
-  selectedFormSettingsFieldLabel.value = draggingFieldLabel.value || formDesignFieldLabel(sourceFieldKey);
-  resetFieldOrderDropTarget();
-}
-
 function fieldGroupTitleForDraft(fieldKey: string) {
   return effectiveFieldGroupTitleForDraft(fieldKey);
-}
-
-function onFieldOrderGroupDrop(groupTitle: string) {
-  if (!isContractFieldOrderEditable.value || !draggingFieldKey.value) return;
-  moveFieldToGroupEnd(draggingFieldKey.value, groupTitle);
-  resetFieldOrderDropTarget();
-}
-
-function moveFieldOrderTo(
-  sourceFieldKey: string,
-  targetFieldKey: string,
-  placement: 'before' | 'after' = 'before',
-  operationAction = '拖拽排序',
-) {
-  ensureFieldOrderDraftStartsFromCurrentLayout();
-  const draft = moveFieldOrderRelative(fieldOrderDraft.value, sourceFieldKey, targetFieldKey, placement);
-  if (!draft) return false;
-  fieldOrderDraft.value = draft;
-  fieldOrderPreviewActive.value = true;
-  formConfigAuditResult.value = null;
-  appendFormConfigOperation(
-    operationAction,
-    `${formDesignFieldLabel(sourceFieldKey)} 调整到 ${formDesignFieldLabel(targetFieldKey)} ${placement === 'after' ? '后' : '前'}`,
-  );
-  return true;
-}
-
-function moveFieldOrder(fieldKey: string, delta: number) {
-  if (!isContractFieldOrderEditable.value) return;
-  ensureFieldOrderDraftStartsFromCurrentLayout();
-  const draft = moveFieldOrderByDelta(fieldOrderDraft.value, fieldKey, delta);
-  if (!draft) return;
-  fieldOrderDraft.value = draft;
-  fieldOrderPreviewActive.value = true;
-  formConfigAuditResult.value = null;
 }
 
 function routeQueryText(key: string) {
