@@ -3,9 +3,7 @@ import type { Router, LocationQueryRaw } from 'vue-router';
 import { executeButton } from '../../api/executeButton';
 import { pickContractNavQuery } from '../../app/navigationContext';
 import { buildFormActionExecutionPlan } from './actionExecutionPlan';
-import type { BusyKind, ContractAction } from './types';
-
-type SubmissionFeedback = { kind: 'success' | 'warn' | 'error'; message: string } | null;
+import type { BusyKind, ContractAction, SubmissionFeedback } from './types';
 
 type SceneMutationInput = {
   mutation: NonNullable<ContractAction['mutation']>;

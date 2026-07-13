@@ -1,9 +1,7 @@
 import type { ActionContract } from '@sc/schema';
 import { fieldType } from './fieldUtils';
 import { isRequiredFieldEmptyByType } from './valueUtils';
-import type { LayoutNode } from './types';
-
-type SubmissionFeedback = { kind: 'success' | 'warn' | 'error'; message: string } | null;
+import type { LayoutNode, SubmissionFeedback } from './types';
 
 export type SaveRecordValidationResult = {
   editableMap?: Record<string, unknown>;

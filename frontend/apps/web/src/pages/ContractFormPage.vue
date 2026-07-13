@@ -644,6 +644,7 @@ import {
   type RelationSearchColumn,
   type RelationSearchRow,
   type RelationUiLabels,
+  type SubmissionFeedback,
   type UiStatus,
 } from './contractForm/types';
 import {
@@ -737,7 +738,7 @@ const retainedRouteIdentity = ref('');
 const renderErrorMessage = ref('');
 const errorMessage = ref('');
 const validationErrors = ref<string[]>([]);
-const submissionFeedback = ref<{ kind: 'success' | 'warn' | 'error'; message: string } | null>(null);
+const submissionFeedback = ref<SubmissionFeedback>(null);
 const showOne2manyErrors = ref(false);
 const busyKind = ref<BusyKind>(null);
 const activeContractMode = ref('');
