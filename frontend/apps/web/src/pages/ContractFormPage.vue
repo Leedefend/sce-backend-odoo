@@ -462,6 +462,7 @@ import {
   contractActionRuleKey,
   contractPromptParamsFromRule,
   contractPromptFieldsFromRule,
+  isTierValidationActionHidden as isTierValidationActionHiddenFromState,
   normalizeActionSafety,
   normalizeActionLabel,
   normalizeRequiredParams,
@@ -7387,18 +7388,11 @@ async function executePrimarySubmitAction(action: ContractAction, resId: number)
 }
 
 function isTierValidationActionHidden(methodName: string): boolean {
-  const method = String(methodName || '').trim();
-  const validationStatus = String(formData.validation_status || '').trim();
-  if ((method === 'validate_tier' || method === 'reject_tier') && !formData.can_review) {
-    return true;
-  }
-  if (
-    (method === 'action_confirm' || method === 'action_submit' || method === 'button_confirm')
-    && ['waiting', 'pending', 'validated'].includes(validationStatus)
-  ) {
-    return true;
-  }
-  return false;
+  return isTierValidationActionHiddenFromState({
+    methodName,
+    validationStatus: formData.validation_status,
+    canReview: formData.can_review,
+  });
 }
 
 async function applyProjectionRefreshPolicy(policy?: ContractAction['refreshPolicy']) {

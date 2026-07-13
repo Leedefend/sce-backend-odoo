@@ -33,6 +33,20 @@ export function normalizeActionLabel(raw: unknown, fallback = ''): string {
   return text;
 }
 
+export function isTierValidationActionHidden(params: {
+  methodName: string;
+  validationStatus: unknown;
+  canReview: unknown;
+}) {
+  const method = String(params.methodName || '').trim();
+  const validationStatus = String(params.validationStatus || '').trim();
+  if ((method === 'validate_tier' || method === 'reject_tier') && !params.canReview) return true;
+  return (
+    (method === 'action_confirm' || method === 'action_submit' || method === 'button_confirm')
+    && ['waiting', 'pending', 'validated'].includes(validationStatus)
+  );
+}
+
 export function contractActionRuleClientMode(rule: Record<string, unknown>) {
   const target = parseMaybeJsonRecord(rule.target);
   return String(target.mode || target.client_mode || rule.mode || rule.client_mode || '').trim();
