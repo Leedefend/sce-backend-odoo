@@ -97,7 +97,7 @@ Generated from repository source files. This report is informational during the 
 | 985 | Python source | `scripts/migration/history_business_usable_probe.py` |
 | 966 | Python source | `addons/smart_core/handlers/load_contract.py` |
 | 966 | Python source | `scripts/verify/scbsly_direct_project_strict_visible_acceptance.py` |
-| 958 | Python source | `addons/smart_construction_core/core_extension.py` |
+| 957 | Python source | `addons/smart_construction_core/core_extension.py` |
 | 944 | Python source | `scripts/ops/scbs_55_user_acceptance_menu_policy_apply.py` |
 | 912 | Vue source | `frontend/apps/web/src/components/action/ActionSurfaceToolbar.vue` |
 | 902 | Python source | `scripts/migration/fresh_db_material_stock_document_projection_write.py` |
@@ -207,7 +207,7 @@ Generated from repository source files. This report is informational during the 
 | 985 | warning | Python source | `scripts/migration/history_business_usable_probe.py` |
 | 966 | warning | Python source | `addons/smart_core/handlers/load_contract.py` |
 | 966 | warning | Python source | `scripts/verify/scbsly_direct_project_strict_visible_acceptance.py` |
-| 958 | warning | Python source | `addons/smart_construction_core/core_extension.py` |
+| 957 | warning | Python source | `addons/smart_construction_core/core_extension.py` |
 
 ## Interpretation
 

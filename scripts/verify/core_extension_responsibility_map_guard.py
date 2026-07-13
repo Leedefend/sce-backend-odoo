@@ -18,7 +18,7 @@ PROJECTED_CONTRACTS = ROOT / "addons/smart_construction_core/core_extension_proj
 SERVICES = ROOT / "addons/smart_construction_core/core_extension_services.py"
 API_POLICY = ROOT / "addons/smart_construction_core/core_extension_api_policy.py"
 DOC = ROOT / "docs/engineering_convergence/core_extension_responsibility_map.md"
-MAX_LINES = 958
+MAX_LINES = 957
 
 
 def _line_count(path: Path) -> int:
@@ -251,7 +251,7 @@ def main() -> int:
         text = DOC.read_text(encoding="utf-8")
         required_tokens = [
             "Target file: `addons/smart_construction_core/core_extension.py`",
-            "Current line budget: `<=958`.",
+            "Current line budget: `<=957`.",
             "`core_extension.py` is the construction-industry contribution facade",
             "`smart_core_register(registry)`",
             "`smart_core_extend_system_init(data, env, user)`",
@@ -306,7 +306,7 @@ def main() -> int:
             "Stage 11 API Policy Hooks",
             "`core_extension_api_policy.py` owns API data policy hooks",
             "`core_extension.py` imports API policy public hook names directly",
-            "`core_extension.py` is locked at `<=958` lines",
+            "`core_extension.py` is locked at `<=957` lines",
             "future PRs from this branch should include multiple commits",
             "open only when",
         ]

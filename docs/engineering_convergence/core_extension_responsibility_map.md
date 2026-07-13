@@ -2,7 +2,7 @@
 
 Target file: `addons/smart_construction_core/core_extension.py`
 
-Current line budget: `<=958`.
+Current line budget: `<=957`.
 
 ## Role
 
@@ -235,4 +235,4 @@ Stage 11 is complete when:
 - the extracted module may perform read-only ORM searches required by file
   model discovery and attachment subject lookup, but must not write records or
   mutate registries;
-- `core_extension.py` is locked at `<=958` lines for this stage.
+- `core_extension.py` is locked at `<=957` lines for this stage.
