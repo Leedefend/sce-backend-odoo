@@ -581,11 +581,11 @@ import {
   formRuntimeCommandHintLabel,
   formRuntimeReasonLabel,
   formRuntimeRowStateLabel,
+  appendOne2manyDraftRow,
   buildOne2manyCommandValue as buildOne2manyCommandValueFromRows,
   collectOne2manyDraftValidationFromRows,
-  createOne2manyDraftRow,
+  ensureOne2manyRows as ensureOne2manyRowsForField,
   initOne2manyRowsFromRelationSource,
-  normalizeOne2manyColumnValue,
   one2manyCanCreateFromPolicies,
   one2manyColumnDisplayValue,
   one2manyColumnInputType,
@@ -593,10 +593,13 @@ import {
   one2manyColumnsFromSubview,
   one2manyDraftSummary,
   one2manyPrimaryColumnFromColumns,
+  removeOne2manyDraftRow,
+  restoreOne2manyDraftRow,
   one2manyRowLabelFromPrimary,
   one2manyRowHintsFromPatches,
   one2manyRowStateLabel,
   selectOne2manySubview,
+  setOne2manyDraftRowField,
   one2manySubviewPolicies,
 } from './contractForm/one2manyUtils';
 import {
@@ -2539,10 +2542,7 @@ function removedOne2manyRows(name: string) {
 }
 
 function ensureOne2manyRows(name: string) {
-  if (!Array.isArray(one2manyRows[name])) {
-    one2manyRows[name] = [];
-  }
-  return one2manyRows[name];
+  return ensureOne2manyRowsForField(one2manyRows, name);
 }
 
 function makeOne2manyKey() {
@@ -2550,51 +2550,23 @@ function makeOne2manyKey() {
 }
 
 function addOne2manyRow(name: string) {
-  const rows = ensureOne2manyRows(name);
   const primary = one2manyPrimaryColumn(name);
   const columns = one2manyColumns(name);
-  rows.push(createOne2manyDraftRow({ key: makeOne2manyKey(), primary, columns }));
+  appendOne2manyDraftRow({ rowsByField: one2manyRows, fieldName: name, key: makeOne2manyKey(), primary, columns });
   markFieldChanged(name);
 }
 
 function setOne2manyRowField(fieldName: string, rowKey: string, column: One2ManyColumn, value: unknown) {
-  if (column.readonly) return;
-  const rows = ensureOne2manyRows(fieldName);
-  const row = rows.find((item) => item.key === rowKey);
-  if (!row) return;
-  const normalized = normalizeOne2manyColumnValue(column, value);
-  row.values = {
-    ...(row.values || {}),
-    [column.name]: normalized,
-  };
-  row.dirty = true;
-  if (!row.dirtyFields.includes(column.name)) {
-    row.dirtyFields = [...row.dirtyFields, column.name];
-  }
-  markFieldChanged(fieldName);
+  const changed = setOne2manyDraftRowField({ rowsByField: one2manyRows, fieldName, rowKey, column, value });
+  if (changed) markFieldChanged(fieldName);
 }
 
 function removeOne2manyRow(fieldName: string, rowKey: string) {
-  const rows = ensureOne2manyRows(fieldName);
-  const index = rows.findIndex((item) => item.key === rowKey);
-  if (index < 0) return;
-  const row = rows[index];
-  if (row.isNew) {
-    rows.splice(index, 1);
-  } else {
-    row.removed = true;
-    row.dirty = true;
-  }
-  markFieldChanged(fieldName);
+  if (removeOne2manyDraftRow(one2manyRows, fieldName, rowKey)) markFieldChanged(fieldName);
 }
 
 function restoreOne2manyRow(fieldName: string, rowKey: string) {
-  const rows = ensureOne2manyRows(fieldName);
-  const row = rows.find((item) => item.key === rowKey);
-  if (!row) return;
-  row.removed = false;
-  row.dirty = true;
-  markFieldChanged(fieldName);
+  if (restoreOne2manyDraftRow(one2manyRows, fieldName, rowKey)) markFieldChanged(fieldName);
 }
 
 function initOne2manyRows(name: string, source: unknown) {

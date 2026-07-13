@@ -161,6 +161,73 @@ export function createOne2manyDraftRow(params: {
   };
 }
 
+export function ensureOne2manyRows(
+  rowsByField: Record<string, One2ManyInlineRow[]>,
+  fieldName: string,
+) {
+  if (!Array.isArray(rowsByField[fieldName])) {
+    rowsByField[fieldName] = [];
+  }
+  return rowsByField[fieldName];
+}
+
+export function appendOne2manyDraftRow(params: {
+  rowsByField: Record<string, One2ManyInlineRow[]>;
+  fieldName: string;
+  key: string;
+  primary: string;
+  columns: One2ManyColumn[];
+}) {
+  const rows = ensureOne2manyRows(params.rowsByField, params.fieldName);
+  rows.push(createOne2manyDraftRow({ key: params.key, primary: params.primary, columns: params.columns }));
+}
+
+export function setOne2manyDraftRowField(params: {
+  rowsByField: Record<string, One2ManyInlineRow[]>;
+  fieldName: string;
+  rowKey: string;
+  column: One2ManyColumn;
+  value: unknown;
+}) {
+  if (params.column.readonly) return false;
+  const rows = ensureOne2manyRows(params.rowsByField, params.fieldName);
+  const row = rows.find((item) => item.key === params.rowKey);
+  if (!row) return false;
+  const normalized = normalizeOne2manyColumnValue(params.column, params.value);
+  row.values = {
+    ...(row.values || {}),
+    [params.column.name]: normalized,
+  };
+  row.dirty = true;
+  if (!row.dirtyFields.includes(params.column.name)) {
+    row.dirtyFields = [...row.dirtyFields, params.column.name];
+  }
+  return true;
+}
+
+export function removeOne2manyDraftRow(rowsByField: Record<string, One2ManyInlineRow[]>, fieldName: string, rowKey: string) {
+  const rows = ensureOne2manyRows(rowsByField, fieldName);
+  const index = rows.findIndex((item) => item.key === rowKey);
+  if (index < 0) return false;
+  const row = rows[index];
+  if (row.isNew) {
+    rows.splice(index, 1);
+  } else {
+    row.removed = true;
+    row.dirty = true;
+  }
+  return true;
+}
+
+export function restoreOne2manyDraftRow(rowsByField: Record<string, One2ManyInlineRow[]>, fieldName: string, rowKey: string) {
+  const rows = ensureOne2manyRows(rowsByField, fieldName);
+  const row = rows.find((item) => item.key === rowKey);
+  if (!row) return false;
+  row.removed = false;
+  row.dirty = true;
+  return true;
+}
+
 export function initOne2manyRowsFromRelationSource(params: {
   source: unknown;
   relationOptions: Array<{ id: number; label: string }>;
