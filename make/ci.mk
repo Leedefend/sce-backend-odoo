@@ -712,6 +712,7 @@ ci.local.quick: guard.prod.forbid architecture.complexity_baseline_lock verify.u
 	@python3 scripts/verify/construction_core_extension_project_layout_split_guard.py
 	@python3 scripts/verify/construction_core_extension_contract_helpers_split_guard.py
 	@python3 scripts/verify/construction_core_extension_policy_maps_split_guard.py
+	@python3 scripts/verify/construction_core_extension_system_init_rows_split_guard.py
 	@python3 scripts/verify/construction_core_extension_responsibility_map_guard.py
 	@python3 scripts/verify/frontend_page_contract_boundary_guard.py
 	@python3 scripts/verify/frontend_page_contract_orchestration_consumption_guard.py
