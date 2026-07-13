@@ -1,5 +1,11 @@
 import type { ContractAction } from './types';
 
+function recordOrEmpty(value: unknown): Record<string, unknown> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : {};
+}
+
 export function collectRuntimeCapabilities(session: {
   capabilities?: unknown[];
   capabilityCatalog?: Record<string, { key?: unknown; state?: unknown; capability_state?: unknown }>;
@@ -55,6 +61,39 @@ export function normalizeSearchFilters(rows: unknown) {
       };
     })
     .filter((row) => row.key && row.label);
+}
+
+export function resolveBusinessCategoryContext(params: {
+  contractRecord: unknown;
+  routeQuery: Record<string, unknown>;
+  relationBusinessCategoryLabel: string;
+}) {
+  const contractRecord = recordOrEmpty(params.contractRecord);
+  const head = recordOrEmpty(contractRecord.head);
+  const headContext = recordOrEmpty(head.context);
+  const contractContext = recordOrEmpty(contractRecord.context);
+  const query = params.routeQuery;
+  return {
+    label: String(
+      query.current_business_category_label
+      || query.default_business_category_label
+      || headContext.current_business_category_label
+      || headContext.default_business_category_label
+      || contractContext.current_business_category_label
+      || contractContext.default_business_category_label
+      || params.relationBusinessCategoryLabel
+      || '',
+    ).trim(),
+    code: String(
+      query.current_business_category_code
+      || query.default_business_category_code
+      || headContext.current_business_category_code
+      || headContext.default_business_category_code
+      || contractContext.current_business_category_code
+      || contractContext.default_business_category_code
+      || '',
+    ).trim(),
+  };
 }
 
 export function buildWorkflowTransitions(params: {

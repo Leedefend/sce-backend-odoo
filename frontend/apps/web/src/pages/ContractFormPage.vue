@@ -707,6 +707,7 @@ import {
   collectRuntimeUserGroups,
   normalizeContractWarnings,
   normalizeSearchFilters,
+  resolveBusinessCategoryContext,
 } from './contractForm/contractRuntimeVm';
 
 async function collectActionParams(action: ContractAction): Promise<Record<string, unknown> | null> {
@@ -1116,46 +1117,13 @@ const pageTitle = computed(() => resolvePageTitle({
   recordTitle: String(formData.display_name || formData.name || ''),
 }));
 
-const currentBusinessCategoryLabel = computed(() => {
-  const contractRecord = dictOrEmpty(contract.value);
-  const head = dictOrEmpty(contractRecord.head);
-  const headContext = head.context && typeof head.context === 'object'
-    ? head.context as Record<string, unknown>
-    : {};
-  const contractContext = contractRecord.context && typeof contractRecord.context === 'object'
-    ? contractRecord.context as Record<string, unknown>
-    : {};
-  return String(
-    route.query.current_business_category_label
-    || route.query.default_business_category_label
-    || headContext.current_business_category_label
-    || headContext.default_business_category_label
-    || contractContext.current_business_category_label
-    || contractContext.default_business_category_label
-    || relationKeywords.business_category_id
-    || '',
-  ).trim();
-});
-
-const currentBusinessCategoryCode = computed(() => {
-  const contractRecord = dictOrEmpty(contract.value);
-  const head = dictOrEmpty(contractRecord.head);
-  const headContext = head.context && typeof head.context === 'object'
-    ? head.context as Record<string, unknown>
-    : {};
-  const contractContext = contractRecord.context && typeof contractRecord.context === 'object'
-    ? contractRecord.context as Record<string, unknown>
-    : {};
-  return String(
-    route.query.current_business_category_code
-    || route.query.default_business_category_code
-    || headContext.current_business_category_code
-    || headContext.default_business_category_code
-    || contractContext.current_business_category_code
-    || contractContext.default_business_category_code
-    || '',
-  ).trim();
-});
+const currentBusinessCategoryContext = computed(() => resolveBusinessCategoryContext({
+  contractRecord: contract.value,
+  routeQuery: route.query as Record<string, unknown>,
+  relationBusinessCategoryLabel: relationKeywords.business_category_id,
+}));
+const currentBusinessCategoryLabel = computed(() => currentBusinessCategoryContext.value.label);
+const currentBusinessCategoryCode = computed(() => currentBusinessCategoryContext.value.code);
 
 const pageDisplayTitle = computed(() => resolvePageDisplayTitle({
   isProjectIntakeCreateMode: isProjectIntakeCreateMode.value,
