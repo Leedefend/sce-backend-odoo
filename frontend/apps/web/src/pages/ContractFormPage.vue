@@ -633,6 +633,7 @@ import {
   type ContractAction,
   type ContractFieldGovernanceAction,
   type ContractFieldGovernanceRow,
+  type FormRuntimeStateEvent,
   type FormConfigAuditResult,
   type LayoutNode,
   type LowCodeFieldSize,
@@ -709,15 +710,7 @@ async function collectActionParams(action: ContractAction): Promise<Record<strin
   if (!action.requiresReason && !requiredParams.has('reason')) return {};
   const reason = window.prompt(`${action.label || '操作'}原因`)?.trim() || '';
   if (!reason) {
-    applyFormRuntimeStatusEvent({
-      status,
-      errorMessage,
-    }, {
-      kind: 'status',
-      transaction: 'runAction',
-      status: 'error',
-      errorMessage: '请填写操作原因',
-    });
+    applyPageStatusEvent({ kind: 'status', transaction: 'runAction', status: 'error', errorMessage: '请填写操作原因' });
     return null;
   }
   return { reason };
@@ -754,6 +747,13 @@ const formSettingsActiveTab = ref<'structure' | 'fields' | 'details' | 'actions'
 const contractModeFeedback = ref('');
 const contract = ref<ActionContract | null>(null);
 const contractMeta = ref<Record<string, unknown> | null>(null);
+
+type PageStatusEvent = Extract<FormRuntimeStateEvent, { kind: 'status' }>;
+
+function applyPageStatusEvent(event: PageStatusEvent) {
+  applyFormRuntimeStatusEvent({ status, errorMessage }, event);
+}
+
 const {
   copyContractJson,
   exportContractJson,
@@ -952,14 +952,7 @@ const {
   onPendingUploadFailed: (message) => {
     validationErrors.value = [message];
     submissionFeedback.value = { kind: 'error', message };
-    applyFormRuntimeStatusEvent({
-      status,
-      errorMessage,
-    }, {
-      kind: 'status',
-      transaction: 'primaryAction',
-      status: 'error',
-    });
+    applyPageStatusEvent({ kind: 'status', transaction: 'primaryAction', status: 'error' });
   },
 });
 const nativeChatterAutoLoadKey = ref('');
@@ -1653,15 +1646,7 @@ const {
       await reload();
       return true;
     } catch (err) {
-      applyFormRuntimeStatusEvent({
-        status,
-        errorMessage,
-      }, {
-        kind: 'status',
-        transaction: 'formConfig',
-        status: 'error',
-        errorMessage: err instanceof Error ? err.message : '自定义字段创建失败',
-      });
+      applyPageStatusEvent({ kind: 'status', transaction: 'formConfig', status: 'error', errorMessage: err instanceof Error ? err.message : '自定义字段创建失败' });
       return false;
     } finally {
       busyKind.value = null;
@@ -2089,15 +2074,7 @@ async function auditCurrentFormConfiguration() {
     });
     formConfigAuditResult.value = normalizeFormConfigAuditResult(result);
   } catch (err) {
-    applyFormRuntimeStatusEvent({
-      status,
-      errorMessage,
-    }, {
-      kind: 'status',
-      transaction: 'formConfig',
-      status: 'error',
-      errorMessage: err instanceof Error ? err.message : '表单配置检查失败',
-    });
+    applyPageStatusEvent({ kind: 'status', transaction: 'formConfig', status: 'error', errorMessage: err instanceof Error ? err.message : '表单配置检查失败' });
   } finally {
     formConfigAuditBusy.value = false;
   }
@@ -2463,15 +2440,7 @@ async function publishSelectedLowCodeContract() {
     contractModeFeedback.value = '配置版本已发布，刷新页面后按新配置生效';
     await loadLowCodeContractList();
   } catch (err) {
-    applyFormRuntimeStatusEvent({
-      status,
-      errorMessage,
-    }, {
-      kind: 'status',
-      transaction: 'contractMode',
-      status: 'error',
-      errorMessage: err instanceof Error ? err.message : '配置版本发布失败',
-    });
+    applyPageStatusEvent({ kind: 'status', transaction: 'contractMode', status: 'error', errorMessage: err instanceof Error ? err.message : '配置版本发布失败' });
   } finally {
     busyKind.value = null;
   }
@@ -2492,15 +2461,7 @@ async function rollbackSelectedLowCodeContract() {
     await loadLowCodeContractList();
     await switchLowCodeContractByName();
   } catch (err) {
-    applyFormRuntimeStatusEvent({
-      status,
-      errorMessage,
-    }, {
-      kind: 'status',
-      transaction: 'contractMode',
-      status: 'error',
-      errorMessage: err instanceof Error ? err.message : '配置版本回滚失败',
-    });
+    applyPageStatusEvent({ kind: 'status', transaction: 'contractMode', status: 'error', errorMessage: err instanceof Error ? err.message : '配置版本回滚失败' });
   } finally {
     busyKind.value = null;
   }
@@ -4062,15 +4023,7 @@ async function runNativeLayoutAction(row: Record<string, unknown>) {
       await reload();
       return;
     } catch (err) {
-      applyFormRuntimeStatusEvent({
-        status,
-        errorMessage,
-      }, {
-        kind: 'status',
-        transaction: 'runAction',
-        status: 'error',
-        errorMessage: err instanceof Error ? err.message : '操作执行失败',
-      });
+      applyPageStatusEvent({ kind: 'status', transaction: 'runAction', status: 'error', errorMessage: err instanceof Error ? err.message : '操作执行失败' });
       return;
     } finally {
       busyKind.value = null;
@@ -5500,14 +5453,7 @@ async function reload() {
     const reloadToken = activeReloadToken + 1;
     activeReloadToken = reloadToken;
     renderErrorMessage.value = '';
-    applyFormRuntimeStatusEvent({
-      status,
-      errorMessage,
-    }, {
-      kind: 'status',
-      transaction: 'formReload',
-      status: 'loading',
-    });
+    applyPageStatusEvent({ kind: 'status', transaction: 'formReload', status: 'loading' });
     validationErrors.value = [];
     showOne2manyErrors.value = false;
     try {
@@ -5515,14 +5461,7 @@ async function reload() {
       if (reloadToken !== activeReloadToken) return;
       await loadRecord();
       if (reloadToken !== activeReloadToken) return;
-      applyFormRuntimeStatusEvent({
-        status,
-        errorMessage,
-      }, {
-        kind: 'status',
-        transaction: 'formReload',
-        status: 'ok',
-      });
+      applyPageStatusEvent({ kind: 'status', transaction: 'formReload', status: 'ok' });
       retainedRouteIdentity.value = formRouteIdentity();
       void preloadFormAuxiliaryData(reloadToken);
     } catch (err) {
@@ -5539,15 +5478,7 @@ async function reload() {
         });
         return;
       }
-      applyFormRuntimeStatusEvent({
-        status,
-        errorMessage,
-      }, {
-        kind: 'status',
-        transaction: 'formReload',
-        status: 'error',
-        errorMessage: err instanceof Error ? err.message : '表单加载失败',
-      });
+      applyPageStatusEvent({ kind: 'status', transaction: 'formReload', status: 'error', errorMessage: err instanceof Error ? err.message : '表单加载失败' });
     } finally {
       if (activeReloadIdentity === reloadIdentity) {
         activeReloadPromise = null;
