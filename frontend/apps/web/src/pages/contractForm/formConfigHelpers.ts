@@ -88,6 +88,38 @@ export function appendFormConfigOperationLogEntry(
   return [entry, ...entries].slice(0, limit);
 }
 
+export function moveFieldOrderRelative(
+  order: string[],
+  sourceFieldKey: string,
+  targetFieldKey: string,
+  placement: 'before' | 'after' = 'before',
+): string[] | null {
+  const source = String(sourceFieldKey || '').trim();
+  const target = String(targetFieldKey || '').trim();
+  if (!source || !target || source === target) return null;
+  const draft = [...order];
+  const from = draft.indexOf(source);
+  const to = draft.indexOf(target);
+  if (from < 0 || to < 0) return null;
+  const [moved] = draft.splice(from, 1);
+  const targetIndex = draft.indexOf(target);
+  if (targetIndex < 0) return null;
+  const insertIndex = placement === 'after' ? targetIndex + 1 : targetIndex;
+  draft.splice(insertIndex, 0, moved);
+  return draft;
+}
+
+export function moveFieldOrderByDelta(order: string[], fieldKey: string, delta: number): string[] | null {
+  const key = String(fieldKey || '').trim();
+  const draft = [...order];
+  const from = draft.indexOf(key);
+  const to = from + Number(delta || 0);
+  if (!key || from < 0 || to < 0 || to >= draft.length) return null;
+  const [moved] = draft.splice(from, 1);
+  draft.splice(to, 0, moved);
+  return draft;
+}
+
 export function formConfigOperationSubject(action: string, summary: string) {
   const normalizedAction = String(action || '').trim();
   const normalizedSummary = String(summary || '').trim();

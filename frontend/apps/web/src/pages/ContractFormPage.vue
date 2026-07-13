@@ -523,6 +523,8 @@ import {
   normalizeFormConfigOperationLogEntries,
   normalizeLowCodeApplyParams,
   normalizeLowCodeContractListRows,
+  moveFieldOrderByDelta,
+  moveFieldOrderRelative,
   readableFallbackFieldLabel,
   resolveSelectedFormSettingsFieldGroupTitle,
   type LowCodeLayoutDraftRow,
@@ -7230,15 +7232,8 @@ function moveFieldOrderTo(
   operationAction = '拖拽排序',
 ) {
   ensureFieldOrderDraftStartsFromCurrentLayout();
-  const draft = [...fieldOrderDraft.value];
-  const from = draft.indexOf(sourceFieldKey);
-  const to = draft.indexOf(targetFieldKey);
-  if (from < 0 || to < 0 || sourceFieldKey === targetFieldKey) return false;
-  const [moved] = draft.splice(from, 1);
-  const targetIndex = draft.indexOf(targetFieldKey);
-  if (targetIndex < 0) return false;
-  const insertIndex = placement === 'after' ? targetIndex + 1 : targetIndex;
-  draft.splice(insertIndex, 0, moved);
+  const draft = moveFieldOrderRelative(fieldOrderDraft.value, sourceFieldKey, targetFieldKey, placement);
+  if (!draft) return false;
   fieldOrderDraft.value = draft;
   fieldOrderPreviewActive.value = true;
   formConfigAuditResult.value = null;
@@ -7252,12 +7247,8 @@ function moveFieldOrderTo(
 function moveFieldOrder(fieldKey: string, delta: number) {
   if (!isContractFieldOrderEditable.value) return;
   ensureFieldOrderDraftStartsFromCurrentLayout();
-  const draft = [...fieldOrderDraft.value];
-  const from = draft.indexOf(fieldKey);
-  const to = from + delta;
-  if (from < 0 || to < 0 || to >= draft.length) return;
-  const [moved] = draft.splice(from, 1);
-  draft.splice(to, 0, moved);
+  const draft = moveFieldOrderByDelta(fieldOrderDraft.value, fieldKey, delta);
+  if (!draft) return;
   fieldOrderDraft.value = draft;
   fieldOrderPreviewActive.value = true;
   formConfigAuditResult.value = null;
