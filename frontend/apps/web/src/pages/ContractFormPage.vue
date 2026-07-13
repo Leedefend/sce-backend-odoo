@@ -569,6 +569,7 @@ import {
   applyReadonlyFieldValues,
   shouldShowRequiredMark as shouldShowRequiredMarkFromNativeLayout,
   isNativeFieldVisible as isNativeFieldVisibleFromNativeLayout,
+  isNativeLayoutNodeVisible as isNativeLayoutNodeVisibleFromNativeLayout,
   type FieldSemanticMeta,
   type NativeLayoutLikeNode,
   type SemanticFieldGroup,
@@ -4648,28 +4649,19 @@ function evaluateNativeActionVisibility(row: Record<string, unknown>) {
 }
 
 function isNativeLayoutNodeVisible(nodeRaw: NativeFormLayoutNode) {
-  if (evaluateNativeModifierValue(nativeModifierValue(nodeRaw, 'invisible'))) return false;
-  const node = nodeRaw as Record<string, unknown>;
-  const nodeType = String(node.type || '').trim().toLowerCase();
-  if (node.visible === false && !(isContractFieldOrderEditable.value && nodeType === 'group')) return false;
-  if (nodeType === 'group') {
-    const title = normalizeFieldGroupTitle(node.string || node.label || node.title);
-    if (title && !effectiveGroupVisible(title) && !isContractFieldOrderEditable.value) return false;
-  }
-  const fieldName = String(nodeRaw.name || '').trim();
-  if (
-    nodeType === 'field'
-    && fieldName
-    && Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, fieldName)
-    && fieldVisibilityDraft[fieldName] === false
-    && !isContractFieldOrderEditable.value
-  ) {
-    return false;
-  }
-  if (nodeType === 'button') {
-    return Boolean(contractActionFromNativeRow(node));
-  }
-  return true;
+  return isNativeLayoutNodeVisibleFromNativeLayout({
+    node: nodeRaw,
+    editable: isContractFieldOrderEditable.value,
+    evaluateModifier: evaluateNativeModifierValue,
+    normalizeGroupTitle: normalizeFieldGroupTitle,
+    isGroupVisible: effectiveGroupVisible,
+    isFieldVisibleInDraft: (fieldName) => (
+      Object.prototype.hasOwnProperty.call(fieldVisibilityDraft, fieldName)
+        ? fieldVisibilityDraft[fieldName]
+        : undefined
+    ),
+    resolveAction: contractActionFromNativeRow,
+  });
 }
 
 function isNativeFavoriteField(name: string) {

@@ -12,7 +12,7 @@ Generated from repository source files. This report is informational during the 
 
 | Lines | Category | File |
 | ---: | --- | --- |
-| 8167 | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
+| 8159 | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
 | 4820 | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 4491 | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 4400 | Python source | `addons/smart_construction_core/core_extension.py` |
@@ -94,10 +94,10 @@ Generated from repository source files. This report is informational during the 
 | 990 | Python source | `addons/smart_core/tests/test_business_config_surface.py` |
 | 989 | Python source | `addons/smart_construction_core/models/support/business_form_policy_templates.py` |
 | 985 | Python source | `scripts/migration/history_business_usable_probe.py` |
+| 968 | TypeScript source | `frontend/apps/web/src/pages/contractForm/nativeLayoutUtils.ts` |
 | 966 | Python source | `addons/smart_core/handlers/load_contract.py` |
 | 966 | Python source | `scripts/verify/scbsly_direct_project_strict_visible_acceptance.py` |
 | 944 | Python source | `scripts/ops/scbs_55_user_acceptance_menu_policy_apply.py` |
-| 933 | TypeScript source | `frontend/apps/web/src/pages/contractForm/nativeLayoutUtils.ts` |
 | 912 | Vue source | `frontend/apps/web/src/components/action/ActionSurfaceToolbar.vue` |
 | 902 | Python source | `scripts/migration/fresh_db_material_stock_document_projection_write.py` |
 | 892 | Python source | `scripts/verify/release_capability_audit.py` |
@@ -128,7 +128,7 @@ Generated from repository source files. This report is informational during the 
 
 | Lines | Status | Category | File |
 | ---: | --- | --- | --- |
-| 8167 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
+| 8159 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
 | 4820 | split_plan_required | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 4491 | split_plan_required | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 4400 | split_plan_required | Python source | `addons/smart_construction_core/core_extension.py` |
@@ -204,10 +204,10 @@ Generated from repository source files. This report is informational during the 
 | 990 | warning | Python source | `addons/smart_core/tests/test_business_config_surface.py` |
 | 989 | warning | Python source | `addons/smart_construction_core/models/support/business_form_policy_templates.py` |
 | 985 | warning | Python source | `scripts/migration/history_business_usable_probe.py` |
+| 968 | warning | TypeScript source | `frontend/apps/web/src/pages/contractForm/nativeLayoutUtils.ts` |
 | 966 | warning | Python source | `addons/smart_core/handlers/load_contract.py` |
 | 966 | warning | Python source | `scripts/verify/scbsly_direct_project_strict_visible_acceptance.py` |
 | 944 | warning | Python source | `scripts/ops/scbs_55_user_acceptance_menu_policy_apply.py` |
-| 933 | warning | TypeScript source | `frontend/apps/web/src/pages/contractForm/nativeLayoutUtils.ts` |
 
 ## Interpretation
 

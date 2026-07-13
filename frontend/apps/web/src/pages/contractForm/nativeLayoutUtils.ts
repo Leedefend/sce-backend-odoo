@@ -128,6 +128,16 @@ export type NativeFieldVisibilityInput = {
   evaluatePolicy: (name: string, descriptor: FieldDescriptor) => FieldPolicyLike;
 };
 
+export type NativeLayoutNodeVisibilityInput = {
+  node: NativeLayoutLikeNode;
+  editable: boolean;
+  evaluateModifier: (value: unknown) => boolean;
+  normalizeGroupTitle: (value: unknown) => string;
+  isGroupVisible: (title: string) => boolean;
+  isFieldVisibleInDraft: (fieldName: string) => boolean | undefined;
+  resolveAction: (row: Record<string, unknown>) => unknown;
+};
+
 const CHILD_KEYS = ['children', 'pages', 'tabs', 'nodes', 'items'] as const;
 const CREATE_WORKFLOW_STATE_FIELD_NAMES = new Set([
   'state',
@@ -548,6 +558,31 @@ export function isNativeFieldVisible(input: NativeFieldVisibilityInput) {
   // them explicitly. Explicit invisible/status rules are handled above.
   if (input.node) return true;
   return input.renderProfile === 'create' && semantic.surface_role === 'advanced';
+}
+
+export function isNativeLayoutNodeVisible(input: NativeLayoutNodeVisibilityInput) {
+  const nodeRaw = input.node;
+  if (input.evaluateModifier(nativeModifierValue(nodeRaw, 'invisible'))) return false;
+  const node = nodeRaw as Record<string, unknown>;
+  const nodeType = String(node.type || '').trim().toLowerCase();
+  if (node.visible === false && !(input.editable && nodeType === 'group')) return false;
+  if (nodeType === 'group') {
+    const title = input.normalizeGroupTitle(node.string || node.label || node.title);
+    if (title && !input.isGroupVisible(title) && !input.editable) return false;
+  }
+  const fieldName = String(nodeRaw.name || '').trim();
+  if (
+    nodeType === 'field'
+    && fieldName
+    && input.isFieldVisibleInDraft(fieldName) === false
+    && !input.editable
+  ) {
+    return false;
+  }
+  if (nodeType === 'button') {
+    return Boolean(input.resolveAction(node));
+  }
+  return true;
 }
 
 function stringList(value: unknown): string[] {
