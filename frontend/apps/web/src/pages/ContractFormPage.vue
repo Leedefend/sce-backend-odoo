@@ -696,6 +696,8 @@ import { useLowCodeFieldCreateRuntime } from './contractForm/useLowCodeFieldCrea
 import { useFormSettingsLayoutRuntime } from './contractForm/useFormSettingsLayoutRuntime';
 import { useFormSettingsGroupRuntime } from './contractForm/useFormSettingsGroupRuntime';
 import { useFieldOrderMutationRuntime } from './contractForm/useFieldOrderMutationRuntime';
+import { useFieldVisibilityDraftRuntime } from './contractForm/useFieldVisibilityDraftRuntime';
+import { useInlineFieldPolicyRuntime } from './contractForm/useInlineFieldPolicyRuntime';
 import {
   buildWorkflowTransitions,
   analyzeFormContractReadiness,
@@ -1478,6 +1480,36 @@ const {
   formDesignFieldLabel: (fieldKey) => formDesignFieldLabel(fieldKey),
   appendOperation: appendFormConfigOperation,
   resetDropTarget: resetFieldOrderDropTarget,
+});
+const {
+  hideSuggestedInternalFields,
+  onFieldVisibilityDraftChange,
+  onSelectedFormSettingsFieldVisibilityChange,
+} = useFieldVisibilityDraftRuntime({
+  fieldVisibilityDraft,
+  fieldVisibilityDirty,
+  fieldVisibilityDirtyKeys,
+  formConfigAuditResult,
+  contractModeFeedback,
+  selectedFieldKey: () => selectedFormSettingsFieldKey.value,
+  suggestedHiddenRows: () => suggestedHiddenFieldRows.value,
+  formDesignFieldLabel: (fieldKey) => formDesignFieldLabel(fieldKey),
+  appendOperation: appendFormConfigOperation,
+});
+const {
+  onContractInlineFieldLabelChange,
+  setInlineFieldPolicy,
+} = useInlineFieldPolicyRuntime({
+  busy: () => busy.value,
+  busyKind,
+  errorMessage,
+  status,
+  contractModeFeedback,
+  lowCodeApplyBaseParams: () => lowCodeApplyBaseParams(),
+  contractFieldSequence: (fieldKey) => contractFieldSequence(fieldKey),
+  formDesignFieldLabel: (fieldKey) => formDesignFieldLabel(fieldKey),
+  appendOperation: appendFormConfigOperation,
+  reload: () => reload(),
 });
 const {
   lowCodeFieldCreateDialog,
@@ -5604,15 +5636,6 @@ async function onContractFieldAction(payload: FormSectionFieldActionPayload) {
   await runContractRuleAction(raw);
 }
 
-function onFieldVisibilityDraftChange(fieldKey: string, value: string) {
-  fieldVisibilityDraft[fieldKey] = value === 'show';
-  fieldVisibilityDirtyKeys[fieldKey] = true;
-  fieldVisibilityDirty.value = true;
-  formConfigAuditResult.value = null;
-  appendFormConfigOperation(value === 'show' ? '显示字段' : '隐藏字段', `${formDesignFieldLabel(fieldKey)} 设置为${value === 'show' ? '显示' : '隐藏'}`);
-  contractModeFeedback.value = '字段显示设置已调整，保存后生效';
-}
-
 function onFormSettingsFieldSelect(payload: { field: FormSectionFieldSchema; groupTitle: string }) {
   if (!isContractFieldOrderEditable.value) return;
   const fieldKey = String(payload.field.name || payload.field.key || '').trim();
@@ -5680,12 +5703,6 @@ async function onSelectedFormSettingsGroupTitleChange(event: Event) {
   await onContractInlineGroupRename({ oldTitle, newTitle });
 }
 
-function onSelectedFormSettingsFieldVisibilityChange(value: string) {
-  const fieldKey = selectedFormSettingsFieldKey.value;
-  if (!fieldKey) return;
-  onFieldVisibilityDraftChange(fieldKey, value);
-}
-
 async function onSelectedFormSettingsFieldLabelChange(event: Event) {
   const fieldKey = selectedFormSettingsFieldKey.value;
   const target = event.target as HTMLInputElement | null;
@@ -5693,19 +5710,6 @@ async function onSelectedFormSettingsFieldLabelChange(event: Event) {
   if (!fieldKey || !label || label === selectedFormSettingsFieldRow.value?.label) return;
   selectedFormSettingsFieldLabel.value = label;
   await setInlineFieldPolicy(fieldKey, { label });
-}
-
-function hideSuggestedInternalFields() {
-  const rows = suggestedHiddenFieldRows.value;
-  if (!rows.length) return;
-  rows.forEach((row) => {
-    fieldVisibilityDraft[row.fieldKey] = false;
-    fieldVisibilityDirtyKeys[row.fieldKey] = true;
-  });
-  fieldVisibilityDirty.value = true;
-  formConfigAuditResult.value = null;
-  appendFormConfigOperation('批量隐藏字段', `隐藏 ${rows.length} 个系统字段`);
-  contractModeFeedback.value = `已标记隐藏 ${rows.length} 个系统字段，保存后生效`;
 }
 
 function contractInlineFieldOrderIndex(field: FormSectionFieldSchema) {
@@ -5770,46 +5774,6 @@ function lowCodeApplyBaseParams() {
 
 function contractFieldSequence(fieldKey: string, fallback = 100) {
   return contractFieldSequenceFromOrder(fieldOrderDraft.value, fieldKey, fallback);
-}
-
-async function setInlineFieldPolicy(fieldKey: string, params: Record<string, unknown>) {
-  const base = lowCodeApplyBaseParams();
-  if (!fieldKey || busy.value) return;
-  const label = String(params.label || '').trim();
-  const groupTitle = normalizeFieldGroupTitle(params.group_title);
-  busyKind.value = 'action';
-  try {
-    await intentRequest({
-      intent: FORM_FIELD_CONFIG_INTENTS.policySet,
-      params: {
-        ...base,
-        field_name: fieldKey,
-        sequence: contractFieldSequence(fieldKey),
-        ...params,
-      },
-      context: { view: 'form' },
-    });
-    if (label) {
-      appendFormConfigOperation('修改字段名称', `${formDesignFieldLabel(fieldKey)} 改为 ${label}`, 'done');
-    }
-    if (groupTitle) {
-      appendFormConfigOperation('移动分组', `${label || formDesignFieldLabel(fieldKey)} 移动到 ${groupTitle}`, 'done');
-    }
-    contractModeFeedback.value = '字段配置已更新';
-    await reload();
-  } catch (err) {
-    errorMessage.value = err instanceof Error ? err.message : '字段显示规则更新失败';
-    status.value = 'error';
-  } finally {
-    busyKind.value = null;
-  }
-}
-
-async function onContractInlineFieldLabelChange(payload: { field: FormSectionFieldSchema; label: string }) {
-  const fieldKey = String(payload.field.name || '').trim();
-  const label = String(payload.label || '').trim();
-  if (!fieldKey || !label) return;
-  await setInlineFieldPolicy(fieldKey, { label });
 }
 
 function fieldGroupTitleForDraft(fieldKey: string) {

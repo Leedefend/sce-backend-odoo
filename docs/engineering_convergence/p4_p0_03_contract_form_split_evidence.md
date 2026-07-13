@@ -38,6 +38,8 @@ Extracted responsibilities:
 - Current-form layout column, group visibility/column, field-size mutation, and reset-to-baseline handlers moved to `frontend/apps/web/src/pages/contractForm/useFormSettingsLayoutRuntime.ts`.
 - Current-form configured/native group field discovery and group rename draft mutation moved to `frontend/apps/web/src/pages/contractForm/useFormSettingsGroupRuntime.ts`.
 - Field-order move, relative placement, move-to-group, and drag/drop draft mutation moved to `frontend/apps/web/src/pages/contractForm/useFieldOrderMutationRuntime.ts`.
+- Field visibility draft mutation and suggested internal-field hiding moved to `frontend/apps/web/src/pages/contractForm/useFieldVisibilityDraftRuntime.ts`.
+- Inline field policy intent execution and inline label-change handling moved to `frontend/apps/web/src/pages/contractForm/useInlineFieldPolicyRuntime.ts`.
 - The Web Contract V2 frontend architecture guard is now part of the local `make ci` gate through `verify.unified_page_contract.v2.web_architecture`.
 - High-risk split-plan file growth is now locked by `docs/engineering_convergence/complexity_baseline_lock.json` and `scripts/ci/enforce_complexity_baseline_lock.py`.
 - Frontend page contract boundary, orchestration-consumption, and consumer-intrusion guards are now part of `make ci.local.quick`.
@@ -49,7 +51,7 @@ The route component remains the orchestration shell and still owns runtime state
 
 | File | Before | After |
 | --- | ---: | ---: |
-| `frontend/apps/web/src/pages/ContractFormPage.vue` | 13762 | 6622 |
+| `frontend/apps/web/src/pages/ContractFormPage.vue` | 13762 | 6586 |
 
 ## Boundary Decision
 
@@ -58,7 +60,7 @@ The route component remains the orchestration shell and still owns runtime state
 - No frontend fallback menu, permission, action, or form policy was introduced.
 - No data migration, backend endpoint change, or visual redesign is included in this slice.
 - Existing `groups_xmlids` usage in `ContractFormPage.vue` is locked at 1 occurrence by `scripts/verify/web_contract_v2_frontend_architecture_guard.py`; the next cleanup must remove the final entitlement read fully behind backend contracts.
-- `ContractFormPage.vue` is line-count locked at 6622 lines. Future work must continue extracting or modifying existing owned modules instead of adding new responsibilities to the route component.
+- `ContractFormPage.vue` is line-count locked at 6586 lines. Future work must continue extracting or modifying existing owned modules instead of adding new responsibilities to the route component.
 
 ## Verification
 
