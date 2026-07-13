@@ -1,0 +1,240 @@
+.block {
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  padding: 10px;
+  margin-bottom: 10px;
+  background: var(--sc-app-muted-bg);
+  min-width: 0;
+}
+
+.block h3 {
+  margin: 0 0 8px;
+  font-size: 12px;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip-btn {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--sc-app-border-strong);
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
+  cursor: pointer;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.chip-btn:disabled,
+.ghost:disabled,
+.primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.62;
+}
+
+.native-chatter-compose {
+  margin-top: 10px;
+  display: grid;
+  gap: 8px;
+}
+
+.native-chatter-field {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--sc-app-text-secondary);
+}
+
+.native-collab-selected,
+.native-collab-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.native-collab-options {
+  margin-top: -2px;
+}
+
+.native-chatter-input {
+  min-height: 82px;
+  resize: vertical;
+  border: 1px solid var(--sc-app-border-strong);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
+}
+
+.native-chatter-compose-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.native-chatter-message {
+  margin-top: 8px;
+}
+
+.native-chatter-empty {
+  margin: 6px 0 0;
+  padding: 8px 10px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-muted-bg);
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.native-chatter-timeline {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.native-chatter-entry {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 8px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-panel);
+  font-size: 12px;
+}
+
+.native-chatter-type {
+  color: var(--sc-app-success-text);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.native-chatter-body {
+  min-width: 0;
+  color: var(--sc-app-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.native-chatter-meta {
+  color: var(--sc-app-text-secondary);
+  white-space: nowrap;
+}
+
+.native-chatter-entry-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.native-chatter-entry-action {
+  min-height: 26px;
+  padding: 3px 8px;
+  font-size: 12px;
+}
+
+.native-attachment-tools {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.native-attachment-upload {
+  position: relative;
+  overflow: hidden;
+}
+
+.native-attachment-upload input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.native-attachment-download {
+  padding: 4px 8px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.native-pending-attachments {
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.native-pending-attachments li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 1px solid var(--border-subtle, #d9e2ec);
+  border-radius: 6px;
+  color: var(--text-secondary, #475569);
+  font-size: 12px;
+  background: var(--surface-muted, #f8fafc);
+}
+
+.native-pending-attachments span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.validation-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--sc-app-danger-text);
+  font-size: 12px;
+}
+
+.ghost,
+.primary {
+  border-radius: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--sc-app-border);
+  background: var(--sc-app-panel);
+  font-weight: 500;
+}
+
+.primary {
+  background: var(--sc-semantic-surface-interactive);
+  color: var(--sc-semantic-text-on-interactive);
+  border-color: var(--sc-semantic-surface-interactive);
+}
+
+.ghost {
+  color: var(--sc-app-text-secondary);
+}
+
+.mini {
+  min-height: 26px;
+  padding: 3px 8px;
+  font-size: 12px;
+}
+
+@media (max-width: 760px) {
+  .native-chatter-entry {
+    grid-template-columns: 1fr;
+  }
+}

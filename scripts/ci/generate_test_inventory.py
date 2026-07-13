@@ -34,6 +34,23 @@ KEYWORDS = (
 
 MANUAL_ENTRIES = [
     {
+        "id": "T-GATE-000",
+        "layer": "gate",
+        "entrypoint": "make ci.local.quick",
+        "purpose": (
+            "Local inner-loop gate for frontend and architecture-boundary iteration, "
+            "covering split-plan growth locks, frontend contract boundary guards, lint, "
+            "strict typecheck, and whitespace checks."
+        ),
+        "estimated_runtime": "<5m",
+        "owner": "frontend owner",
+        "status": "active",
+        "decision_gate": "local_iteration",
+        "disposition": "canonical_entry",
+        "aggregate_target": "make ci.local.quick",
+        "notes": "Use during small local iterations; does not replace the full PR gate.",
+    },
+    {
         "id": "T-GATE-001",
         "layer": "gate",
         "entrypoint": "make ci",
@@ -58,6 +75,19 @@ MANUAL_ENTRIES = [
         "disposition": "canonical_entry",
         "aggregate_target": "make test.e2e",
         "notes": "Release/full verification gate, not required for every small PR.",
+    },
+    {
+        "id": "T-GATE-003",
+        "layer": "contract",
+        "entrypoint": "scripts/ci/verify_contract_form_split_evidence.py",
+        "purpose": "Freshness guard for P4-P0-03 contract form split evidence.",
+        "estimated_runtime": "<5m",
+        "owner": "platform owner",
+        "status": "active",
+        "decision_gate": "local_iteration",
+        "disposition": "covered_by_aggregate",
+        "aggregate_target": "make ci.local.quick",
+        "notes": "Runs inside the local quick gate to keep line counts and remote verification wording current.",
     },
     {
         "id": "T-ODOO-001",
@@ -89,6 +119,10 @@ MANUAL_ENTRIES = [
         "notes": "Runs TEST_TAGS=e2e_fixed_journey on a clean Odoo test database.",
     },
 ]
+
+AUTO_SCAN_EXCLUDED = {
+    "scripts/ci/verify_contract_form_split_evidence.py",
+}
 
 
 def classify_layer(path: Path) -> str:
@@ -473,6 +507,8 @@ def iter_assets() -> list[Path]:
             continue
         for path in root.rglob("*"):
             if not path.is_file() or path.suffix not in VALID_EXTENSIONS:
+                continue
+            if path.relative_to(ROOT).as_posix() in AUTO_SCAN_EXCLUDED:
                 continue
             if "__pycache__" in path.parts:
                 continue

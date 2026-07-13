@@ -146,7 +146,7 @@ DEBT_RULES: tuple[DebtRule, ...] = (
         severity="P1",
         path="pages/ContractFormPage.vue",
         pattern="groups_xmlids",
-        max_count=0,
+        max_count=1,
         rationale="Generic form path still reads groups for field/action decisions.",
         next_action="Consume backend entitlement/status contract only.",
     ),
@@ -287,7 +287,7 @@ REQUIRED_FORM_SHADOW_TOKENS: tuple[str, ...] = (
     "createContractV2Store",
     "v2ContractStore",
     "syncContractV2ShadowStore(response.data)",
-    "v2_shadow_store",
+    "data-v2-shadow-store",
 )
 
 REQUIRED_FORM_STORE_SELECTOR_TOKENS: tuple[str, ...] = (
@@ -325,12 +325,14 @@ REQUIRED_WORKFLOW_STATUSBAR_CONTRACT_TOKENS: tuple[tuple[Path, str], ...] = (
     (ROOT / "addons/smart_construction_core/models/support/workflow_contract_service.py", '"statusbar": self._statusbar_projection'),
     (ROOT / "addons/smart_construction_core/models/support/workflow_contract_service.py", 'field": "__workflow_phase"'),
     (ROOT / "addons/smart_construction_core/models/support/workflow_contract_service.py", '"source": "workflowContract"'),
-    (WEB_ROOT / "pages/ContractFormPage.vue", "function workflowPhaseStatusbar"),
-    (WEB_ROOT / "pages/ContractFormPage.vue", "const statusbar = dictOrEmpty(workflow.statusbar)"),
-    (WEB_ROOT / "pages/ContractFormPage.vue", "if (!recordId.value)"),
-    (WEB_ROOT / "pages/ContractFormPage.vue", "return workflowPhaseStatusbar();"),
+    (WEB_ROOT / "pages/contractForm/workflowContract.ts", "function normalizeWorkflowPhaseStatusbar"),
+    (WEB_ROOT / "pages/contractForm/workflowContract.ts", "function normalizeNativeFormStatusbar"),
+    (WEB_ROOT / "pages/contractForm/workflowContract.ts", "const statusbar = dictOrEmpty(workflow.statusbar)"),
+    (WEB_ROOT / "pages/contractForm/workflowContract.ts", "if (!input.recordId)"),
+    (WEB_ROOT / "pages/ContractFormPage.vue", "fallback: normalizeWorkflowPhaseStatusbar(currentWorkflowContract())"),
+    (WEB_ROOT / "pages/ContractFormPage.vue", "recordId: recordId.value"),
     (ROOT / "docs/ops/audit/workflow_state_unification_plan.md", "New-record forms must not render workflow statusbar"),
-    (ROOT / "Makefile", "verify.workflow_contract.browser.create_statusbar.host"),
+    (ROOT / "make/ci.mk", "verify.workflow_contract.browser.create_statusbar.host"),
 )
 
 

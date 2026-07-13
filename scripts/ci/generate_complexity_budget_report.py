@@ -150,16 +150,27 @@ def render(all_rows: list[dict[str, object]]) -> str:
     for row in largest:
         lines.append(f"| {row['lines']} | {row['status']} | {row['category']} | `{row['path']}` |")
 
-    lines.extend(
-        [
-            "",
-            "## Interpretation",
-            "",
-            "- Split-plan files are allowed to remain during the first pass, but must receive an owner and decomposition direction.",
-            "- New feature work should not add unrelated code to split-plan files.",
-            "- The root `Makefile` is already beyond the split-plan threshold and should be delegated into smaller scripts/fragments over time.",
-        ]
-    )
+    interpretation = [
+        "",
+        "## Interpretation",
+        "",
+        "- Split-plan files are allowed to remain during the first pass, but must receive an owner and decomposition direction.",
+        "- New feature work should not add unrelated code to split-plan files.",
+    ]
+    makefile_row = next((row for row in all_rows if row["path"] == "Makefile"), None)
+    if makefile_row and makefile_row["status"] == "split_plan_required":
+        interpretation.append(
+            "- The root `Makefile` is already beyond the split-plan threshold and should be delegated into smaller scripts/fragments over time."
+        )
+    elif makefile_row and makefile_row["status"] == "warning":
+        interpretation.append(
+            "- The root `Makefile` is below the split-plan threshold but still above the warning threshold; keep future targets in included fragments."
+        )
+    elif makefile_row:
+        interpretation.append(
+            "- The root `Makefile` is within budget; keep it as a thin variable and include entrypoint."
+        )
+    lines.extend(interpretation)
     return "\n".join(lines) + "\n"
 
 

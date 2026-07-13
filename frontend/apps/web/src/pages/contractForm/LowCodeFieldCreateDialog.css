@@ -1,0 +1,97 @@
+.contract-field-create-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgb(15 23 42 / 32%);
+}
+
+.contract-field-create-dialog {
+  display: grid;
+  gap: 14px;
+  width: min(420px, 100%);
+  padding: 18px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 8px;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
+  box-shadow: 0 18px 44px rgb(15 23 42 / 18%);
+}
+
+.contract-field-create-head,
+.contract-field-create-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.contract-field-create-head h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.contract-field-create-close {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-panel-muted);
+  color: var(--sc-app-text-secondary);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.contract-field-create-close:hover {
+  color: var(--sc-app-text-primary);
+}
+
+.contract-field-create-actions {
+  justify-content: flex-end;
+}
+
+.contract-mode-prompt-field {
+  display: grid;
+  gap: 5px;
+  min-width: 180px;
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.contract-mode-prompt-field input,
+.contract-mode-prompt-field select {
+  height: 34px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 6px;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
+  padding: 0 10px;
+  font-size: 13px;
+}
+
+.chip-btn {
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--sc-app-border-strong);
+  background: var(--sc-app-input-bg);
+  color: var(--sc-app-text-primary);
+  cursor: pointer;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.ghost {
+  border-radius: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--sc-app-border);
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-secondary);
+  font-weight: 500;
+}

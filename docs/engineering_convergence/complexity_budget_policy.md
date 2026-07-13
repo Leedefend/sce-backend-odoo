@@ -36,3 +36,14 @@ During v1.1 convergence:
 2. Assign owners to split-plan files.
 3. Convert repeated Makefile bodies into scripts or included fragments.
 4. Add hard CI limits only after the current baseline has an approved exception list.
+
+## Split-Plan Debt Lock
+
+The first hard limit is active for the high-risk split-plan files listed in
+`complexity_baseline_lock.json`.
+
+- Current line counts are ceilings, not targets.
+- Reductions are accepted without changing the baseline.
+- Increases fail `make ci` through `architecture.complexity_baseline_lock`.
+- Raising a ceiling requires an explicit architecture review because it means a known split-plan file is absorbing new responsibility.
+- The initial locked set covers the root Makefile, the P0 route shell, and frontend split-plan pages/shells that are most likely to absorb product behavior during iteration.

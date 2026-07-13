@@ -21,13 +21,12 @@ export function resolveActionViewSortSeed(options: {
     options.viewOrderRaw,
     options.metaOrderRaw,
     options.fallbackSortRaw,
-    'id desc',
   ];
   for (const item of candidates) {
     const value = String(item || '').trim();
     if (value) return value;
   }
-  return 'id desc';
+  return '';
 }
 
 export function resolveActionViewContractLimit(limitRaw?: unknown): number {
@@ -73,6 +72,6 @@ export function buildActionViewListRequest(options: {
     limit: options.contractLimit,
     offset: Math.max(0, Math.trunc(options.listOffset || 0)),
     search_term: options.searchTerm.trim() || undefined,
-    order: options.order,
+    order: options.order.trim() || undefined,
   };
 }

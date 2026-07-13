@@ -187,7 +187,11 @@ def main() -> int:
             "useActionViewSurfaceIntentRuntime({",
         ],
         "RecordView.vue": [
-            "contract-driven record view",
+            "const pageContract = usePageContract('record');",
+            "loadActionContractRaw(",
+            "buildRecordRuntimeFromContract(",
+            "readRecordDiagnosticsRaw(",
+            "writeRecordDiagnosticsRaw(",
             "lastIntent.value = 'api.data.read'",
             "lastIntent.value = 'api.data.write'",
             "pageSectionEnabled(",
