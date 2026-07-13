@@ -485,6 +485,7 @@ import {
 } from './contractForm/fieldUtils';
 import {
   appendFormConfigOperationLogEntry,
+  buildFormConfigFieldLabelReplacementEntries,
   buildFormFieldConfigScope,
   buildFormConfigOperationLogStorageKey,
   buildCurrentFormGroupOptions,
@@ -528,6 +529,7 @@ import {
   moveFieldOrderRelative,
   moveFieldOrderToGroupEnd,
   readableFallbackFieldLabel,
+  resolveFormDesignFieldLabel,
   resolveSelectedFormSettingsFieldGroupTitle,
   type LowCodeLayoutDraftRow,
 } from './contractForm/formConfigHelpers';
@@ -1695,23 +1697,17 @@ function clearFormConfigOperationLog() {
 }
 
 function formConfigFieldLabelReplacementEntries() {
-  const labels = new Map<string, string>();
-  const remember = (fieldKey: string, label: string) => {
-    const key = String(fieldKey || '').trim();
-    const value = String(label || '').trim();
-    if (!key || !value || key === value) return;
-    labels.set(key, value);
-  };
-  Object.entries(formConfigFieldLabelCache).forEach(([key, label]) => remember(key, label));
-  Object.entries(nativeFormDesignFieldLabels.value).forEach(([key, label]) => remember(key, label));
-  activeContractModeFieldRows.value.forEach((row) => remember(row.fieldKey, row.label));
-  currentFormDesignFieldKeys.value.forEach((fieldKey) => {
-    const key = String(fieldKey || '').trim();
-    if (!key || labels.has(key)) return;
-    const descriptor = contract.value?.fields?.[key] as Record<string, unknown> | undefined;
-    remember(key, String(contractFieldLabel(key) || descriptor?.string || descriptor?.label || '').trim());
+  return buildFormConfigFieldLabelReplacementEntries({
+    cachedLabels: formConfigFieldLabelCache,
+    nativeLabels: nativeFormDesignFieldLabels.value,
+    activeRows: activeContractModeFieldRows.value,
+    fieldKeys: currentFormDesignFieldKeys.value,
+    resolveContractLabel: (fieldKey) => contractFieldLabel(fieldKey),
+    resolveDescriptorLabel: (fieldKey) => {
+      const descriptor = contract.value?.fields?.[fieldKey] as Record<string, unknown> | undefined;
+      return String(descriptor?.string || descriptor?.label || '').trim();
+    },
   });
-  return Array.from(labels.entries()).sort((left, right) => right[0].length - left[0].length);
 }
 
 function formatFormConfigOperationSummary(summary: string) {
@@ -1723,25 +1719,19 @@ watch(formConfigOperationLogStorageKey, () => {
 }, { immediate: true });
 
 function formDesignFieldLabel(fieldKey: string) {
-  const key = String(fieldKey || '').trim();
-  if (!key) return '';
-  const selectedLabel = selectedFormSettingsFieldKey.value === key
-    ? String(selectedFormSettingsFieldLabel.value || '').trim()
-    : '';
-  if (selectedLabel && selectedLabel !== key) return selectedLabel;
-  const cachedLabel = String(formConfigFieldLabelCache[key] || '').trim();
-  const structuredLabel = String(contractFieldLabel(key) || '').trim();
-  const nativeLabel = String(nativeFormDesignFieldLabels.value[key] || '').trim();
-  const row = activeContractModeFieldRows.value.find((item) => item.fieldKey === key);
-  const rowLabel = String(row?.label || '').trim();
-  const descriptor = contract.value?.fields?.[key] as Record<string, unknown> | undefined;
-  const descriptorLabel = String(descriptor?.string || descriptor?.label || '').trim();
-  if (cachedLabel && cachedLabel !== key) return cachedLabel;
-  if (structuredLabel && structuredLabel !== key) return structuredLabel;
-  if (nativeLabel && nativeLabel !== key) return nativeLabel;
-  if (rowLabel && rowLabel !== key) return rowLabel;
-  if (descriptorLabel && descriptorLabel !== key) return descriptorLabel;
-  return rowLabel || readableFallbackFieldLabel(key);
+  return resolveFormDesignFieldLabel({
+    fieldKey,
+    selectedFieldKey: selectedFormSettingsFieldKey.value,
+    selectedFieldLabel: selectedFormSettingsFieldLabel.value,
+    cachedLabels: formConfigFieldLabelCache,
+    nativeLabels: nativeFormDesignFieldLabels.value,
+    activeRows: activeContractModeFieldRows.value,
+    resolveContractLabel: (key) => contractFieldLabel(key),
+    resolveDescriptorLabel: (key) => {
+      const descriptor = contract.value?.fields?.[key] as Record<string, unknown> | undefined;
+      return String(descriptor?.string || descriptor?.label || '').trim();
+    },
+  });
 }
 
 function rememberFormConfigFieldLabel(fieldKey: string, label: string) {

@@ -183,6 +183,56 @@ export function formatFormConfigOperationSummary(summary: string, replacementEnt
   return text;
 }
 
+export function buildFormConfigFieldLabelReplacementEntries(params: {
+  cachedLabels: Record<string, string>;
+  nativeLabels: Record<string, string>;
+  activeRows: Array<{ fieldKey: string; label: string }>;
+  fieldKeys: string[];
+  resolveContractLabel: (fieldKey: string) => string;
+  resolveDescriptorLabel: (fieldKey: string) => string;
+}) {
+  const labels = new Map<string, string>();
+  const remember = (fieldKey: string, label: string) => {
+    const key = String(fieldKey || '').trim();
+    const value = String(label || '').trim();
+    if (!key || !value || key === value) return;
+    labels.set(key, value);
+  };
+  Object.entries(params.cachedLabels).forEach(([key, label]) => remember(key, label));
+  Object.entries(params.nativeLabels).forEach(([key, label]) => remember(key, label));
+  params.activeRows.forEach((row) => remember(row.fieldKey, row.label));
+  params.fieldKeys.forEach((fieldKey) => {
+    const key = String(fieldKey || '').trim();
+    if (!key || labels.has(key)) return;
+    remember(key, params.resolveContractLabel(key) || params.resolveDescriptorLabel(key));
+  });
+  return Array.from(labels.entries()).sort((left, right) => right[0].length - left[0].length);
+}
+
+export function resolveFormDesignFieldLabel(params: {
+  fieldKey: string;
+  selectedFieldKey: string;
+  selectedFieldLabel: string;
+  cachedLabels: Record<string, string>;
+  nativeLabels: Record<string, string>;
+  activeRows: Array<{ fieldKey: string; label: string }>;
+  resolveContractLabel: (fieldKey: string) => string;
+  resolveDescriptorLabel: (fieldKey: string) => string;
+}) {
+  const key = String(params.fieldKey || '').trim();
+  if (!key) return '';
+  const selectedLabel = params.selectedFieldKey === key ? String(params.selectedFieldLabel || '').trim() : '';
+  const cachedLabel = String(params.cachedLabels[key] || '').trim();
+  const structuredLabel = String(params.resolveContractLabel(key) || '').trim();
+  const nativeLabel = String(params.nativeLabels[key] || '').trim();
+  const rowLabel = String(params.activeRows.find((item) => item.fieldKey === key)?.label || '').trim();
+  const descriptorLabel = String(params.resolveDescriptorLabel(key) || '').trim();
+  for (const label of [selectedLabel, cachedLabel, structuredLabel, nativeLabel, rowLabel, descriptorLabel]) {
+    if (label && label !== key) return label;
+  }
+  return rowLabel || readableFallbackFieldLabel(key);
+}
+
 export function readableFallbackFieldLabel(fieldKey: string) {
   const key = String(fieldKey || '').trim();
   if (!key) return '';
