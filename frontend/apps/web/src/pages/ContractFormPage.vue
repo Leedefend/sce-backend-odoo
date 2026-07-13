@@ -261,8 +261,8 @@
           :show-advanced-toggle="hasAdvancedFields && !isProjectIntakeCreateMode && !useNativeFormTree"
           @cancel-prompt="closeContractPromptAction"
           @close-field-create="closeInlineCustomFieldCreate"
-          @field-create-label-change="lowCodeFieldCreateDialog.label = $event"
-          @field-create-type-change="lowCodeFieldCreateDialog.ttype = $event"
+          @field-create-label-change="setFieldCreateLabel"
+          @field-create-type-change="setFieldCreateType"
           @open-mode-action="openContractModeAction"
           @prompt-value-change="contractPromptValues[$event.fieldName] = $event.value"
           @submit-field-create="submitInlineCustomFieldCreate"
@@ -349,7 +349,6 @@ import NativeCollaborationPanel, {
 import ContractFormNativeCanvas from './contractForm/ContractFormNativeCanvas.vue';
 import RelationSearchDialog from './contractForm/RelationSearchDialog.vue';
 import ContractModeSupportPanel from './contractForm/ContractModeSupportPanel.vue';
-import { type LowCodeFieldCreateDialogState } from './contractForm/LowCodeFieldCreateDialog.vue';
 import CurrentFormFieldSettingsPanel from './contractForm/CurrentFormFieldSettingsPanel.vue';
 import ContractFormActionBlocks from './contractForm/ContractFormActionBlocks.vue';
 import type {
@@ -461,8 +460,6 @@ import { normalizeContractAccessPolicy } from './contractForm/accessPolicy';
 import {
   fieldInputType,
   fieldType,
-  normalizeLowCodeColumns,
-  normalizeLowCodeFieldSize,
   normalizeRelationIds,
   parseMany2oneDisplay,
   sanitizeUiErrorMessage,
@@ -503,7 +500,6 @@ import {
   lowCodeLayoutFieldLabelFromNodes,
   lowCodeLayoutFromFormSpec,
   lowCodeScopedContractName,
-  lowCodeFieldSizeLabel,
   lowCodeViewsFromContractResponse,
   mergeLowCodeLayoutWithRuntimeGroupShells,
   normalizeConfigPageLabel,
@@ -700,6 +696,8 @@ import {
 } from './contractForm/useNativeAttachmentRuntime';
 import { useNativeChatterRuntime } from './contractForm/useNativeChatterRuntime';
 import { useFieldOrderDragRuntime } from './contractForm/useFieldOrderDragRuntime';
+import { useLowCodeFieldCreateRuntime } from './contractForm/useLowCodeFieldCreateRuntime';
+import { useFormSettingsLayoutRuntime } from './contractForm/useFormSettingsLayoutRuntime';
 import {
   buildWorkflowTransitions,
   analyzeFormContractReadiness,
@@ -1394,13 +1392,76 @@ const {
   viewId: () => routeQueryText('view_id') || routeQueryText('viewId'),
   page: () => routeQueryText('page_label') || routeQueryText('pageLabel') || route.fullPath,
 });
-const lowCodeFieldCreateDialog = reactive<LowCodeFieldCreateDialogState>({
-  open: false,
-  afterFieldKey: '',
-  groupTitle: '',
-  sequence: 100,
-  label: '',
-  ttype: 'char',
+const {
+  onFormLayoutColumnsChange,
+  onSelectedFormSettingsGroupVisibilityChange,
+  onSelectedFormSettingsGroupColumnsChange,
+  onSelectedFormSettingsFieldSizeChange,
+} = useFormSettingsLayoutRuntime({
+  formLayoutColumnsBase,
+  formLayoutColumnsDraft,
+  formLayoutDirty,
+  formConfigAuditResult,
+  groupVisibilityBase,
+  groupVisibilityDraft,
+  groupColumnsBase,
+  groupColumnsDraft,
+  groupLayoutDirtyKeys,
+  fieldSizeBase,
+  fieldSizeDraft,
+  fieldLayoutDirtyKeys,
+  currentGroupOptions: () => currentFormGroupOptions.value,
+  groupNavigatorItems: () => formDesignerGroupNavigatorItems.value,
+  selectedGroupTitle: () => selectedFormSettingsFieldGroupTitle.value,
+  selectedFieldKey: () => selectedFormSettingsFieldKey.value,
+  effectiveGroupVisible: (key) => effectiveGroupVisible(key),
+  effectiveGroupColumns: (key) => effectiveGroupColumns(key),
+  effectiveFieldSize: (fieldKey) => effectiveFieldSize(fieldKey),
+  formDesignFieldLabel: (fieldKey) => formDesignFieldLabel(fieldKey),
+  appendOperation: appendFormConfigOperation,
+});
+const {
+  lowCodeFieldCreateDialog,
+  openCentralCustomFieldCreate,
+  onContractInlineFieldAddAfter,
+  onContractInlineGroupAddField,
+  closeInlineCustomFieldCreate,
+  setFieldCreateLabel,
+  setFieldCreateType,
+  submitInlineCustomFieldCreate,
+} = useLowCodeFieldCreateRuntime({
+  busy: () => busy.value,
+  selectedFieldKey: () => selectedFormSettingsFieldKey.value,
+  selectedGroupTitle: () => selectedFormSettingsFieldGroupTitle.value,
+  firstGroupTitle: () => currentFormGroupOptions.value[0] || '',
+  fieldOrderLength: () => fieldOrderDraft.value.length,
+  fieldSequence: (fieldKey, fallback) => contractFieldSequence(fieldKey, fallback),
+  submit: async ({ label, ttype, groupTitle, sequence }) => {
+    busyKind.value = 'action';
+    try {
+      await intentRequest({
+        intent: FORM_FIELD_CONFIG_INTENTS.customFieldCreate,
+        params: {
+          ...lowCodeApplyBaseParams(),
+          label,
+          ttype,
+          group_title: groupTitle,
+          sequence,
+        },
+        context: { view: 'form' },
+      });
+      contractModeFeedback.value = '字段已添加';
+      appendFormConfigOperation('新增字段', `${label} 添加到 ${groupTitle}`, 'done');
+      await reload();
+      return true;
+    } catch (err) {
+      errorMessage.value = err instanceof Error ? err.message : '自定义字段创建失败';
+      status.value = 'error';
+      return false;
+    } finally {
+      busyKind.value = null;
+    }
+  },
 });
 const lowCodeContractLoaded = ref(false);
 const lowCodeContractHydrating = ref(false);
@@ -5549,14 +5610,6 @@ function selectFormDesignerField(fieldKey: string) {
   });
 }
 
-function openCentralCustomFieldCreate() {
-  const selectedFieldKey = selectedFormSettingsFieldKey.value;
-  const groupTitle = selectedFormSettingsFieldGroupTitle.value
-    || currentFormGroupOptions.value[0]
-    || '业务配置字段';
-  openInlineCustomFieldCreate(groupTitle, selectedFieldKey);
-}
-
 function moveFieldToGroupEnd(fieldKey: string, groupTitle: string) {
   const sourceFieldKey = String(fieldKey || '').trim();
   if (!sourceFieldKey) return;
@@ -5593,110 +5646,6 @@ function onSelectedFormSettingsFieldGroupMoveChange(event: Event) {
     ? targetInput.value
     : '';
   moveSelectedFormSettingsFieldToGroup(value);
-}
-
-function onFormLayoutColumnsChange(event: Event) {
-  const target = event.target as HTMLSelectElement | null;
-  const previousColumns = formLayoutColumnsDraft.value;
-  const columns = normalizeLowCodeColumns(target?.value, formLayoutColumnsDraft.value);
-  if (columns === formLayoutColumnsDraft.value) return;
-  const groupTitles = new Set<string>();
-  currentFormGroupOptions.value.forEach((title) => {
-    const key = normalizeFieldGroupTitle(title);
-    if (key) groupTitles.add(key);
-  });
-  formDesignerGroupNavigatorItems.value.forEach((item) => {
-    const key = normalizeFieldGroupTitle(item.title);
-    if (key) groupTitles.add(key);
-  });
-  Object.keys(groupColumnsBase.value).forEach((key) => {
-    const normalized = normalizeFieldGroupTitle(key);
-    if (normalized) groupTitles.add(normalized);
-  });
-  Object.keys(groupColumnsDraft).forEach((key) => {
-    const normalized = normalizeFieldGroupTitle(key);
-    if (normalized) groupTitles.add(normalized);
-  });
-  formLayoutColumnsDraft.value = columns;
-  groupTitles.forEach((key) => {
-    const baseColumns = groupColumnsBase.value[key] || previousColumns;
-    const draftColumns = groupColumnsDraft[key] || baseColumns;
-    if (draftColumns !== previousColumns) return;
-    groupColumnsDraft[key] = columns;
-    const baseVisible = Object.prototype.hasOwnProperty.call(groupVisibilityBase.value, key)
-      ? groupVisibilityBase.value[key] !== false
-      : true;
-    const draftVisible = Object.prototype.hasOwnProperty.call(groupVisibilityDraft, key)
-      ? groupVisibilityDraft[key] !== false
-      : baseVisible;
-    if (columns === baseColumns && draftVisible === baseVisible) {
-      delete groupLayoutDirtyKeys[key];
-    } else {
-      groupLayoutDirtyKeys[key] = true;
-    }
-  });
-  formLayoutDirty.value = columns !== formLayoutColumnsBase.value;
-  formConfigAuditResult.value = null;
-  appendFormConfigOperation('调整页面列数', `页面调整为 ${columns} 栏`);
-}
-
-function onSelectedFormSettingsGroupVisibilityChange(value: string) {
-  const title = selectedFormSettingsFieldGroupTitle.value;
-  const key = normalizeFieldGroupTitle(title);
-  if (!key) return;
-  const visible = value !== 'hide';
-  if (effectiveGroupVisible(key) === visible) return;
-  groupVisibilityDraft[key] = visible;
-  const baseVisible = Object.prototype.hasOwnProperty.call(groupVisibilityBase.value, key)
-    ? groupVisibilityBase.value[key] !== false
-    : true;
-  if (visible === baseVisible && (groupColumnsDraft[key] || groupColumnsBase.value[key] || formLayoutColumnsBase.value) === (groupColumnsBase.value[key] || formLayoutColumnsBase.value)) {
-    delete groupLayoutDirtyKeys[key];
-  } else {
-    groupLayoutDirtyKeys[key] = true;
-  }
-  formConfigAuditResult.value = null;
-  appendFormConfigOperation(visible ? '显示分组' : '隐藏分组', `${key} 设置为${visible ? '显示' : '隐藏'}`);
-}
-
-function onSelectedFormSettingsGroupColumnsChange(event: Event) {
-  const title = selectedFormSettingsFieldGroupTitle.value;
-  const key = normalizeFieldGroupTitle(title);
-  if (!key) return;
-  const target = event.target as HTMLSelectElement | null;
-  const columns = normalizeLowCodeColumns(target?.value, effectiveGroupColumns(key));
-  if (effectiveGroupColumns(key) === columns) return;
-  groupColumnsDraft[key] = columns;
-  const baseColumns = groupColumnsBase.value[key] || formLayoutColumnsBase.value;
-  const baseVisible = Object.prototype.hasOwnProperty.call(groupVisibilityBase.value, key)
-    ? groupVisibilityBase.value[key] !== false
-    : true;
-  const draftVisible = Object.prototype.hasOwnProperty.call(groupVisibilityDraft, key)
-    ? groupVisibilityDraft[key] !== false
-    : baseVisible;
-  if (columns === baseColumns && draftVisible === baseVisible) {
-    delete groupLayoutDirtyKeys[key];
-  } else {
-    groupLayoutDirtyKeys[key] = true;
-  }
-  formConfigAuditResult.value = null;
-  appendFormConfigOperation('调整分组列数', `${key} 调整为 ${columns} 栏`);
-}
-
-function onSelectedFormSettingsFieldSizeChange(event: Event) {
-  const fieldKey = selectedFormSettingsFieldKey.value;
-  if (!fieldKey) return;
-  const target = event.target as HTMLSelectElement | null;
-  const size = normalizeLowCodeFieldSize(target?.value);
-  if (effectiveFieldSize(fieldKey) === size) return;
-  fieldSizeDraft[fieldKey] = size;
-  if (size === (fieldSizeBase.value[fieldKey] || 'normal')) {
-    delete fieldLayoutDirtyKeys[fieldKey];
-  } else {
-    fieldLayoutDirtyKeys[fieldKey] = true;
-  }
-  formConfigAuditResult.value = null;
-  appendFormConfigOperation('调整字段尺寸', `${formDesignFieldLabel(fieldKey)} 设置为${lowCodeFieldSizeLabel(size)}`);
 }
 
 async function onSelectedFormSettingsGroupTitleChange(event: Event) {
@@ -5905,55 +5854,6 @@ async function onContractInlineGroupRename(payload: { oldTitle: string; newTitle
   formConfigAuditResult.value = null;
   appendFormConfigOperation('修改分组名称', `${oldTitle} 改为 ${newTitle}`);
   contractModeFeedback.value = '分组名称已调整，保存表单设置后生效';
-}
-
-function openInlineCustomFieldCreate(groupTitle: string, afterFieldKey = '') {
-  lowCodeFieldCreateDialog.open = true;
-  lowCodeFieldCreateDialog.afterFieldKey = afterFieldKey;
-  lowCodeFieldCreateDialog.groupTitle = String(groupTitle || '').trim() || '业务配置字段';
-  lowCodeFieldCreateDialog.sequence = contractFieldSequence(afterFieldKey, fieldOrderDraft.value.length ? (fieldOrderDraft.value.length + 1) * 10 : 100) + 5;
-  lowCodeFieldCreateDialog.label = '';
-  lowCodeFieldCreateDialog.ttype = 'char';
-}
-
-function onContractInlineFieldAddAfter(payload: { field: FormSectionFieldSchema; groupTitle: string }) {
-  openInlineCustomFieldCreate(payload.groupTitle || '业务配置字段', String(payload.field.name || '').trim());
-}
-
-function onContractInlineGroupAddField(payload: { groupTitle: string }) {
-  openInlineCustomFieldCreate(payload.groupTitle || '业务配置字段');
-}
-
-function closeInlineCustomFieldCreate() {
-  lowCodeFieldCreateDialog.open = false;
-}
-
-async function submitInlineCustomFieldCreate() {
-  const label = String(lowCodeFieldCreateDialog.label || '').trim();
-  if (!label || busy.value) return;
-  busyKind.value = 'action';
-  try {
-    await intentRequest({
-      intent: FORM_FIELD_CONFIG_INTENTS.customFieldCreate,
-      params: {
-        ...lowCodeApplyBaseParams(),
-        label,
-        ttype: lowCodeFieldCreateDialog.ttype || 'char',
-        group_title: lowCodeFieldCreateDialog.groupTitle || '业务配置字段',
-        sequence: lowCodeFieldCreateDialog.sequence || 100,
-      },
-      context: { view: 'form' },
-    });
-    contractModeFeedback.value = '字段已添加';
-    appendFormConfigOperation('新增字段', `${label} 添加到 ${lowCodeFieldCreateDialog.groupTitle || '业务配置字段'}`, 'done');
-    closeInlineCustomFieldCreate();
-    await reload();
-  } catch (err) {
-    errorMessage.value = err instanceof Error ? err.message : '自定义字段创建失败';
-    status.value = 'error';
-  } finally {
-    busyKind.value = null;
-  }
 }
 
 function onFieldOrderDrop(targetFieldKey: string, targetGroupTitle = '', requestedPlacement?: 'before' | 'after' | '') {
