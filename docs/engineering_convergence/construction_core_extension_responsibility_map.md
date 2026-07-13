@@ -3,7 +3,7 @@
 Date: 2026-07-14
 Owner: Construction backend owner
 Target file: `addons/smart_construction_core/core_extension.py`
-Current size: 4,180 lines
+Current size: 3,763 lines
 Phase: staged responsibility split
 
 ## Purpose
@@ -41,6 +41,7 @@ construction-owned policy.
 | --- | --- |
 | `construction_core_extension_project_layout_split_guard.py` | Project layout helper extraction, user_id pruning, relabeling, responsibility/collaboration group injection, and projection-only boundary. |
 | `construction_core_extension_contract_helpers_split_guard.py` | Generic contract helper extraction, v2 layout/status mirrors, governance patch mirrors, content replacement, form layout governance, line lock, and projection-only boundary. |
+| `construction_core_extension_policy_maps_split_guard.py` | Static policy/map extraction, role/nav/file/API/unlink maps, line lock, no import-time registration side effects, and pure-constant boundary. |
 | `backend_boundary_guard.py` | Core backend ownership and extension-boundary constraints. |
 | `owner_industry_isolation_probe.py` | Industry module isolation and required extension hooks. |
 
@@ -70,12 +71,28 @@ Stage 2 is complete when:
   IO, environment access, or permission inference;
 - `core_extension.py` is locked at `<=4180` lines for this stage.
 
+## Stage 3 Target
+
+Stage 3 is complete when:
+
+- `core_extension_policy_maps.py` owns static construction policy/map facts:
+  role surfaces, role groups, nav scene maps, file model allowlists, legacy
+  visible column labels, API write/mutation policies, unlink policies, critical
+  scene overrides, and create-field fallbacks;
+- `core_extension.py` keeps public hook functions, import-time registration
+  calls, and behavior that touches `env`, ACL, routing, services, or logging;
+- the extracted module remains pure constants and local policy construction:
+  no ORM calls, HTTP calls, routing, registration side effects, file IO,
+  environment access, or permission inference;
+- `core_extension.py` is locked at `<=3763` lines for this stage.
+
 ## Next Candidate
 
 Next candidates should be read-only first:
 
 - contract normalizer helpers around construction diary/general contract form;
-- policy map constants and pure accessors;
+- import-time registration facts after module load order and consumers are
+  locked by tests;
 - capability row builders after their data/API dependencies are mapped.
 
 Do not move import-time registration side effects until their module load order

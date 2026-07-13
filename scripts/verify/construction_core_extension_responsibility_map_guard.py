@@ -43,16 +43,18 @@ def main() -> int:
 
     for token in [
         "Construction Core Extension Responsibility Map",
-        "Current size: 4,180 lines",
+        "Current size: 3,763 lines",
         "staged responsibility split",
         "## Public Entry Points",
         "## Responsibility Bands",
         "## Current Guards",
         "## Stage 1 Target",
         "## Stage 2 Target",
+        "## Stage 3 Target",
         "`core_extension_project_layout.py` owns pure project form layout helpers",
         "`core_extension_contract_helpers.py` owns generic contract helper utilities",
-        "`core_extension.py` is locked at `<=4180` lines",
+        "`core_extension_policy_maps.py` owns static construction policy/map facts",
+        "`core_extension.py` is locked at `<=3763` lines",
         "Do not move import-time registration side effects",
         "projection-only",
     ]:
@@ -62,6 +64,7 @@ def main() -> int:
     for guard in [
         "construction_core_extension_project_layout_split_guard.py",
         "construction_core_extension_contract_helpers_split_guard.py",
+        "construction_core_extension_policy_maps_split_guard.py",
         "backend_boundary_guard.py",
         "owner_industry_isolation_probe.py",
     ]:
@@ -81,6 +84,12 @@ def main() -> int:
             errors.append("core_extension.py must import contract helper module")
         if "_contract_helpers.sc_set_v2_container_tree(contract, container_tree)" not in core:
             errors.append("core_extension.py must delegate contract container tree helper")
+        if "core_extension_policy_maps as _policy_maps" not in core:
+            errors.append("core_extension.py must import policy maps module")
+        if "ROLE_SURFACE_OVERRIDES = _policy_maps.ROLE_SURFACE_OVERRIDES" not in core:
+            errors.append("core_extension.py must delegate role surface maps")
+        if "register_legacy_standard_list_profile({" not in core:
+            errors.append("core_extension.py must keep import-time list profile registration")
 
     split_queue_token = (
         "`addons/smart_construction_core/core_extension.py` | "
@@ -92,6 +101,7 @@ def main() -> int:
     for ci_token in [
         "python3 scripts/verify/construction_core_extension_project_layout_split_guard.py",
         "python3 scripts/verify/construction_core_extension_contract_helpers_split_guard.py",
+        "python3 scripts/verify/construction_core_extension_policy_maps_split_guard.py",
         "python3 scripts/verify/construction_core_extension_responsibility_map_guard.py",
     ]:
         if ci_token not in ci:
