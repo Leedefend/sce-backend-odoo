@@ -2,7 +2,7 @@
 
 Target file: `addons/smart_construction_core/core_extension.py`
 
-Current line budget: `<=3471`.
+Current line budget: `<=3020`.
 
 ## Role
 
@@ -32,7 +32,7 @@ cross-industry policy.
 | 1-409 | Imports and eager registrations | Register project scope, reason metadata, capability groups, semantic scene profiles, and legacy governance profiles. | `core_extension_bootstrap.py` or declarative registration specs. |
 | 410-1120 | Contract projection helpers | Project field labeling, responsibility groups, v2 container/status patches, diary/company/tax form normalization, workflow injection. | `core_extension_contract_projection.py`. |
 | 1121-1571 | Static policy/catalog data | Large dictionaries and state policy tables consumed by later hooks. | `core_extension_policy_catalog.py`. |
-| 1782-2101 | Workspace collection builders | Safe ORM reads and construction workspace row builders for task, payment, risk, and project action surfaces. | `core_extension_workspace_facts.py`. |
+| 1907-1967 | Workspace collection facade | System-init fact contribution orchestration delegates row builders to `core_extension_workspace_facts.py`. | `core_extension_workspace_facts.py`. |
 | 2104-2436 | Basic contribution hooks | Identity, scene maps, surface aliases, record context, file/api policy contributions, role entries, and home blocks. | `core_extension_contributions.py`. |
 | 2235-2261 | Intent handler registration | Registry compatibility loader delegates to imported handler contribution mapping. | `core_extension_intents.py`. |
 | 2461-2938 | Capability and form action contributions | Capability payload normalization, group contributions, create fallbacks, and payment form business actions. | `core_extension_capabilities.py` and `core_extension_form_actions.py`. |
@@ -154,3 +154,16 @@ Stage 5 is complete when:
 - the extracted helper does not import Odoo, read ORM state, perform IO, or call
   service handlers;
 - `core_extension.py` is locked at `<=3471` lines for this stage.
+
+## Stage 6 Workspace Fact Builders
+
+Stage 6 is complete when:
+
+- `core_extension_workspace_facts.py` owns safe workspace ORM reads and row
+  builders for task, payment, risk, project, role-entry, home-block, and
+  enterprise enablement facts;
+- `get_system_init_fact_contributions` remains in the facade and still controls
+  construction fact assembly, exception boundaries, and returned payload shape;
+- shared helper functions such as `_safe_search_read`, `_model_has_field`, and
+  `_as_text` are private to the workspace facts module;
+- `core_extension.py` is locked at `<=3020` lines for this stage.

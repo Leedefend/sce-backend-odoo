@@ -11,8 +11,9 @@ CAPABILITIES = ROOT / "addons/smart_construction_core/core_extension_capabilitie
 FORM_ACTIONS = ROOT / "addons/smart_construction_core/core_extension_form_actions.py"
 INTENTS = ROOT / "addons/smart_construction_core/core_extension_intents.py"
 SYSTEM_INIT = ROOT / "addons/smart_construction_core/core_extension_system_init.py"
+WORKSPACE_FACTS = ROOT / "addons/smart_construction_core/core_extension_workspace_facts.py"
 DOC = ROOT / "docs/engineering_convergence/core_extension_responsibility_map.md"
-MAX_LINES = 3471
+MAX_LINES = 3020
 
 
 def _line_count(path: Path) -> int:
@@ -111,13 +112,36 @@ def main() -> int:
             if token in system_init_text:
                 errors.append(f"system init helper must remain pure; found token: {token}")
 
+    if not WORKSPACE_FACTS.is_file():
+        errors.append("core_extension_workspace_facts.py missing")
+    else:
+        workspace_text = WORKSPACE_FACTS.read_text(encoding="utf-8")
+        required_workspace_tokens = [
+            "def _safe_search_read(",
+            "def _model_has_field(",
+            "def _build_task_action_rows(",
+            "def _build_payment_action_rows(",
+            "def _build_risk_action_rows(",
+            "def _build_project_action_rows(",
+            "def _build_role_entry_contract_rows(",
+            "def _build_home_block_contract_rows(",
+            "def _build_enterprise_enablement_contract(",
+        ]
+        for token in required_workspace_tokens:
+            if token not in workspace_text:
+                errors.append(f"workspace facts module missing token: {token}")
+        forbidden_tokens = (".write(", "requests.", "registry[")
+        for token in forbidden_tokens:
+            if token in workspace_text:
+                errors.append(f"workspace facts module must not mutate records/registry; found token: {token}")
+
     if not DOC.is_file():
         errors.append("core_extension responsibility map missing")
     else:
         text = DOC.read_text(encoding="utf-8")
         required_tokens = [
             "Target file: `addons/smart_construction_core/core_extension.py`",
-            "Current line budget: `<=3471`.",
+            "Current line budget: `<=3020`.",
             "`core_extension.py` is the construction-industry contribution facade",
             "`smart_core_register(registry)`",
             "`smart_core_extend_system_init(data, env, user)`",
@@ -149,6 +173,10 @@ def main() -> int:
             "`core_extension_system_init.py` owns pure workspace keyword",
             "`smart_core_extend_system_init` keeps input validation",
             "`core_extension.py` is locked at `<=3471` lines",
+            "Stage 6 Workspace Fact Builders",
+            "`core_extension_workspace_facts.py` owns safe workspace ORM reads",
+            "`get_system_init_fact_contributions` remains in the facade",
+            "`core_extension.py` is locked at `<=3020` lines",
             "future PRs from this branch should include multiple commits",
             "open only when",
         ]
