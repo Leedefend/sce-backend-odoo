@@ -14,8 +14,9 @@ SYSTEM_INIT = ROOT / "addons/smart_construction_core/core_extension_system_init.
 WORKSPACE_FACTS = ROOT / "addons/smart_construction_core/core_extension_workspace_facts.py"
 NAVIGATION_POLICY = ROOT / "addons/smart_construction_core/core_extension_navigation_policy.py"
 CONTRACT_PROJECTION = ROOT / "addons/smart_construction_core/core_extension_contract_projection.py"
+PROJECTED_CONTRACTS = ROOT / "addons/smart_construction_core/core_extension_projected_contracts.py"
 DOC = ROOT / "docs/engineering_convergence/core_extension_responsibility_map.md"
-MAX_LINES = 1662
+MAX_LINES = 1517
 
 
 def _line_count(path: Path) -> int:
@@ -179,13 +180,32 @@ def main() -> int:
             if token in projection_text:
                 errors.append(f"contract projection module must not write records/registry; found token: {token}")
 
+    if not PROJECTED_CONTRACTS.is_file():
+        errors.append("core_extension_projected_contracts.py missing")
+    else:
+        projected_text = PROJECTED_CONTRACTS.read_text(encoding="utf-8")
+        required_projected_tokens = [
+            "def smart_core_finalize_projected_contract_data(",
+            "def _user_confirmed_formal_list_action_ids(",
+            "USER_CONFIRMED_FORMAL_LIST_ACTION_XMLIDS",
+            "business_list_config_contract_authoritative",
+            "user_confirmed_formal_list_lock",
+        ]
+        for token in required_projected_tokens:
+            if token not in projected_text:
+                errors.append(f"projected contracts module missing token: {token}")
+        forbidden_tokens = (".write(", "registry[")
+        for token in forbidden_tokens:
+            if token in projected_text:
+                errors.append(f"projected contracts module must not mutate records/registry; found token: {token}")
+
     if not DOC.is_file():
         errors.append("core_extension responsibility map missing")
     else:
         text = DOC.read_text(encoding="utf-8")
         required_tokens = [
             "Target file: `addons/smart_construction_core/core_extension.py`",
-            "Current line budget: `<=1662`.",
+            "Current line budget: `<=1517`.",
             "`core_extension.py` is the construction-industry contribution facade",
             "`smart_core_register(registry)`",
             "`smart_core_extend_system_init(data, env, user)`",
@@ -229,6 +249,10 @@ def main() -> int:
             "`core_extension_contract_projection.py` owns construction-specific v2 contract",
             "`core_extension.py` imports the three public hook names directly",
             "`core_extension.py` is locked at `<=1662` lines",
+            "Stage 9 Projected Contract Finalization",
+            "`core_extension_projected_contracts.py` owns user-confirmed formal list action",
+            "`core_extension.py` imports `smart_core_finalize_projected_contract_data`",
+            "`core_extension.py` is locked at `<=1517` lines",
             "future PRs from this branch should include multiple commits",
             "open only when",
         ]

@@ -2,7 +2,7 @@
 
 Target file: `addons/smart_construction_core/core_extension.py`
 
-Current line budget: `<=1662`.
+Current line budget: `<=1517`.
 
 ## Role
 
@@ -37,7 +37,7 @@ cross-industry policy.
 | 2235-2261 | Intent handler registration | Registry compatibility loader delegates to imported handler contribution mapping. | `core_extension_intents.py`. |
 | 2461-2938 | Capability and form action contributions | Capability payload normalization, group contributions, create fallbacks, and payment form business actions. | `core_extension_capabilities.py` and `core_extension_form_actions.py`. |
 | 2422-2450 | System-init facade and wrapper hooks | Build `ext_facts`, then delegate page/profile override merge to `core_extension_system_init.py`. | `core_extension_system_init.py` plus wrappers retained in facade. |
-| 2541-2685 | Projected contract finalization | User-confirmed action ids and final projected contract shaping. | `core_extension_projected_contracts.py`. |
+| imported | Projected contract finalization | User-confirmed action ids and final projected contract shaping. | `core_extension_projected_contracts.py`. |
 | imported | Service/menu/navigation policy hooks | Business config refs, relation policy, menu token policy, role resolution, app shell, scene entry specs, acceptance nav. | `core_extension_navigation_policy.py`. |
 
 ## Extraction Order
@@ -198,3 +198,16 @@ Stage 8 is complete when:
 - the extracted module may call the workflow contract service for read-only
   projection enrichment, but must not write records or mutate registries;
 - `core_extension.py` is locked at `<=1662` lines for this stage.
+
+## Stage 9 Projected Contract Finalization
+
+Stage 9 is complete when:
+
+- `core_extension_projected_contracts.py` owns user-confirmed formal list action
+  lookup, project form projected governance finalization, tree-view contract
+  locking, and list-profile lock backfill;
+- `core_extension.py` imports `smart_core_finalize_projected_contract_data`
+  directly so existing exports keep working;
+- the extracted module may read views, actions, and generated contracts, but
+  must not write records or mutate registries;
+- `core_extension.py` is locked at `<=1517` lines for this stage.
