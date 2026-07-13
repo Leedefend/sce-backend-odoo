@@ -258,6 +258,35 @@ export function createRootActionCandidatesFromRules(params: {
     .filter((action): action is ContractAction => Boolean(action));
 }
 
+export function resolvePrimaryCreateFooterAction(params: {
+  actions: ContractAction[];
+  fallbackRules: unknown;
+  targetModel: string;
+}): ContractAction | null {
+  const mappedCandidates = params.actions.filter((action) => {
+    const level = String(action.level || '').trim().toLowerCase();
+    const kind = String(action.kind || '').trim().toLowerCase();
+    const source = String(action.sourceWidgetId || '').trim();
+    const isWizardRootAction = source === 'page.root' && level === 'header';
+    return (level === 'footer' || isWizardRootAction)
+      && (kind === 'object' || kind === 'server')
+      && Boolean(action.methodName)
+      && action.selection === 'none';
+  });
+  const candidates = mappedCandidates.length
+    ? mappedCandidates
+    : createRootActionCandidatesFromRules({
+      rules: params.fallbackRules,
+      targetModel: params.targetModel,
+    });
+  if (candidates.length !== 1) return null;
+  return {
+    ...candidates[0],
+    enabled: true,
+    hint: '',
+  };
+}
+
 export function stableContractId(value: unknown, fallback: string) {
   const raw = String(value || fallback || '').trim();
   const normalized = raw

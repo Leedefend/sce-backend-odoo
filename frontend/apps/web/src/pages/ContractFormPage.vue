@@ -463,10 +463,10 @@ import {
   contractActionRuleKey,
   contractPromptParamsFromRule,
   contractPromptFieldsFromRule,
-  createRootActionCandidatesFromRules,
   normalizeActionSafety,
   normalizeActionLabel,
   normalizeRequiredParams,
+  resolvePrimaryCreateFooterAction,
   resolveV2ButtonStatus,
 } from './contractForm/actionContract';
 import { normalizeContractAccessPolicy } from './contractForm/accessPolicy';
@@ -3809,36 +3809,16 @@ const primarySubmitAction = computed<ContractAction | null>(() => {
   return visibleAction || null;
 });
 
-function rawCreateRootActionCandidates(): ContractAction[] {
-  const v2 = resolveUnifiedPageContractV2(contract.value);
-  const rows = parseMaybeJsonRecord(v2?.actionContract).actionRuleList;
-  return createRootActionCandidatesFromRules({
-    rules: rows,
-    targetModel: model.value,
-  });
-}
-
 const primaryCreateFooterAction = computed<ContractAction | null>(() => {
   if (isProjectIntakeCreateMode.value) return null;
   if (!model.value || recordId.value) return null;
   if (primarySubmitAction.value) return null;
-  const mappedCandidates = contractActions.value.filter((action) => {
-    const level = String(action.level || '').trim().toLowerCase();
-    const kind = String(action.kind || '').trim().toLowerCase();
-    const source = String(action.sourceWidgetId || '').trim();
-    const isWizardRootAction = source === 'page.root' && level === 'header';
-    return (level === 'footer' || isWizardRootAction)
-      && (kind === 'object' || kind === 'server')
-      && Boolean(action.methodName)
-      && action.selection === 'none';
+  const v2 = resolveUnifiedPageContractV2(contract.value);
+  return resolvePrimaryCreateFooterAction({
+    actions: contractActions.value,
+    fallbackRules: parseMaybeJsonRecord(v2?.actionContract).actionRuleList,
+    targetModel: model.value,
   });
-  const candidates = mappedCandidates.length ? mappedCandidates : rawCreateRootActionCandidates();
-  if (candidates.length !== 1) return null;
-  return {
-    ...candidates[0],
-    enabled: true,
-    hint: '',
-  };
 });
 
 function actionResponseNavQuery(result: object | null | undefined, extra?: Record<string, unknown>) {
