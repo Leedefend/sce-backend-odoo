@@ -20,8 +20,8 @@ Generated from `complexity_budget_report.md` split-plan-required files.
 | P1 | 3684 | Frontend owner | `frontend/apps/web/src/views/MenuConfigView.vue` | Extract composables, child panels, data adapters, and action handlers; keep the route component as orchestration shell. |
 | P1 | 3633 | Platform owner | `addons/smart_core/handlers/form_field_configuration.py` | Extract parsing, validation, assembly, and response mapping into owned services. |
 | P1 | 3525 | Frontend owner | `frontend/apps/web/src/views/HomeView.vue` | Extract composables, child panels, data adapters, and action handlers; keep the route component as orchestration shell. |
-| P1 | 3361 | Platform owner | `addons/smart_core/utils/contract_governance.py` | Extract constants/registries, user-surface normalization, list governance, native bridge, form policy, diagnostics, and keep `apply_contract_governance` as a thin facade. |
 | P1 | 3323 | Construction backend owner | `addons/smart_construction_core/tests/test_p0_state_closure.py` | Split fixtures, scenario builders, and assertion groups by behavior area. |
+| P1 | 3212 | Platform owner | `addons/smart_core/utils/contract_governance.py` | Extract constants/registries, user-surface normalization, list governance, native bridge, form policy, diagnostics, and keep `apply_contract_governance` as a thin facade. |
 | P1 | 3202 | Platform owner | `addons/smart_core/tests/test_form_field_configuration_params.py` | Split fixtures, scenario builders, and assertion groups by behavior area. |
 | P1 | 3187 | Frontend owner | `frontend/apps/web/src/pages/ListPage.vue` | Extract composables, child panels, data adapters, and action handlers; keep the route component as orchestration shell. |
 | P1 | 3092 | Construction backend owner | `addons/smart_construction_core/models/support/p1_daily_business_visible_alias_fields.py` | Extract service methods for cross-model workflow, amount, and policy logic. |
