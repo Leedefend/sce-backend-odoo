@@ -622,7 +622,7 @@ import {
   relationCreateMode,
   relationInlineCreate,
   relationModel as relationModelFromDescriptor,
-  relationOptionFromRow,
+  relationOptionsFromRecords,
   relationOrder,
   relationReadFields,
   relationSearchColumnsFromContract,
@@ -2346,10 +2346,7 @@ async function hydrateSelectedRelationOptions() {
         ids: missingIds,
         fields: relationReadFields(descriptor),
       });
-      const records = Array.isArray(response.records) ? response.records : [];
-      const options = records
-        .map((row) => relationOptionFromRow(row as Record<string, unknown>, descriptor))
-        .filter((item): item is RelationOption => Boolean(item));
+      const options = relationOptionsFromRecords(response.records, descriptor);
       if (options.length) mergeRelationOptions(name, options);
     } catch (err) {
       if (err instanceof ApiError) {
@@ -2720,10 +2717,7 @@ async function queryRelationOptions(name: string, keyword: string): Promise<Rela
       search_term: search || undefined,
       silentErrors: true,
     });
-    const records = Array.isArray(listed?.records) ? listed.records : [];
-    const mapped = records
-      .map((row) => relationOptionFromRow(row as Record<string, unknown>, descriptor))
-      .filter((item): item is RelationOption => Boolean(item));
+    const mapped = relationOptionsFromRecords(listed?.records, descriptor);
     if (search && !mapped.length && (dynamicDomainDependencyFields(descriptor).length || runtimeRelationDomain(name).length)) {
       return queryRelationOptions(name, '');
     }
@@ -2760,10 +2754,7 @@ async function fetchRelationOptions(name: string, keyword: string, limit = 80): 
     search_term: String(keyword || '').trim() || undefined,
     silentErrors: true,
   });
-  const records = Array.isArray(listed?.records) ? listed.records : [];
-  return records
-    .map((row) => relationOptionFromRow(row as Record<string, unknown>, descriptor))
-    .filter((item): item is RelationOption => Boolean(item));
+  return relationOptionsFromRecords(listed?.records, descriptor);
 }
 
 async function loadRelationSearchColumns(fieldName: string): Promise<RelationSearchColumn[]> {
@@ -3155,10 +3146,7 @@ async function loadRelationOptions() {
         domain,
         silentErrors: true,
       });
-      const records = Array.isArray(listed?.records) ? listed.records : [];
-      next[name] = records
-        .map((row) => relationOptionFromRow(row as Record<string, unknown>, descriptor as FieldDescriptor))
-        .filter((item): item is RelationOption => Boolean(item));
+      next[name] = relationOptionsFromRecords(listed?.records, descriptor as FieldDescriptor);
     } catch (err) {
       if (err instanceof ApiError) {
         const denied = err.status === 403 || String(err.reasonCode || '').toUpperCase() === 'PERMISSION_DENIED';

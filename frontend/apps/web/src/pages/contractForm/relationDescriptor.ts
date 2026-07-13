@@ -128,6 +128,12 @@ export function relationOptionFromRow(row: Record<string, unknown>, descriptor?:
   };
 }
 
+export function relationOptionsFromRecords(records: unknown, descriptor?: FieldDescriptor): RelationOption[] {
+  return (Array.isArray(records) ? records : [])
+    .map((row) => relationOptionFromRow(row as Record<string, unknown>, descriptor))
+    .filter((item): item is RelationOption => Boolean(item));
+}
+
 export function relationOptionsWithSelectedFallback(options: RelationOption[] | undefined, value: unknown): RelationOption[] {
   const rows = Array.isArray(options) ? options : [];
   if (rows.length) return rows;
