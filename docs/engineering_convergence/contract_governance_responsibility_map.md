@@ -3,7 +3,7 @@
 Date: 2026-07-13
 Owner: Platform owner
 Target file: `addons/smart_core/utils/contract_governance.py`
-Current size: 4,490 lines
+Current size: 4,272 lines
 Phase: staged responsibility split
 
 ## Purpose
@@ -34,7 +34,7 @@ and by a smaller public module layout.
 | --- | --- | --- | --- |
 | imported | Constants and registries | Source authority metadata, user-surface allowlists, project/enterprise field profiles, render profiles, form policy constants, and contract key canonical map. | `contract_governance_registry.py`. |
 | 1-446 | Source authority and registry API | Source authority descriptors, legacy profile registration, profile matching. | Keep facade wrappers until import-time compatibility is fully covered. |
-| 615-1264 | User surface normalization | Capability normalization, scene sanitization, search/action noise reduction, user-surface policies. | `contract_governance_user_surface.py`. |
+| imported + 567-651 | User surface normalization | Capability normalization is delegated; scene sanitization, search/action noise reduction, and user-surface policies remain in facade/user-surface helpers. | `contract_governance_capabilities.py` and `contract_governance_user_surface.py`. |
 | 1267-2178 | Project and enterprise governance | Scene list metadata, project form/list/kanban/task transforms, enterprise company/department/user forms. | `contract_governance_project_profiles.py` and `contract_governance_enterprise_profiles.py`. |
 | 2181-2596 | Standard list governance | Standard list profile application, toolbar labels, tier-review list shaping. | `contract_governance_list_surface.py`. |
 | 2599-3044 | Native surface and scene bridge | Visible-field access realignment, native surface normalization, scene contract v1 bridge, labels, relation semantics. | `contract_governance_native_bridge.py`. |
@@ -57,6 +57,7 @@ and by a smaller public module layout.
 | `list_batch_action_closure_guard.py` | Batch action policy behavior through governed list contracts. |
 | `contract_governance_registry_split_guard.py` | Constants/registry extraction compatibility and line-budget lock. |
 | `contract_governance_user_surface_split_guard.py` | User-surface sanitizer/action grouping extraction compatibility and purity lock. |
+| `contract_governance_capabilities_split_guard.py` | Capability normalization extraction compatibility, shared registry behavior, and purity lock. |
 
 ## Extraction Order
 
@@ -143,3 +144,20 @@ Stage 3 is complete when:
 - the registry module remains static data plus mutable legacy registries: no ORM
   calls, HTTP calls, routing, file IO, or environment access;
 - `contract_governance.py` is locked at `<=4490` lines for this stage.
+
+## Stage 4 Target
+
+Stage 4 is complete when:
+
+- `contract_governance_capabilities.py` owns capability normalization, capability
+  state derivation, default payload derivation, delivery-level derivation, and
+  demo/internal capability filtering helpers;
+- `contract_governance.py` keeps `normalize_capabilities`,
+  `is_internal_or_smoke`, and `_has_demo_semantics` available through loaded
+  module aliases for existing callers and the main pipeline;
+- direct `spec_from_file_location` loading shares the capability group registry
+  object with `contract_governance.py`, so `register_capability_group_profile`
+  affects later normalization;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=4272` lines for this stage.
