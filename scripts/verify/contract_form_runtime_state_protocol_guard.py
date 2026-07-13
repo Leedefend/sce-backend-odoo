@@ -115,14 +115,19 @@ def main() -> int:
 
     required_applier_tokens = [
         "export function applyFormRuntimeStatusEvent",
+        "export function applyFormRuntimeBusyEvent",
         "type FormRuntimeStatusEvent = Extract<FormRuntimeStateEvent, { kind: 'status' }>",
+        "type FormRuntimeBusyEvent = Extract<FormRuntimeStateEvent, { kind: 'begin' } | { kind: 'end' }>",
         "FormRuntimeStatusRefs",
+        "FormRuntimeBusyRefs",
         "INITIAL_FORM_RUNTIME_STATE",
         "reduceFormRuntimeState",
         "status: refs.status.value",
         "errorMessage: refs.errorMessage.value",
+        "busyKind: refs.busyKind.value",
         "refs.status.value = next.status",
         "refs.errorMessage.value = next.errorMessage",
+        "refs.busyKind.value = next.busyKind",
     ]
     for token in required_applier_tokens:
         if token not in applier:
@@ -140,14 +145,13 @@ def main() -> int:
         "writeContractFormRecord",
         "queryRelationOptions",
         "reload(",
-        "busyKind.value",
         "submissionFeedback.value",
         "validationErrors.value",
         "showOne2manyErrors.value",
     ]
     for token in forbidden_applier_tokens:
         if token in applier:
-            errors.append(f"runtimeStateApplier.ts must stay status-only; forbidden token: {token}")
+            errors.append(f"runtimeStateApplier.ts must stay event-only; forbidden token: {token}")
 
     required_type_exports = [
         "FormRuntimeBusyKind as BusyKind",
