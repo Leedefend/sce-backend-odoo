@@ -2,7 +2,7 @@
 
 Target file: `addons/smart_construction_core/core_extension.py`
 
-Current line budget: `<=2371`.
+Current line budget: `<=1662`.
 
 ## Role
 
@@ -29,8 +29,8 @@ cross-industry policy.
 
 | Lines | Area | Current Responsibility | Candidate Destination |
 | ---: | --- | --- | --- |
-| 1-409 | Imports and eager registrations | Register project scope, reason metadata, capability groups, semantic scene profiles, and legacy governance profiles. | `core_extension_bootstrap.py` or declarative registration specs. |
-| 410-1120 | Contract projection helpers | Project field labeling, responsibility groups, v2 container/status patches, diary/company/tax form normalization, workflow injection. | `core_extension_contract_projection.py`. |
+| 1-480 | Imports and eager registrations | Register project scope, reason metadata, capability groups, semantic scene profiles, and legacy governance profiles. | `core_extension_bootstrap.py` or declarative registration specs. |
+| imported | Contract projection helpers | Project field labeling, responsibility groups, v2 container/status patches, diary/company/tax form normalization, workflow injection. | `core_extension_contract_projection.py`. |
 | 1121-1571 | Static policy/catalog data | Large dictionaries and state policy tables consumed by later hooks. | `core_extension_policy_catalog.py`. |
 | 1907-1967 | Workspace collection facade | System-init fact contribution orchestration delegates row builders to `core_extension_workspace_facts.py`. | `core_extension_workspace_facts.py`. |
 | 2104-2436 | Basic contribution hooks | Identity, scene maps, surface aliases, record context, file/api policy contributions, role entries, and home blocks. | `core_extension_contributions.py`. |
@@ -182,3 +182,19 @@ Stage 7 is complete when:
 - the extracted module may perform read-only ORM searches required by relation
   entry policy, but must not write records or mutate registries;
 - `core_extension.py` is locked at `<=2371` lines for this stage.
+
+## Stage 8 Contract Projection Hooks
+
+Stage 8 is complete when:
+
+- `core_extension_contract_projection.py` owns construction-specific v2 contract
+  projection helpers, project responsibility layout backfill, construction diary
+  form shaping, general contract tax normalization, company contract form
+  normalization, and workflow contract injection;
+- `core_extension.py` imports the three public hook names directly:
+  `smart_core_finalize_unified_page_contract_v2`,
+  `smart_core_normalize_projected_contract_data`, and
+  `smart_core_normalize_unified_page_contract_v2`;
+- the extracted module may call the workflow contract service for read-only
+  projection enrichment, but must not write records or mutate registries;
+- `core_extension.py` is locked at `<=1662` lines for this stage.

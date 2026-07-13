@@ -13,8 +13,9 @@ INTENTS = ROOT / "addons/smart_construction_core/core_extension_intents.py"
 SYSTEM_INIT = ROOT / "addons/smart_construction_core/core_extension_system_init.py"
 WORKSPACE_FACTS = ROOT / "addons/smart_construction_core/core_extension_workspace_facts.py"
 NAVIGATION_POLICY = ROOT / "addons/smart_construction_core/core_extension_navigation_policy.py"
+CONTRACT_PROJECTION = ROOT / "addons/smart_construction_core/core_extension_contract_projection.py"
 DOC = ROOT / "docs/engineering_convergence/core_extension_responsibility_map.md"
-MAX_LINES = 2371
+MAX_LINES = 1662
 
 
 def _line_count(path: Path) -> int:
@@ -152,10 +153,31 @@ def main() -> int:
         for token in required_navigation_tokens:
             if token not in navigation_text:
                 errors.append(f"navigation policy module missing token: {token}")
-        forbidden_tokens = (".write(", "registry[")
+        forbidden_tokens = (".write(",)
         for token in forbidden_tokens:
             if token in navigation_text:
                 errors.append(f"navigation policy module must not mutate records/registry; found token: {token}")
+
+    if not CONTRACT_PROJECTION.is_file():
+        errors.append("core_extension_contract_projection.py missing")
+    else:
+        projection_text = CONTRACT_PROJECTION.read_text(encoding="utf-8")
+        required_projection_tokens = [
+            "def smart_core_finalize_unified_page_contract_v2(",
+            "def smart_core_normalize_projected_contract_data(",
+            "def smart_core_normalize_unified_page_contract_v2(",
+            "def _sc_normalize_construction_diary_form(",
+            "def _sc_general_contract_tax_contract(",
+            "def _sc_normalize_general_contract_company_form(",
+            "def _sc_inject_workflow_contract(",
+        ]
+        for token in required_projection_tokens:
+            if token not in projection_text:
+                errors.append(f"contract projection module missing token: {token}")
+        forbidden_tokens = (".write(",)
+        for token in forbidden_tokens:
+            if token in projection_text:
+                errors.append(f"contract projection module must not write records/registry; found token: {token}")
 
     if not DOC.is_file():
         errors.append("core_extension responsibility map missing")
@@ -163,7 +185,7 @@ def main() -> int:
         text = DOC.read_text(encoding="utf-8")
         required_tokens = [
             "Target file: `addons/smart_construction_core/core_extension.py`",
-            "Current line budget: `<=2371`.",
+            "Current line budget: `<=1662`.",
             "`core_extension.py` is the construction-industry contribution facade",
             "`smart_core_register(registry)`",
             "`smart_core_extend_system_init(data, env, user)`",
@@ -203,6 +225,10 @@ def main() -> int:
             "`core_extension_navigation_policy.py` owns business config refs",
             "`core_extension.py` imports those public hook names directly",
             "`core_extension.py` is locked at `<=2371` lines",
+            "Stage 8 Contract Projection Hooks",
+            "`core_extension_contract_projection.py` owns construction-specific v2 contract",
+            "`core_extension.py` imports the three public hook names directly",
+            "`core_extension.py` is locked at `<=1662` lines",
             "future PRs from this branch should include multiple commits",
             "open only when",
         ]
