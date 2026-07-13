@@ -700,6 +700,7 @@ import {
   type NativeAttachmentViewerLike,
 } from './contractForm/useNativeAttachmentRuntime';
 import { useNativeChatterRuntime } from './contractForm/useNativeChatterRuntime';
+import { useFieldOrderDragRuntime } from './contractForm/useFieldOrderDragRuntime';
 import {
   buildWorkflowTransitions,
   analyzeFormContractReadiness,
@@ -1334,12 +1335,22 @@ const formLayoutDirty = ref(false);
 const groupLayoutDirtyKeys = reactive<Record<string, boolean>>({});
 const fieldLayoutDirtyKeys = reactive<Record<string, boolean>>({});
 const fieldMoveTargetDraft = reactive<Record<string, string>>({});
-const draggingFieldKey = ref('');
-const draggingFieldLabel = ref('');
-const dropTargetFieldKey = ref('');
-const dropTargetPlacement = ref<'before' | 'after'>('before');
-const fieldDragAutoScrollDirection = ref(0);
-let fieldDragAutoScrollFrame = 0;
+const {
+  draggingFieldKey,
+  draggingFieldLabel,
+  dropTargetFieldKey,
+  dropTargetPlacement,
+  dragStart: onFieldOrderDragStart,
+  dragOver: onFieldOrderDragOver,
+  dragLeave: onFieldOrderDragLeave,
+  dragEnd: onFieldOrderDragEnd,
+  windowDragOver: onFieldOrderWindowDragOver,
+  windowDragStop: onFieldOrderWindowDragStop,
+  resetDropTarget: resetFieldOrderDropTarget,
+} = useFieldOrderDragRuntime({
+  enabled: () => isContractFieldOrderEditable.value,
+  resolveFieldLabel: (fieldKey) => formDesignFieldLabel(fieldKey),
+});
 const selectedFormSettingsFieldKey = ref('');
 const selectedFormSettingsFieldLabel = ref('');
 const selectedFormSettingsFieldGroupTitleDraft = ref('');
@@ -5973,93 +5984,6 @@ async function submitInlineCustomFieldCreate() {
   }
 }
 
-function onFieldOrderDragStart(fieldKey: string, event?: DragEvent) {
-  if (!isContractFieldOrderEditable.value) return;
-  draggingFieldKey.value = fieldKey;
-  draggingFieldLabel.value = draggingFieldLabel.value || formDesignFieldLabel(fieldKey);
-  dropTargetFieldKey.value = '';
-  dropTargetPlacement.value = 'before';
-  if (event?.dataTransfer) {
-    event.dataTransfer.effectAllowed = 'move';
-    event.dataTransfer.setData('text/plain', fieldKey);
-  }
-}
-
-function stopFieldDragAutoScroll() {
-  fieldDragAutoScrollDirection.value = 0;
-  if (fieldDragAutoScrollFrame) {
-    cancelAnimationFrame(fieldDragAutoScrollFrame);
-    fieldDragAutoScrollFrame = 0;
-  }
-}
-
-function runFieldDragAutoScroll() {
-  if (!fieldDragAutoScrollDirection.value || !draggingFieldKey.value) {
-    stopFieldDragAutoScroll();
-    return;
-  }
-  const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 0;
-  const maxScrollTop = typeof document !== 'undefined'
-    ? Math.max(
-      document.documentElement.scrollHeight,
-      document.body?.scrollHeight || 0,
-    ) - viewportHeight
-    : 0;
-  const currentScrollTop = typeof window !== 'undefined' ? window.scrollY : 0;
-  const atStart = currentScrollTop <= 0 && fieldDragAutoScrollDirection.value < 0;
-  const atEnd = currentScrollTop >= maxScrollTop && fieldDragAutoScrollDirection.value > 0;
-  if (atStart || atEnd) {
-    stopFieldDragAutoScroll();
-    return;
-  }
-  window.scrollBy({
-    top: fieldDragAutoScrollDirection.value * 18,
-    behavior: 'auto',
-  });
-  fieldDragAutoScrollFrame = requestAnimationFrame(runFieldDragAutoScroll);
-}
-
-function scheduleFieldDragAutoScroll(direction: number) {
-  if (fieldDragAutoScrollDirection.value === direction && fieldDragAutoScrollFrame) return;
-  stopFieldDragAutoScroll();
-  if (!direction) return;
-  fieldDragAutoScrollDirection.value = direction;
-  fieldDragAutoScrollFrame = requestAnimationFrame(runFieldDragAutoScroll);
-}
-
-function onFieldOrderWindowDragOver(event: DragEvent) {
-  if (!isContractFieldOrderEditable.value || !draggingFieldKey.value) return;
-  const viewportHeight = window.innerHeight || 0;
-  if (!viewportHeight) return;
-  const edgeSize = Math.min(132, Math.max(72, Math.round(viewportHeight * 0.16)));
-  if (event.clientY <= edgeSize) {
-    scheduleFieldDragAutoScroll(-1);
-    return;
-  }
-  if (event.clientY >= viewportHeight - edgeSize) {
-    scheduleFieldDragAutoScroll(1);
-    return;
-  }
-  scheduleFieldDragAutoScroll(0);
-}
-
-function onFieldOrderWindowDragStop() {
-  onFieldOrderDragEnd();
-}
-
-function onFieldOrderDragOver(fieldKey: string, placement: 'before' | 'after' | '' = 'before') {
-  if (!isContractFieldOrderEditable.value || !draggingFieldKey.value || draggingFieldKey.value === fieldKey) return;
-  dropTargetFieldKey.value = fieldKey;
-  dropTargetPlacement.value = placement === 'after' ? 'after' : 'before';
-}
-
-function onFieldOrderDragLeave(fieldKey: string) {
-  if (dropTargetFieldKey.value === fieldKey) {
-    dropTargetFieldKey.value = '';
-    dropTargetPlacement.value = 'before';
-  }
-}
-
 function onFieldOrderDrop(targetFieldKey: string, targetGroupTitle = '', requestedPlacement?: 'before' | 'after' | '') {
   if (!isContractFieldOrderEditable.value || !draggingFieldKey.value || draggingFieldKey.value === targetFieldKey) return;
   const sourceFieldKey = draggingFieldKey.value;
@@ -6076,8 +6000,7 @@ function onFieldOrderDrop(targetFieldKey: string, targetGroupTitle = '', request
   }
   selectedFormSettingsFieldKey.value = sourceFieldKey;
   selectedFormSettingsFieldLabel.value = draggingFieldLabel.value || formDesignFieldLabel(sourceFieldKey);
-  dropTargetFieldKey.value = '';
-  dropTargetPlacement.value = 'before';
+  resetFieldOrderDropTarget();
 }
 
 function fieldGroupTitleForDraft(fieldKey: string) {
@@ -6087,8 +6010,7 @@ function fieldGroupTitleForDraft(fieldKey: string) {
 function onFieldOrderGroupDrop(groupTitle: string) {
   if (!isContractFieldOrderEditable.value || !draggingFieldKey.value) return;
   moveFieldToGroupEnd(draggingFieldKey.value, groupTitle);
-  dropTargetFieldKey.value = '';
-  dropTargetPlacement.value = 'before';
+  resetFieldOrderDropTarget();
 }
 
 function moveFieldOrderTo(
@@ -6118,14 +6040,6 @@ function moveFieldOrder(fieldKey: string, delta: number) {
   fieldOrderDraft.value = draft;
   fieldOrderPreviewActive.value = true;
   formConfigAuditResult.value = null;
-}
-
-function onFieldOrderDragEnd() {
-  draggingFieldKey.value = '';
-  draggingFieldLabel.value = '';
-  dropTargetFieldKey.value = '';
-  dropTargetPlacement.value = 'before';
-  stopFieldDragAutoScroll();
 }
 
 function resetContractFieldOrder() {
@@ -6970,7 +6884,7 @@ onBeforeUnmount(() => {
   if (typeof document !== 'undefined') {
     document.removeEventListener('keydown', onRelationDialogDocumentKeydown);
   }
-  stopFieldDragAutoScroll();
+  onFieldOrderDragEnd();
 });
 </script>
 
