@@ -613,12 +613,12 @@ import {
   dynamicDomainDependencyFields,
   fallbackRelationSearchColumns,
   hasAmbiguousRelationMatches,
-  buildRelationDomainFromParts,
   isBlockAllDomain,
   mergeRelationDomains,
   normalizeRelationSearchColumns,
   normalizeRouteQueryValues,
   openRelationSearchDialogState,
+  relationDomainFromDescriptor,
   relationCreateMode,
   relationInlineCreate,
   relationModel as relationModelFromDescriptor,
@@ -633,6 +633,7 @@ import {
   relationSearchRowsFromRecords,
   relationUiLabel,
   relationUiLabels,
+  runtimeRelationDomainFromModifiers,
   resolveRelationQuickFillOption,
   singleContainingRelationOption,
 } from './contractForm/relationDescriptor';
@@ -2674,26 +2675,19 @@ function clearDynamicRelationDependents(changedName: string) {
 }
 
 function relationDomain(descriptor?: FieldDescriptor) {
-  const entry = relationEntry(descriptor);
-  const entryDomain = Array.isArray(entry?.domain) ? entry.domain : [];
-  const dynamicDomain = dynamicDomainFromDescriptor(descriptor);
-  return buildRelationDomainFromParts({
+  return relationDomainFromDescriptor({
     descriptor,
-    entryDomain,
-    dynamicDomain,
-    entryModel: String(entry?.model || '').trim(),
-    entryDefaultType: String(entry?.defaultVals?.type || '').trim(),
+    dynamicDomain: dynamicDomainFromDescriptor(descriptor),
     routeDefaultType: String(route.query.default_type || '').trim(),
   });
 }
 
 function runtimeRelationDomain(name: string) {
-  const out: unknown[] = [];
-  const base = (fieldModifierMap.value?.[name] || {}) as Record<string, unknown>;
-  if (Array.isArray(base.domain)) out.push(...base.domain);
-  const patch = (onchangeModifiersPatch.value?.[name] || {}) as Record<string, unknown>;
-  if (Array.isArray(patch.domain)) out.push(...patch.domain);
-  return out;
+  return runtimeRelationDomainFromModifiers({
+    fieldName: name,
+    baseModifiers: fieldModifierMap.value,
+    patchModifiers: onchangeModifiersPatch.value,
+  });
 }
 
 function mergedRelationDomain(name: string, descriptor?: FieldDescriptor) {

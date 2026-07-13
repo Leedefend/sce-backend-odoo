@@ -340,6 +340,36 @@ export function buildRelationDomainFromParts(params: {
   return out.length ? out : undefined;
 }
 
+export function relationDomainFromDescriptor(params: {
+  descriptor?: FieldDescriptor;
+  dynamicDomain: unknown[];
+  routeDefaultType: string;
+}) {
+  const entry = relationEntry(params.descriptor);
+  return buildRelationDomainFromParts({
+    descriptor: params.descriptor,
+    entryDomain: Array.isArray(entry?.domain) ? entry.domain : [],
+    dynamicDomain: params.dynamicDomain,
+    entryModel: String(entry?.model || '').trim(),
+    entryDefaultType: String(entry?.defaultVals?.type || '').trim(),
+    routeDefaultType: params.routeDefaultType,
+  });
+}
+
+export function runtimeRelationDomainFromModifiers(params: {
+  fieldName: string;
+  baseModifiers: Record<string, Record<string, unknown>> | null | undefined;
+  patchModifiers: Record<string, Record<string, unknown>> | null | undefined;
+}) {
+  const name = String(params.fieldName || '').trim();
+  const out: unknown[] = [];
+  const base = (params.baseModifiers?.[name] || {}) as Record<string, unknown>;
+  if (Array.isArray(base.domain)) out.push(...base.domain);
+  const patch = (params.patchModifiers?.[name] || {}) as Record<string, unknown>;
+  if (Array.isArray(patch.domain)) out.push(...patch.domain);
+  return out;
+}
+
 export function mergeRelationDomains(base: unknown, runtime: unknown) {
   const out: unknown[] = [];
   const runtimeHasDomain = Array.isArray(runtime) && runtime.length > 0;
