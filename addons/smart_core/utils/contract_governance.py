@@ -47,6 +47,18 @@ _REGISTRY_EXPORTS = (
     "_ENTERPRISE_USER_FIELD_LABELS",
     "_PROJECT_FORM_ACTION_GROUP_LIMIT",
     "_PROJECT_FORM_DEFAULT_ACTION_GROUP_LABELS",
+    "_FORM_CORE_FIELD_MAX",
+    "_FORM_ACTION_PRIMARY_KEYWORDS",
+    "_FORM_ACTION_READONLY_KEYWORDS",
+    "_FORM_PRIMARY_DISABLED_REASON",
+    "_FORM_DISABLED_REASON_CAPABILITY",
+    "_FORM_DISABLED_REASON_LIFECYCLE",
+    "_FORM_DISABLED_REASON_GROUP",
+    "_FORM_DISABLED_REASON_ROLE",
+    "_FORM_SCENE_PROFILE_DEFAULT",
+    "_FORM_SCENE_PROFILE_PROJECT",
+    "_CAPABILITY_GROUP_DEFAULTS",
+    "_CONTRACT_KEY_CANONICAL_MAP",
     "_TIER_REVIEW_LIST_NAV_ACTION_PREFIXES",
     "_BUSINESS_FIELD_LABEL_OVERRIDES",
     "_USER_SURFACE_ACTION_GROUP_LABELS",
@@ -446,27 +458,6 @@ def _apply_registered_legacy_standard_list_profiles(data: dict) -> None:
         )
 
 
-_FORM_CORE_FIELD_MAX = 8
-_FORM_ACTION_PRIMARY_KEYWORDS = (
-    "提交",
-    "保存",
-    "创建",
-    "确认",
-    "进入下一阶段",
-    "approve",
-    "submit",
-    "save",
-    "create",
-    "confirm",
-)
-_FORM_ACTION_READONLY_KEYWORDS = (
-    "查看",
-    "打开",
-    "open",
-    "view",
-)
-
-
 def _inject_enterprise_form_governance(data: dict, *, next_action_key: str = "", next_action_label: str = "") -> None:
     governance = _as_dict(data.get("form_governance"))
     governance.update(
@@ -487,10 +478,6 @@ def _inject_enterprise_form_governance(data: dict, *, next_action_key: str = "",
         governance.pop("next_action", None)
     data["form_governance"] = governance
 
-_FORM_PRIMARY_DISABLED_REASON = "请先完成必填字段后再执行主操作"
-_FORM_DISABLED_REASON_CAPABILITY = "缺少执行该操作所需能力"
-
-
 def _governance_primary_model(data: dict) -> str:
     governance = _as_dict(data.get("governance"))
     head = _as_dict(data.get("head"))
@@ -502,38 +489,6 @@ def _governance_primary_model(data: dict) -> str:
         or data.get("model")
         or permissions.get("model")
     )
-_FORM_DISABLED_REASON_LIFECYCLE = "当前生命周期状态不允许该操作"
-_FORM_DISABLED_REASON_GROUP = "当前角色组不满足执行条件"
-_FORM_DISABLED_REASON_ROLE = "当前角色不满足执行条件"
-_FORM_SCENE_PROFILE_DEFAULT = "generic.form"
-_FORM_SCENE_PROFILE_PROJECT = "project.form"
-
-_CAPABILITY_GROUP_DEFAULTS = {
-    "governance": {"label": "Governance", "icon": "shield"},
-    "analytics": {"label": "Analytics", "icon": "chart"},
-    "others": {"label": "Other", "icon": "grid"},
-}
-
-_CONTRACT_KEY_CANONICAL_MAP = {
-    "requiredCapabilities": "required_capabilities",
-    "groupsXmlids": "groups_xmlids",
-    "actionId": "action_id",
-    "menuId": "menu_id",
-    "viewType": "view_type",
-    "recordId": "record_id",
-    "reasonCode": "reason_code",
-    "deliveryLevel": "delivery_level",
-    "targetSceneKey": "target_scene_key",
-    "entryKind": "entry_kind",
-    "capabilityState": "capability_state",
-    "capabilityStateReason": "capability_state_reason",
-    "defaultPayload": "default_payload",
-    "groupKey": "group_key",
-    "groupLabel": "group_label",
-    "groupIcon": "group_icon",
-    "groupSequence": "group_sequence",
-}
-
 _DOMAIN_OVERRIDE_REGISTRY: list[dict[str, Any]] = []
 
 

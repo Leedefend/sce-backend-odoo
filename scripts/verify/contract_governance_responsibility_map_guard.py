@@ -79,7 +79,7 @@ def main() -> int:
 
     for token in [
         "Contract Governance Responsibility Map",
-        "Current size: 4,820 lines",
+        "Current size: 4,490 lines",
         "projection-only",
         "Do not start mechanical extraction",
         "## Public Entry Points",
@@ -95,6 +95,9 @@ def main() -> int:
         "## Stage 2 Target",
         "`contract_governance_user_surface.py` owns recursive user-mode field stripping",
         "`contract_governance.py` is locked at `<=4535` lines",
+        "## Stage 3 Target",
+        "`contract_governance_registry.py` also owns form policy constants",
+        "`contract_governance.py` is locked at `<=4490` lines",
     ]:
         if token not in doc:
             errors.append(f"responsibility map missing token: {token}")

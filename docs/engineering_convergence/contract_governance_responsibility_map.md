@@ -3,8 +3,8 @@
 Date: 2026-07-13
 Owner: Platform owner
 Target file: `addons/smart_core/utils/contract_governance.py`
-Current size: 4,820 lines
-Phase: read-only responsibility audit
+Current size: 4,490 lines
+Phase: staged responsibility split
 
 ## Purpose
 
@@ -32,8 +32,8 @@ and by a smaller public module layout.
 
 | Lines | Band | Current responsibility | Extraction candidate |
 | --- | --- | --- | --- |
-| 1-252 | Constants and registries | Source authority metadata, user-surface allowlists, project/enterprise field profiles, render profiles. | `contract_governance_constants.py` and typed registry definitions. |
-| 253-591 | Source authority and registry API | Source authority descriptors, legacy profile registration, profile matching. | `contract_governance_registry.py`. |
+| imported | Constants and registries | Source authority metadata, user-surface allowlists, project/enterprise field profiles, render profiles, form policy constants, and contract key canonical map. | `contract_governance_registry.py`. |
+| 1-446 | Source authority and registry API | Source authority descriptors, legacy profile registration, profile matching. | Keep facade wrappers until import-time compatibility is fully covered. |
 | 615-1264 | User surface normalization | Capability normalization, scene sanitization, search/action noise reduction, user-surface policies. | `contract_governance_user_surface.py`. |
 | 1267-2178 | Project and enterprise governance | Scene list metadata, project form/list/kanban/task transforms, enterprise company/department/user forms. | `contract_governance_project_profiles.py` and `contract_governance_enterprise_profiles.py`. |
 | 2181-2596 | Standard list governance | Standard list profile application, toolbar labels, tier-review list shaping. | `contract_governance_list_surface.py`. |
@@ -130,3 +130,16 @@ Stage 2 is complete when:
   remain in the facade until their registry and model-policy dependencies are
   isolated separately;
 - `contract_governance.py` is locked at `<=4535` lines for this stage.
+
+## Stage 3 Target
+
+Stage 3 is complete when:
+
+- `contract_governance_registry.py` also owns form policy constants, primary and
+  readonly action keyword sets, disabled-reason copy, form scene profile names,
+  capability group defaults, and the contract key canonical map;
+- `contract_governance.py` continues to export those names via `_REGISTRY_EXPORTS`
+  for direct import compatibility;
+- the registry module remains static data plus mutable legacy registries: no ORM
+  calls, HTTP calls, routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=4490` lines for this stage.

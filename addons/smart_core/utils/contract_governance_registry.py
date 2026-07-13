@@ -218,6 +218,56 @@ _PROJECT_FORM_DEFAULT_ACTION_GROUP_LABELS = {
     "drilldown": "Open",
     "other": "More",
 }
+_FORM_CORE_FIELD_MAX = 8
+_FORM_ACTION_PRIMARY_KEYWORDS = (
+    "提交",
+    "保存",
+    "创建",
+    "确认",
+    "进入下一阶段",
+    "approve",
+    "submit",
+    "save",
+    "create",
+    "confirm",
+)
+_FORM_ACTION_READONLY_KEYWORDS = (
+    "查看",
+    "打开",
+    "open",
+    "view",
+)
+_FORM_PRIMARY_DISABLED_REASON = "请先完成必填字段后再执行主操作"
+_FORM_DISABLED_REASON_CAPABILITY = "缺少执行该操作所需能力"
+_FORM_DISABLED_REASON_LIFECYCLE = "当前生命周期状态不允许该操作"
+_FORM_DISABLED_REASON_GROUP = "当前角色组不满足执行条件"
+_FORM_DISABLED_REASON_ROLE = "当前角色不满足执行条件"
+_FORM_SCENE_PROFILE_DEFAULT = "generic.form"
+_FORM_SCENE_PROFILE_PROJECT = "project.form"
+_CAPABILITY_GROUP_DEFAULTS = {
+    "governance": {"label": "Governance", "icon": "shield"},
+    "analytics": {"label": "Analytics", "icon": "chart"},
+    "others": {"label": "Other", "icon": "grid"},
+}
+_CONTRACT_KEY_CANONICAL_MAP = {
+    "requiredCapabilities": "required_capabilities",
+    "groupsXmlids": "groups_xmlids",
+    "actionId": "action_id",
+    "menuId": "menu_id",
+    "viewType": "view_type",
+    "recordId": "record_id",
+    "reasonCode": "reason_code",
+    "deliveryLevel": "delivery_level",
+    "targetSceneKey": "target_scene_key",
+    "entryKind": "entry_kind",
+    "capabilityState": "capability_state",
+    "capabilityStateReason": "capability_state_reason",
+    "defaultPayload": "default_payload",
+    "groupKey": "group_key",
+    "groupLabel": "group_label",
+    "groupIcon": "group_icon",
+    "groupSequence": "group_sequence",
+}
 _TIER_REVIEW_LIST_NAV_ACTION_PREFIXES = ()
 _BUSINESS_FIELD_LABEL_OVERRIDES = {
     "display_name": "名称",

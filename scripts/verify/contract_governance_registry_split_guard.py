@@ -9,7 +9,7 @@ GOVERNANCE = ROOT / "addons/smart_core/utils/contract_governance.py"
 REGISTRY = ROOT / "addons/smart_core/utils/contract_governance_registry.py"
 CI = ROOT / "make/ci.mk"
 
-MAX_GOVERNANCE_LINES = 4655
+MAX_GOVERNANCE_LINES = 4490
 
 REQUIRED_EXPORTS = [
     "SOURCE_KIND",
@@ -31,6 +31,18 @@ REQUIRED_EXPORTS = [
     "CONTRACT_MODES",
     "CONTRACT_SURFACES",
     "_USER_SURFACE_PRIMARY_ACTION_MAX",
+    "_FORM_CORE_FIELD_MAX",
+    "_FORM_ACTION_PRIMARY_KEYWORDS",
+    "_FORM_ACTION_READONLY_KEYWORDS",
+    "_FORM_PRIMARY_DISABLED_REASON",
+    "_FORM_DISABLED_REASON_CAPABILITY",
+    "_FORM_DISABLED_REASON_LIFECYCLE",
+    "_FORM_DISABLED_REASON_GROUP",
+    "_FORM_DISABLED_REASON_ROLE",
+    "_FORM_SCENE_PROFILE_DEFAULT",
+    "_FORM_SCENE_PROFILE_PROJECT",
+    "_CAPABILITY_GROUP_DEFAULTS",
+    "_CONTRACT_KEY_CANONICAL_MAP",
 ]
 
 
@@ -78,6 +90,8 @@ def main() -> int:
             "LEGACY_DELETE_ONLY_MODELS = {\"res.company\", \"hr.department\", \"res.users\"}",
             "_LEGACY_STANDARD_LIST_PROFILE_REGISTRY: list[dict[str, Any]] = []",
             "_RENDER_PROFILE_READONLY = \"readonly\"",
+            "_FORM_ACTION_PRIMARY_KEYWORDS = (",
+            "_CONTRACT_KEY_CANONICAL_MAP = {",
         ]:
             if token not in registry_text:
                 errors.append(f"contract_governance_registry.py missing registry token: {token}")
