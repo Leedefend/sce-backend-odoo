@@ -430,7 +430,6 @@ import {
   fieldInputType,
   fieldType,
   normalizeRelationIds,
-  parseMany2oneDisplay,
   sanitizeUiErrorMessage,
   toDateInputValue,
   toDatetimeInputValue,
@@ -488,6 +487,11 @@ import {
   normalizeRouteDefault,
   resolveNavigationUrl as resolveNavigationUrlFromOrigin,
 } from './contractForm/valueUtils';
+import {
+  buildOnchangeRequestPayload,
+  normalizeOnchangeFieldPatch,
+  normalizeOnchangeResponse,
+} from './contractForm/onchangeNormalization';
 import { dictOrEmpty, mergeFieldLabelsFromSource } from './contractForm/recordUtils';
 import {
   collectFormDataFieldNames,
@@ -5050,20 +5054,13 @@ function scheduleOnchange() {
 }
 
 function buildOnchangeValues() {
-  const out: Record<string, unknown> = {};
-  Object.keys(contract.value?.fields || {}).forEach((name) => {
-    const descriptor = contract.value?.fields?.[name];
-    out[name] = normalizeContractFieldValue({
-      name,
-      value: formData[name],
-      descriptor,
-      originalValue: originalValues.value[name],
-      mode: 'onchange',
-      buildOne2manyValue: buildOne2manyCommandValue,
-    });
+  return buildOnchangeRequestPayload({
+    fields: contract.value?.fields,
+    formData,
+    originalValues: originalValues.value,
+    recordId: recordId.value,
+    buildOne2manyValue: buildOne2manyCommandValue,
   });
-  if (recordId.value) out.id = recordId.value;
-  return out;
 }
 
 async function runOnchangeRoundtrip() {
@@ -5079,18 +5076,15 @@ async function runOnchangeRoundtrip() {
       changed_fields: changed,
       context: pickContractNavQuery(route.query as Record<string, unknown>),
     });
-    const patch = response?.patch;
-    const modifiersPatch = response?.modifiers_patch;
-    const linePatches = Array.isArray(response?.line_patches) ? response.line_patches : [];
-    const warnings = Array.isArray(response?.warnings) ? response.warnings : [];
+    const { patch, modifiersPatch, linePatches, warnings } = normalizeOnchangeResponse(response);
     onchangeWarnings.value = warnings;
     onchangeLinePatches.value = linePatches;
-    if (modifiersPatch && typeof modifiersPatch === 'object') {
+    if (Object.keys(modifiersPatch).length) {
       onchangeModifiersPatch.value = {
         ...onchangeModifiersPatch.value,
-        ...(modifiersPatch as Record<string, Record<string, unknown>>),
+        ...modifiersPatch,
       };
-      const patchedFields = Object.keys(modifiersPatch as Record<string, Record<string, unknown>>);
+      const patchedFields = Object.keys(modifiersPatch);
       await Promise.all(
         patchedFields.map(async (name) => {
           const descriptor = contract.value?.fields?.[name];
@@ -5100,20 +5094,22 @@ async function runOnchangeRoundtrip() {
         }),
       );
     }
-    if (patch && typeof patch === 'object') {
+    if (Object.keys(patch).length) {
       applyingOnchangePatch.value = true;
       Object.entries(patch).forEach(([name, value]) => {
         if (!(name in (contract.value?.fields || {}))) return;
-        const ttype = fieldType(contract.value?.fields?.[name]);
-        if (ttype === 'many2many' || ttype === 'one2many') {
-          formData[name] = Array.isArray(value) ? value : [];
-          if (ttype === 'one2many') initOne2manyRows(name, formData[name]);
-        } else if (ttype === 'many2one') {
-          const option = parseMany2oneDisplay(value);
-          upsertRelationOption(name, option);
-          const ids = normalizeRelationIds(value);
-          const nextId = ids.length ? ids[0] : false;
-          if (!nextId) {
+        const node = layoutNodes.value.find((item) => item.kind === 'field' && item.name === name);
+        const normalized = normalizeOnchangeFieldPatch({
+          descriptor: contract.value?.fields?.[name],
+          readonly: Boolean(node?.readonly || contract.value?.fields?.[name]?.readonly),
+          value,
+        });
+        if (normalized.kind === 'x2many') {
+          formData[name] = normalized.value;
+          if (normalized.fieldType === 'one2many') initOne2manyRows(name, formData[name]);
+        } else if (normalized.kind === 'many2one') {
+          upsertRelationOption(name, normalized.option);
+          if (!normalized.nextId) {
             const currentIds = relationIds(name);
             const selectedOption = currentIds.length
               ? (relationOptions.value[name] || []).find((item) => item.id === currentIds[0])
@@ -5126,16 +5122,10 @@ async function runOnchangeRoundtrip() {
               delete relationQueryTimers[name];
             }
           }
-          const node = layoutNodes.value.find((item) => item.kind === 'field' && item.name === name);
-          const readonly = Boolean(node?.readonly || contract.value?.fields?.[name]?.readonly);
-          formData[name] = readonly && option ? [option.id, option.label] : nextId;
-          relationKeywords[name] = option?.label || (nextId ? relationKeywords[name] || `#${nextId}` : '');
-        } else if (ttype === 'date') {
-          formData[name] = toDateInputValue(value);
-        } else if (ttype === 'datetime') {
-          formData[name] = toDatetimeInputValue(value);
+          formData[name] = normalized.value;
+          relationKeywords[name] = normalized.keyword || (normalized.nextId ? relationKeywords[name] || `#${normalized.nextId}` : '');
         } else {
-          formData[name] = value;
+          formData[name] = normalized.value;
         }
       });
       applyingOnchangePatch.value = false;
