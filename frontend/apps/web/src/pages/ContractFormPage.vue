@@ -696,6 +696,7 @@ import { useFieldVisibilityDraftRuntime } from './contractForm/useFieldVisibilit
 import { useInlineFieldPolicyRuntime } from './contractForm/useInlineFieldPolicyRuntime';
 import { useContractModeActionRuntime } from './contractForm/useContractModeActionRuntime';
 import { useActionResponseNavigation } from './contractForm/useActionResponseNavigation';
+import { usePrimaryFormActionRuntime } from './contractForm/usePrimaryFormActionRuntime';
 import {
   buildWorkflowTransitions,
   analyzeFormContractReadiness,
@@ -988,6 +989,26 @@ const requestedSourceMode = computed(() => (
   requestedSurface.value === 'native' ? 'native_parser' : 'governance_pipeline'
 ));
 const busy = computed(() => busyKind.value !== null);
+const {
+  runPrimaryFormAction,
+} = usePrimaryFormActionRuntime({
+  actionId: () => actionId.value || 0,
+  applyProjectionRefreshPolicy: (policy) => applyProjectionRefreshPolicy(policy),
+  busyKind,
+  confirmActionSafety: (action) => confirmActionSafety(action),
+  errorMessage,
+  modelName: () => model.value,
+  navigateActionResponseResult: (result) => navigateActionResponseResult(result),
+  primaryCreateFooterAction: () => primaryCreateFooterAction.value,
+  primarySubmitAction: () => primarySubmitAction.value,
+  recordId,
+  reload: () => reload(),
+  routeMenuId: () => route.query.menu_id,
+  saveRecord: (refreshPolicy) => saveRecord(refreshPolicy),
+  status,
+  submissionFeedback,
+  validationErrors,
+});
 
 function recordVersionPolicy() {
   const raw = (contract.value as Record<string, unknown> | null)?.record_version;
@@ -5966,77 +5987,6 @@ async function runAction(action: ContractAction) {
     } finally {
       busyKind.value = null;
     }
-  }
-}
-
-async function runPrimaryFormAction() {
-  const footerAction = primaryCreateFooterAction.value;
-  if (footerAction) {
-    const saved = await saveRecord(footerAction.refreshPolicy);
-    if (!saved) return;
-    await nextTick();
-    const submittedRecordId = typeof saved === 'number' ? saved : recordId.value;
-    if (!submittedRecordId) {
-      errorMessage.value = '操作失败：请先保存记录后再执行';
-      status.value = 'error';
-      return;
-    }
-    await executePrimarySubmitAction({
-      ...footerAction,
-      enabled: true,
-      hint: '',
-    }, submittedRecordId);
-    return;
-  }
-  const submitAction = primarySubmitAction.value;
-  if (!submitAction) {
-    await saveRecord();
-    return;
-  }
-  const saved = await saveRecord(submitAction.refreshPolicy);
-  if (!saved) return;
-  await nextTick();
-  const submittedRecordId = typeof saved === 'number' ? saved : recordId.value;
-  if (!submittedRecordId) {
-    errorMessage.value = '提交失败：请先保存记录后再提交';
-    status.value = 'error';
-    return;
-  }
-  await executePrimarySubmitAction({
-    ...submitAction,
-    enabled: true,
-    hint: '',
-  }, submittedRecordId);
-}
-
-async function executePrimarySubmitAction(action: ContractAction, resId: number) {
-  if (!await confirmActionSafety(action)) return;
-  busyKind.value = 'action';
-  try {
-    const response = await executeButton({
-      model: action.targetModel || model.value,
-      res_id: resId,
-      button: { name: action.methodName, type: action.kind === 'server' ? 'server' : 'object' },
-      context: action.context,
-      meta: {
-        menu_id: Number(route.query.menu_id || 0) || undefined,
-        action_id: actionId.value || undefined,
-      },
-    });
-    const result = response?.result;
-    if (await navigateActionResponseResult(result)) {
-      return;
-    }
-    submissionFeedback.value = { kind: 'success', message: '提交成功' };
-    await applyProjectionRefreshPolicy(action.refreshPolicy || { on_success: ['scene_projection'] });
-    await reload();
-  } catch (err) {
-    const message = sanitizeUiErrorMessage(err instanceof Error ? err.message : err, '提交失败，请检查填写内容');
-    validationErrors.value = [message];
-    submissionFeedback.value = { kind: 'error', message: '提交失败，请检查填写内容' };
-    status.value = 'error';
-  } finally {
-    busyKind.value = null;
   }
 }
 
