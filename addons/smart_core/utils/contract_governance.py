@@ -358,226 +358,59 @@ def _mark_legacy_user_surface_model_policy(data: dict, policy_key: str) -> None:
 
 
 def register_legacy_standard_list_profile(profile: dict[str, Any]) -> None:
-    if not isinstance(profile, dict):
-        return
-    model_name = _safe_text(profile.get("model_name"))
-    if not model_name:
-        return
-    normalized = {
-        "model_name": model_name,
-        "columns_order": [
-            _safe_text(name)
-            for name in (profile.get("columns_order") if isinstance(profile.get("columns_order"), list) else [])
-            if _safe_text(name)
-        ],
-        "column_labels": {
-            _safe_text(key): _safe_text(value)
-            for key, value in (profile.get("column_labels") if isinstance(profile.get("column_labels"), dict) else {}).items()
-            if _safe_text(key)
-        },
-        "row_primary": _safe_text(profile.get("row_primary")),
-        "row_secondary": _safe_text(profile.get("row_secondary")),
-        "status_field": _safe_text(profile.get("status_field")),
-        "strict_columns": bool(profile.get("strict_columns")),
-        "profile_key": _safe_text(profile.get("profile_key")),
-        "signature_any": [
-            _safe_text(item)
-            for item in (profile.get("signature_any") if isinstance(profile.get("signature_any"), list) else [])
-            if _safe_text(item)
-        ],
-    }
-    if not normalized["columns_order"]:
-        return
-    dedupe_key = normalized["profile_key"] or normalized["model_name"]
-    for index, existing in enumerate(_LEGACY_STANDARD_LIST_PROFILE_REGISTRY):
-        existing_key = _safe_text(existing.get("profile_key")) or _safe_text(existing.get("model_name"))
-        if existing_key == dedupe_key:
-            _LEGACY_STANDARD_LIST_PROFILE_REGISTRY[index] = normalized
-            return
-    _LEGACY_STANDARD_LIST_PROFILE_REGISTRY.append(normalized)
+    _registry.register_legacy_standard_list_profile(profile)
 
 
 def register_legacy_record_context_clear_model(model_name: str) -> None:
-    model = _safe_text(model_name)
-    if model:
-        LEGACY_RECORD_CONTEXT_CLEAR_MODELS.add(model)
+    _registry.register_legacy_record_context_clear_model(model_name)
 
 
 def register_legacy_delete_only_model(model_name: str) -> None:
-    model = _safe_text(model_name)
-    if model:
-        LEGACY_DELETE_ONLY_MODELS.add(model)
+    _registry.register_legacy_delete_only_model(model_name)
 
 
 def register_legacy_project_form_governance_model(model_name: str) -> None:
-    model = _safe_text(model_name)
-    if model:
-        _LEGACY_PROJECT_FORM_GOVERNANCE_MODELS.add(model)
+    _registry.register_legacy_project_form_governance_model(model_name)
 
 
 def register_legacy_project_form_profile(model_name: str, profile: dict[str, Any]) -> None:
-    model = _safe_text(model_name)
-    if not model or not isinstance(profile, dict):
-        return
-    primary_fields = [_safe_text(name) for name in (profile.get("primary_fields") or []) if _safe_text(name)]
-    create_hidden_fields = [
-        _safe_text(name)
-        for name in (profile.get("create_hidden_fields") or [])
-        if _safe_text(name)
-    ]
-    action_priorities = [
-        _safe_text(name)
-        for name in (profile.get("action_priorities") or [])
-        if _safe_text(name)
-    ]
-    action_noise_markers = [
-        _safe_lower(name)
-        for name in (profile.get("action_noise_markers") or [])
-        if _safe_text(name)
-    ]
-    search_noise_markers = [
-        _safe_lower(name)
-        for name in (profile.get("search_noise_markers") or [])
-        if _safe_text(name)
-    ]
-    action_group_labels = {
-        _safe_text(key): _safe_text(value)
-        for key, value in _as_dict(profile.get("action_group_labels")).items()
-        if _safe_text(key) and _safe_text(value)
-    }
-    _LEGACY_PROJECT_FORM_PROFILE_REGISTRY[model] = {
-        "primary_fields": primary_fields,
-        "create_hidden_fields": create_hidden_fields,
-        "action_priorities": action_priorities,
-        "action_noise_markers": action_noise_markers,
-        "search_noise_markers": search_noise_markers,
-        "action_group_labels": action_group_labels,
-        "max_fields": int(profile.get("max_fields") or _PROJECT_FORM_FIELD_MAX),
-    }
+    _registry.register_legacy_project_form_profile(
+        model_name,
+        profile,
+        default_max_fields=_PROJECT_FORM_FIELD_MAX,
+    )
 
 
 def register_legacy_project_task_form_governance_model(model_name: str) -> None:
-    model = _safe_text(model_name)
-    if model:
-        _LEGACY_PROJECT_TASK_FORM_GOVERNANCE_MODELS.add(model)
+    _registry.register_legacy_project_task_form_governance_model(model_name)
 
 
 def register_legacy_project_task_form_profile(model_name: str, profile: dict[str, Any]) -> None:
-    model = _safe_text(model_name)
-    if not model or not isinstance(profile, dict):
-        return
-    fields = [_safe_text(name) for name in (profile.get("fields") or []) if _safe_text(name)]
-    if not fields:
-        return
-    labels = {
-        _safe_text(key): _safe_text(value)
-        for key, value in _as_dict(profile.get("field_labels")).items()
-        if _safe_text(key) and _safe_text(value)
-    }
-    description_fields = [
-        _safe_text(name)
-        for name in (profile.get("description_fields") or [])
-        if _safe_text(name)
-    ]
-    _LEGACY_PROJECT_TASK_FORM_PROFILE_REGISTRY[model] = {
-        "fields": fields,
-        "field_labels": labels,
-        "core_group_label": _safe_text(profile.get("core_group_label")) or "基础信息",
-        "description_group_label": _safe_text(profile.get("description_group_label")) or "说明",
-        "description_fields": description_fields,
-    }
+    _registry.register_legacy_project_task_form_profile(model_name, profile)
 
 
 def register_legacy_project_kanban_governance_model(model_name: str) -> None:
-    model = _safe_text(model_name)
-    if model:
-        _LEGACY_PROJECT_KANBAN_GOVERNANCE_MODELS.add(model)
+    _registry.register_legacy_project_kanban_governance_model(model_name)
 
 
 def register_legacy_project_kanban_profile(model_name: str, profile: dict[str, Any]) -> None:
-    model = _safe_text(model_name)
-    if not model or not isinstance(profile, dict):
-        return
-
-    def _field_list(key: str) -> list[str]:
-        return [_safe_text(name) for name in (profile.get(key) or []) if _safe_text(name)]
-
-    _LEGACY_PROJECT_KANBAN_PROFILE_REGISTRY[model] = {
-        "primary_fields": _field_list("primary_fields"),
-        "secondary_fields": _field_list("secondary_fields"),
-        "status_fields": _field_list("status_fields"),
-        "title_field": _safe_text(profile.get("title_field")),
-        "max_meta": int(profile.get("max_meta") or 4),
-    }
+    _registry.register_legacy_project_kanban_profile(model_name, profile)
 
 
 def register_legacy_kanban_row_action(model_name: str, action: dict[str, Any]) -> None:
-    model = _safe_text(model_name)
-    if not model or not isinstance(action, dict):
-        return
-    key = _safe_text(action.get("key") or action.get("name"))
-    if not key:
-        return
-    row = _deep_clone_json_like(action)
-    row["key"] = key
-    row.setdefault("name", key)
-    _LEGACY_KANBAN_ROW_ACTION_REGISTRY.setdefault(model, [])
-    existing = _LEGACY_KANBAN_ROW_ACTION_REGISTRY[model]
-    existing[:] = [item for item in existing if _safe_text(item.get("key") or item.get("name")) != key]
-    existing.append(row)
+    _registry.register_legacy_kanban_row_action(model_name, action)
 
 
 def register_legacy_field_presentation(model_name: str, field_name: str, profile: dict[str, Any]) -> None:
-    model = _safe_text(model_name)
-    field = _safe_text(field_name)
-    if not model or not field or not isinstance(profile, dict):
-        return
-    normalized = {
-        "label": _safe_text(profile.get("label")),
-        "widget": _safe_text(profile.get("widget")),
-        "cell_role": _safe_text(profile.get("cell_role")),
-        "mutation": _deep_clone_json_like(profile.get("mutation")) if isinstance(profile.get("mutation"), dict) else {},
-    }
-    _LEGACY_FIELD_PRESENTATION_REGISTRY[(model, field)] = normalized
+    _registry.register_legacy_field_presentation(model_name, field_name, profile)
 
 
 def register_capability_group_profile(group_key: str, profile: dict[str, Any]) -> None:
-    key = _safe_text(group_key)
-    if not key or not isinstance(profile, dict):
-        return
-    _CAPABILITY_GROUP_PROFILE_REGISTRY[key] = {
-        "label": _safe_text(profile.get("label"), key),
-        "icon": _safe_text(profile.get("icon")),
-        "key_prefixes": tuple(
-            _safe_lower(item)
-            for item in (profile.get("key_prefixes") if isinstance(profile.get("key_prefixes"), list) else [])
-            if _safe_text(item)
-        ),
-    }
+    _registry.register_capability_group_profile(group_key, profile)
 
 
 def register_scene_semantic_profile(profile: dict[str, Any]) -> None:
-    if not isinstance(profile, dict):
-        return
-    purpose = _safe_text(profile.get("purpose"))
-    if not purpose:
-        return
-    normalized = {
-        "purpose": purpose,
-        "code_prefixes": tuple(
-            _safe_lower(item)
-            for item in (profile.get("code_prefixes") if isinstance(profile.get("code_prefixes"), list) else [])
-            if _safe_text(item)
-        ),
-        "code_contains": tuple(
-            _safe_lower(item)
-            for item in (profile.get("code_contains") if isinstance(profile.get("code_contains"), list) else [])
-            if _safe_text(item)
-        ),
-    }
-    if not normalized["code_prefixes"] and not normalized["code_contains"]:
-        return
-    _SCENE_SEMANTIC_PROFILE_REGISTRY.append(normalized)
+    _registry.register_scene_semantic_profile(profile)
 
 
 def _legacy_field_presentation(model_name: str, field_name: str) -> dict[str, Any]:

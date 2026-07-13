@@ -79,6 +79,9 @@ def main() -> int:
             "contract_governance_registry.py",
             "globals().update({name: getattr(_registry, name) for name in _REGISTRY_EXPORTS})",
             "NO_BUSINESS_FACT_AUTHORITY = True is defined in contract_governance_registry.py",
+            "_registry.register_legacy_standard_list_profile(profile)",
+            "_registry.register_legacy_project_form_profile(",
+            "_registry.register_legacy_kanban_row_action(model_name, action)",
         ]:
             if token not in governance_text:
                 errors.append(f"contract_governance.py missing split compatibility token: {token}")
@@ -92,6 +95,10 @@ def main() -> int:
             "_RENDER_PROFILE_READONLY = \"readonly\"",
             "_FORM_ACTION_PRIMARY_KEYWORDS = (",
             "_CONTRACT_KEY_CANONICAL_MAP = {",
+            "def register_legacy_standard_list_profile(",
+            "def register_legacy_project_form_profile(",
+            "def register_legacy_kanban_row_action(",
+            "def register_scene_semantic_profile(",
         ]:
             if token not in registry_text:
                 errors.append(f"contract_governance_registry.py missing registry token: {token}")
@@ -116,6 +123,43 @@ def main() -> int:
             errors.append("registry mutation through contract_governance.py did not update registry module object")
         governance.LEGACY_RECORD_CONTEXT_CLEAR_MODELS.clear()
         governance.LEGACY_RECORD_CONTEXT_CLEAR_MODELS.update(before)
+        active_registry = loaded_registry or registry
+        active_registry._LEGACY_STANDARD_LIST_PROFILE_REGISTRY.clear()
+        governance.register_legacy_standard_list_profile(
+            {
+                "model_name": "guard.model",
+                "columns_order": ["name", "", "state"],
+                "column_labels": {"name": "Name", "": "Ignored"},
+                "profile_key": "guard.profile",
+            }
+        )
+        if active_registry._LEGACY_STANDARD_LIST_PROFILE_REGISTRY[0].get("columns_order") != ["name", "state"]:
+            errors.append("standard list profile registration must normalize columns in registry module")
+        governance.register_legacy_project_form_profile(
+            "guard.project",
+            {
+                "primary_fields": ["name", ""],
+                "action_noise_markers": [" Demo "],
+                "search_noise_markers": [" Filter "],
+                "action_group_labels": {"main": "Main", "": "Ignored"},
+            },
+        )
+        project_profile = active_registry._LEGACY_PROJECT_FORM_PROFILE_REGISTRY.get("guard.project") or {}
+        if project_profile.get("action_noise_markers") != ["demo"]:
+            errors.append("project form profile registration must lowercase action noise markers in registry module")
+        if project_profile.get("action_group_labels") != {"main": "Main"}:
+            errors.append("project form profile registration must normalize action group labels in registry module")
+        action = {"name": "open", "target": {"route": "/guard"}}
+        governance.register_legacy_kanban_row_action("guard.project", action)
+        action["target"]["route"] = "/mutated"
+        registered_action = (active_registry._LEGACY_KANBAN_ROW_ACTION_REGISTRY.get("guard.project") or [{}])[0]
+        if registered_action.get("key") != "open" or registered_action.get("target", {}).get("route") != "/guard":
+            errors.append("kanban row action registration must clone and normalize action rows in registry module")
+        governance.register_scene_semantic_profile(
+            {"purpose": "guard", "code_prefixes": [" Demo "], "code_contains": [" Flow "]}
+        )
+        if active_registry._SCENE_SEMANTIC_PROFILE_REGISTRY[-1].get("code_prefixes") != ("demo",):
+            errors.append("scene semantic profile registration must normalize code prefixes in registry module")
 
     if errors:
         print("[contract_governance_registry_split_guard] FAIL")

@@ -5,8 +5,8 @@ Generated from repository source files. This report is informational during the 
 ## Summary
 
 - Scanned files: `3899`
-- Files requiring split plan: `42`
-- Files above warning threshold: `64`
+- Files requiring split plan: `41`
+- Files above warning threshold: `65`
 
 ## Split Plan Required
 
@@ -50,7 +50,6 @@ Generated from repository source files. This report is informational during the 
 | 1558 | Python source | `addons/smart_construction_core/models/support/contract_center.py` |
 | 1552 | Python source | `addons/smart_core/tests/test_odoo_native_alignment_boundaries.py` |
 | 1546 | Python source | `addons/smart_core/app_config_engine/services/view_Parser/parsers Tree Form.py` |
-| 1537 | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 1523 | Python source | `addons/smart_construction_core/wizard/project_boq_import_wizard.py` |
 | 599 | Shell script | `scripts/audit/smoke_role_matrix.sh` |
 | 551 | Shell script | `scripts/ops/audit_project_actions.sh` |
@@ -72,6 +71,7 @@ Generated from repository source files. This report is informational during the 
 | 1396 | XML data/view | `addons/smart_construction_core/data/view_orchestration_contract_generated_data.xml` |
 | 1383 | XML data/view | `addons/smart_construction_core/views/support/legacy_direct_acceptance_views.xml` |
 | 1380 | XML data/view | `addons/smart_construction_core/views/support/audit_list_fields_views.xml` |
+| 1370 | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 1336 | Python source | `scripts/verify/release_v2_0_0_control_docs_guard.py` |
 | 1330 | Python source | `addons/smart_core/delivery/menu_service.py` |
 | 1323 | Python source | `addons/smart_core/app_config_engine/models/app_view_config.py` |
@@ -168,7 +168,6 @@ Generated from repository source files. This report is informational during the 
 | 1558 | split_plan_required | Python source | `addons/smart_construction_core/models/support/contract_center.py` |
 | 1552 | split_plan_required | Python source | `addons/smart_core/tests/test_odoo_native_alignment_boundaries.py` |
 | 1546 | split_plan_required | Python source | `addons/smart_core/app_config_engine/services/view_Parser/parsers Tree Form.py` |
-| 1537 | split_plan_required | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 1523 | split_plan_required | Python source | `addons/smart_construction_core/wizard/project_boq_import_wizard.py` |
 | 1499 | warning | Vue source | `frontend/apps/web/src/views/RecordView.vue` |
 | 1490 | warning | Python source | `addons/smart_construction_core/models/support/workflow_contract_service.py` |
@@ -181,6 +180,7 @@ Generated from repository source files. This report is informational during the 
 | 1396 | warning | XML data/view | `addons/smart_construction_core/data/view_orchestration_contract_generated_data.xml` |
 | 1383 | warning | XML data/view | `addons/smart_construction_core/views/support/legacy_direct_acceptance_views.xml` |
 | 1380 | warning | XML data/view | `addons/smart_construction_core/views/support/audit_list_fields_views.xml` |
+| 1370 | warning | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 1336 | warning | Python source | `scripts/verify/release_v2_0_0_control_docs_guard.py` |
 | 1330 | warning | Python source | `addons/smart_core/delivery/menu_service.py` |
 | 1323 | warning | Python source | `addons/smart_core/app_config_engine/models/app_view_config.py` |

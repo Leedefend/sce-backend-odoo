@@ -3,7 +3,7 @@
 Date: 2026-07-13
 Owner: Platform owner
 Target file: `addons/smart_core/utils/contract_governance.py`
-Current size: 1,537 lines
+Current size: 1,370 lines
 Phase: staged responsibility split
 
 ## Purpose
@@ -567,3 +567,17 @@ Stage 32 is complete when:
   behavior, domain override ordering, or `apply_contract_governance` pipeline
   order;
 - `contract_governance.py` is locked at `<=1537` lines for this stage.
+
+## Stage 33 Target
+
+Stage 33 is complete when:
+
+- `contract_governance_registry.py` owns legacy registration normalization for
+  standard list profiles, record context/delete-only models, project
+  form/task/kanban profiles, kanban row actions, field presentation, capability
+  group profiles, and scene semantic profiles;
+- `contract_governance.py` keeps the public registration entry points as facade
+  wrappers so external imports and construction override modules remain stable;
+- registry mutation still happens on the same loaded registry object shared
+  through `globals().update(...)`;
+- `contract_governance.py` is locked at `<=1370` lines for this stage.
