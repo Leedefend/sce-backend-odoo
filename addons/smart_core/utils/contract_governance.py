@@ -2124,44 +2124,12 @@ def _apply_standard_search_toolbar_labels(data: dict) -> None:
 
 
 def _govern_tier_review_list_for_user(data: dict) -> None:
-    if not _is_model_tree_contract(data, "tier.review"):
-        return
-    _mark_legacy_industry_governance_profile(data, "tier.review.list")
-
-    def _keep_action(row: Any) -> bool:
-        if not isinstance(row, dict):
-            return False
-        key = _safe_text(row.get("key"))
-        return not any(key.startswith(prefix) for prefix in _TIER_REVIEW_LIST_NAV_ACTION_PREFIXES)
-
-    buttons = data.get("buttons")
-    if isinstance(buttons, list):
-        data["buttons"] = [dict(row) for row in buttons if _keep_action(row)]
-
-    toolbar = _as_dict(data.get("toolbar"))
-    if toolbar:
-        for slot in ("header", "sidebar", "footer"):
-            rows = toolbar.get(slot)
-            if isinstance(rows, list):
-                toolbar[slot] = [dict(row) for row in rows if _keep_action(row)]
-        data["toolbar"] = toolbar
-
-    groups = data.get("action_groups")
-    if isinstance(groups, list):
-        normalized = []
-        for group in groups:
-            if not isinstance(group, dict):
-                continue
-            actions = group.get("actions")
-            if not isinstance(actions, list):
-                continue
-            kept = [dict(row) for row in actions if _keep_action(row)]
-            if not kept:
-                continue
-            next_group = dict(group)
-            next_group["actions"] = kept
-            normalized.append(next_group)
-        data["action_groups"] = normalized
+    _list_surface.govern_tier_review_list_for_user(
+        data,
+        is_model_tree_contract=_is_model_tree_contract,
+        mark_legacy_industry_governance_profile=_mark_legacy_industry_governance_profile,
+        nav_action_prefixes=_TIER_REVIEW_LIST_NAV_ACTION_PREFIXES,
+    )
 
 
 def _realign_access_policy_with_visible_fields(data: dict) -> None:

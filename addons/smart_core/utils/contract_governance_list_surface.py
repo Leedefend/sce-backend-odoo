@@ -129,3 +129,50 @@ def apply_standard_search_toolbar_labels(data: dict) -> None:
     tree["row_actions"] = row_actions
     views["tree"] = tree
     data["views"] = views
+
+
+def govern_tier_review_list_for_user(
+    data: dict,
+    *,
+    is_model_tree_contract: Any,
+    mark_legacy_industry_governance_profile: Any,
+    nav_action_prefixes: tuple[str, ...],
+) -> None:
+    if not is_model_tree_contract(data, "tier.review"):
+        return
+    mark_legacy_industry_governance_profile(data, "tier.review.list")
+
+    def _keep_action(row: Any) -> bool:
+        if not isinstance(row, dict):
+            return False
+        key = _safe_text(row.get("key"))
+        return not any(key.startswith(prefix) for prefix in nav_action_prefixes)
+
+    buttons = data.get("buttons")
+    if isinstance(buttons, list):
+        data["buttons"] = [dict(row) for row in buttons if _keep_action(row)]
+
+    toolbar = _as_dict(data.get("toolbar"))
+    if toolbar:
+        for slot in ("header", "sidebar", "footer"):
+            rows = toolbar.get(slot)
+            if isinstance(rows, list):
+                toolbar[slot] = [dict(row) for row in rows if _keep_action(row)]
+        data["toolbar"] = toolbar
+
+    groups = data.get("action_groups")
+    if isinstance(groups, list):
+        normalized = []
+        for group in groups:
+            if not isinstance(group, dict):
+                continue
+            actions = group.get("actions")
+            if not isinstance(actions, list):
+                continue
+            kept = [dict(row) for row in actions if _keep_action(row)]
+            if not kept:
+                continue
+            next_group = dict(group)
+            next_group["actions"] = kept
+            normalized.append(next_group)
+        data["action_groups"] = normalized
