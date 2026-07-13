@@ -10,8 +10,9 @@ CATALOG = ROOT / "addons/smart_construction_core/core_extension_policy_catalog.p
 CAPABILITIES = ROOT / "addons/smart_construction_core/core_extension_capabilities.py"
 FORM_ACTIONS = ROOT / "addons/smart_construction_core/core_extension_form_actions.py"
 INTENTS = ROOT / "addons/smart_construction_core/core_extension_intents.py"
+SYSTEM_INIT = ROOT / "addons/smart_construction_core/core_extension_system_init.py"
 DOC = ROOT / "docs/engineering_convergence/core_extension_responsibility_map.md"
-MAX_LINES = 3675
+MAX_LINES = 3471
 
 
 def _line_count(path: Path) -> int:
@@ -99,13 +100,24 @@ def main() -> int:
             if token in intents_text:
                 errors.append(f"intent helper module must not perform registry/ORM mutation; found token: {token}")
 
+    if not SYSTEM_INIT.is_file():
+        errors.append("core_extension_system_init.py missing")
+    else:
+        system_init_text = SYSTEM_INIT.read_text(encoding="utf-8")
+        if "def apply_system_init_profile_overrides(" not in system_init_text:
+            errors.append("system init helper missing apply_system_init_profile_overrides")
+        forbidden_tokens = ("odoo.", "env[", ".search(", ".write(", "http", "requests.", "Path(")
+        for token in forbidden_tokens:
+            if token in system_init_text:
+                errors.append(f"system init helper must remain pure; found token: {token}")
+
     if not DOC.is_file():
         errors.append("core_extension responsibility map missing")
     else:
         text = DOC.read_text(encoding="utf-8")
         required_tokens = [
             "Target file: `addons/smart_construction_core/core_extension.py`",
-            "Current line budget: `<=3675`.",
+            "Current line budget: `<=3471`.",
             "`core_extension.py` is the construction-industry contribution facade",
             "`smart_core_register(registry)`",
             "`smart_core_extend_system_init(data, env, user)`",
@@ -133,6 +145,10 @@ def main() -> int:
             "`core_extension_intents.py` owns import-tolerant construction intent handler",
             "`smart_core_register` remains in the facade",
             "`core_extension.py` is locked at `<=3675` lines",
+            "Stage 5 System Init Profile Overrides",
+            "`core_extension_system_init.py` owns pure workspace keyword",
+            "`smart_core_extend_system_init` keeps input validation",
+            "`core_extension.py` is locked at `<=3471` lines",
             "future PRs from this branch should include multiple commits",
             "open only when",
         ]

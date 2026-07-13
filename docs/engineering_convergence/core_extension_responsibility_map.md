@@ -2,7 +2,7 @@
 
 Target file: `addons/smart_construction_core/core_extension.py`
 
-Current line budget: `<=3675`.
+Current line budget: `<=3471`.
 
 ## Role
 
@@ -36,7 +36,7 @@ cross-industry policy.
 | 2104-2436 | Basic contribution hooks | Identity, scene maps, surface aliases, record context, file/api policy contributions, role entries, and home blocks. | `core_extension_contributions.py`. |
 | 2235-2261 | Intent handler registration | Registry compatibility loader delegates to imported handler contribution mapping. | `core_extension_intents.py`. |
 | 2461-2938 | Capability and form action contributions | Capability payload normalization, group contributions, create fallbacks, and payment form business actions. | `core_extension_capabilities.py` and `core_extension_form_actions.py`. |
-| 3046-3423 | System-init facade and wrapper hooks | Build `ext_facts`, page profile overrides, and thin `smart_core_*` wrappers for server action/file/API/model hooks. | `core_extension_system_init.py` plus wrappers retained in facade. |
+| 2422-2450 | System-init facade and wrapper hooks | Build `ext_facts`, then delegate page/profile override merge to `core_extension_system_init.py`. | `core_extension_system_init.py` plus wrappers retained in facade. |
 | 3442-3586 | Projected contract finalization | User-confirmed action ids and final projected contract shaping. | `core_extension_projected_contracts.py`. |
 | 3589-4372 | Service/menu/navigation policy hooks | Scene service classes, portal builders, business config refs, relation policy, menu token policy, role resolution, app shell, scene entry specs, acceptance nav. | `core_extension_navigation_policy.py` and service hook modules. |
 
@@ -141,3 +141,16 @@ Stage 4 is complete when:
 - the extracted module may import Odoo handler classes, but must not perform ORM
   reads/writes or mutate the platform registry directly;
 - `core_extension.py` is locked at `<=3675` lines for this stage.
+
+## Stage 5 System Init Profile Overrides
+
+Stage 5 is complete when:
+
+- `core_extension_system_init.py` owns pure workspace keyword and page profile
+  override merging;
+- `smart_core_extend_system_init` keeps input validation, construction fact
+  collection, `ext_facts` module insertion, and final helper invocation in the
+  facade;
+- the extracted helper does not import Odoo, read ORM state, perform IO, or call
+  service handlers;
+- `core_extension.py` is locked at `<=3471` lines for this stage.
