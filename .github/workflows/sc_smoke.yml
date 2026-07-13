@@ -1,7 +1,7 @@
 name: sc smoke + validate
 
 on:
-[]
+  workflow_dispatch:
   
 
 concurrency:

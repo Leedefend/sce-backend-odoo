@@ -479,14 +479,6 @@ const showRoleLandingAction = computed(() => roleLandingActionLabel.value !== 'è
 const capabilities = computed(() => session.capabilities);
 const initMeta = computed(() => asDict(session.initMeta));
 const isPlatformAdmin = computed(() => session.user?.is_platform_admin === true);
-const isBusinessConfigAdmin = computed(() => {
-  const groups = Array.isArray(session.user?.groups_xmlids) ? session.user.groups_xmlids : [];
-  return groups.some((group) => [
-    'smart_core.group_smart_core_business_config_admin',
-    'smart_construction_core.group_sc_cap_business_config_admin',
-    'smart_construction_core.group_sc_role_business_admin',
-  ].includes(String(group || '').trim()));
-});
 const visiblePublishedApps = computed(() => (isPlatformAdmin.value ? appCatalog.value : []));
 const showPublishedApps = computed(() => isPlatformAdmin.value && (visiblePublishedApps.value.length > 0 || appCatalogLoading.value));
 const activeAppId = computed(() => {

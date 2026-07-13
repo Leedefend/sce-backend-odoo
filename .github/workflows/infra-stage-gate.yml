@@ -1,9 +1,7 @@
 name: infra stage gate
 
 on:
-  pull_request:
-    branches:
-      - main
+  workflow_dispatch:
 
 concurrency:
   group: infra-stage-gate-${{ github.ref }}
