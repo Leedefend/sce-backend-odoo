@@ -654,6 +654,10 @@ import {
 import {
   formUiLabelFromLabels,
   formUiLabelsFromFormView,
+  resolvePageDisplaySubtitle,
+  resolvePageDisplayTitle,
+  resolvePageTitle,
+  resolveSubmitButtonLabel,
   layoutContainsType,
 } from './contractForm/uiLabels';
 import {
@@ -1106,20 +1110,11 @@ const intakeMissingSummary = computed(() => {
 
 const one2manyValidation = computed(() => collectOne2manyDraftValidation());
 
-function isTechnicalViewTitle(value: string) {
-  const normalized = String(value || '').trim();
-  return /^[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*){1,}\.(?:tree|list|form|kanban|search|graph|pivot|calendar|activity|gantt)$/i.test(normalized);
-}
-
-const pageTitle = computed(() => {
-  const menuTitle = currentMenuTitle.value;
-  if (menuTitle) return menuTitle;
-  const title = String(contract.value?.head?.title || '').trim();
-  if (title && !isTechnicalViewTitle(title)) return title;
-  const recordTitle = String(formData.display_name || formData.name || '').trim();
-  if (recordTitle) return recordTitle;
-  return '业务表单';
-});
+const pageTitle = computed(() => resolvePageTitle({
+  menuTitle: currentMenuTitle.value,
+  contractTitle: String(contract.value?.head?.title || ''),
+  recordTitle: String(formData.display_name || formData.name || ''),
+}));
 
 const currentBusinessCategoryLabel = computed(() => {
   const contractRecord = dictOrEmpty(contract.value);
@@ -1162,27 +1157,21 @@ const currentBusinessCategoryCode = computed(() => {
   ).trim();
 });
 
-const pageDisplayTitle = computed(() => {
-  if (isProjectIntakeCreateMode.value) return '创建项目';
-  const businessTitle = currentBusinessCategoryLabel.value || pageTitle.value;
-  if (businessTitle) {
-    if (recordId.value) return businessTitle;
-    return businessTitle.startsWith('新建') ? businessTitle : `新建${businessTitle}`;
-  }
-  return pageTitle.value;
-});
+const pageDisplayTitle = computed(() => resolvePageDisplayTitle({
+  isProjectIntakeCreateMode: isProjectIntakeCreateMode.value,
+  currentBusinessCategoryLabel: currentBusinessCategoryLabel.value,
+  pageTitle: pageTitle.value,
+  recordId: recordId.value,
+}));
 
-const pageDisplaySubtitle = computed(() => {
-  if (isProjectIntakeCreateMode.value) {
-    return '填写核心信息即可完成项目立项';
-  }
-  if (currentBusinessCategoryLabel.value && pageTitle.value !== currentBusinessCategoryLabel.value) {
-    return pageTitle.value;
-  }
-  const recordTitle = String(formData.display_name || formData.name || '').trim();
-  if (recordTitle && recordTitle !== pageDisplayTitle.value) return recordTitle;
-  return recordId.value ? `记录 #${recordId.value}` : '';
-});
+const pageDisplaySubtitle = computed(() => resolvePageDisplaySubtitle({
+  isProjectIntakeCreateMode: isProjectIntakeCreateMode.value,
+  currentBusinessCategoryLabel: currentBusinessCategoryLabel.value,
+  pageTitle: pageTitle.value,
+  recordTitle: String(formData.display_name || formData.name || ''),
+  pageDisplayTitle: pageDisplayTitle.value,
+  recordId: recordId.value,
+}));
 
 const activityPageTitle = computed(() => {
   const recordTitle = String(formData.display_name || formData.name || '').trim();
@@ -1206,27 +1195,18 @@ const intakeCreateButtonLabel = computed(() => {
   return busy.value && busyKind.value === 'save' ? '创建中…' : '创建项目';
 });
 
-const submitButtonLabel = computed(() => {
-  const footerAction = primaryCreateFooterAction.value;
-  if (busy.value && busyKind.value === 'save' && !primarySubmitAction.value) {
-    if (isProjectQuickIntakeMode.value) return '创建中...';
-    return !recordId.value && footerAction ? '处理中...' : (!recordId.value ? '提交中...' : formUiLabel('saving'));
-  }
-  if (busy.value && busyKind.value === 'action' && (primarySubmitAction.value || footerAction)) {
-    return footerAction ? '处理中...' : '提交中...';
-  }
-  if (footerAction) return footerAction.label;
-  if (primarySubmitAction.value) {
-    return '提交';
-  }
-  if (isProjectQuickIntakeMode.value && !recordId.value) {
-    return '创建并进入项目驾驶舱';
-  }
-  if (!recordId.value && !isProjectIntakeCreateMode.value) {
-    return '提交';
-  }
-  return formUiLabel('save');
-});
+const submitButtonLabel = computed(() => resolveSubmitButtonLabel({
+  busy: busy.value,
+  busyKind: busyKind.value,
+  footerActionLabel: primaryCreateFooterAction.value?.label || '',
+  hasFooterAction: Boolean(primaryCreateFooterAction.value),
+  hasPrimarySubmitAction: Boolean(primarySubmitAction.value),
+  isProjectQuickIntakeMode: isProjectQuickIntakeMode.value,
+  isProjectIntakeCreateMode: isProjectIntakeCreateMode.value,
+  recordId: recordId.value,
+  saveLabel: formUiLabel('save'),
+  savingLabel: formUiLabel('saving'),
+}));
 const showPrimaryBusinessFormAction = computed(() => !showCurrentFormFieldConfigScope.value && !isProjectIntakeCreateMode.value);
 const showDraftSaveAction = computed(() => showPrimaryBusinessFormAction.value && !recordId.value && canSave.value && !primaryCreateFooterAction.value);
 const draftSaveButtonLabel = computed(() => (busy.value && busyKind.value === 'save' ? formUiLabel('saving') : '保存草稿'));

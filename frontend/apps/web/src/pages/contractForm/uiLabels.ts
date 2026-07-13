@@ -25,6 +25,80 @@ export function formUiLabelFromLabels(labels: Record<string, string>, key: strin
   return labels[key] || fallbackLabels[key] || key;
 }
 
+export function isTechnicalViewTitle(value: string) {
+  const normalized = String(value || '').trim();
+  return /^[a-z_][a-z0-9_]*(?:\.[a-z_][a-z0-9_]*){1,}\.(?:tree|list|form|kanban|search|graph|pivot|calendar|activity|gantt)$/i.test(normalized);
+}
+
+export function resolvePageTitle(params: {
+  menuTitle: string;
+  contractTitle: string;
+  recordTitle: string;
+}) {
+  const menuTitle = String(params.menuTitle || '').trim();
+  if (menuTitle) return menuTitle;
+  const title = String(params.contractTitle || '').trim();
+  if (title && !isTechnicalViewTitle(title)) return title;
+  const recordTitle = String(params.recordTitle || '').trim();
+  if (recordTitle) return recordTitle;
+  return '业务表单';
+}
+
+export function resolvePageDisplayTitle(params: {
+  isProjectIntakeCreateMode: boolean;
+  currentBusinessCategoryLabel: string;
+  pageTitle: string;
+  recordId: number;
+}) {
+  if (params.isProjectIntakeCreateMode) return '创建项目';
+  const businessTitle = String(params.currentBusinessCategoryLabel || params.pageTitle || '').trim();
+  if (!businessTitle) return params.pageTitle;
+  if (params.recordId) return businessTitle;
+  return businessTitle.startsWith('新建') ? businessTitle : `新建${businessTitle}`;
+}
+
+export function resolvePageDisplaySubtitle(params: {
+  isProjectIntakeCreateMode: boolean;
+  currentBusinessCategoryLabel: string;
+  pageTitle: string;
+  recordTitle: string;
+  pageDisplayTitle: string;
+  recordId: number;
+}) {
+  if (params.isProjectIntakeCreateMode) return '填写核心信息即可完成项目立项';
+  if (params.currentBusinessCategoryLabel && params.pageTitle !== params.currentBusinessCategoryLabel) return params.pageTitle;
+  const recordTitle = String(params.recordTitle || '').trim();
+  if (recordTitle && recordTitle !== params.pageDisplayTitle) return recordTitle;
+  return params.recordId ? `记录 #${params.recordId}` : '';
+}
+
+export function resolveSubmitButtonLabel(params: {
+  busy: boolean;
+  busyKind: string | null;
+  footerActionLabel: string;
+  hasFooterAction: boolean;
+  hasPrimarySubmitAction: boolean;
+  isProjectQuickIntakeMode: boolean;
+  isProjectIntakeCreateMode: boolean;
+  recordId: number;
+  saveLabel: string;
+  savingLabel: string;
+}) {
+  if (params.busy && params.busyKind === 'save' && !params.hasPrimarySubmitAction) {
+    if (params.isProjectQuickIntakeMode) return '创建中...';
+    if (!params.recordId && params.hasFooterAction) return '处理中...';
+    return !params.recordId ? '提交中...' : params.savingLabel;
+  }
+  if (params.busy && params.busyKind === 'action' && (params.hasPrimarySubmitAction || params.hasFooterAction)) {
+    return params.hasFooterAction ? '处理中...' : '提交中...';
+  }
+  if (params.hasFooterAction) return params.footerActionLabel;
+  if (params.hasPrimarySubmitAction) return '提交';
+  if (params.isProjectQuickIntakeMode && !params.recordId) return '创建并进入项目驾驶舱';
+  if (!params.recordId && !params.isProjectIntakeCreateMode) return '提交';
+  return params.saveLabel;
+}
+
 export function nativeChatterActionLabel(mode: string, row: Record<string, unknown>) {
   if (mode === 'message') return '记录沟通';
   if (mode === 'note') return '记录备注';
