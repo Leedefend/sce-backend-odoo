@@ -83,3 +83,32 @@ export function nativeActivityFieldLabel(
 ) {
   return activityFieldLabel(action?.payload, name, fallback);
 }
+
+export function nativeCollaborationUnavailableMessage(params: {
+  recordId: number;
+  model: string;
+  renderProfile: string;
+  hasAttachments: boolean;
+}) {
+  if (params.recordId && params.model) return '';
+  if (params.renderProfile === 'create') {
+    return params.hasAttachments
+      ? '保存草稿或提交生成单据后，可记录沟通、记录备注和安排计划；附件会随保存草稿或提交一起上传。'
+      : '保存草稿或提交生成单据后，可记录沟通、记录备注和安排计划。';
+  }
+  return '当前记录尚未加载完成，暂不能写入协作日志。';
+}
+
+export function activeChatterSubmitLabel(mode: string, activityLabel: string) {
+  if (mode === 'activity') return String(activityLabel || '').trim() || '安排计划';
+  if (mode === 'note') return '记录备注';
+  return '记录沟通';
+}
+
+export function activeChatterPostingLabel(mode: string) {
+  return mode === 'activity' ? '安排中...' : '发布中...';
+}
+
+export function activeChatterPlaceholder(mode: string) {
+  return mode === 'note' ? '输入备注内容' : '输入沟通内容';
+}

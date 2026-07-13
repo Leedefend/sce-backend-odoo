@@ -670,12 +670,16 @@ import {
   layoutContainsType,
 } from './contractForm/uiLabels';
 import {
+  activeChatterPlaceholder as activeChatterPlaceholderFromMode,
+  activeChatterPostingLabel as activeChatterPostingLabelFromMode,
+  activeChatterSubmitLabel as activeChatterSubmitLabelFromMode,
   nativeActivityFieldLabel,
   nativeAttachmentContractOrNull,
   nativeAttachmentLabel,
   nativeAttachmentLabelsFromContract,
   nativeAttachmentMaxBytes as nativeAttachmentMaxBytesFromContract,
   nativeChatterActionsFromContract,
+  nativeCollaborationUnavailableMessage as nativeCollaborationUnavailableMessageFromState,
   resolveNativeAttachmentContract,
   resolveNativeChatterContract,
   resolveRuntimeCollaborationContract,
@@ -3574,28 +3578,18 @@ const nativeChatterTitle = computed(() => {
 });
 
 const nativeCollaborationTitle = computed(() => nativeChatterTitle.value || '协作日志');
-const nativeCollaborationUnavailableMessage = computed(() => {
-  if (recordId.value && model.value) return '';
-  if (renderProfile.value === 'create') {
-    return nativeAttachments.value
-      ? '保存草稿或提交生成单据后，可记录沟通、记录备注和安排计划；附件会随保存草稿或提交一起上传。'
-      : '保存草稿或提交生成单据后，可记录沟通、记录备注和安排计划。';
-  }
-  return '当前记录尚未加载完成，暂不能写入协作日志。';
-});
+const nativeCollaborationUnavailableMessage = computed(() => nativeCollaborationUnavailableMessageFromState({
+  recordId: recordId.value,
+  model: model.value,
+  renderProfile: renderProfile.value,
+  hasAttachments: Boolean(nativeAttachments.value),
+}));
 
-const activeChatterSubmitLabel = computed(() => {
-  if (activeChatterMode.value === 'activity') return activeChatterLabel.value || '安排计划';
-  if (activeChatterMode.value === 'note') return '记录备注';
-  return '记录沟通';
-});
+const activeChatterSubmitLabel = computed(() => activeChatterSubmitLabelFromMode(activeChatterMode.value, activeChatterLabel.value));
 
-const activeChatterPostingLabel = computed(() => (activeChatterMode.value === 'activity' ? '安排中...' : '发布中...'));
+const activeChatterPostingLabel = computed(() => activeChatterPostingLabelFromMode(activeChatterMode.value));
 
-const activeChatterPlaceholder = computed(() => {
-  if (activeChatterMode.value === 'note') return '输入备注内容';
-  return '输入沟通内容';
-});
+const activeChatterPlaceholder = computed(() => activeChatterPlaceholderFromMode(activeChatterMode.value));
 
 const activeChatterIsActivity = computed(() => activeChatterMode.value === 'activity');
 
