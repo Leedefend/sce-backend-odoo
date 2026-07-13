@@ -371,15 +371,6 @@ import { intentRequest } from '../api/intents';
 import { loadActionContractRaw, loadModelContractRaw } from '../api/contract';
 import { ApiError } from '../api/client';
 import { executeButton } from '../api/executeButton';
-import {
-  fetchChatterTimeline,
-  postChatterMessage,
-  scheduleChatterActivity,
-  searchCollaborationUsers,
-  updateChatterActivity,
-  type ChatterTimelineEntry,
-  type CollaborationUserOption,
-} from '../api/chatter';
 import { triggerOnchange } from '../api/onchange';
 import type { OnchangeLinePatch } from '../api/onchange';
 import type { ActionContract, FieldDescriptor } from '@sc/schema';
@@ -717,6 +708,7 @@ import {
   useNativeAttachmentRuntime,
   type NativeAttachmentViewerLike,
 } from './contractForm/useNativeAttachmentRuntime';
+import { useNativeChatterRuntime } from './contractForm/useNativeChatterRuntime';
 import {
   buildWorkflowTransitions,
   analyzeFormContractReadiness,
@@ -872,22 +864,39 @@ const changedFieldSet = new Set<string>();
 const dirtyFieldSet = new Set<string>();
 let onchangeTimer: ReturnType<typeof setTimeout> | null = null;
 const applyingOnchangePatch = ref(false);
-const activeChatterMode = ref('');
-const activeChatterLabel = ref('');
-const chatterDraft = ref('');
-const activitySummary = ref('');
-const activityDeadline = ref('');
-const activityNote = ref('');
-const collaborationUserQuery = ref('');
-const collaborationUserOptions = ref<CollaborationUserOption[]>([]);
-const collaborationUsersLoading = ref(false);
-const selectedMentionUserIds = ref<number[]>([]);
-const activityAssigneeId = ref(0);
-const chatterPosting = ref(false);
-const chatterLoading = ref(false);
-const chatterError = ref('');
-const chatterTimeline = ref<ChatterTimelineEntry[]>([]);
-const activityUpdatingIds = ref<number[]>([]);
+const {
+  activeMode: activeChatterMode,
+  activeLabel: activeChatterLabel,
+  draft: chatterDraft,
+  activitySummary,
+  activityDeadline,
+  activityNote,
+  userQuery: collaborationUserQuery,
+  userOptions: collaborationUserOptions,
+  usersLoading: collaborationUsersLoading,
+  selectedMentionUserIds,
+  selectedMentionUsers,
+  userChoices: collaborationUserChoices,
+  activityAssigneeId,
+  posting: chatterPosting,
+  loading: chatterLoading,
+  error: chatterError,
+  timeline: chatterTimeline,
+  activityUpdatingIds,
+  clearForRecordLoad: clearNativeChatterForRecordLoad,
+  closeComposer: closeNativeChatterComposer,
+  loadTimeline: loadNativeChatterTimeline,
+  loadUsers: loadCollaborationUsers,
+  selectMentionUser,
+  removeMentionUser,
+  openAction: openNativeChatterAction,
+  send: sendNativeChatter,
+  updateActivity: updateNativeActivity,
+} = useNativeChatterRuntime({
+  model: () => model.value,
+  recordId: () => recordId.value,
+  activeActivityAction: () => activeActivityAction.value,
+});
 const attachmentViewerRef = ref<NativeAttachmentViewerLike | null>(null);
 const {
   uploading: attachmentUploading,
@@ -3587,14 +3596,6 @@ const activityDeadlineLabel = computed(() => activityFieldLabel('date_deadline',
 const activityNoteLabel = computed(() => activityFieldLabel('note', '备注'));
 const activitySummaryPlaceholder = computed(() => `填写需要跟进的计划事项，例如：补充资料、确认付款、复核合同`);
 const activityNotePlaceholder = computed(() => '补充计划背景、办理要求或注意事项');
-const selectedMentionUsers = computed(() => {
-  const selected = new Set(selectedMentionUserIds.value);
-  return collaborationUserOptions.value.filter((item) => selected.has(Number(item.id || 0)));
-});
-const collaborationUserChoices = computed(() => {
-  const selected = new Set(selectedMentionUserIds.value);
-  return collaborationUserOptions.value.filter((item) => !selected.has(Number(item.id || 0)));
-});
 const activityAssigneeOptions = computed(() => collaborationUserOptions.value);
 const activityAssigneeLabel = computed(() => activityFieldLabel('user_id', '指派给'));
 
@@ -5272,8 +5273,7 @@ async function loadRecord() {
   }
   recordVersionToken.value = '';
   closeNativeChatterComposer();
-  chatterError.value = '';
-  chatterTimeline.value = [];
+  clearNativeChatterForRecordLoad();
   clearNativeAttachmentError();
   if (!recordId.value) {
     clearPendingNativeAttachments();
@@ -5350,98 +5350,6 @@ async function loadRecord() {
   }
 }
 
-async function loadNativeChatterTimeline(targetResId = recordId.value, targetModel = model.value) {
-  if (!targetResId || !targetModel) return;
-  chatterLoading.value = true;
-  try {
-    const response = await fetchChatterTimeline({
-      model: targetModel,
-      res_id: targetResId,
-      limit: 12,
-      include_audit: false,
-    });
-    chatterTimeline.value = Array.isArray(response.items) ? response.items : [];
-  } catch (err) {
-    chatterError.value = err instanceof Error ? err.message : '协作记录加载失败';
-  } finally {
-    chatterLoading.value = false;
-  }
-}
-
-async function loadCollaborationUsers(query = collaborationUserQuery.value) {
-  collaborationUsersLoading.value = true;
-  try {
-    const response = await searchCollaborationUsers({ query, limit: 20 });
-    const items = Array.isArray(response.items) ? response.items : [];
-    const merged = new Map<number, CollaborationUserOption>();
-    collaborationUserOptions.value.forEach((item) => {
-      const id = Number(item.id || 0);
-      if (id) merged.set(id, item);
-    });
-    items.forEach((item) => {
-      const id = Number(item.id || 0);
-      if (id) merged.set(id, item);
-    });
-    collaborationUserOptions.value = Array.from(merged.values());
-  } catch (err) {
-    chatterError.value = err instanceof Error ? err.message : '协作人员加载失败';
-  } finally {
-    collaborationUsersLoading.value = false;
-  }
-}
-
-function collaborationUserLabel(user: CollaborationUserOption) {
-  return String(user.name || user.login || user.email || user.id || '').trim();
-}
-
-function selectMentionUser(user: CollaborationUserOption) {
-  const id = Number(user.id || 0);
-  if (!id || selectedMentionUserIds.value.includes(id)) return;
-  selectedMentionUserIds.value = [...selectedMentionUserIds.value, id];
-  collaborationUserQuery.value = '';
-}
-
-function removeMentionUser(id: number) {
-  selectedMentionUserIds.value = selectedMentionUserIds.value.filter((item) => Number(item) !== Number(id));
-}
-
-function selectActivityAssignee(event: Event) {
-  const value = Number((event.target as HTMLSelectElement).value || 0);
-  activityAssigneeId.value = Number.isFinite(value) && value > 0 ? value : 0;
-}
-
-function nextBusinessDateInputValue() {
-  const date = new Date();
-  date.setDate(date.getDate() + 1);
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
-
-async function openNativeChatterAction(action: NativeChatterAction) {
-  if (!action.enabled) return;
-  chatterError.value = '';
-  const mode = action.mode || action.intent;
-  if (mode === 'message' || mode === 'note' || mode === 'activity') {
-    activeChatterMode.value = mode;
-    activeChatterLabel.value = action.label;
-    if (mode === 'activity' && !activityDeadline.value) {
-      activityDeadline.value = nextBusinessDateInputValue();
-    }
-    if (!chatterTimeline.value.length && !chatterLoading.value) {
-      await loadNativeChatterTimeline();
-    }
-    if (!collaborationUserOptions.value.length && !collaborationUsersLoading.value) {
-      await loadCollaborationUsers('');
-    }
-    return;
-  }
-  activeChatterMode.value = '';
-  activeChatterLabel.value = action.label;
-  chatterError.value = `${action.label} 缺少可执行配置`;
-}
-
 function handleSceneBlockAction(payload: { action?: { target?: Record<string, unknown> } }) {
   const target = payload?.action?.target && typeof payload.action.target === 'object'
     ? payload.action.target
@@ -5462,110 +5370,6 @@ function handleSceneBlockAction(payload: { action?: { target?: Record<string, un
   const sceneKey = String(target.scene_key || '').trim();
   if (sceneKey) {
     void router.push({ name: 'scene', params: { sceneKey } });
-  }
-}
-
-function closeNativeChatterComposer() {
-  activeChatterMode.value = '';
-  activeChatterLabel.value = '';
-  chatterDraft.value = '';
-  activitySummary.value = '';
-  activityDeadline.value = '';
-  activityNote.value = '';
-  selectedMentionUserIds.value = [];
-  activityAssigneeId.value = 0;
-  collaborationUserQuery.value = '';
-}
-
-async function sendNativeChatter() {
-  if (activeChatterMode.value === 'activity') {
-    await scheduleNativeChatterActivity();
-    return;
-  }
-  const body = chatterDraft.value.trim();
-  if (!body || !recordId.value || !model.value || chatterPosting.value) return;
-  chatterPosting.value = true;
-  chatterError.value = '';
-  try {
-    await postChatterMessage({
-      model: model.value,
-      res_id: recordId.value,
-      body,
-      subject: activeChatterLabel.value || activeChatterSubmitLabel.value,
-      mode: activeChatterMode.value === 'note' ? 'note' : 'message',
-      mention_user_ids: selectedMentionUserIds.value,
-    });
-    chatterDraft.value = '';
-    selectedMentionUserIds.value = [];
-    chatterError.value = '';
-    await loadNativeChatterTimeline();
-  } catch (err) {
-    chatterError.value = err instanceof Error ? err.message : '协作消息发送失败';
-  } finally {
-    chatterPosting.value = false;
-  }
-}
-
-async function scheduleNativeChatterActivity() {
-  const summary = activitySummary.value.trim();
-  if (!summary) {
-    chatterError.value = '请填写计划事项';
-    return;
-  }
-  if (!recordId.value || !model.value || chatterPosting.value) return;
-  const action = activeActivityAction.value;
-  chatterPosting.value = true;
-  chatterError.value = '';
-  try {
-    await scheduleChatterActivity({
-      model: model.value,
-      res_id: recordId.value,
-      summary,
-      note: activityNote.value.trim(),
-      date_deadline: activityDeadline.value,
-      activity_type_xmlid: String(action?.payload?.activity_type_xmlid || '').trim() || undefined,
-      user_id: activityAssigneeId.value || undefined,
-    });
-    activitySummary.value = '';
-    activityDeadline.value = '';
-    activityNote.value = '';
-    activityAssigneeId.value = 0;
-    chatterError.value = '';
-    await loadNativeChatterTimeline();
-  } catch (err) {
-    chatterError.value = err instanceof Error ? err.message : '计划事项创建失败';
-  } finally {
-    chatterPosting.value = false;
-  }
-}
-
-function activityEntryId(entry: ChatterTimelineEntry) {
-  return Number(entry.activity?.id || entry.id || 0);
-}
-
-function isActivityUpdating(entry: ChatterTimelineEntry) {
-  const id = activityEntryId(entry);
-  return Boolean(id && activityUpdatingIds.value.includes(id));
-}
-
-async function updateNativeActivity(entry: ChatterTimelineEntry, action: 'done' | 'cancel') {
-  const activityId = activityEntryId(entry);
-  if (!activityId || !recordId.value || !model.value || isActivityUpdating(entry)) return;
-  activityUpdatingIds.value = [...activityUpdatingIds.value, activityId];
-  chatterError.value = '';
-  try {
-    await updateChatterActivity({
-      model: model.value,
-      res_id: recordId.value,
-      activity_id: activityId,
-      action,
-      note: action === 'done' ? '计划已完成。' : '计划已取消。',
-    });
-    await loadNativeChatterTimeline();
-  } catch (err) {
-    chatterError.value = err instanceof Error ? err.message : action === 'done' ? '完成计划失败' : '取消计划失败';
-  } finally {
-    activityUpdatingIds.value = activityUpdatingIds.value.filter((id) => id !== activityId);
   }
 }
 
