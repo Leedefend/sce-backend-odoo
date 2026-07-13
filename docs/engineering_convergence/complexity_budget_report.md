@@ -4,7 +4,7 @@ Generated from repository source files. This report is informational during the 
 
 ## Summary
 
-- Scanned files: `3868`
+- Scanned files: `3869`
 - Files requiring split plan: `42`
 - Files above warning threshold: `64`
 
@@ -24,7 +24,6 @@ Generated from repository source files. This report is informational during the 
 | 3187 | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
 | 3092 | Python source | `addons/smart_construction_core/models/support/p1_daily_business_visible_alias_fields.py` |
 | 3041 | Python source | `addons/smart_core/core/workspace_home_contract_builder.py` |
-| 3020 | Python source | `addons/smart_construction_core/core_extension.py` |
 | 3013 | Python source | `addons/smart_core/app_config_engine/services/assemblers/page_assembler.py` |
 | 2903 | Python source | `addons/smart_core/tests/test_menu_configuration_audit.py` |
 | 2830 | Python source | `addons/smart_construction_core/models/core/material_acceptance.py` |
@@ -32,6 +31,7 @@ Generated from repository source files. This report is informational during the 
 | 2529 | XML data/view | `addons/smart_construction_core/views/menu_business_taxonomy.xml` |
 | 2521 | Vue source | `frontend/apps/web/src/views/MyWorkView.vue` |
 | 2443 | Python source | `addons/smart_core/core/unified_page_contract_v2_assembler.py` |
+| 2371 | Python source | `addons/smart_construction_core/core_extension.py` |
 | 2306 | Python source | `addons/smart_core/handlers/system_init.py` |
 | 2289 | Python source | `addons/smart_construction_core/models/core/project_core.py` |
 | 2267 | Vue source | `frontend/apps/web/src/layouts/AppShell.vue` |
@@ -140,7 +140,6 @@ Generated from repository source files. This report is informational during the 
 | 3187 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
 | 3092 | split_plan_required | Python source | `addons/smart_construction_core/models/support/p1_daily_business_visible_alias_fields.py` |
 | 3041 | split_plan_required | Python source | `addons/smart_core/core/workspace_home_contract_builder.py` |
-| 3020 | split_plan_required | Python source | `addons/smart_construction_core/core_extension.py` |
 | 3013 | split_plan_required | Python source | `addons/smart_core/app_config_engine/services/assemblers/page_assembler.py` |
 | 2903 | split_plan_required | Python source | `addons/smart_core/tests/test_menu_configuration_audit.py` |
 | 2830 | split_plan_required | Python source | `addons/smart_construction_core/models/core/material_acceptance.py` |
@@ -148,6 +147,7 @@ Generated from repository source files. This report is informational during the 
 | 2529 | split_plan_required | XML data/view | `addons/smart_construction_core/views/menu_business_taxonomy.xml` |
 | 2521 | split_plan_required | Vue source | `frontend/apps/web/src/views/MyWorkView.vue` |
 | 2443 | split_plan_required | Python source | `addons/smart_core/core/unified_page_contract_v2_assembler.py` |
+| 2371 | split_plan_required | Python source | `addons/smart_construction_core/core_extension.py` |
 | 2306 | split_plan_required | Python source | `addons/smart_core/handlers/system_init.py` |
 | 2289 | split_plan_required | Python source | `addons/smart_construction_core/models/core/project_core.py` |
 | 2267 | split_plan_required | Vue source | `frontend/apps/web/src/layouts/AppShell.vue` |

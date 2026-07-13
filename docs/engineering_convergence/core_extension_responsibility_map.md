@@ -2,7 +2,7 @@
 
 Target file: `addons/smart_construction_core/core_extension.py`
 
-Current line budget: `<=3020`.
+Current line budget: `<=2371`.
 
 ## Role
 
@@ -37,8 +37,8 @@ cross-industry policy.
 | 2235-2261 | Intent handler registration | Registry compatibility loader delegates to imported handler contribution mapping. | `core_extension_intents.py`. |
 | 2461-2938 | Capability and form action contributions | Capability payload normalization, group contributions, create fallbacks, and payment form business actions. | `core_extension_capabilities.py` and `core_extension_form_actions.py`. |
 | 2422-2450 | System-init facade and wrapper hooks | Build `ext_facts`, then delegate page/profile override merge to `core_extension_system_init.py`. | `core_extension_system_init.py` plus wrappers retained in facade. |
-| 3442-3586 | Projected contract finalization | User-confirmed action ids and final projected contract shaping. | `core_extension_projected_contracts.py`. |
-| 3589-4372 | Service/menu/navigation policy hooks | Scene service classes, portal builders, business config refs, relation policy, menu token policy, role resolution, app shell, scene entry specs, acceptance nav. | `core_extension_navigation_policy.py` and service hook modules. |
+| 2541-2685 | Projected contract finalization | User-confirmed action ids and final projected contract shaping. | `core_extension_projected_contracts.py`. |
+| imported | Service/menu/navigation policy hooks | Business config refs, relation policy, menu token policy, role resolution, app shell, scene entry specs, acceptance nav. | `core_extension_navigation_policy.py`. |
 
 ## Extraction Order
 
@@ -167,3 +167,18 @@ Stage 6 is complete when:
 - shared helper functions such as `_safe_search_read`, `_model_has_field`, and
   `_as_text` are private to the workspace facts module;
 - `core_extension.py` is locked at `<=3020` lines for this stage.
+
+## Stage 7 Navigation Policy Hooks
+
+Stage 7 is complete when:
+
+- `core_extension_navigation_policy.py` owns business config refs, native/lowcode
+  config menu refs, relation entry policy, menu delivery token policy, business
+  nav order, product policy catalog hooks, release/usage role resolution, app
+  shell taxonomy, scene entry orchestrator specs, and user data acceptance nav
+  contracts;
+- `core_extension.py` imports those public hook names directly so existing
+  `smart_construction_core.__init__` exports keep working;
+- the extracted module may perform read-only ORM searches required by relation
+  entry policy, but must not write records or mutate registries;
+- `core_extension.py` is locked at `<=2371` lines for this stage.

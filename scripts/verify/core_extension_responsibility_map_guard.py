@@ -12,8 +12,9 @@ FORM_ACTIONS = ROOT / "addons/smart_construction_core/core_extension_form_action
 INTENTS = ROOT / "addons/smart_construction_core/core_extension_intents.py"
 SYSTEM_INIT = ROOT / "addons/smart_construction_core/core_extension_system_init.py"
 WORKSPACE_FACTS = ROOT / "addons/smart_construction_core/core_extension_workspace_facts.py"
+NAVIGATION_POLICY = ROOT / "addons/smart_construction_core/core_extension_navigation_policy.py"
 DOC = ROOT / "docs/engineering_convergence/core_extension_responsibility_map.md"
-MAX_LINES = 3020
+MAX_LINES = 2371
 
 
 def _line_count(path: Path) -> int:
@@ -135,13 +136,34 @@ def main() -> int:
             if token in workspace_text:
                 errors.append(f"workspace facts module must not mutate records/registry; found token: {token}")
 
+    if not NAVIGATION_POLICY.is_file():
+        errors.append("core_extension_navigation_policy.py missing")
+    else:
+        navigation_text = NAVIGATION_POLICY.read_text(encoding="utf-8")
+        required_navigation_tokens = [
+            "def smart_core_business_config_admin_group_xmlids(",
+            "def smart_core_relation_entry_policy(",
+            "def smart_core_menu_delivery_token_policy(",
+            "def smart_core_resolve_release_actor_role_codes(",
+            "def smart_core_app_shell_contract(",
+            "def smart_core_scene_entry_orchestrator_specs(",
+            "def smart_core_user_data_acceptance_nav_contract(",
+        ]
+        for token in required_navigation_tokens:
+            if token not in navigation_text:
+                errors.append(f"navigation policy module missing token: {token}")
+        forbidden_tokens = (".write(", "registry[")
+        for token in forbidden_tokens:
+            if token in navigation_text:
+                errors.append(f"navigation policy module must not mutate records/registry; found token: {token}")
+
     if not DOC.is_file():
         errors.append("core_extension responsibility map missing")
     else:
         text = DOC.read_text(encoding="utf-8")
         required_tokens = [
             "Target file: `addons/smart_construction_core/core_extension.py`",
-            "Current line budget: `<=3020`.",
+            "Current line budget: `<=2371`.",
             "`core_extension.py` is the construction-industry contribution facade",
             "`smart_core_register(registry)`",
             "`smart_core_extend_system_init(data, env, user)`",
@@ -177,6 +199,10 @@ def main() -> int:
             "`core_extension_workspace_facts.py` owns safe workspace ORM reads",
             "`get_system_init_fact_contributions` remains in the facade",
             "`core_extension.py` is locked at `<=3020` lines",
+            "Stage 7 Navigation Policy Hooks",
+            "`core_extension_navigation_policy.py` owns business config refs",
+            "`core_extension.py` imports those public hook names directly",
+            "`core_extension.py` is locked at `<=2371` lines",
             "future PRs from this branch should include multiple commits",
             "open only when",
         ]
