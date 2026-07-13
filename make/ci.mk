@@ -126,7 +126,7 @@ ci.gate.tp08: guard.prod.forbid check-compose-project check-compose-env
 # ======================================================
 # Continue CLI 集成
 # 注意: `continue` 是 bash 内置关键字，真正的 CLI 是 `cn`
-#
+# 
 # 使用方式:
 #   make cn.p PROMPT="任务描述"          # 无闪烁批处理模式
 #   make cn.tui                          # 交互式 TUI 模式（可能闪烁）
@@ -674,11 +674,15 @@ verify.unified_page_contract.lite: guard.prod.forbid
 # ----------------------------------------------------------------------
 .PHONY: ci ci.local.quick test.frontend test.unit test.odoo.integration test.contract test.e2e.preflight test.e2e.fixed_data.odoo test.e2e test.all test.inventory test.inventory.summary test.e2e.matrix architecture.module_dependency_map architecture.complexity_report architecture.complexity_baseline_lock architecture.split_plan_queue github.remote_execution_plan security.secrets.scan
 
-ci: guard.prod.forbid security.secrets.scan test.inventory test.inventory.summary test.e2e.matrix architecture.module_dependency_map architecture.complexity_report architecture.complexity_baseline_lock architecture.split_plan_queue github.remote_execution_plan test.unit test.frontend test.contract test.e2e.preflight
+ci: guard.prod.forbid security.secrets.scan test.inventory test.inventory.summary test.e2e.matrix architecture.module_dependency_map architecture.complexity_report architecture.complexity_baseline_lock architecture.split_plan_queue verify.unified_page_contract.v2.web_architecture github.remote_execution_plan test.unit test.frontend test.contract test.e2e.preflight
 	@git diff --check
 	@echo "[OK] v1.1 PR quality gate passed"
 
-ci.local.quick: guard.prod.forbid architecture.complexity_baseline_lock
+ci.local.quick: guard.prod.forbid architecture.complexity_baseline_lock verify.unified_page_contract.v2.web_architecture
+	@python3 scripts/ci/verify_contract_form_split_evidence.py
+	@python3 scripts/verify/frontend_page_contract_boundary_guard.py
+	@python3 scripts/verify/frontend_page_contract_orchestration_consumption_guard.py
+	@python3 scripts/verify/frontend_contract_consumer_intrusion_guard.py
 	@scripts/dev/pnpm_exec.sh -C frontend/apps/web lint:src
 	@scripts/dev/pnpm_exec.sh -C frontend/apps/web typecheck:strict
 	@git diff --check

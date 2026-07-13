@@ -2245,3 +2245,4 @@ policy.ensure.extension_modules: guard.prod.forbid check-compose-project check-c
 	  echo "[policy.ensure.extension_modules] HINT: re-run with AUTO_FIX_EXTENSION_MODULES=1 to auto-fix + restart"; \
 	  exit 2; \
 	fi
+

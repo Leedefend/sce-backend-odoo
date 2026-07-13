@@ -62,3 +62,4 @@ gate.contract.bootstrap:
 gate.contract.bootstrap-pass:
 	@$(MAKE) --no-print-directory verify.contract.preflight
 	@DB="$(DB_NAME)" CASES_FILE="docs/contract/cases.yml" REF_DIR="docs/contract/snapshots" CONTRACT_CONFIG="$(CONTRACT_CONFIG)" ODOO_CONF="$(ODOO_CONF)" scripts/contract/gate_contract.sh --bootstrap --bootstrap-pass
+
