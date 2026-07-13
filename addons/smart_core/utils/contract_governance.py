@@ -85,6 +85,26 @@ globals().update({name: getattr(_registry, name) for name in _REGISTRY_EXPORTS})
 # NO_BUSINESS_FACT_AUTHORITY = True is defined in contract_governance_registry.py.
 
 
+def _load_user_surface_module() -> Any:
+    try:
+        from . import contract_governance_user_surface as user_surface
+
+        return user_surface
+    except ImportError:
+        spec = importlib.util.spec_from_file_location(
+            "contract_governance_user_surface",
+            Path(__file__).with_name("contract_governance_user_surface.py"),
+        )
+        if spec is None or spec.loader is None:
+            raise
+        user_surface = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(user_surface)
+        return user_surface
+
+
+_user_surface = _load_user_surface_module()
+
+
 def source_authority_contract() -> dict[str, Any]:
     return {
         "kind": SOURCE_KIND,
@@ -812,56 +832,19 @@ def normalize_capabilities(capabilities: list) -> list[dict]:
 
 
 def _strip_user_mode_fields(obj: Any) -> Any:
-    if isinstance(obj, list):
-        return [_strip_user_mode_fields(item) for item in obj]
-    if not isinstance(obj, dict):
-        return obj
-    out: dict[str, Any] = {}
-    for key, value in obj.items():
-        if str(key or "").strip() in _USER_MODE_STRIP_KEYS:
-            continue
-        out[key] = _strip_user_mode_fields(value)
-    return out
+    return _user_surface.strip_user_mode_fields(obj)
 
 
 def _pick_fields(raw: dict, allowed_keys: tuple[str, ...] | list[str]) -> dict:
-    out: dict[str, Any] = {}
-    for key in allowed_keys:
-        if key in raw:
-            out[key] = raw.get(key)
-    return out
+    return _user_surface.pick_fields(raw, allowed_keys)
 
 
 def _sanitize_capability_for_user(item: dict) -> dict:
-    cap = _pick_fields(dict(item), _USER_CAPABILITY_KEYS)
-    payload = cap.get("default_payload")
-    if isinstance(payload, dict):
-        cap["default_payload"] = _strip_user_mode_fields(payload)
-    return cap
+    return _user_surface.sanitize_capability_for_user(item)
 
 
 def _sanitize_scene_for_user(item: dict) -> dict:
-    scene = _pick_fields(dict(item), _USER_SCENE_KEYS)
-    scene = _strip_user_mode_fields(scene)
-    scene["code"] = _safe_text(scene.get("code") or scene.get("key"))
-    scene["key"] = _safe_text(scene.get("key"), scene.get("code"))
-    scene["name"] = _safe_text(scene.get("name"), scene.get("code") or "未命名场景")
-    target = scene.get("target")
-    if isinstance(target, dict):
-        scene["target"] = _strip_user_mode_fields(_pick_fields(target, _USER_SCENE_TARGET_KEYS))
-    access = scene.get("access")
-    if isinstance(access, dict):
-        scene["access"] = _strip_user_mode_fields(_pick_fields(access, _USER_SCENE_ACCESS_KEYS))
-    tiles = scene.get("tiles")
-    if isinstance(tiles, list):
-        cleaned_tiles = []
-        for tile in tiles:
-            if not isinstance(tile, dict):
-                continue
-            cleaned_tiles.append(_strip_user_mode_fields(_pick_fields(tile, _USER_SCENE_TILE_KEYS)))
-        scene["tiles"] = cleaned_tiles
-    scene["tags"] = _normalized_tags_for_item(scene)
-    return scene
+    return _user_surface.sanitize_scene_for_user(item)
 
 
 def _as_dict(value: Any) -> dict:
@@ -869,7 +852,7 @@ def _as_dict(value: Any) -> dict:
 
 
 def _safe_lower(value: Any) -> str:
-    return _safe_text(value).lower()
+    return _user_surface.safe_lower(value)
 
 
 def _view_type_tokens(*values: Any) -> set[str]:
@@ -883,142 +866,39 @@ def _view_type_tokens(*values: Any) -> set[str]:
 
 
 def _is_numeric_token(value: Any) -> bool:
-    text = _safe_text(value)
-    return bool(text) and text.isdigit()
+    return _user_surface.is_numeric_token(value)
 
 
 def _contains_noise_marker(*values: Any) -> bool:
-    merged = " ".join(_safe_lower(item) for item in values if _safe_text(item))
-    if not merged:
-        return False
-    return any(marker in merged for marker in _USER_SURFACE_NOISE_MARKERS)
+    return _user_surface.contains_noise_marker(*values)
 
 
 def _is_noisy_filter_row(row: dict) -> bool:
-    key = _safe_text(row.get("key"))
-    label = _safe_text(row.get("label") or key)
-    if not key or not label:
-        return True
-    if _is_numeric_token(key) or _is_numeric_token(label):
-        return True
-    return _contains_noise_marker(key, label, row.get("domain_raw"), row.get("context_raw"))
+    return _user_surface.is_noisy_filter_row(row)
 
 
 def _sanitize_user_search_filters(data: dict) -> None:
-    search = _as_dict(data.get("search"))
-    rows = search.get("filters")
-    if not isinstance(rows, list):
-        return
-    out: list[dict] = []
-    seen: set[str] = set()
-    for row in rows:
-        if not isinstance(row, dict):
-            continue
-        if _is_noisy_filter_row(row):
-            continue
-        key = _safe_text(row.get("key"))
-        if not key or key in seen:
-            continue
-        seen.add(key)
-        out.append(row)
-        if len(out) >= _USER_SURFACE_FILTER_MAX:
-            break
-    search["filters"] = out
-    data["search"] = search
+    _user_surface.sanitize_user_search_filters(data)
 
 
 def _is_noisy_action_row(row: dict) -> bool:
-    key = _safe_text(row.get("key"))
-    label = _safe_text(row.get("label") or key)
-    if not key or not label:
-        return True
-    selection = _safe_lower(row.get("selection"))
-    if selection == "multi":
-        return False
-    if _is_numeric_token(key) or _is_numeric_token(label):
-        return True
-    return _contains_noise_marker(key, label, row.get("name"), row.get("xml_id"))
+    return _user_surface.is_noisy_action_row(row)
 
 
 def _classify_user_surface_action_group(action: dict) -> str:
-    key = _safe_lower(action.get("key"))
-    label = _safe_lower(action.get("label"))
-    merged = f"{key} {label}"
-    if any(marker in merged for marker in ("提交", "审批", "transition", "workflow", "lifecycle", "阶段")):
-        return "workflow"
-    if any(marker in merged for marker in ("查看", "open", "dashboard", "看板", "列表", "台账")):
-        return "drilldown"
-    if any(marker in merged for marker in ("创建", "保存", "新增", "submit", "create", "save")):
-        return "basic"
-    return "other"
+    return _user_surface.classify_user_surface_action_group(action)
 
 
 def _build_user_surface_action_groups(rows: list[dict]) -> list[dict]:
-    grouped: dict[str, list[dict]] = {"basic": [], "workflow": [], "drilldown": [], "other": []}
-    for row in rows:
-        if not isinstance(row, dict):
-            continue
-        grouped.setdefault(_classify_user_surface_action_group(row), []).append(row)
-    result: list[dict] = []
-    for key in ("basic", "workflow", "drilldown", "other"):
-        actions = grouped.get(key) or []
-        if not actions:
-            continue
-        primary = actions[:_PROJECT_FORM_ACTION_GROUP_LIMIT]
-        overflow = actions[_PROJECT_FORM_ACTION_GROUP_LIMIT:]
-        result.append(
-            {
-                "key": key,
-                "label": _USER_SURFACE_ACTION_GROUP_LABELS.get(key, key),
-                "actions": primary,
-                "overflow_actions": overflow,
-                "overflow_count": len(overflow),
-            }
-        )
-    return result
+    return _user_surface.build_user_surface_action_groups(rows)
 
 
 def _sanitize_user_action_rows(rows: Any, max_count: int = _USER_SURFACE_ACTION_MAX) -> list[dict]:
-    if not isinstance(rows, list):
-        return []
-    cleaned: list[dict] = []
-    seen: set[str] = set()
-    for row in rows:
-        if not isinstance(row, dict):
-            continue
-        if _is_noisy_action_row(row):
-            continue
-        key = _safe_text(row.get("key"))
-        if not key or key in seen:
-            continue
-        seen.add(key)
-        cleaned.append(row)
-    if len(cleaned) <= max_count:
-        return cleaned
-
-    # Preserve list selection actions before trimming user-surface action groups.
-    multi_rows = [row for row in cleaned if _safe_lower(row.get("selection")) == "multi"]
-    other_rows = [row for row in cleaned if _safe_lower(row.get("selection")) != "multi"]
-    if len(multi_rows) >= max_count:
-        return multi_rows
-    return multi_rows + other_rows[: max_count - len(multi_rows)]
+    return _user_surface.sanitize_user_action_rows(rows, max_count=max_count)
 
 
 def _apply_user_surface_noise_reduction(data: dict) -> None:
-    _sanitize_user_search_filters(data)
-    action_rows: list[dict] = []
-    if isinstance(data.get("buttons"), list):
-        data["buttons"] = _sanitize_user_action_rows(data.get("buttons"))
-        action_rows.extend(data["buttons"])
-    toolbar = _as_dict(data.get("toolbar"))
-    if toolbar:
-        for section in ("header", "sidebar", "footer"):
-            if isinstance(toolbar.get(section), list):
-                toolbar[section] = _sanitize_user_action_rows(toolbar.get(section), max_count=4)
-                action_rows.extend(toolbar[section])
-        data["toolbar"] = toolbar
-    if action_rows and not isinstance(data.get("action_groups"), list):
-        data["action_groups"] = _build_user_surface_action_groups(action_rows)
+    _user_surface.apply_user_surface_noise_reduction(data)
 
 
 def _apply_user_surface_policies(data: dict) -> None:
