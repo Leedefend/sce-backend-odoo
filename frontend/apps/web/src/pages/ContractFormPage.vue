@@ -489,6 +489,8 @@ import {
   buildCurrentFormGroupOptions,
   buildFormDesignerGroupNavigatorItems,
   buildFormDesignerSearchableFieldRows,
+  buildLowCodeApplyBaseParams,
+  buildLowCodeReturnQuery,
   buildLowCodeViewOrchestration as buildLowCodeViewOrchestrationFromDraft,
   changedFieldGroupFromDrafts,
   changedFieldVisibilityFromDrafts,
@@ -502,6 +504,7 @@ import {
   formConfigOperationStatusLabel,
   fieldGroupTitleMatches,
   formatFormConfigAuditSummary,
+  formConfigSaveOperationSummary as formConfigSaveOperationSummaryFromDraft,
   formatFormConfigOperationSummary as formatFormConfigOperationSummaryText,
   formatFormConfigOperationTime,
   collectNativeLayoutGroupTitles,
@@ -522,6 +525,7 @@ import {
   normalizeFormConfigAuditResult,
   normalizeLowCodeApplyParams,
   normalizeLowCodeContractListRows,
+  contractFieldSequenceFromOrder,
   moveFieldOrderByDelta,
   moveFieldOrderRelative,
   moveFieldOrderToGroupEnd,
@@ -6685,18 +6689,16 @@ function onContractInlineFieldOrderDragEnd() {
 function lowCodeApplyBaseParams() {
   const configAction = contractV2ActionRules().find((rule) => contractActionRuleKey(rule) === BUSINESS_CONFIG_ACTION_KEYS.currentFormFieldOrderSave);
   const target = parseMaybeJsonRecord(configAction?.target);
-  return normalizeLowCodeApplyParams({
-    action_id: Number(actionId.value || route.query.action_id || 0) || 0,
-    view_id: Number(routeQueryText('view_id') || routeQueryText('viewId') || 0) || 0,
-    view_type: 'form',
-    ...parseMaybeJsonRecord(target.params),
-    model: String(model.value || ''),
+  return buildLowCodeApplyBaseParams({
+    actionId: actionId.value || route.query.action_id,
+    viewId: routeQueryText('view_id') || routeQueryText('viewId'),
+    targetParams: parseMaybeJsonRecord(target.params),
+    modelName: String(model.value || ''),
   });
 }
 
 function contractFieldSequence(fieldKey: string, fallback = 100) {
-  const index = fieldOrderDraft.value.indexOf(fieldKey);
-  return index >= 0 ? (index + 1) * 10 : fallback;
+  return contractFieldSequenceFromOrder(fieldOrderDraft.value, fieldKey, fallback);
 }
 
 async function setInlineFieldPolicy(fieldKey: string, params: Record<string, unknown>) {
@@ -7041,21 +7043,12 @@ function routeQueryText(key: string) {
 }
 
 function lowCodeReturnQuery() {
-  const query: Record<string, string> = {};
-  ['root_menu_xmlid', 'db', 'menu_id'].forEach((key) => {
-    const value = routeQueryText(key);
-    if (value) query[key] = value;
+  return buildLowCodeReturnQuery({
+    routeQuery: route.query as Record<string, unknown>,
+    modelName: model.value,
+    actionId: actionId.value,
+    openPagesFlag: BUSINESS_CONFIG_ROUTE_FLAGS.openPages,
   });
-  if (model.value) query.model = model.value;
-  if (actionId.value) query.action_id = String(actionId.value);
-  query[BUSINESS_CONFIG_ROUTE_FLAGS.openPages] = '1';
-  const pageLabel = routeQueryText('page_label');
-  if (pageLabel) query.page_label = pageLabel;
-  const viewId = routeQueryText('view_id');
-  if (viewId) query.view_id = viewId;
-  const roleKey = routeQueryText('role_key');
-  if (roleKey) query.role_key = roleKey;
-  return query;
 }
 
 function previewLowCodeConfiguredPage() {
@@ -7091,14 +7084,14 @@ function returnToBusinessConfigDesigner() {
 }
 
 function formConfigSaveOperationSummary(changedVisibility: Record<string, boolean>, changedGroups: Record<string, string>) {
-  const parts: string[] = [];
-  if (hasFieldOrderChanges.value) parts.push('字段顺序');
-  const groupCount = Object.keys(changedGroups).length;
-  if (groupCount) parts.push(`${groupCount} 个字段分组`);
-  const visibilityCount = Object.keys(changedVisibility).length;
-  if (visibilityCount) parts.push(`${visibilityCount} 个字段显示状态`);
-  if (hasFormLayoutChanges.value || hasGroupLayoutChanges.value || hasFieldLayoutChanges.value) parts.push('表单布局');
-  return parts.length ? `保存并发布：${parts.join('、')}` : '保存并发布表单设置';
+  return formConfigSaveOperationSummaryFromDraft({
+    hasFieldOrderChanges: hasFieldOrderChanges.value,
+    changedVisibility,
+    changedGroups,
+    hasFormLayoutChanges: hasFormLayoutChanges.value,
+    hasGroupLayoutChanges: hasGroupLayoutChanges.value,
+    hasFieldLayoutChanges: hasFieldLayoutChanges.value,
+  });
 }
 
 async function saveContractFieldOrder() {

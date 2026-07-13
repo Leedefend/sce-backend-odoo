@@ -927,6 +927,72 @@ export function normalizeLowCodeApplyParams(raw: Record<string, unknown>): Recor
   return params;
 }
 
+export function buildLowCodeApplyBaseParams(params: {
+  actionId: unknown;
+  viewId: unknown;
+  targetParams: Record<string, unknown>;
+  modelName: string;
+}) {
+  return normalizeLowCodeApplyParams({
+    action_id: Number(params.actionId || 0) || 0,
+    view_id: Number(params.viewId || 0) || 0,
+    view_type: 'form',
+    ...params.targetParams,
+    model: String(params.modelName || ''),
+  });
+}
+
+export function contractFieldSequenceFromOrder(fieldOrder: string[], fieldKey: string, fallback = 100) {
+  const index = fieldOrder.indexOf(String(fieldKey || '').trim());
+  return index >= 0 ? (index + 1) * 10 : fallback;
+}
+
+export function formConfigSaveOperationSummary(params: {
+  hasFieldOrderChanges: boolean;
+  changedVisibility: Record<string, boolean>;
+  changedGroups: Record<string, string>;
+  hasFormLayoutChanges: boolean;
+  hasGroupLayoutChanges: boolean;
+  hasFieldLayoutChanges: boolean;
+}) {
+  const parts: string[] = [];
+  if (params.hasFieldOrderChanges) parts.push('字段顺序');
+  const groupCount = Object.keys(params.changedGroups).length;
+  if (groupCount) parts.push(`${groupCount} 个字段分组`);
+  const visibilityCount = Object.keys(params.changedVisibility).length;
+  if (visibilityCount) parts.push(`${visibilityCount} 个字段显示状态`);
+  if (params.hasFormLayoutChanges || params.hasGroupLayoutChanges || params.hasFieldLayoutChanges) parts.push('表单布局');
+  return parts.length ? `保存并发布：${parts.join('、')}` : '保存并发布表单设置';
+}
+
+export function buildLowCodeReturnQuery(params: {
+  routeQuery: Record<string, unknown>;
+  modelName: string;
+  actionId: unknown;
+  openPagesFlag: string;
+}) {
+  const query: Record<string, string> = {};
+  const routeQueryText = (key: string) => {
+    const value = params.routeQuery[key];
+    if (Array.isArray(value)) return String(value[0] || '').trim();
+    return String(value || '').trim();
+  };
+  ['root_menu_xmlid', 'db', 'menu_id'].forEach((key) => {
+    const value = routeQueryText(key);
+    if (value) query[key] = value;
+  });
+  const modelName = String(params.modelName || '').trim();
+  const actionId = Number(params.actionId || 0) || 0;
+  if (modelName) query.model = modelName;
+  if (actionId) query.action_id = String(actionId);
+  query[params.openPagesFlag] = '1';
+  ['page_label', 'view_id', 'role_key'].forEach((key) => {
+    const value = routeQueryText(key);
+    if (value) query[key] = value;
+  });
+  return query;
+}
+
 export function lowCodeScopedContractName(modelName: string, params: Record<string, unknown>) {
   const actionId = Number(params.action_id || params.actionId || 0);
   const viewId = Number(params.view_id || params.viewId || 0);
