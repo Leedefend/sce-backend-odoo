@@ -710,6 +710,11 @@ import {
   restoreIntakeAutosavePayload,
 } from './contractForm/intakeAutosave';
 import {
+  applyIncomingFormFieldValue,
+  snapshotOriginalFormValues,
+  type FormRecordHydrationTarget,
+} from './contractForm/recordHydration';
+import {
   buildWorkflowTransitions,
   analyzeFormContractReadiness,
   buildRouteContractContext,
@@ -5270,43 +5275,24 @@ async function loadRecord() {
     clearTimeout(onchangeTimer);
     onchangeTimer = null;
   }
+  const hydrationTarget: FormRecordHydrationTarget = {
+    formData,
+    relationOptions: relationOptions.value,
+    relationKeywords,
+    upsertRelationOption,
+    initOne2manyRows,
+  };
   if (!recordId.value) {
     const defaults = resolveCreateDefaults();
     fieldNames.forEach((name) => {
-      const descriptor = contract.value?.fields?.[name];
-      const ttype = fieldType(descriptor);
-      const incoming = name in defaults ? defaults[name] : '';
-      if (ttype === 'many2many' || ttype === 'one2many') {
-        formData[name] = Array.isArray(incoming) ? incoming : [];
-        if (ttype === 'one2many') initOne2manyRows(name, formData[name]);
-      } else if (ttype === 'many2one') {
-        const option = parseMany2oneDisplay(incoming);
-        upsertRelationOption(name, option);
-        const ids = normalizeRelationIds(incoming);
-        formData[name] = ids.length ? ids[0] : false;
-        const matched = ids.length
-          ? (relationOptions.value[name] || []).find((item) => item.id === ids[0])
-          : null;
-        relationKeywords[name] = matched?.label || option?.label || '';
-      } else if (ttype === 'date') {
-        formData[name] = toDateInputValue(incoming);
-      } else if (ttype === 'datetime') {
-        formData[name] = toDatetimeInputValue(incoming);
-      } else {
-        formData[name] = incoming;
-      }
+      applyIncomingFormFieldValue({
+        fieldName: name,
+        descriptor: contract.value?.fields?.[name],
+        incoming: name in defaults ? defaults[name] : '',
+        target: hydrationTarget,
+      });
     });
-    originalValues.value = fieldNames.reduce<Record<string, unknown>>((acc, name) => {
-      const value = formData[name];
-      if (Array.isArray(value)) {
-        acc[name] = [...value];
-      } else if (value && typeof value === 'object') {
-        acc[name] = JSON.parse(JSON.stringify(value));
-      } else {
-        acc[name] = value;
-      }
-      return acc;
-    }, {});
+    originalValues.value = snapshotOriginalFormValues(fieldNames, formData);
     nativeLayoutVisibilityRevision.value += 1;
     restoreIntakeAutosave();
     return;
@@ -5324,42 +5310,17 @@ async function loadRecord() {
   }
   fieldNames.forEach((name) => {
     if (name === versionPolicy?.tokenField && !contract.value?.fields?.[name]) return;
-    const descriptor = contract.value?.fields?.[name];
-    const ttype = fieldType(descriptor);
     const incoming = Object.prototype.hasOwnProperty.call(row, name)
       ? (row as Record<string, unknown>)[name]
       : (contractMainData[name] ?? '');
-    if (ttype === 'many2many' || ttype === 'one2many') {
-      formData[name] = Array.isArray(incoming) ? incoming : [];
-      if (ttype === 'one2many') initOne2manyRows(name, formData[name]);
-    } else if (ttype === 'many2one') {
-      const option = parseMany2oneDisplay(incoming);
-      upsertRelationOption(name, option);
-      const ids = normalizeRelationIds(incoming);
-      formData[name] = ids.length ? ids[0] : false;
-      const matched = ids.length
-        ? (relationOptions.value[name] || []).find((item) => item.id === ids[0])
-        : null;
-      relationKeywords[name] = matched?.label || option?.label || '';
-    } else if (ttype === 'date') {
-      formData[name] = toDateInputValue(incoming);
-    } else if (ttype === 'datetime') {
-      formData[name] = toDatetimeInputValue(incoming);
-    } else {
-      formData[name] = incoming;
-    }
+    applyIncomingFormFieldValue({
+      fieldName: name,
+      descriptor: contract.value?.fields?.[name],
+      incoming,
+      target: hydrationTarget,
+    });
   });
-  originalValues.value = fieldNames.reduce<Record<string, unknown>>((acc, name) => {
-    const value = formData[name];
-    if (Array.isArray(value)) {
-      acc[name] = [...value];
-    } else if (value && typeof value === 'object') {
-      acc[name] = JSON.parse(JSON.stringify(value));
-    } else {
-      acc[name] = value;
-    }
-    return acc;
-  }, {});
+  originalValues.value = snapshotOriginalFormValues(fieldNames, formData);
   nativeLayoutVisibilityRevision.value += 1;
   if (recordId.value && (nativeChatterActions.value.length || nativeAttachments.value)) {
     await loadNativeChatterTimeline(recordId.value, model.value);
