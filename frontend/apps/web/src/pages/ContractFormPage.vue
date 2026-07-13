@@ -483,10 +483,8 @@ import {
   viewTypeDisplayLabel,
 } from './contractForm/fieldUtils';
 import {
-  appendFormConfigOperationLogEntry,
   buildFormConfigFieldLabelReplacementEntries,
   buildFormFieldConfigScope,
-  buildFormConfigOperationLogStorageKey,
   buildCurrentFormGroupOptions,
   buildFormDesignerGroupNavigatorItems,
   buildFormDesignerSearchableFieldRows,
@@ -497,7 +495,6 @@ import {
   changedFieldGroupFromDrafts,
   changedFieldVisibilityFromDrafts,
   collectLowCodeLayoutFromViewOrchestration,
-  createFormConfigOperationLogEntry,
   collectNativeFieldStructureGroups,
   effectiveFieldGroupTitleFromDrafts,
   extractLowCodeFormFieldDraftState,
@@ -531,13 +528,12 @@ import {
   moveFieldOrderByDelta,
   moveFieldOrderRelative,
   moveFieldOrderToGroupEnd,
-  persistFormConfigOperationLogEntries,
   readableFallbackFieldLabel,
-  readFormConfigOperationLogEntries,
   resolveFormDesignFieldLabel,
   resolveSelectedFormSettingsFieldGroupTitle,
   type LowCodeLayoutDraftRow,
 } from './contractForm/formConfigHelpers';
+import { useFormConfigOperationLog } from './contractForm/useFormConfigOperationLog';
 import {
   isMissingRequiredValue,
   isRequiredFieldEmptyByType,
@@ -698,7 +694,6 @@ import {
   type ContractFieldGovernanceAction,
   type ContractFieldGovernanceRow,
   type FormConfigAuditResult,
-  type FormConfigOperationLogEntry,
   type LayoutNode,
   type LowCodeFieldSize,
   type NativeChatterAction,
@@ -1313,7 +1308,20 @@ const fieldVisibilityDraft = reactive<Record<string, boolean>>({});
 const fieldVisibilityDirtyKeys = reactive<Record<string, boolean>>({});
 const formConfigAuditBusy = ref(false);
 const formConfigAuditResult = ref<FormConfigAuditResult | null>(null);
-const formConfigOperationLog = ref<FormConfigOperationLogEntry[]>([]);
+const {
+  operationLog: formConfigOperationLog,
+  operatorName: formConfigOperatorName,
+  appendOperation: appendFormConfigOperation,
+  markPendingOperations: markPendingFormConfigOperations,
+  clearOperationLog: clearFormConfigOperationLog,
+} = useFormConfigOperationLog({
+  user: () => session.user as Record<string, unknown> | null,
+  db: () => route.query.db,
+  modelName: () => model.value || route.params.model,
+  actionId: () => actionId.value || route.query.action_id,
+  viewId: () => routeQueryText('view_id') || routeQueryText('viewId'),
+  page: () => routeQueryText('page_label') || routeQueryText('pageLabel') || route.fullPath,
+});
 const lowCodeFieldCreateDialog = reactive<LowCodeFieldCreateDialogState>({
   open: false,
   afterFieldKey: '',
@@ -1595,64 +1603,6 @@ const hasCurrentFormFieldDraftChanges = computed(() => (
   || fieldVisibilityDirty.value
 ));
 
-const formConfigOperatorName = computed(() => {
-  const user = (session.user || {}) as Record<string, unknown>;
-  return String(user.name || user.login || user.email || user.id || '当前用户').trim();
-});
-
-const formConfigOperationLogStorageKey = computed(() => {
-  const user = (session.user || {}) as Record<string, unknown>;
-  return buildFormConfigOperationLogStorageKey({
-    db: route.query.db,
-    modelName: model.value || route.params.model,
-    actionId: actionId.value || route.query.action_id,
-    viewId: routeQueryText('view_id') || routeQueryText('viewId'),
-    page: routeQueryText('page_label') || routeQueryText('pageLabel') || route.fullPath,
-    userId: user.id || user.login || formConfigOperatorName.value,
-  });
-});
-
-function persistFormConfigOperationLog() {
-  persistFormConfigOperationLogEntries(
-    formConfigOperationLogStorageKey.value,
-    formConfigOperationLog.value,
-    typeof window === 'undefined' ? undefined : window.sessionStorage,
-  );
-}
-
-function hydrateFormConfigOperationLog() {
-  formConfigOperationLog.value = readFormConfigOperationLogEntries(
-    formConfigOperationLogStorageKey.value,
-    typeof window === 'undefined' ? undefined : window.sessionStorage,
-    formConfigOperatorName.value,
-  );
-}
-
-function appendFormConfigOperation(
-  action: string,
-  summary: string,
-  status: FormConfigOperationLogEntry['status'] = 'pending',
-) {
-  const entry = createFormConfigOperationLogEntry(action, summary, formConfigOperatorName.value, status);
-  if (!entry) return;
-  formConfigOperationLog.value = appendFormConfigOperationLogEntry(formConfigOperationLog.value, entry);
-  persistFormConfigOperationLog();
-}
-
-function markPendingFormConfigOperations(status: Extract<FormConfigOperationLogEntry['status'], 'saved' | 'reverted'>) {
-  const hasPending = formConfigOperationLog.value.some((entry) => entry.status === 'pending');
-  if (!hasPending) return;
-  formConfigOperationLog.value = formConfigOperationLog.value.map((entry) => (
-    entry.status === 'pending' ? { ...entry, status } : entry
-  ));
-  persistFormConfigOperationLog();
-}
-
-function clearFormConfigOperationLog() {
-  formConfigOperationLog.value = [];
-  persistFormConfigOperationLog();
-}
-
 function formConfigFieldLabelReplacementEntries() {
   return buildFormConfigFieldLabelReplacementEntries({
     cachedLabels: formConfigFieldLabelCache,
@@ -1670,10 +1620,6 @@ function formConfigFieldLabelReplacementEntries() {
 function formatFormConfigOperationSummary(summary: string) {
   return formatFormConfigOperationSummaryText(summary, formConfigFieldLabelReplacementEntries());
 }
-
-watch(formConfigOperationLogStorageKey, () => {
-  hydrateFormConfigOperationLog();
-}, { immediate: true });
 
 function formDesignFieldLabel(fieldKey: string) {
   return resolveFormDesignFieldLabel({
