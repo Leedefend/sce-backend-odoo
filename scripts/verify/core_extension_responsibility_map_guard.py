@@ -9,8 +9,9 @@ TARGET = ROOT / "addons/smart_construction_core/core_extension.py"
 CATALOG = ROOT / "addons/smart_construction_core/core_extension_policy_catalog.py"
 CAPABILITIES = ROOT / "addons/smart_construction_core/core_extension_capabilities.py"
 FORM_ACTIONS = ROOT / "addons/smart_construction_core/core_extension_form_actions.py"
+INTENTS = ROOT / "addons/smart_construction_core/core_extension_intents.py"
 DOC = ROOT / "docs/engineering_convergence/core_extension_responsibility_map.md"
-MAX_LINES = 3875
+MAX_LINES = 3675
 
 
 def _line_count(path: Path) -> int:
@@ -79,13 +80,32 @@ def main() -> int:
             if token in form_actions_text:
                 errors.append(f"form action module must remain pure; found token: {token}")
 
+    if not INTENTS.is_file():
+        errors.append("core_extension_intents.py missing")
+    else:
+        intents_text = INTENTS.read_text(encoding="utf-8")
+        required_intent_tokens = [
+            "def get_intent_handler_contributions():",
+            "APPROVAL_POLICY_INTENTS",
+            "ProjectExecutionAdvanceHandler = None",
+            "CostTrackingRecordCreateHandler = None",
+            "\"source_module\": \"smart_construction_core\"",
+        ]
+        for token in required_intent_tokens:
+            if token not in intents_text:
+                errors.append(f"intent helper module missing token: {token}")
+        forbidden_tokens = ("env[", ".search(", ".write(", "registry[")
+        for token in forbidden_tokens:
+            if token in intents_text:
+                errors.append(f"intent helper module must not perform registry/ORM mutation; found token: {token}")
+
     if not DOC.is_file():
         errors.append("core_extension responsibility map missing")
     else:
         text = DOC.read_text(encoding="utf-8")
         required_tokens = [
             "Target file: `addons/smart_construction_core/core_extension.py`",
-            "Current line budget: `<=3875`.",
+            "Current line budget: `<=3675`.",
             "`core_extension.py` is the construction-industry contribution facade",
             "`smart_core_register(registry)`",
             "`smart_core_extend_system_init(data, env, user)`",
@@ -109,6 +129,10 @@ def main() -> int:
             "`core_extension_form_actions.py` owns pure normalization",
             "`smart_core_form_business_actions` keeps model filtering",
             "`core_extension.py` is locked at `<=3875` lines",
+            "Stage 4 Intent Handler Contributions",
+            "`core_extension_intents.py` owns import-tolerant construction intent handler",
+            "`smart_core_register` remains in the facade",
+            "`core_extension.py` is locked at `<=3675` lines",
             "future PRs from this branch should include multiple commits",
             "open only when",
         ]

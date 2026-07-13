@@ -2,7 +2,7 @@
 
 Target file: `addons/smart_construction_core/core_extension.py`
 
-Current line budget: `<=3875`.
+Current line budget: `<=3675`.
 
 ## Role
 
@@ -34,7 +34,7 @@ cross-industry policy.
 | 1121-1571 | Static policy/catalog data | Large dictionaries and state policy tables consumed by later hooks. | `core_extension_policy_catalog.py`. |
 | 1782-2101 | Workspace collection builders | Safe ORM reads and construction workspace row builders for task, payment, risk, and project action surfaces. | `core_extension_workspace_facts.py`. |
 | 2104-2436 | Basic contribution hooks | Identity, scene maps, surface aliases, record context, file/api policy contributions, role entries, and home blocks. | `core_extension_contributions.py`. |
-| 2439-2659 | Intent handler registration | Import-tolerant handler mapping and registry compatibility loader. | `core_extension_intents.py`. |
+| 2235-2261 | Intent handler registration | Registry compatibility loader delegates to imported handler contribution mapping. | `core_extension_intents.py`. |
 | 2461-2938 | Capability and form action contributions | Capability payload normalization, group contributions, create fallbacks, and payment form business actions. | `core_extension_capabilities.py` and `core_extension_form_actions.py`. |
 | 3046-3423 | System-init facade and wrapper hooks | Build `ext_facts`, page profile overrides, and thin `smart_core_*` wrappers for server action/file/API/model hooks. | `core_extension_system_init.py` plus wrappers retained in facade. |
 | 3442-3586 | Projected contract finalization | User-confirmed action ids and final projected contract shaping. | `core_extension_projected_contracts.py`. |
@@ -129,3 +129,15 @@ Stage 3 is complete when:
 - the extracted builder does not import Odoo, read ORM state, perform IO, or
   trigger notifications/routing;
 - `core_extension.py` is locked at `<=3875` lines for this stage.
+
+## Stage 4 Intent Handler Contributions
+
+Stage 4 is complete when:
+
+- `core_extension_intents.py` owns import-tolerant construction intent handler
+  mapping and contribution row assembly;
+- `smart_core_register` remains in the facade and continues to populate the
+  provided registry from `get_intent_handler_contributions()`;
+- the extracted module may import Odoo handler classes, but must not perform ORM
+  reads/writes or mutate the platform registry directly;
+- `core_extension.py` is locked at `<=3675` lines for this stage.

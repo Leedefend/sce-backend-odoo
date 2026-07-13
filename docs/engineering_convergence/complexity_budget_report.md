@@ -4,7 +4,7 @@ Generated from repository source files. This report is informational during the 
 
 ## Summary
 
-- Scanned files: `3865`
+- Scanned files: `3866`
 - Files requiring split plan: `42`
 - Files above warning threshold: `64`
 
@@ -14,10 +14,10 @@ Generated from repository source files. This report is informational during the 
 | ---: | --- | --- |
 | 5939 | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
 | 4535 | Python source | `addons/smart_core/utils/contract_governance.py` |
-| 3875 | Python source | `addons/smart_construction_core/core_extension.py` |
 | 3849 | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 3773 | Vue source | `frontend/apps/web/src/views/ActionView.vue` |
 | 3684 | Vue source | `frontend/apps/web/src/views/MenuConfigView.vue` |
+| 3675 | Python source | `addons/smart_construction_core/core_extension.py` |
 | 3633 | Python source | `addons/smart_core/handlers/form_field_configuration.py` |
 | 3525 | Vue source | `frontend/apps/web/src/views/HomeView.vue` |
 | 3323 | Python source | `addons/smart_construction_core/tests/test_p0_state_closure.py` |
@@ -130,10 +130,10 @@ Generated from repository source files. This report is informational during the 
 | ---: | --- | --- | --- |
 | 5939 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
 | 4535 | split_plan_required | Python source | `addons/smart_core/utils/contract_governance.py` |
-| 3875 | split_plan_required | Python source | `addons/smart_construction_core/core_extension.py` |
 | 3849 | split_plan_required | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 3773 | split_plan_required | Vue source | `frontend/apps/web/src/views/ActionView.vue` |
 | 3684 | split_plan_required | Vue source | `frontend/apps/web/src/views/MenuConfigView.vue` |
+| 3675 | split_plan_required | Python source | `addons/smart_construction_core/core_extension.py` |
 | 3633 | split_plan_required | Python source | `addons/smart_core/handlers/form_field_configuration.py` |
 | 3525 | split_plan_required | Vue source | `frontend/apps/web/src/views/HomeView.vue` |
 | 3323 | split_plan_required | Python source | `addons/smart_construction_core/tests/test_p0_state_closure.py` |
