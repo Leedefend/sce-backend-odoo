@@ -11,7 +11,7 @@ import {
   lowCodeScopedContractName,
   normalizeLowCodeApplyParams,
 } from './formConfigHelpers';
-import { applyFormRuntimeStatusEvent } from './runtimeStateApplier';
+import { applyFormRuntimeBusyEvent, applyFormRuntimeStatusEvent } from './runtimeStateApplier';
 import type { BusyKind, FormConfigAuditResult, LowCodeFieldSize, UiStatus } from './types';
 
 type LowCodeColumns = 1 | 2 | 3;
@@ -91,7 +91,11 @@ export function useFormConfigSaveRuntime(params: {
       params.contractModeFeedback.value = '';
       return true;
     }
-    params.busyKind.value = 'action';
+    applyFormRuntimeBusyEvent(params, {
+      kind: 'begin',
+      transaction: 'formConfig',
+      busyKind: 'action',
+    });
     try {
       if (hasFieldApplyParams) {
         await intentRequest({
@@ -162,7 +166,10 @@ export function useFormConfigSaveRuntime(params: {
       });
       return false;
     } finally {
-      params.busyKind.value = null;
+      applyFormRuntimeBusyEvent(params, {
+        kind: 'end',
+        transaction: 'formConfig',
+      });
     }
   }
 
