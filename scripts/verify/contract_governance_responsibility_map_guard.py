@@ -42,6 +42,7 @@ REQUIRED_GUARDS = [
     "test_contract_governance_task_form_profile_registry.py",
     "test_odoo_native_alignment_boundaries.py",
     "list_batch_action_closure_guard.py",
+    "contract_governance_registry_split_guard.py",
 ]
 
 INVARIANTS = [
@@ -87,6 +88,9 @@ def main() -> int:
         "## Do Not Move Yet",
         "## Invariants",
         "## Next Implementation Candidate",
+        "## Stage 1 Target",
+        "`contract_governance_registry.py` owns source authority constants",
+        "`contract_governance.py` is locked at `<=4655` lines",
     ]:
         if token not in doc:
             errors.append(f"responsibility map missing token: {token}")

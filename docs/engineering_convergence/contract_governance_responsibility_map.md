@@ -55,6 +55,7 @@ and by a smaller public module layout.
 | `test_contract_governance_task_form_profile_registry.py` | Task form profile registry behavior. |
 | `test_odoo_native_alignment_boundaries.py` | Source authority and native alignment boundaries. |
 | `list_batch_action_closure_guard.py` | Batch action policy behavior through governed list contracts. |
+| `contract_governance_registry_split_guard.py` | Constants/registry extraction compatibility and line-budget lock. |
 
 ## Extraction Order
 
@@ -86,12 +87,28 @@ and by a smaller public module layout.
 
 ## Next Implementation Candidate
 
-The first code PR should extract constants and registry APIs into a small module
-while keeping all public imports from `contract_governance.py` working. The PR
-must include:
+The first code PR should extract constants and registry storage into a small
+module while keeping all public imports from `contract_governance.py` working.
+Registry mutation APIs can remain in the facade until their helper dependencies
+are extracted safely. The PR must include:
 
 - module compatibility test for existing public imports;
 - registry behavior tests;
 - determinism guard;
 - coverage guard;
 - full `make ci`.
+
+## Stage 1 Target
+
+Stage 1 is complete when:
+
+- `contract_governance_registry.py` owns source authority constants, mutable
+  legacy registries, mode/surface constants, field profile constants, and render
+  profile constants;
+- `contract_governance.py` still exports all previous public and private
+  registry symbols for compatibility;
+- direct `spec_from_file_location` loading of `contract_governance.py` still
+  works for existing tests;
+- registry mutation through `contract_governance.py` updates the loaded registry
+  storage object;
+- `contract_governance.py` is locked at `<=4655` lines for this stage.

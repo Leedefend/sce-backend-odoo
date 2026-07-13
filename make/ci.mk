@@ -688,6 +688,7 @@ ci.local.quick: guard.prod.forbid architecture.complexity_baseline_lock verify.u
 	@python3 scripts/verify/contract_form_action_plan_builder_guard.py
 	@python3 scripts/verify/contract_form_save_payload_builder_guard.py
 	@python3 scripts/verify/contract_governance_responsibility_map_guard.py
+	@python3 scripts/verify/contract_governance_registry_split_guard.py
 	@python3 scripts/verify/frontend_page_contract_boundary_guard.py
 	@python3 scripts/verify/frontend_page_contract_orchestration_consumption_guard.py
 	@python3 scripts/verify/frontend_contract_consumer_intrusion_guard.py
