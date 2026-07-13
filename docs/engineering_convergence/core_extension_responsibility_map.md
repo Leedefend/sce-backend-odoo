@@ -2,7 +2,7 @@
 
 Target file: `addons/smart_construction_core/core_extension.py`
 
-Current line budget: `<=4162`.
+Current line budget: `<=4146`.
 
 ## Role
 
@@ -93,3 +93,14 @@ Stage 1b is complete when:
 - API data unlink policy tables remain in the facade because they still depend
   on `_state_unlink_policy`;
 - `core_extension.py` is locked at `<=4162` lines for this stage.
+
+## Stage 1c API Catalog Extraction
+
+Stage 1c is complete when:
+
+- `core_extension_policy_catalog.py` owns API write allowlists, static mutation
+  policies, and draft-delete state constants;
+- `_state_unlink_policy`, `API_DATA_DRAFT_UNLINK_POLICIES`, and
+  `API_DATA_UNLINK_POLICIES` remain in the facade until the policy builder is
+  extracted with focused behavior tests;
+- `core_extension.py` is locked at `<=4146` lines for this stage.

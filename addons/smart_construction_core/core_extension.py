@@ -54,6 +54,9 @@ from odoo.addons.smart_core.utils.reason_codes import (
     register_legacy_business_reason_meta,
 )
 from odoo.addons.smart_construction_core.core_extension_policy_catalog import (
+    API_DATA_MUTATION_POLICIES,
+    API_DATA_WRITE_ALLOWLIST,
+    DRAFT_DELETE_ALLOWED_STATES,
     FILE_ATTACHMENT_ALLOWED_LEGACY_MODEL_PREFIXES,
     FILE_ATTACHMENT_ALLOWED_MODEL_EXACT,
     FILE_ATTACHMENT_ALLOWED_MODEL_PREFIXES,
@@ -1339,25 +1342,6 @@ register_legacy_standard_list_profile({
     "status_field": "document_state_label",
     "strict_columns": True,
 })
-
-API_DATA_WRITE_ALLOWLIST = {
-    "project.project": ["name", "description", "date_start"],
-    "project.task": ["name", "description", "date_deadline", "project_id"],
-    "purchase.order.line": ["name", "order_id"],
-    "res.partner": ["name", "email", "phone", "sc_supplier_type", "sc_supplier_type_ids"],
-}
-API_DATA_MUTATION_POLICIES = {
-    "sc.legacy.receipt.income.fact": {
-        "allowed_ops": ["create", "write"],
-        "allowed": False,
-        "reason_code": "READONLY_PROJECTION_MUTATION_DENIED",
-        "message": "历史事实投影为只读数据，不允许通过业务办理接口创建或修改。",
-        "source": "smart_construction_core",
-    },
-}
-
-DRAFT_DELETE_ALLOWED_STATES = ("cancel", "cancelled", "draft")
-
 
 def _state_unlink_policy(
     model_name: str,

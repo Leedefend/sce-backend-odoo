@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[2]
 TARGET = ROOT / "addons/smart_construction_core/core_extension.py"
 CATALOG = ROOT / "addons/smart_construction_core/core_extension_policy_catalog.py"
 DOC = ROOT / "docs/engineering_convergence/core_extension_responsibility_map.md"
-MAX_LINES = 4162
+MAX_LINES = 4146
 
 
 def _line_count(path: Path) -> int:
@@ -43,6 +43,9 @@ def main() -> int:
             "CRITICAL_SCENE_TARGET_OVERRIDES = {",
             "INDUSTRY_CREATE_FIELD_FALLBACKS = {",
             "USER_CONFIRMED_FORMAL_LIST_ACTION_XMLIDS = {",
+            "API_DATA_WRITE_ALLOWLIST = {",
+            "API_DATA_MUTATION_POLICIES = {",
+            "DRAFT_DELETE_ALLOWED_STATES =",
         ]
         for token in required_catalog_tokens:
             if token not in catalog_text:
@@ -58,7 +61,7 @@ def main() -> int:
         text = DOC.read_text(encoding="utf-8")
         required_tokens = [
             "Target file: `addons/smart_construction_core/core_extension.py`",
-            "Current line budget: `<=4162`.",
+            "Current line budget: `<=4146`.",
             "`core_extension.py` is the construction-industry contribution facade",
             "`smart_core_register(registry)`",
             "`smart_core_extend_system_init(data, env, user)`",
@@ -71,6 +74,9 @@ def main() -> int:
             "`core_extension_policy_catalog.py` also owns legacy visible business column",
             "API data unlink policy tables remain in the facade",
             "`core_extension.py` is locked at `<=4162` lines",
+            "Stage 1c API Catalog Extraction",
+            "`core_extension_policy_catalog.py` owns API write allowlists",
+            "`core_extension.py` is locked at `<=4146` lines",
             "future PRs from this branch should include multiple commits",
             "open only when",
         ]
