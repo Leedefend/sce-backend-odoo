@@ -627,6 +627,11 @@ import {
 } from './contractForm/relationDescriptor';
 import { useRelationRuntime } from './contractForm/useRelationRuntime';
 import {
+  buildSceneValidationPanel,
+  collectSceneValidationPrecheckErrors as collectSceneValidationPrecheckErrorsFromRules,
+  sceneValidationErrorPrefix,
+} from './contractForm/sceneValidation';
+import {
   isWorkflowTransitionMethod,
   normalizeWorkflowActionRows,
   normalizeWorkflowEvidenceGateRows,
@@ -4162,34 +4167,25 @@ const validationRequiredFields = computed(() => {
   });
   return out;
 });
-const sceneValidationErrorPrefix = `${ErrorCodes.SCENE_VALIDATION_REQUIRED}:`;
+const sceneValidationRequiredErrorPrefix = sceneValidationErrorPrefix(ErrorCodes.SCENE_VALIDATION_REQUIRED);
 const sceneValidationPanel = computed(() => {
-  if (!useSceneFormAugmentations.value) return null;
-  const rows = validationErrors.value
-    .map((item) => String(item || '').trim())
-    .filter((item) => item.startsWith(sceneValidationErrorPrefix));
-  if (!rows.length) return null;
-  const normalized = rows
-    .map((item) => item.slice(sceneValidationErrorPrefix.length).trim())
-    .filter(Boolean);
   const sceneKey = String(route.query.scene_key || route.params.sceneKey || '').trim();
   const modelName = String(model.value || '').trim();
-  const suggestedAction = resolveSceneValidationSuggestedAction({
-    modelName,
-    recordId: recordId.value,
-    actionId: actionId.value,
-    sceneKey,
-    roleCode: runtimeRoleCode.value,
+  return buildSceneValidationPanel({
+    enabled: useSceneFormAugmentations.value,
+    validationErrors: validationErrors.value,
+    errorCode: ErrorCodes.SCENE_VALIDATION_REQUIRED,
+    suggestedAction: resolveSceneValidationSuggestedAction({
+      modelName,
+      recordId: recordId.value,
+      actionId: actionId.value,
+      sceneKey,
+      roleCode: runtimeRoleCode.value,
+    }),
   });
-  return {
-    code: ErrorCodes.SCENE_VALIDATION_REQUIRED,
-    message: normalized.join('；') || '场景约束校验未通过，请补齐必填字段。',
-    hint: '请补齐必填字段后重试。',
-    suggestedAction,
-  };
 });
 const nonSceneValidationErrors = computed(() => (
-  validationErrors.value.filter((item) => !String(item || '').trim().startsWith(sceneValidationErrorPrefix))
+  validationErrors.value.filter((item) => !String(item || '').trim().startsWith(sceneValidationRequiredErrorPrefix))
 ));
 const contractVisibleFields = computed<string[]>(() => {
   const snapshot = dictOrEmpty(v2ContractStore.value?.snapshot);
@@ -4788,15 +4784,14 @@ function shouldShowRequiredMark(node: LayoutNode) {
 }
 
 function collectSceneValidationPrecheckErrors(fieldLabels: Record<string, string>): string[] {
-  const out: string[] = [];
-  for (const field of sceneValidationRequiredFields.value) {
-    if (!isFieldVisible(field)) continue;
-    const value = formData[field];
-    if (isMissingRequiredValue(value)) {
-      out.push(`${ErrorCodes.SCENE_VALIDATION_REQUIRED}: ${fieldLabels[field] || field} 为必填项`);
-    }
-  }
-  return Array.from(new Set(out)).slice(0, 5);
+  return collectSceneValidationPrecheckErrorsFromRules({
+    requiredFields: sceneValidationRequiredFields.value,
+    fieldLabels,
+    isFieldVisible,
+    fieldValue: (field) => formData[field],
+    isMissingValue: isMissingRequiredValue,
+    errorCode: ErrorCodes.SCENE_VALIDATION_REQUIRED,
+  });
 }
 
 const layoutNodes = computed<LayoutNode[]>(() => {
