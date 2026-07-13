@@ -3,7 +3,7 @@
 Date: 2026-07-13
 Owner: Platform owner
 Target file: `addons/smart_core/utils/contract_governance.py`
-Current size: 3,780 lines
+Current size: 3,769 lines
 Phase: staged responsibility split
 
 ## Purpose
@@ -63,6 +63,7 @@ and by a smaller public module layout.
 | `contract_governance_native_bridge_split_guard.py` | Native/scene bridge extraction compatibility, envelope derivation, search surface, and action bridge behavior lock. |
 | `contract_governance_labels_split_guard.py` | Business label normalization, shared field presentation registry, native layout labels, and relation-entry semantics lock. |
 | `contract_governance_access_policy_split_guard.py` | Access policy visible-field realignment and warning marker behavior lock. |
+| `contract_governance_canonicalization_split_guard.py` | Contract key canonicalization extraction compatibility, alias conflict behavior, and purity lock. |
 
 ## Extraction Order
 
@@ -242,3 +243,15 @@ Stage 9 is complete when:
 - the extracted module remains projection-only: no ORM calls, HTTP calls,
   routing, file IO, or environment access;
 - `contract_governance.py` is locked at `<=3780` lines for this stage.
+
+## Stage 10 Target
+
+Stage 10 is complete when:
+
+- `contract_governance_canonicalization.py` owns recursive contract key
+  canonicalization, alias replacement precedence, and conflict recording;
+- `contract_governance.py` keeps `_canonicalize_contract_keys` as a wrapper so
+  the main pipeline order and direct helper references remain stable;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=3769` lines for this stage.
