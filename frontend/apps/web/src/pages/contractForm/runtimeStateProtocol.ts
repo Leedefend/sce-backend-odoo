@@ -33,6 +33,7 @@ export type FormRuntimeTransactionName =
   | 'runAction'
   | 'runOnchangeRoundtrip'
   | 'primaryAction'
+  | 'formReload'
   | 'formConfig'
   | 'inlinePolicy'
   | 'contractMode';
@@ -49,6 +50,7 @@ export const FORM_RUNTIME_TRANSACTIONS: readonly FormRuntimeTransactionName[] = 
   'runAction',
   'runOnchangeRoundtrip',
   'primaryAction',
+  'formReload',
   'formConfig',
   'inlinePolicy',
   'contractMode',

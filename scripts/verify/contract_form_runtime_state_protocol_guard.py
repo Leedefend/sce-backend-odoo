@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -55,6 +56,7 @@ def main() -> int:
         "'saveRecord'",
         "'runAction'",
         "'runOnchangeRoundtrip'",
+        "'formReload'",
     ]
     for token in required_protocol_tokens:
         if token not in protocol:
@@ -170,6 +172,7 @@ def main() -> int:
 
     required_consumers = [
         (page, "type SubmissionFeedback,", "ContractFormPage.vue"),
+        (page, "import { applyFormRuntimeStatusEvent } from './contractForm/runtimeStateApplier';", "ContractFormPage.vue"),
         (save_helper, "import type { LayoutNode, SubmissionFeedback } from './types';", "saveRecordHelpers.ts"),
         (action_runtime, "import { applyFormRuntimeStatusEvent } from './runtimeStateApplier';", "useFormActionRuntime.ts"),
         (action_runtime, "import type { BusyKind, ContractAction, SubmissionFeedback, UiStatus } from './types';", "useFormActionRuntime.ts"),
@@ -242,6 +245,27 @@ def main() -> int:
     for source, label, token in stale_config_writes:
         if token in source:
             errors.append(f"{label} still bypasses status applier: {token}")
+
+    required_page_status_tokens = [
+        "transaction: 'formReload'",
+        "transaction: 'runAction'",
+        "transaction: 'formConfig'",
+        "transaction: 'contractMode'",
+        "transaction: 'primaryAction'",
+        "errorMessage: '请填写操作原因'",
+        "errorMessage: err instanceof Error ? err.message : '表单加载失败'",
+    ]
+    for token in required_page_status_tokens:
+        if token not in page:
+            errors.append(f"ContractFormPage.vue missing status applier token: {token}")
+
+    forbidden_page_status_write_patterns = [
+        (r"\bstatus\.value\s*=(?!=)", "status.value assignment"),
+        (r"\berrorMessage\.value\s*=(?!=)", "errorMessage.value assignment"),
+    ]
+    for pattern, label in forbidden_page_status_write_patterns:
+        if re.search(pattern, page):
+            errors.append(f"ContractFormPage.vue must route status/error writes through applier; forbidden token: {label}")
 
     ci_token = "python3 scripts/verify/contract_form_runtime_state_protocol_guard.py"
     if ci_token not in ci:
