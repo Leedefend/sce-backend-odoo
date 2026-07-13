@@ -1,17 +1,38 @@
-# --- SmartOdoo 平台核心代码所有权定义 ----------------------
+# v1.1 Engineering Convergence code ownership
 
-# 平台核心模块所有者（生产环境敏感逻辑）
-/addons/smart_construction_core/    @Leedefend
+# Default owner for any unmatched path.
+* @Leedefend
 
-# 配置引擎模块（系统配置、统一管理组件）
-/addons/app_config_engine/          @Leedefend
+# GitHub governance and release process.
+/.github/ @Leedefend
+/docs/engineering_convergence/ @Leedefend
 
-# 全局脚本、Makefile、CI/CD 工作流
-/Makefile                           @Leedefend
-/.github/workflows/                 @Leedefend
+# CI, local quality gates, deployment, and operations.
+/Makefile @Leedefend
+/docker-compose*.yml @Leedefend
+/Dockerfile @Leedefend
+/scripts/ci/ @Leedefend
+/scripts/deploy/ @Leedefend
+/scripts/dev/ @Leedefend
+/scripts/common/ @Leedefend
 
-# 文档目录（可多人编辑，如有需要可加入团队成员）
-/docs/                               @Leedefend
+# Platform core and low-code configuration engine.
+/addons/smart_core/ @Leedefend
+/addons/smart_core/app_config_engine/ @Leedefend
 
-# 默认规则：所有未匹配路径也需要你审核
-*                                     @Leedefend
+# Construction business domains.
+/addons/smart_construction_core/ @Leedefend
+/addons/smart_construction_portal/ @Leedefend
+/addons/smart_construction_scene/ @Leedefend
+/addons/smart_construction_bundle/ @Leedefend
+
+# Demo and seed data must not influence production release decisions.
+/addons/smart_construction_demo/ @Leedefend
+/addons/smart_construction_seed/ @Leedefend
+
+# Frontend application.
+/frontend/ @Leedefend
+
+# Migration and generated data tooling.
+/migration_assets/ @Leedefend
+/scripts/migration/ @Leedefend

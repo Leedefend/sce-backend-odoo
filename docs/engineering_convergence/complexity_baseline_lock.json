@@ -1,0 +1,65 @@
+{
+  "description": "Debt-lock line-count ceilings for high-risk split-plan files. Reductions are allowed; increases require an explicit architecture review and baseline update.",
+  "files": {
+    "Makefile": {
+      "max_lines": 272,
+      "owner": "DevOps owner",
+      "reason": "Root Makefile must remain a thin entrypoint and delegate implementation to included fragments."
+    },
+    "frontend/apps/web/src/layouts/AppShell.vue": {
+      "max_lines": 2385,
+      "owner": "Frontend owner",
+      "reason": "Application shell is a split-plan layout file and must not absorb page-specific behavior."
+    },
+    "frontend/apps/web/src/pages/ContractFormPage.vue": {
+      "max_lines": 13410,
+      "owner": "Frontend owner",
+      "reason": "Contract form route shell is under active decomposition and must not absorb new responsibilities."
+    },
+    "frontend/apps/web/src/pages/ListPage.vue": {
+      "max_lines": 3317,
+      "owner": "Frontend owner",
+      "reason": "List route shell is a split-plan file and should delegate contract runtime and rendering concerns."
+    },
+    "frontend/apps/web/src/stores/session.ts": {
+      "max_lines": 2005,
+      "owner": "Frontend owner",
+      "reason": "Session store is a split-plan runtime file and must not accumulate unrelated product state."
+    },
+    "frontend/apps/web/src/views/ActionView.vue": {
+      "max_lines": 3831,
+      "owner": "Frontend owner",
+      "reason": "Action view shell is a split-plan file and should remain a contract orchestration surface."
+    },
+    "frontend/apps/web/src/views/BusinessConfigSurfaceView.vue": {
+      "max_lines": 5428,
+      "owner": "Frontend owner",
+      "reason": "Business configuration surface is a P0 split-plan file and must not grow during convergence."
+    },
+    "frontend/apps/web/src/views/HomeView.vue": {
+      "max_lines": 3525,
+      "owner": "Frontend owner",
+      "reason": "Home/workbench shell is a split-plan file and should delegate panels and data adapters."
+    },
+    "frontend/apps/web/src/views/MenuConfigView.vue": {
+      "max_lines": 3747,
+      "owner": "Frontend owner",
+      "reason": "Menu configuration surface is a split-plan file and should delegate policy, ordering, and presentation helpers."
+    },
+    "frontend/apps/web/src/views/MyWorkView.vue": {
+      "max_lines": 2594,
+      "owner": "Frontend owner",
+      "reason": "My Work surface is a split-plan file and should delegate task/query composition."
+    },
+    "frontend/apps/web/src/views/RecordView.vue": {
+      "max_lines": 1525,
+      "owner": "Frontend owner",
+      "reason": "RecordView is a split-plan compatibility surface and must not become a parallel product runtime."
+    },
+    "frontend/apps/web/src/views/SceneView.vue": {
+      "max_lines": 1741,
+      "owner": "Frontend owner",
+      "reason": "Scene view is a split-plan file and should delegate scene runtime and rendering helpers."
+    }
+  }
+}

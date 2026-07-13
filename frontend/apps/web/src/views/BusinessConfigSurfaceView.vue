@@ -1163,7 +1163,7 @@ import { executePageContractAction } from '../app/pageContractActionRuntime';
 import { useSessionStore } from '../stores/session';
 
 const SURFACE_LOAD_TIMEOUT_MS = 20000;
-const ACTIVE_EDITOR_SCROLL_OPTIONS: ScrollIntoViewOptions = { block: 'start', behavior: 'auto' };
+const ACTIVE_EDITOR_SCROLL_OPTIONS = { block: 'start', behavior: 'auto' } as const;
 const ACTIVE_EDITOR_VIEWPORT_TOP = 96;
 const CORE_DELIVERY_READINESS_SECTIONS = new Set(['form', 'list_search', 'menu', 'approval']);
 const BUSINESS_FIELD_LABEL_OVERRIDES: Record<string, string> = {

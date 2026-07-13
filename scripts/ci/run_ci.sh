@@ -15,6 +15,10 @@ guard_prod_forbid
 : "${DOCS_MOUNT_CONT:?DOCS_MOUNT_CONT required}"
 : "${CONFIG_MOUNT_HOST:?CONFIG_MOUNT_HOST required}"
 : "${CONFIG_MOUNT_CONT:?CONFIG_MOUNT_CONT required}"
+: "${CI_ARTIFACT_DIR:=artifacts/ci}"
+: "${CI_LOG:=ci.log}"
+: "${CI_PASS_SIG_RE:=(0 failed, 0 error\\(s\\))}"
+: "${CI_ARTIFACT_KEEP:=20}"
 
 mkdir -p "${CI_ARTIFACT_DIR}"
 : > "${CI_ARTIFACT_DIR}/${CI_LOG}"
@@ -27,7 +31,7 @@ log "CI run: TEST_TAGS_FINAL=${TEST_TAGS_FINAL}"
 
 # Boundary audit (fail fast)
 log "CI boundary audit: smart_core"
-make audit.boundary.smart_core
+make audit.boundary.smart_core.ci
 
 # 0) 准备数据库（保证干净）
 log "CI db reset: ${DB_CI}"

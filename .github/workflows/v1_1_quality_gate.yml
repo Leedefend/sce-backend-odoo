@@ -1,0 +1,68 @@
+name: v1.1 quality gate
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+concurrency:
+  group: v1-1-quality-gate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality_gate:
+    runs-on: [self-hosted, huawei, ubuntu22]
+    timeout-minutes: 30
+    env:
+      CI_CACHE_REPO: /opt/ci-cache/sce-backend-odoo.git
+      HEAD_REF: ${{ github.event.pull_request.head.ref || github.ref_name }}
+      HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ github.workspace }}
+
+    steps:
+      - name: Checkout from CI mirror
+        run: |
+          set -euo pipefail
+          git --git-dir="$CI_CACHE_REPO" remote set-url origin https://github.com/Leedefend/sce-backend-odoo.git
+          if git --git-dir="$CI_CACHE_REPO" cat-file -e "$HEAD_SHA^{commit}" 2>/dev/null; then
+            echo "Using cached commit $HEAD_SHA"
+          else
+            timeout 180 git --git-dir="$CI_CACHE_REPO" fetch --no-tags --prune origin "+refs/heads/${HEAD_REF}:refs/remotes/origin/${HEAD_REF}" \
+              || timeout 180 git --git-dir="$CI_CACHE_REPO" fetch --no-tags origin "$HEAD_SHA"
+          fi
+          find "$GITHUB_WORKSPACE" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+          git clone --reference-if-able "$CI_CACHE_REPO" "$CI_CACHE_REPO" "$GITHUB_WORKSPACE"
+          git remote set-url origin https://github.com/Leedefend/sce-backend-odoo.git
+          git checkout --force "$HEAD_SHA"
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
+      - name: Verify runner tools
+        run: |
+          node --version
+          corepack enable
+          corepack prepare pnpm@9 --activate
+          pnpm --version
+          python3 --version
+
+      - name: Install frontend dependencies
+        run: |
+          pnpm --dir frontend/apps/web install --frozen-lockfile=false
+
+      - name: Run unified PR quality gate
+        run: |
+          make ci
+
+      - name: Publish convergence summary
+        if: always()
+        run: |
+          {
+            echo "## v1.1 Quality Gate"
+            echo ""
+            echo "- entry: \`make ci\`"
+            echo "- scope: static, frontend, contract syntax, secret scan"
+            echo "- heavier gates: \`make test.odoo.integration\`, \`make test.e2e\`"
+          } >> "$GITHUB_STEP_SUMMARY"

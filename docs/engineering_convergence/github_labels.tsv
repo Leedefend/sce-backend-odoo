@@ -1,0 +1,23 @@
+priority:P0	d73a4a	Production blocker: data loss, permission bypass, deployment failure, or core flow unavailable.
+priority:P1	f28c28	Must fix before pilot or release candidate.
+priority:P2	fbca04	Important but can follow P0/P1 work.
+area:backend	1d76db	Backend, Odoo model, service, controller, or migration work.
+area:frontend	5319e7	Web frontend, interaction, layout, or browser behavior.
+area:contract	006b75	API contract, schema, intent, or compatibility work.
+area:devops	0e8a16	CI, deployment, environment, backup, or release tooling.
+area:security	b60205	Authorization, secrets, upload safety, dependency, or audit work.
+area:data	0052cc	Data quality, migration, attachment, or restore work.
+area:docs	0075ca	Documentation and governance evidence.
+type:bug	d73a4a	Defect or regression.
+type:refactor	c5def5	Internal restructuring without intended behavior change.
+type:test	0e8a16	Test coverage, validation, or automation.
+type:governance	5319e7	Process, ownership, milestone, or release control.
+status:ready	0e8a16	Ready to implement.
+status:in-progress	fbca04	Implementation is active.
+status:blocked	d73a4a	Blocked by dependency or decision.
+status:verification	5319e7	Implementation complete and waiting for evidence.
+risk:data	b60205	Data integrity or migration risk.
+risk:security	b60205	Permission, secret, upload, or audit risk.
+risk:release	f28c28	Deployment, rollback, or operational risk.
+risk:performance	fbca04	Latency, throughput, scale, or resource risk.
+evidence:required	5319e7	Must attach test, screenshot, log, trace, or report evidence.

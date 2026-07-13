@@ -1,22 +1,6 @@
 name: demo.ci
 
 on:
-  pull_request:
-    branches: [ main ]
-    paths:
-      - "addons/smart_construction_demo/**"
-      - "addons/smart_construction_seed/**"
-      - "Makefile"
-      - "docker-compose*.yml"
-      - ".github/workflows/demo-ci.yml"
-  push:
-    branches: [ main ]
-    paths:
-      - "addons/smart_construction_demo/**"
-      - "addons/smart_construction_seed/**"
-      - "Makefile"
-      - "docker-compose*.yml"
-      - ".github/workflows/demo-ci.yml"
   workflow_dispatch:
     inputs:
       scenario:
@@ -34,7 +18,7 @@ concurrency:
 
 jobs:
   demo_ci:
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, huawei, ubuntu22]
     timeout-minutes: 45
 
     env:

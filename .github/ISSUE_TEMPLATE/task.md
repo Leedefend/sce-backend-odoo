@@ -1,19 +1,32 @@
 ---
-name: "📝 Task 任务"
-about: 明确要做的技术事项
-labels: task
+name: Engineering convergence task
+about: Track v1.1 governance, test, CI, architecture, security, performance, or DR work.
+labels: "type:governance,evidence:required"
 ---
 
-## 📌 描述
-<!-- 明确说明要处理的任务内容 -->
+## Problem and Goal
 
-## 🎯 输出要求
-- [ ] 完成代码编写
-- [ ] 完成测试
-- [ ] 创建 PR
+## Work Scope
 
-## 🗂 关联模块
-- smart_construction_core
-- smart_project_center
+## Out of Scope
 
-## 🔗 相关 Issue / PR
+## Implementation Plan
+
+## Acceptance Criteria
+
+- [ ]
+
+## Test Requirements
+
+## Data Migration Impact
+
+## Security and Permission Impact
+
+## Rollback Plan
+
+## Delivery Evidence
+
+## Owner and Due Date
+
+- Owner:
+- Due:

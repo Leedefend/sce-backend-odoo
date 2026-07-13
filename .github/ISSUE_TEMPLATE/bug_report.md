@@ -1,25 +1,41 @@
 ---
-name: "🐛 Bug Report"
-about: 报告问题或异常行为
-labels: bug
+name: Bug report
+about: Report a defect, regression, delivery blocker, or P0/P1 issue.
+labels: "type:bug,evidence:required"
 ---
 
-## 🐞 问题描述
-<!-- 描述你遇到的问题 -->
+## Problem and Goal
 
-## 📦 出现位置
-菜单路径：
-模型：
-视图：
+## Work Scope
 
-## 🔁 复现步骤
+## Out of Scope
+
+## Reproduction Steps
+
 1.
 2.
 3.
 
-## 🧪 预期行为
-<!-- 正常应该是什么样？ -->
+## Expected Result
 
-## 📎 附件
-- 日志
-- 截图
+## Actual Result
+
+## Acceptance Criteria
+
+- [ ]
+
+## Test Requirements
+
+## Data Migration Impact
+
+## Security and Permission Impact
+
+## Rollback Plan
+
+## Delivery Evidence
+
+## Priority
+
+- [ ] `priority:P0`
+- [ ] `priority:P1`
+- [ ] `priority:P2`
