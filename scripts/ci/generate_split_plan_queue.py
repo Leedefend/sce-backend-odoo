@@ -25,6 +25,11 @@ def owner_for(path: str) -> str:
 
 
 def direction_for(path: str) -> str:
+    if path == "addons/smart_core/utils/contract_governance.py":
+        return (
+            "Extract constants/registries, user-surface normalization, list governance, native bridge, "
+            "form policy, diagnostics, and keep `apply_contract_governance` as a thin facade."
+        )
     if path == "Makefile":
         return "Move implementation bodies into `scripts/ci`, `scripts/verify`, or included `make/*.mk` fragments while keeping stable public targets."
     if path.endswith(".vue"):
