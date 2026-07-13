@@ -55,6 +55,7 @@ def main() -> int:
         "'saveRecord'",
         "'runAction'",
         "'runOnchangeRoundtrip'",
+        "'formReload'",
     ]
     for token in required_protocol_tokens:
         if token not in protocol:

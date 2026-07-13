@@ -5479,8 +5479,14 @@ async function reload() {
     const reloadToken = activeReloadToken + 1;
     activeReloadToken = reloadToken;
     renderErrorMessage.value = '';
-    status.value = 'loading';
-    errorMessage.value = '';
+    applyFormRuntimeStatusEvent({
+      status,
+      errorMessage,
+    }, {
+      kind: 'status',
+      transaction: 'formReload',
+      status: 'loading',
+    });
     validationErrors.value = [];
     showOne2manyErrors.value = false;
     try {
@@ -5488,7 +5494,14 @@ async function reload() {
       if (reloadToken !== activeReloadToken) return;
       await loadRecord();
       if (reloadToken !== activeReloadToken) return;
-      status.value = 'ok';
+      applyFormRuntimeStatusEvent({
+        status,
+        errorMessage,
+      }, {
+        kind: 'status',
+        transaction: 'formReload',
+        status: 'ok',
+      });
       retainedRouteIdentity.value = formRouteIdentity();
       void preloadFormAuxiliaryData(reloadToken);
     } catch (err) {
@@ -5505,8 +5518,15 @@ async function reload() {
         });
         return;
       }
-      errorMessage.value = err instanceof Error ? err.message : '表单加载失败';
-      status.value = 'error';
+      applyFormRuntimeStatusEvent({
+        status,
+        errorMessage,
+      }, {
+        kind: 'status',
+        transaction: 'formReload',
+        status: 'error',
+        errorMessage: err instanceof Error ? err.message : '表单加载失败',
+      });
     } finally {
       if (activeReloadIdentity === reloadIdentity) {
         activeReloadPromise = null;
