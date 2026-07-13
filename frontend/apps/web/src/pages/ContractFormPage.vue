@@ -674,6 +674,7 @@ import { useActionResponseNavigation } from './contractForm/useActionResponseNav
 import { usePrimaryFormActionRuntime } from './contractForm/usePrimaryFormActionRuntime';
 import { useFormActionRuntime } from './contractForm/useFormActionRuntime';
 import { useFormConfigSaveRuntime } from './contractForm/useFormConfigSaveRuntime';
+import { applyFormRuntimeStatusEvent } from './contractForm/runtimeStateApplier';
 import { useContractDebugExportRuntime } from './contractForm/useContractDebugExportRuntime';
 import { useProjectContextChangeRuntime } from './contractForm/useProjectContextChangeRuntime';
 import { useFormPageLifecycleRuntime } from './contractForm/useFormPageLifecycleRuntime';
@@ -1638,8 +1639,15 @@ const {
       await reload();
       return true;
     } catch (err) {
-      errorMessage.value = err instanceof Error ? err.message : '自定义字段创建失败';
-      status.value = 'error';
+      applyFormRuntimeStatusEvent({
+        status,
+        errorMessage,
+      }, {
+        kind: 'status',
+        transaction: 'formConfig',
+        status: 'error',
+        errorMessage: err instanceof Error ? err.message : '自定义字段创建失败',
+      });
       return false;
     } finally {
       busyKind.value = null;
@@ -2067,8 +2075,15 @@ async function auditCurrentFormConfiguration() {
     });
     formConfigAuditResult.value = normalizeFormConfigAuditResult(result);
   } catch (err) {
-    errorMessage.value = err instanceof Error ? err.message : '表单配置检查失败';
-    status.value = 'error';
+    applyFormRuntimeStatusEvent({
+      status,
+      errorMessage,
+    }, {
+      kind: 'status',
+      transaction: 'formConfig',
+      status: 'error',
+      errorMessage: err instanceof Error ? err.message : '表单配置检查失败',
+    });
   } finally {
     formConfigAuditBusy.value = false;
   }
@@ -2434,8 +2449,15 @@ async function publishSelectedLowCodeContract() {
     contractModeFeedback.value = '配置版本已发布，刷新页面后按新配置生效';
     await loadLowCodeContractList();
   } catch (err) {
-    errorMessage.value = err instanceof Error ? err.message : '配置版本发布失败';
-    status.value = 'error';
+    applyFormRuntimeStatusEvent({
+      status,
+      errorMessage,
+    }, {
+      kind: 'status',
+      transaction: 'contractMode',
+      status: 'error',
+      errorMessage: err instanceof Error ? err.message : '配置版本发布失败',
+    });
   } finally {
     busyKind.value = null;
   }
@@ -2456,8 +2478,15 @@ async function rollbackSelectedLowCodeContract() {
     await loadLowCodeContractList();
     await switchLowCodeContractByName();
   } catch (err) {
-    errorMessage.value = err instanceof Error ? err.message : '配置版本回滚失败';
-    status.value = 'error';
+    applyFormRuntimeStatusEvent({
+      status,
+      errorMessage,
+    }, {
+      kind: 'status',
+      transaction: 'contractMode',
+      status: 'error',
+      errorMessage: err instanceof Error ? err.message : '配置版本回滚失败',
+    });
   } finally {
     busyKind.value = null;
   }
