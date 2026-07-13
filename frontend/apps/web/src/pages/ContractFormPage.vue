@@ -952,7 +952,14 @@ const {
   onPendingUploadFailed: (message) => {
     validationErrors.value = [message];
     submissionFeedback.value = { kind: 'error', message };
-    status.value = 'error';
+    applyFormRuntimeStatusEvent({
+      status,
+      errorMessage,
+    }, {
+      kind: 'status',
+      transaction: 'primaryAction',
+      status: 'error',
+    });
   },
 });
 const nativeChatterAutoLoadKey = ref('');
