@@ -509,8 +509,7 @@ import {
 import { useFormConfigOperationLog } from './contractForm/useFormConfigOperationLog';
 import {
   isMissingRequiredValue,
-  isRequiredFieldEmptyByType,
-  normalizeContractFieldValue,
+    normalizeContractFieldValue,
   normalizeComparable,
   normalizeRouteDefault,
   resolveNavigationUrl as resolveNavigationUrlFromOrigin,
@@ -700,6 +699,16 @@ import { useContractDebugExportRuntime } from './contractForm/useContractDebugEx
 import { useProjectContextChangeRuntime } from './contractForm/useProjectContextChangeRuntime';
 import { useFormPageLifecycleRuntime } from './contractForm/useFormPageLifecycleRuntime';
 import { useFormAuxiliaryWatchersRuntime } from './contractForm/useFormAuxiliaryWatchersRuntime';
+import {
+  collectRecordSaveValues,
+  validateBeforeSaveRecord,
+} from './contractForm/saveRecordHelpers';
+import { useCreatedRecordNavigationRuntime } from './contractForm/useCreatedRecordNavigationRuntime';
+import { useFormNavigationActionsRuntime } from './contractForm/useFormNavigationActionsRuntime';
+import {
+  formCreateContext as formCreateContextFromState,
+  resolveCreateDefaults as resolveCreateDefaultsFromState,
+} from './contractForm/createDefaults';
 import {
   buildWorkflowTransitions,
   analyzeFormContractReadiness,
@@ -1054,6 +1063,34 @@ const {
   saveRecord: (refreshPolicy) => saveRecord(refreshPolicy),
   status,
   submissionFeedback,
+});
+const {
+  navigateCreatedRecord,
+} = useCreatedRecordNavigationRuntime({
+  applyProjectionRefreshPolicy: (policy) => applyProjectionRefreshPolicy(policy),
+  currentQuery: () => route.query as Record<string, unknown>,
+  isProjectQuickIntakeMode: () => isProjectQuickIntakeMode.value,
+  isProjectStandardIntakeMode: () => isProjectStandardIntakeMode.value,
+  modelName: () => model.value,
+  resolveWorkspaceContextQuery: () => resolveWorkspaceContextQuery(),
+  returnToProjectIntakeList: (createdId) => returnToProjectIntakeList(createdId),
+  router,
+});
+const {
+  cancelIntake,
+  openFilter,
+  returnToProjectIntakeList,
+} = useFormNavigationActionsRuntime({
+  actionId: () => actionId.value || 0,
+  currentQuery: () => route.query as Record<string, unknown>,
+  isProjectIntakeCreateMode: () => isProjectIntakeCreateMode.value,
+  resolveLandingPath: (fallback) => session.resolveLandingPath(fallback),
+  resolveWorkspaceContextQuery: () => resolveWorkspaceContextQuery(),
+  router,
+  searchFilters: () => searchFilters.value,
+  setActiveFilterKey: (key) => {
+    activeFilterKey.value = key;
+  },
 });
 function recordVersionPolicy() {
   const raw = (contract.value as Record<string, unknown> | null)?.record_version;
@@ -5184,92 +5221,6 @@ function collectWritableValues() {
   return values;
 }
 
-function isRequiredFieldEmpty(value: unknown, descriptor?: FieldDescriptor | null) {
-  return isRequiredFieldEmptyByType(value, fieldType(descriptor));
-}
-
-function collectRequiredFieldIssues(values: Record<string, unknown>) {
-  const missing = layoutNodes.value
-    .filter((node) => node.kind === 'field' && !node.readonly && isWritableFieldVisible(node.name))
-    .filter((node) => {
-      const descriptor = node.descriptor || contract.value?.fields?.[node.name];
-      if (!descriptor?.required) return false;
-      const value = Object.prototype.hasOwnProperty.call(values, node.name)
-        ? values[node.name]
-        : normalizeFieldValue(node.name, formData[node.name]);
-      return isRequiredFieldEmpty(value, descriptor);
-    })
-    .map((node) => String(node.label || node.descriptor?.string || node.name).trim())
-    .filter(Boolean);
-  if (!missing.length) return [];
-  return [`保存前请填写：${Array.from(new Set(missing)).slice(0, 5).join('、')}`];
-}
-
-function formCreateContext() {
-  const storeContext = resolveContractV2SourceContext(v2ContractStore.value);
-  const sourceContext = (Object.keys(storeContext).length ? storeContext : resolveUnifiedPageContractV2SourceContext(contract.value)).context || {};
-  return sourceContext;
-}
-
-function resolveCreateDefaults() {
-  const storeMainData = resolveContractV2MainData(v2ContractStore.value);
-  const defaults: Record<string, unknown> = {
-    ...(Object.keys(storeMainData).length ? storeMainData : resolveUnifiedPageContractV2MainData(contract.value)),
-  };
-  Object.entries(route.query as Record<string, unknown>).forEach(([key, value]) => {
-    if (key.startsWith('default_')) {
-      defaults[key.replace(/^default_/, '')] = normalizeRouteDefault(value);
-    }
-  });
-  const context = formCreateContext();
-  Object.entries(context).forEach(([key, value]) => {
-    if (key.startsWith('default_') && !(key.replace(/^default_/, '') in defaults)) {
-      defaults[key.replace(/^default_/, '')] = value;
-    }
-  });
-  const validator = contract.value?.validator as Record<string, unknown> | undefined;
-  const defaultsSample = validator?.defaults_sample;
-  if (defaultsSample && typeof defaultsSample === 'object' && !Array.isArray(defaultsSample)) {
-    Object.entries(defaultsSample as Record<string, unknown>).forEach(([key, value]) => {
-      if (!(key in defaults)) {
-        defaults[key] = value === 'dynamic' ? '' : value;
-      }
-    });
-  }
-  const selectedProject = session.projectContext?.selected;
-  const selectedProjectId = Number(selectedProject?.id || 0);
-  if (
-    selectedProjectId > 0
-    && contract.value?.fields?.project_id
-    && normalizeRelationIds(defaults.project_id).length === 0
-  ) {
-    defaults.project_id = [
-      selectedProjectId,
-      selectedProject?.display_name || selectedProject?.name || `项目 ${selectedProjectId}`,
-    ];
-  }
-  const selectedStrategy = String(selectedProject?.operation_strategy || '').trim();
-  if (
-    selectedStrategy
-    && contract.value?.fields?.operation_strategy
-    && !String(defaults.operation_strategy || '').trim()
-  ) {
-    defaults.operation_strategy = selectedStrategy;
-  }
-  const selectedOwnerId = Number(selectedProject?.owner_id || 0);
-  if (
-    selectedOwnerId > 0
-    && contract.value?.fields?.owner_id
-    && normalizeRelationIds(defaults.owner_id).length === 0
-  ) {
-    defaults.owner_id = [
-      selectedOwnerId,
-      selectedProject?.owner_name || `业主 ${selectedOwnerId}`,
-    ];
-  }
-  return defaults;
-}
-
 function resolveNavigationUrl(url: string) {
   return resolveNavigationUrlFromOrigin(url, window.location.origin);
 }
@@ -5474,7 +5425,7 @@ async function loadRecord() {
     initOne2manyRows,
   };
   if (!recordId.value) {
-    const defaults = resolveCreateDefaults();
+    const defaults = resolveCreateDefaultsFromState({ contract: contract.value, routeQuery: route.query as Record<string, unknown>, selectedProject: session.projectContext?.selected || null, v2ContractStore: v2ContractStore.value });
     fieldNames.forEach((name) => {
       applyIncomingFormFieldValue({
         fieldName: name,
@@ -5890,144 +5841,59 @@ async function applyProjectionRefreshPolicy(policy?: ContractAction['refreshPoli
   });
 }
 
-async function openFilter(filterKey: string) {
-  if (!actionId.value) return;
-  const selected = searchFilters.value.find((item) => item.key === filterKey);
-  activeFilterKey.value = filterKey;
-  await router.push({
-    name: 'action',
-    params: { actionId: String(actionId.value) },
-    query: pickContractNavQuery(route.query as Record<string, unknown>, {
-      action_id: actionId.value,
-      preset_filter: filterKey,
-      domain_raw: selected?.domainRaw || undefined,
-      context_raw: selected?.contextRaw || undefined,
-    }),
-  });
-}
-
-async function cancelIntake() {
-  if (!isProjectIntakeCreateMode.value) return;
-  const target = session.resolveLandingPath('/');
-  await router.replace({ path: target, query: resolveWorkspaceContextQuery() });
-}
-
-async function returnToProjectIntakeList(createdId: number | string) {
-  const queryActionId = Number(route.query.action_id || actionId.value || 0) || 0;
-  if (queryActionId > 0) {
-    await router.replace({
-      path: `/a/${queryActionId}`,
-      query: pickContractNavQuery(route.query as Record<string, unknown>, {
-        project_id: String(createdId),
-        view_mode: 'tree',
-      }),
-    });
-    return true;
-  }
-  return false;
-}
-
 async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']): Promise<boolean | number> {
   if (!canSave.value || !model.value) return false;
   submissionFeedback.value = null;
   validationErrors.value = [];
-  const standardCreateMode = isProjectStandardIntakeMode.value;
-  if (standardCreateMode) {
-    const draftErrors: string[] = [];
-    const projectName = String(formData.name || '').trim();
-    const managerId = Number(formData.manager_id || 0);
-    if (!projectName) draftErrors.push('请填写项目名称');
-    if (!Number.isFinite(managerId) || managerId <= 0) draftErrors.push('请填写项目经理');
-    if (draftErrors.length) {
-      validationErrors.value = draftErrors;
-      submissionFeedback.value = { kind: 'warn', message: '创建失败，请检查填写内容' };
-      return false;
-    }
-  }
-  const one2manyIssues = one2manyValidation.value.issues;
-  if (one2manyIssues.length) {
-    showOne2manyErrors.value = true;
-    validationErrors.value = one2manyIssues.slice(0, 5);
-    submissionFeedback.value = { kind: 'warn', message: '创建失败，请检查填写内容' };
-    return false;
-  }
-  showOne2manyErrors.value = false;
-  const labels = layoutNodes.value.reduce<Record<string, string>>((acc, node) => {
-    if (node.kind === 'field') acc[node.name] = node.label || node.name;
-    return acc;
-  }, {});
-  const scenePrecheckIssues = collectSceneValidationPrecheckErrors(labels);
-  if (scenePrecheckIssues.length) {
-    validationErrors.value = scenePrecheckIssues;
-    submissionFeedback.value = { kind: 'warn', message: '创建失败，请检查填写内容' };
-    return false;
-  }
-  const relationCreateIssues = await resolvePendingInlineRelationCreates();
-  if (relationCreateIssues.length) {
-    validationErrors.value = relationCreateIssues;
-    submissionFeedback.value = { kind: 'warn', message: '创建失败，请检查填写内容' };
-    return false;
-  }
-  const tagCreateIssues = await resolvePendingMany2manyTagCreates();
-  if (tagCreateIssues.length) {
-    validationErrors.value = tagCreateIssues;
-    submissionFeedback.value = { kind: 'warn', message: '创建失败，请检查填写内容' };
-    return false;
-  }
-  const editableMap = collectWritableValues();
-  if (!recordId.value) {
-    const requiredIssues = collectRequiredFieldIssues(editableMap);
-    if (requiredIssues.length) {
-      validationErrors.value = requiredIssues;
-      submissionFeedback.value = { kind: 'warn', message: '请先补充必填信息，再保存草稿或提交。' };
-      return false;
-    }
-  }
-  if (!standardCreateMode) {
-    const issues = validateContractFormData({
+  const validation = await validateBeforeSaveRecord({
+    collectPolicyValidationErrors: (submittedFields) => [
+      ...collectPolicyValidationErrors(contract.value, policyContext.value),
+      ...collectPolicyValidationErrors(contract.value, {
+        ...policyContext.value,
+        submittedFields,
+      }),
+    ],
+    collectSceneValidationPrecheckErrors: (fieldLabels) => collectSceneValidationPrecheckErrors(fieldLabels),
+    collectWritableValues: () => collectWritableValues(),
+    formData,
+    isProjectStandardIntakeMode: isProjectStandardIntakeMode.value,
+    isWritableFieldVisible: (name) => isWritableFieldVisible(name),
+    layoutNodes: layoutNodes.value,
+    layoutFieldLabels: () => layoutNodes.value.reduce<Record<string, string>>((acc, node) => {
+      if (node.kind === 'field') acc[node.name] = node.label || node.name;
+      return acc;
+    }, {}),
+    normalizeFieldValue: (name, value) => normalizeFieldValue(name, value),
+    one2manyIssues: one2manyValidation.value.issues,
+    projectManagerId: formData.manager_id,
+    projectName: formData.name,
+    recordId: recordId.value,
+    resolvePendingInlineRelationCreates: () => resolvePendingInlineRelationCreates(),
+    resolvePendingMany2manyTagCreates: () => resolvePendingMany2manyTagCreates(),
+    validateContractFormData: (fieldLabels, values) => validateContractFormData({
       contract: contract.value,
-      fieldLabels: labels,
-      values: editableMap,
-    });
-    const basePolicyIssues = collectPolicyValidationErrors(contract.value, policyContext.value);
-    const submittedPolicyIssues = collectPolicyValidationErrors(contract.value, {
-      ...policyContext.value,
-      submittedFields: new Set(Object.keys(editableMap)),
-    });
-    const policyIssues = [...basePolicyIssues, ...submittedPolicyIssues];
-    if (policyIssues.length) {
-      validationErrors.value = Array.from(new Set(policyIssues)).slice(0, 5);
-      submissionFeedback.value = { kind: 'warn', message: '请先补充必填信息，再保存草稿或提交。' };
-      return false;
-    }
-    if (issues.length) {
-      validationErrors.value = Array.from(new Set(issues.map((item) => item.message))).slice(0, 5);
-      submissionFeedback.value = { kind: 'warn', message: '请先补充必填信息，再保存草稿或提交。' };
-      return false;
-    }
+      fieldLabels,
+      values,
+    }).map((item) => item.message),
+  });
+  showOne2manyErrors.value = Boolean(validation.showOne2manyErrors);
+  if (!validation.ok || !validation.editableMap) {
+    validationErrors.value = validation.validationErrors || [];
+    submissionFeedback.value = validation.submissionFeedback || null;
+    return false;
   }
+  const editableMap = validation.editableMap;
   busyKind.value = 'save';
   try {
-    const values = Object.entries(editableMap).reduce<Record<string, unknown>>((acc, [key, value]) => {
-      if (!recordId.value) {
-        acc[key] = value;
-        return acc;
-      }
-      const ttype = fieldType(contract.value?.fields?.[key]);
-      if (ttype === 'many2many' || ttype === 'one2many') {
-        if (Array.isArray(value) && value.length) {
-          acc[key] = value;
-        }
-        return acc;
-      }
-      if (!dirtyFieldSet.has(key)) {
-        return acc;
-      }
-      if (comparableFieldValue(key, formData[key]) !== comparableFieldValue(key, originalValues.value[key])) {
-        acc[key] = value;
-      }
-      return acc;
-    }, {});
+    const values = collectRecordSaveValues({
+      comparableFieldValue: (name, value) => comparableFieldValue(name, value),
+      contract: contract.value,
+      dirtyFieldSet,
+      editableMap,
+      formData,
+      originalValues: originalValues.value,
+      recordId: recordId.value,
+    });
     if (recordId.value && !Object.keys(values).length) {
       busyKind.value = null;
       dirtyFieldSet.clear();
@@ -6045,7 +5911,7 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']): Prom
       await applyProjectionRefreshPolicy(refreshPolicy || { on_success: ['scene_projection'] });
       return true;
     }
-    const created = await createContractFormRecord({ model: model.value, vals: values, context: formCreateContext() });
+    const created = await createContractFormRecord({ model: model.value, vals: values, context: formCreateContextFromState({ contract: contract.value, v2ContractStore: v2ContractStore.value }) });
     if (created?.id) {
       const attachmentsUploaded = await uploadPendingNativeAttachments(Number(created.id));
       if (!attachmentsUploaded) {
@@ -6054,45 +5920,12 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']): Prom
       const title = String(contract.value?.head?.title || '').trim();
       submissionFeedback.value = { kind: 'success', message: `${title || '记录'}已创建` };
       clearIntakeAutosave();
-      const nextSceneRoute = String(sceneReadyFormSurface.value.nextSceneRoute || '').trim();
-      const nextSceneKey = String(sceneReadyFormSurface.value.nextSceneKey || '').trim();
-      const resolvedNextRoute = nextSceneRoute || (nextSceneKey ? `/s/${nextSceneKey}` : '');
-      if (isProjectQuickIntakeMode.value && model.value === 'project.project') {
-        await applyProjectionRefreshPolicy(refreshPolicy || { on_success: ['scene_projection', 'workbench_projection'] });
-        if (await returnToProjectIntakeList(created.id)) return;
-        const routePath = resolvedNextRoute || '/s/project.management';
-        await router.replace({
-          path: routePath,
-          query: {
-            project_id: String(created.id),
-            ...resolveWorkspaceContextQuery(),
-          },
-        });
-        return true;
-      }
-      if (isProjectStandardIntakeMode.value && resolvedNextRoute) {
-        await applyProjectionRefreshPolicy(refreshPolicy || { on_success: ['scene_projection', 'workbench_projection'] });
-        if (await returnToProjectIntakeList(created.id)) return true;
-        await router.replace({
-          path: resolvedNextRoute,
-          query: {
-            project_id: String(created.id),
-            ...resolveWorkspaceContextQuery(),
-          },
-        });
-        return true;
-      }
-      if (isProjectStandardIntakeMode.value && model.value === 'project.project') {
-        await applyProjectionRefreshPolicy(refreshPolicy || { on_success: ['scene_projection', 'workbench_projection'] });
-        if (await returnToProjectIntakeList(created.id)) return true;
-      }
-      const createdRoute = router.resolve({
-        name: 'model-form',
-        params: { model: model.value, id: String(created.id) },
-        query: pickContractNavQuery(route.query as Record<string, unknown>),
+      return await navigateCreatedRecord({
+        createdId: created.id,
+        nextSceneKey: String(sceneReadyFormSurface.value.nextSceneKey || '').trim(),
+        nextSceneRoute: String(sceneReadyFormSurface.value.nextSceneRoute || '').trim(),
+        refreshPolicy,
       });
-      window.location.replace(new URL(createdRoute.href, window.location.origin).toString());
-      await new Promise<never>(() => {});
     }
   } catch (err) {
     const fallback = recordId.value ? '保存失败，请检查填写内容' : '创建失败，请检查填写内容';
