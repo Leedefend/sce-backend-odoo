@@ -3,7 +3,7 @@
 Date: 2026-07-14
 Owner: Construction backend owner
 Target file: `addons/smart_construction_core/core_extension.py`
-Current size: 4,241 lines
+Current size: 4,180 lines
 Phase: staged responsibility split
 
 ## Purpose
@@ -40,6 +40,7 @@ construction-owned policy.
 | Guard | Coverage |
 | --- | --- |
 | `construction_core_extension_project_layout_split_guard.py` | Project layout helper extraction, user_id pruning, relabeling, responsibility/collaboration group injection, and projection-only boundary. |
+| `construction_core_extension_contract_helpers_split_guard.py` | Generic contract helper extraction, v2 layout/status mirrors, governance patch mirrors, content replacement, form layout governance, line lock, and projection-only boundary. |
 | `backend_boundary_guard.py` | Core backend ownership and extension-boundary constraints. |
 | `owner_industry_isolation_probe.py` | Industry module isolation and required extension hooks. |
 
@@ -55,6 +56,19 @@ Stage 1 is complete when:
 - the extracted module remains projection-only: no ORM calls, HTTP calls,
   routing, file IO, environment access, or permission inference;
 - `core_extension.py` is locked at `<=4241` lines for this stage.
+
+## Stage 2 Target
+
+Stage 2 is complete when:
+
+- `core_extension_contract_helpers.py` owns generic contract helper utilities:
+  field-node collection, v2 container/status mirrors, governance patch mirrors,
+  content replacement, and form layout governance resolution/application;
+- `core_extension.py` keeps `_sc_*` compatibility wrappers and form normalizer
+  orchestration, and delegates helper behavior into the extracted module;
+- the helper remains projection-only: no ORM calls, HTTP calls, routing, file
+  IO, environment access, or permission inference;
+- `core_extension.py` is locked at `<=4180` lines for this stage.
 
 ## Next Candidate
 
