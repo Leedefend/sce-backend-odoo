@@ -184,3 +184,13 @@ export function normalizeNativeFormStatusbar(input: NativeFormStatusbarInput): N
     readonly: Boolean(input.fieldReadonly(field) || input.readonly),
   };
 }
+
+export function resolveStatusbarSelectionValue(descriptor: FieldDescriptor | undefined, value: unknown) {
+  const raw = String(value || '').trim();
+  const selection = Array.isArray(descriptor?.selection) ? descriptor.selection : [];
+  if (!selection.length) return raw || false;
+  const byCode = selection.find((item) => String((item as unknown[])[0] ?? '') === raw);
+  const byLabel = selection.find((item) => String((item as unknown[])[1] ?? '') === raw);
+  const matched = byCode || byLabel;
+  return matched ? String((matched as unknown[])[0] ?? raw) || false : raw || false;
+}

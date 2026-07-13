@@ -637,6 +637,7 @@ import {
   normalizeWorkflowEvidenceGateRows,
   normalizeNativeFormStatusbar,
   normalizeWorkflowPhaseStatusbar,
+  resolveStatusbarSelectionValue,
   workflowActionMethodAliases,
   workflowActionRowForMethod,
 } from './contractForm/workflowContract';
@@ -4615,19 +4616,8 @@ const nativeStatusbar = computed<NativeStatusbarVm>(() => {
 function setStatusbarValue(value: string) {
   const field = nativeStatusbar.value.field;
   if (!field || nativeStatusbar.value.readonly) return;
-  const raw = String(value || '').trim();
-  let resolved = raw;
   const descriptor = contract.value?.fields?.[field];
-  const selection = Array.isArray(descriptor?.selection) ? descriptor.selection : [];
-  if (selection.length) {
-    const byCode = selection.find((item) => String((item as unknown[])[0] ?? '') === raw);
-    const byLabel = selection.find((item) => String((item as unknown[])[1] ?? '') === raw);
-    const matched = byCode || byLabel;
-    if (matched) {
-      resolved = String((matched as unknown[])[0] ?? raw);
-    }
-  }
-  formData[field] = resolved || false;
+  formData[field] = resolveStatusbarSelectionValue(descriptor, value);
   markFieldChanged(field);
 }
 
