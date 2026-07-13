@@ -461,6 +461,7 @@ import {
   contractActionRuleClientMode,
   contractActionRuleControl,
   contractActionRuleKey,
+  contractPromptParamsFromRule,
   contractPromptFieldsFromRule,
   createRootActionCandidatesFromRules,
   normalizeActionSafety,
@@ -6478,37 +6479,6 @@ function applyRouteConfigMode(rawMode: unknown) {
   }
 }
 
-function promptContractActionParams(rule: Record<string, unknown>, providedValues: Record<string, string> = {}) {
-  const target = parseMaybeJsonRecord(rule.target);
-  const params = { ...parseMaybeJsonRecord(target.params || rule.params) };
-  const promptSchema = parseMaybeJsonRecord(target.prompt_schema || target.promptSchema || rule.prompt_schema || rule.promptSchema);
-  const fields = Array.isArray(promptSchema.fields) ? promptSchema.fields : [];
-  for (const raw of fields) {
-    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) continue;
-    const field = raw as Record<string, unknown>;
-    const name = String(field.name || '').trim();
-    if (!name) continue;
-    const label = String(field.label || name).trim();
-    const required = field.required !== false;
-    const optionRows = Array.isArray(field.options)
-      ? field.options.map((item) => parseMaybeJsonRecord(item)).filter((row) => String(row.value || '').trim())
-      : [];
-    const options = optionRows
-      .map((row) => `${String(row.value || '').trim()}=${String(row.label || row.value || '').trim()}`)
-      .filter(Boolean);
-    const suffix = options.length ? ` (${options.join(', ')})` : '';
-    const rawValue = String(providedValues[name] || '').trim();
-    const optionMatch = optionRows.find((row) => (
-      String(row.value || '').trim() === rawValue
-      || String(row.label || '').trim() === rawValue
-    ));
-    const value = optionMatch ? String(optionMatch.value || '').trim() : rawValue;
-    if (required && !value) return null;
-    if (value) params[name] = value;
-  }
-  return params;
-}
-
 function openContractModeAction(rule: Record<string, unknown>) {
   const promptFields = contractPromptFieldsFromRule(rule);
   if (!promptFields.length) {
@@ -6535,7 +6505,7 @@ function closeContractPromptAction() {
 async function submitContractPromptAction() {
   const rule = contractPromptRule.value;
   if (!rule) return;
-  const params = promptContractActionParams(rule, contractPromptValues);
+  const params = contractPromptParamsFromRule(rule, contractPromptValues);
   if (params === null) return;
   await runContractRuleAction(rule, params);
   closeContractPromptAction();
@@ -6554,7 +6524,7 @@ async function runContractRuleAction(rule: Record<string, unknown>, providedPara
     openContractModeAction(rule);
     return;
   }
-  const params = providedParams || promptContractActionParams(rule);
+  const params = providedParams || contractPromptParamsFromRule(rule);
   if (params === null) return;
   busyKind.value = 'action';
   try {

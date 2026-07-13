@@ -77,6 +77,25 @@ export function contractPromptFieldsFromRule(rule: Record<string, unknown>): Con
     .filter((field): field is ContractPromptField => Boolean(field));
 }
 
+export function contractPromptParamsFromRule(
+  rule: Record<string, unknown>,
+  providedValues: Record<string, string> = {},
+): Record<string, unknown> | null {
+  const target = parseMaybeJsonRecord(rule.target);
+  const params = { ...parseMaybeJsonRecord(target.params || rule.params) };
+  for (const field of contractPromptFieldsFromRule(rule)) {
+    const rawValue = String(providedValues[field.name] || '').trim();
+    const optionMatch = field.options.find((row) => (
+      String(row.value || '').trim() === rawValue
+      || String(row.label || '').trim() === rawValue
+    ));
+    const value = optionMatch ? String(optionMatch.value || '').trim() : rawValue;
+    if (field.required && !value) return null;
+    if (value) params[field.name] = value;
+  }
+  return params;
+}
+
 export function buildContractFieldActionsFromRules(params: {
   rules: Record<string, unknown>[];
   fieldName: string;
