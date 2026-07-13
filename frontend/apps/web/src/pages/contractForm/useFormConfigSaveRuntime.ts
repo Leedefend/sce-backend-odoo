@@ -11,7 +11,8 @@ import {
   lowCodeScopedContractName,
   normalizeLowCodeApplyParams,
 } from './formConfigHelpers';
-import type { BusyKind, FormConfigAuditResult, LowCodeFieldSize } from './types';
+import { applyFormRuntimeStatusEvent } from './runtimeStateApplier';
+import type { BusyKind, FormConfigAuditResult, LowCodeFieldSize, UiStatus } from './types';
 
 type LowCodeColumns = 1 | 2 | 3;
 
@@ -53,7 +54,7 @@ export function useFormConfigSaveRuntime(params: {
   markPendingOperations: (status: 'saved' | 'reverted') => void;
   modelName: () => string;
   reload: () => Promise<void>;
-  status: Ref<string>;
+  status: Ref<UiStatus>;
 }) {
   function formConfigSaveOperationSummary(changedVisibility: Record<string, boolean>, changedGroups: Record<string, string>) {
     return formConfigSaveOperationSummaryFromDraft({
@@ -153,8 +154,12 @@ export function useFormConfigSaveRuntime(params: {
       await params.hydrateLowCodeDraftFromContract();
       return true;
     } catch (err) {
-      params.errorMessage.value = err instanceof Error ? err.message : '表单字段顺序更新失败';
-      params.status.value = 'error';
+      applyFormRuntimeStatusEvent(params, {
+        kind: 'status',
+        transaction: 'formConfig',
+        status: 'error',
+        errorMessage: err instanceof Error ? err.message : '表单字段顺序更新失败',
+      });
       return false;
     } finally {
       params.busyKind.value = null;
