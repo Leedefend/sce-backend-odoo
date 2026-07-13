@@ -12,6 +12,9 @@ PAGE = ROOT / "frontend/apps/web/src/pages/ContractFormPage.vue"
 SAVE_HELPER = ROOT / "frontend/apps/web/src/pages/contractForm/saveRecordHelpers.ts"
 ACTION_RUNTIME = ROOT / "frontend/apps/web/src/pages/contractForm/useFormActionRuntime.ts"
 PRIMARY_RUNTIME = ROOT / "frontend/apps/web/src/pages/contractForm/usePrimaryFormActionRuntime.ts"
+FORM_CONFIG_RUNTIME = ROOT / "frontend/apps/web/src/pages/contractForm/useFormConfigSaveRuntime.ts"
+INLINE_POLICY_RUNTIME = ROOT / "frontend/apps/web/src/pages/contractForm/useInlineFieldPolicyRuntime.ts"
+CONTRACT_MODE_RUNTIME = ROOT / "frontend/apps/web/src/pages/contractForm/useContractModeActionRuntime.ts"
 CI = ROOT / "make/ci.mk"
 
 
@@ -29,6 +32,9 @@ def main() -> int:
     save_helper = _read(SAVE_HELPER)
     action_runtime = _read(ACTION_RUNTIME)
     primary_runtime = _read(PRIMARY_RUNTIME)
+    form_config_runtime = _read(FORM_CONFIG_RUNTIME)
+    inline_policy_runtime = _read(INLINE_POLICY_RUNTIME)
+    contract_mode_runtime = _read(CONTRACT_MODE_RUNTIME)
     ci = _read(CI)
 
     if not protocol:
@@ -169,6 +175,12 @@ def main() -> int:
         (action_runtime, "import type { BusyKind, ContractAction, SubmissionFeedback, UiStatus } from './types';", "useFormActionRuntime.ts"),
         (primary_runtime, "import { applyFormRuntimeStatusEvent } from './runtimeStateApplier';", "usePrimaryFormActionRuntime.ts"),
         (primary_runtime, "import type { BusyKind, ContractAction, SubmissionFeedback, UiStatus } from './types';", "usePrimaryFormActionRuntime.ts"),
+        (form_config_runtime, "import { applyFormRuntimeStatusEvent } from './runtimeStateApplier';", "useFormConfigSaveRuntime.ts"),
+        (form_config_runtime, "UiStatus", "useFormConfigSaveRuntime.ts"),
+        (inline_policy_runtime, "import { applyFormRuntimeStatusEvent } from './runtimeStateApplier';", "useInlineFieldPolicyRuntime.ts"),
+        (inline_policy_runtime, "UiStatus", "useInlineFieldPolicyRuntime.ts"),
+        (contract_mode_runtime, "import { applyFormRuntimeStatusEvent } from './runtimeStateApplier';", "useContractModeActionRuntime.ts"),
+        (contract_mode_runtime, "UiStatus", "useContractModeActionRuntime.ts"),
     ]
     for source, token, label in required_consumers:
         if token not in source:
@@ -211,6 +223,25 @@ def main() -> int:
     for token in stale_primary_writes:
         if token in primary_runtime:
             errors.append(f"usePrimaryFormActionRuntime.ts still bypasses status applier: {token}")
+
+    config_status_event_requirements = [
+        (form_config_runtime, "useFormConfigSaveRuntime.ts", "transaction: 'formConfig'", "errorMessage: err instanceof Error ? err.message : '表单字段顺序更新失败'"),
+        (inline_policy_runtime, "useInlineFieldPolicyRuntime.ts", "transaction: 'inlinePolicy'", "errorMessage: err instanceof Error ? err.message : '字段显示规则更新失败'"),
+        (contract_mode_runtime, "useContractModeActionRuntime.ts", "transaction: 'contractMode'", "errorMessage: err instanceof Error ? err.message : '表单配置操作失败'"),
+    ]
+    for source, label, transaction_token, error_token in config_status_event_requirements:
+        for token in ["applyFormRuntimeStatusEvent(params, {", transaction_token, error_token]:
+            if token not in source:
+                errors.append(f"{label} missing config status applier token: {token}")
+
+    stale_config_writes = [
+        (form_config_runtime, "useFormConfigSaveRuntime.ts", "params.errorMessage.value = err instanceof Error ? err.message : '表单字段顺序更新失败';"),
+        (inline_policy_runtime, "useInlineFieldPolicyRuntime.ts", "params.errorMessage.value = err instanceof Error ? err.message : '字段显示规则更新失败';"),
+        (contract_mode_runtime, "useContractModeActionRuntime.ts", "params.errorMessage.value = err instanceof Error ? err.message : '表单配置操作失败';"),
+    ]
+    for source, label, token in stale_config_writes:
+        if token in source:
+            errors.append(f"{label} still bypasses status applier: {token}")
 
     ci_token = "python3 scripts/verify/contract_form_runtime_state_protocol_guard.py"
     if ci_token not in ci:

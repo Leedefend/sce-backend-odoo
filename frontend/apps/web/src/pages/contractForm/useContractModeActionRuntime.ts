@@ -6,12 +6,13 @@ import {
   contractPromptFieldsFromRule,
   contractPromptParamsFromRule,
 } from './actionContract';
-import type { BusyKind } from './types';
+import { applyFormRuntimeStatusEvent } from './runtimeStateApplier';
+import type { BusyKind, UiStatus } from './types';
 
 export function useContractModeActionRuntime(params: {
   busyKind: Ref<BusyKind>;
   errorMessage: Ref<string>;
-  status: Ref<string>;
+  status: Ref<UiStatus>;
   contractModeFeedback: Ref<string>;
   applyClientMode: (mode: string, toggle?: boolean) => boolean | void;
   reload: () => Promise<void>;
@@ -54,8 +55,12 @@ export function useContractModeActionRuntime(params: {
       params.contractModeFeedback.value = String(target.success_message || '已更新').trim();
       await params.reload();
     } catch (err) {
-      params.errorMessage.value = err instanceof Error ? err.message : '表单配置操作失败';
-      params.status.value = 'error';
+      applyFormRuntimeStatusEvent(params, {
+        kind: 'status',
+        transaction: 'contractMode',
+        status: 'error',
+        errorMessage: err instanceof Error ? err.message : '表单配置操作失败',
+      });
     } finally {
       params.busyKind.value = null;
     }

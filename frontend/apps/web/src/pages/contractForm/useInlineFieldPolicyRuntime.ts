@@ -2,13 +2,14 @@ import type { Ref } from 'vue';
 import { intentRequest } from '../../api/intents';
 import { FORM_FIELD_CONFIG_INTENTS } from '../../app/businessConfigBoundaries';
 import { normalizeFieldGroupTitle } from './formConfigHelpers';
-import type { BusyKind, FormConfigOperationLogEntry } from './types';
+import { applyFormRuntimeStatusEvent } from './runtimeStateApplier';
+import type { BusyKind, FormConfigOperationLogEntry, UiStatus } from './types';
 
 export function useInlineFieldPolicyRuntime(params: {
   busy: () => boolean;
   busyKind: Ref<BusyKind>;
   errorMessage: Ref<string>;
-  status: Ref<string>;
+  status: Ref<UiStatus>;
   contractModeFeedback: Ref<string>;
   lowCodeApplyBaseParams: () => Record<string, unknown>;
   contractFieldSequence: (fieldKey: string) => number;
@@ -42,8 +43,12 @@ export function useInlineFieldPolicyRuntime(params: {
       params.contractModeFeedback.value = '字段配置已更新';
       await params.reload();
     } catch (err) {
-      params.errorMessage.value = err instanceof Error ? err.message : '字段显示规则更新失败';
-      params.status.value = 'error';
+      applyFormRuntimeStatusEvent(params, {
+        kind: 'status',
+        transaction: 'inlinePolicy',
+        status: 'error',
+        errorMessage: err instanceof Error ? err.message : '字段显示规则更新失败',
+      });
     } finally {
       params.busyKind.value = null;
     }
