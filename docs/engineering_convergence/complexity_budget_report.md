@@ -27,7 +27,7 @@ Generated from repository source files. This report is informational during the 
 | 3013 | Python source | `addons/smart_core/app_config_engine/services/assemblers/page_assembler.py` |
 | 2903 | Python source | `addons/smart_core/tests/test_menu_configuration_audit.py` |
 | 2830 | Python source | `addons/smart_construction_core/models/core/material_acceptance.py` |
-| 2781 | Python source | `addons/smart_core/utils/contract_governance.py` |
+| 2708 | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 2585 | Python source | `addons/smart_construction_core/tests/test_user_feedback_business_views.py` |
 | 2529 | XML data/view | `addons/smart_construction_core/views/menu_business_taxonomy.xml` |
 | 2521 | Vue source | `frontend/apps/web/src/views/MyWorkView.vue` |
@@ -143,7 +143,7 @@ Generated from repository source files. This report is informational during the 
 | 3013 | split_plan_required | Python source | `addons/smart_core/app_config_engine/services/assemblers/page_assembler.py` |
 | 2903 | split_plan_required | Python source | `addons/smart_core/tests/test_menu_configuration_audit.py` |
 | 2830 | split_plan_required | Python source | `addons/smart_construction_core/models/core/material_acceptance.py` |
-| 2781 | split_plan_required | Python source | `addons/smart_core/utils/contract_governance.py` |
+| 2708 | split_plan_required | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 2585 | split_plan_required | Python source | `addons/smart_construction_core/tests/test_user_feedback_business_views.py` |
 | 2529 | split_plan_required | XML data/view | `addons/smart_construction_core/views/menu_business_taxonomy.xml` |
 | 2521 | split_plan_required | Vue source | `frontend/apps/web/src/views/MyWorkView.vue` |

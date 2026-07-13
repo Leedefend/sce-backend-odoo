@@ -95,7 +95,7 @@ def main() -> int:
 
     for token in [
         "Contract Governance Responsibility Map",
-        "Current size: 2,781 lines",
+        "Current size: 2,708 lines",
         "projection-only",
         "Do not start mechanical extraction",
         "## Public Entry Points",
@@ -168,6 +168,9 @@ def main() -> int:
         "## Stage 21 Target",
         "`contract_governance_project_form.py` also owns legacy project form profile",
         "`contract_governance.py` is locked at `<=2781` lines",
+        "## Stage 22 Target",
+        "`contract_governance_project_form.py` also owns project form layout filtering",
+        "`contract_governance.py` is locked at `<=2708` lines",
     ]:
         if token not in doc:
             errors.append(f"responsibility map missing token: {token}")

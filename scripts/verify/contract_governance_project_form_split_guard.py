@@ -9,7 +9,7 @@ GOVERNANCE = ROOT / "addons/smart_core/utils/contract_governance.py"
 PROJECT_FORM = ROOT / "addons/smart_core/utils/contract_governance_project_form.py"
 CI = ROOT / "make/ci.mk"
 
-MAX_GOVERNANCE_LINES = 2781
+MAX_GOVERNANCE_LINES = 2708
 
 
 def _read(path: Path) -> str:
@@ -45,6 +45,7 @@ def main() -> int:
             "contract_governance_project_form.py",
             "return _project_form.normalize_legacy_project_form_profile(",
             "return _project_form.pick_project_form_fields(",
+            "_project_form.filter_project_form_layout(",
             "def _build_project_lifecycle_summary(data: dict) -> None:",
             "_project_form.build_project_lifecycle_summary(data)",
         ]:
@@ -55,6 +56,7 @@ def main() -> int:
         for token in [
             "def normalize_legacy_project_form_profile(",
             "def pick_project_form_fields(",
+            "def filter_project_form_layout(",
             "def build_project_lifecycle_summary(",
             "\"action_noise_markers\"",
             "for key in (\"children\", \"tabs\", \"pages\", \"nodes\", \"items\")",
@@ -127,6 +129,48 @@ def main() -> int:
         selected = governance._pick_project_form_fields(profile_data)
         if selected != ["code", "manager_id", "name", "state"]:
             errors.append(f"project form fields must merge primary/page/order/required fields, got {selected!r}")
+        layout_data = {
+            **profile_data,
+            "views": {
+                "form": {
+                    "layout": [
+                        {
+                            "type": "notebook",
+                            "pages": [
+                                {
+                                    "type": "page",
+                                    "name": "keep",
+                                    "children": [
+                                        {"type": "field", "name": "code"},
+                                        {"type": "field", "name": "message_ids"},
+                                    ],
+                                },
+                                {
+                                    "type": "page",
+                                    "name": "drop",
+                                    "children": [{"type": "field", "name": "message_ids"}],
+                                },
+                            ],
+                        }
+                    ]
+                }
+            },
+        }
+        governance._filter_project_form_layout(layout_data, ["code", "manager_id", "state"])
+        layout = (((layout_data.get("views") or {}).get("form") or {}).get("layout")) or []
+        notebook = layout[0] if layout and isinstance(layout[0], dict) else {}
+        pages = notebook.get("pages") or []
+        kept_page_names = [row.get("name") for row in pages if isinstance(row, dict)]
+        if kept_page_names != ["keep"]:
+            errors.append(f"project form layout must prune empty pages, got {kept_page_names!r}")
+        keep_children = pages[0].get("children") if pages else []
+        if [row.get("name") for row in keep_children if isinstance(row, dict)] != ["code"]:
+            errors.append("project form layout must prune disallowed page fields")
+        if [row.get("name") for row in layout if isinstance(row, dict) and row.get("type") == "field"] != [
+            "manager_id",
+            "state",
+        ]:
+            errors.append("project form layout must backfill selected fields missing from native layout")
 
         transitions = [
             {"trigger": {"label": f"Transition {idx}", "kind": "server"}}

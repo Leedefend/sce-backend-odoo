@@ -133,6 +133,85 @@ def pick_project_form_fields(
     return selected[:max_fields]
 
 
+def filter_project_form_layout(data: dict, selected_fields: list[str], *, profile: dict) -> None:
+    views = _as_dict(data.get("views"))
+    form = _as_dict(views.get("form"))
+    layout = form.get("layout")
+    if not isinstance(layout, list):
+        return
+
+    def _iter_children(node: dict) -> list[list]:
+        rows: list[list] = []
+        for key in ("children", "tabs", "pages", "nodes", "items"):
+            candidate = node.get(key)
+            if isinstance(candidate, list):
+                rows.append(candidate)
+        return rows
+
+    def _collect_layout_field_names(nodes: list, out: list[str]) -> None:
+        for node in nodes:
+            if not isinstance(node, dict):
+                continue
+            node_type = _safe_lower(node.get("type"))
+            if node_type == "field":
+                name = _safe_text(node.get("name"))
+                if name and name not in out:
+                    out.append(name)
+            for children in _iter_children(node):
+                _collect_layout_field_names(children, out)
+
+    def _prune_layout(nodes: list, allowed: set[str]) -> list[dict]:
+        cleaned: list[dict] = []
+        for node in nodes:
+            if not isinstance(node, dict):
+                continue
+            node_type = _safe_lower(node.get("type"))
+            if node_type == "field":
+                name = _safe_text(node.get("name"))
+                if name and name in allowed:
+                    cleaned.append(node)
+                continue
+            copied = dict(node)
+            structured_children_present = False
+            for key in ("children", "tabs", "pages", "nodes", "items"):
+                raw_children = node.get(key)
+                if not isinstance(raw_children, list):
+                    continue
+                pruned_children = _prune_layout(raw_children, allowed)
+                copied[key] = pruned_children
+                if key in {"children", "tabs", "pages"} and pruned_children:
+                    structured_children_present = True
+            keep_node = True
+            if node_type in {"group", "page", "notebook", "sheet", "header"}:
+                has_structured_key = any(isinstance(node.get(key), list) for key in ("children", "tabs", "pages"))
+                if has_structured_key and not structured_children_present:
+                    keep_node = False
+            if keep_node:
+                cleaned.append(copied)
+        return cleaned
+
+    selected_order = [name for name in selected_fields if _safe_text(name)]
+    selected_set = set(selected_order)
+    filtered_layout = _prune_layout(layout, selected_set)
+
+    existing_field_names: list[str] = []
+    _collect_layout_field_names(filtered_layout, existing_field_names)
+    if not existing_field_names:
+        primary_fields = profile.get("primary_fields") or []
+        for name in primary_fields:
+            if name in selected_fields:
+                filtered_layout.append({"type": "field", "name": name})
+        _collect_layout_field_names(filtered_layout, existing_field_names)
+
+    existing_set = set(existing_field_names)
+    missing_selected = [name for name in selected_order if name and name not in existing_set]
+    for name in missing_selected:
+        filtered_layout.append({"type": "field", "name": name})
+    form["layout"] = filtered_layout
+    views["form"] = form
+    data["views"] = views
+
+
 def build_project_lifecycle_summary(data: dict) -> None:
     workflow = _as_dict(data.get("workflow"))
     states = workflow.get("states")
