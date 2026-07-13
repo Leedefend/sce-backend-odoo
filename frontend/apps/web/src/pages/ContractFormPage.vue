@@ -575,12 +575,6 @@ import {
   formRuntimeCommandHintLabel,
   formRuntimeReasonLabel,
   formRuntimeRowStateLabel,
-  appendOne2manyDraftRow,
-  buildOne2manyCommandValue as buildOne2manyCommandValueFromRows,
-  collectOne2manyDraftValidationFromRows,
-  ensureOne2manyRows as ensureOne2manyRowsForField,
-  initOne2manyRowsFromRelationSource,
-  mergeOne2manyHydratedRecords,
   one2manyCanCreateFromPolicies,
   one2manyColumnDisplayValue,
   one2manyColumnInputType,
@@ -588,15 +582,12 @@ import {
   one2manyColumnsFromSubview,
   one2manyDraftSummary,
   one2manyPrimaryColumnFromColumns,
-  removeOne2manyDraftRow,
-  restoreOne2manyDraftRow,
   one2manyRowLabelFromPrimary,
-  one2manyRowHintsFromPatches,
   one2manyRowStateLabel,
   selectOne2manySubview,
-  setOne2manyDraftRowField,
   one2manySubviewPolicies,
 } from './contractForm/one2manyUtils';
+import { useOne2manyRuntime } from './contractForm/useOne2manyRuntime';
 import {
   dynamicRelationDomainFromDescriptor,
   relationEntry,
@@ -856,10 +847,35 @@ const {
   setRelationSearchKeyword,
   selectRelationSearchRow,
 } = useRelationRuntime();
-const one2manyRows = reactive<Record<string, One2ManyInlineRow[]>>({});
 const onchangeModifiersPatch = ref<Record<string, Record<string, unknown>>>({});
 const onchangeWarnings = ref<Array<{ title?: string; message?: string; reason_code?: string }>>([]);
 const onchangeLinePatches = ref<OnchangeLinePatch[]>([]);
+const {
+  rowsByField: one2manyRows,
+  fieldRows: one2manyFieldRows,
+  visibleRows: visibleOne2manyRows,
+  removedRows: removedOne2manyRows,
+  ensureRows: ensureOne2manyRows,
+  clearRows: clearOne2manyRows,
+  addRow: addOne2manyRow,
+  setRowField: setOne2manyRowField,
+  removeRow: removeOne2manyRow,
+  restoreRow: restoreOne2manyRow,
+  initRows: initOne2manyRows,
+  mergeHydratedRecords: mergeHydratedOne2manyRecords,
+  buildCommandValue: buildOne2manyCommandValue,
+  collectValidation: collectOne2manyDraftValidation,
+  rowHints: one2manyRowHints,
+  applyLinePatches: applyOnchangeLinePatches,
+} = useOne2manyRuntime({
+  recordId: () => recordId.value,
+  originalValues: () => originalValues.value,
+  onchangeLinePatches: () => onchangeLinePatches.value as Array<Record<string, unknown>>,
+  resolveColumns: (fieldName) => one2manyColumns(fieldName),
+  resolvePrimaryColumn: (fieldName) => one2manyPrimaryColumn(fieldName),
+  resolveRelationOptions: (fieldName) => relationOptionsForField(fieldName),
+  markFieldChanged,
+});
 const changedFieldSet = new Set<string>();
 const dirtyFieldSet = new Set<string>();
 let onchangeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -2357,10 +2373,6 @@ async function hydrateSelectedRelationOptions() {
   }));
 }
 
-function one2manyFieldRows(name: string) {
-  return Array.isArray(one2manyRows[name]) ? one2manyRows[name] : [];
-}
-
 function one2manyRelationModel(name: string) {
   const descriptor = contract.value?.fields?.[name] as Record<string, unknown> | undefined;
   return String(descriptor?.relation || '').trim();
@@ -2465,48 +2477,6 @@ function one2manySummary(name: string) {
   return one2manyDraftSummary(one2manyFieldRows(name));
 }
 
-function visibleOne2manyRows(name: string) {
-  return one2manyFieldRows(name).filter((row) => !row.removed);
-}
-
-function removedOne2manyRows(name: string) {
-  return one2manyFieldRows(name).filter((row) => row.removed);
-}
-
-function ensureOne2manyRows(name: string) {
-  return ensureOne2manyRowsForField(one2manyRows, name);
-}
-
-function makeOne2manyKey() {
-  return `o2m_${Date.now()}_${Math.random().toString(16).slice(2, 8)}`;
-}
-
-function addOne2manyRow(name: string) {
-  const primary = one2manyPrimaryColumn(name);
-  const columns = one2manyColumns(name);
-  appendOne2manyDraftRow({ rowsByField: one2manyRows, fieldName: name, key: makeOne2manyKey(), primary, columns });
-  markFieldChanged(name);
-}
-
-function setOne2manyRowField(fieldName: string, rowKey: string, column: One2ManyColumn, value: unknown) {
-  const changed = setOne2manyDraftRowField({ rowsByField: one2manyRows, fieldName, rowKey, column, value });
-  if (changed) markFieldChanged(fieldName);
-}
-
-function removeOne2manyRow(fieldName: string, rowKey: string) {
-  if (removeOne2manyDraftRow(one2manyRows, fieldName, rowKey)) markFieldChanged(fieldName);
-}
-
-function restoreOne2manyRow(fieldName: string, rowKey: string) {
-  if (restoreOne2manyDraftRow(one2manyRows, fieldName, rowKey)) markFieldChanged(fieldName);
-}
-
-function initOne2manyRows(name: string, source: unknown) {
-  const options = relationOptionsForField(name);
-  const primary = one2manyPrimaryColumn(name);
-  one2manyRows[name] = initOne2manyRowsFromRelationSource({ source, relationOptions: options, primary });
-}
-
 async function hydrateOne2manyRows(name: string) {
   const relation = one2manyRelationModel(name);
   if (!relation) return;
@@ -2522,7 +2492,7 @@ async function hydrateOne2manyRows(name: string) {
       fields,
     });
     const records = Array.isArray(response.records) ? response.records : [];
-    mergeOne2manyHydratedRecords({ rows, columns, records: records as Array<Record<string, unknown>> });
+    mergeHydratedOne2manyRecords(name, records as Array<Record<string, unknown>>);
   } catch {
     // Keep the id/display-name fallback when the child model is not readable.
   }
@@ -2537,49 +2507,8 @@ async function hydrateVisibleOne2manyRows() {
   await Promise.all(names.map((name) => hydrateOne2manyRows(name)));
 }
 
-function buildOne2manyCommandValue(name: string, mode: 'onchange' | 'write') {
-  return buildOne2manyCommandValueFromRows(originalValues.value[name], one2manyFieldRows(name), mode);
-}
-
-function collectOne2manyDraftValidation() {
-  return collectOne2manyDraftValidationFromRows({
-    rowsByField: one2manyRows,
-    recordId: recordId.value,
-    resolvePrimaryColumn: one2manyPrimaryColumn,
-    resolveColumns: one2manyColumns,
-  });
-}
-
 function one2manyRowErrors(fieldName: string, rowKey: string) {
   return one2manyValidation.value.rowErrors[`${fieldName}:${rowKey}`] || [];
-}
-
-function one2manyRowHints(fieldName: string, row: One2ManyInlineRow) {
-  return one2manyRowHintsFromPatches({
-    patches: onchangeLinePatches.value as Array<Record<string, unknown>>,
-    fieldName,
-    row,
-  });
-}
-
-function applyOnchangeLinePatches(linePatches: OnchangeLinePatch[]) {
-  if (!Array.isArray(linePatches) || !linePatches.length) return;
-  linePatches.forEach((line) => {
-    const fieldName = String(line.field || '').trim();
-    if (!fieldName) return;
-    const rowKey = String(line.row_key || '').trim();
-    const rowId = Number(line.row_id || 0);
-    const rows = ensureOne2manyRows(fieldName);
-    const row = rows.find((item) => (rowKey && item.key === rowKey) || (rowId > 0 && Number(item.id || 0) === rowId));
-    if (!row) return;
-    const patch = line.patch;
-    if (patch && typeof patch === 'object') {
-      row.values = {
-        ...(row.values || {}),
-        ...(patch as Record<string, unknown>),
-      };
-    }
-  });
 }
 
 function setRelationKeyword(name: string, keyword: string) {
@@ -5286,9 +5215,7 @@ async function loadRecord() {
     delete relationKeywords[key];
   });
   relationOptions.value = {};
-  Object.keys(one2manyRows).forEach((key) => {
-    delete one2manyRows[key];
-  });
+  clearOne2manyRows();
   onchangeModifiersPatch.value = {};
   onchangeWarnings.value = [];
   onchangeLinePatches.value = [];
