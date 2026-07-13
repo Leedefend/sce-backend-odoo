@@ -2,7 +2,7 @@
 
 Target file: `addons/smart_construction_core/core_extension.py`
 
-Current line budget: `<=1422`.
+Current line budget: `<=958`.
 
 ## Role
 
@@ -29,14 +29,12 @@ cross-industry policy.
 
 | Lines | Area | Current Responsibility | Candidate Destination |
 | ---: | --- | --- | --- |
-| 1-480 | Imports and eager registrations | Register project scope, reason metadata, capability groups, semantic scene profiles, and legacy governance profiles. | `core_extension_bootstrap.py` or declarative registration specs. |
+| 1-708 | Imports and eager registrations | Register project scope, reason metadata, capability groups, semantic scene profiles, and legacy governance profiles. | `core_extension_bootstrap.py` or declarative registration specs. |
 | imported | Contract projection helpers | Project field labeling, responsibility groups, v2 container/status patches, diary/company/tax form normalization, workflow injection. | `core_extension_contract_projection.py`. |
-| 1121-1571 | Static policy/catalog data | Large dictionaries and state policy tables consumed by later hooks. | `core_extension_policy_catalog.py`. |
-| 1907-1967 | Workspace collection facade | System-init fact contribution orchestration delegates row builders to `core_extension_workspace_facts.py`. | `core_extension_workspace_facts.py`. |
-| 2104-2436 | Basic contribution hooks | Identity, scene maps, surface aliases, record context, file/api policy contributions, role entries, and home blocks. | `core_extension_contributions.py`. |
-| 2235-2261 | Intent handler registration | Registry compatibility loader delegates to imported handler contribution mapping. | `core_extension_intents.py`. |
-| 2461-2938 | Capability and form action contributions | Capability payload normalization, group contributions, create fallbacks, and payment form business actions. | `core_extension_capabilities.py` and `core_extension_form_actions.py`. |
-| 2422-2450 | System-init facade and wrapper hooks | Build `ext_facts`, then delegate page/profile override merge to `core_extension_system_init.py`. | `core_extension_system_init.py` plus wrappers retained in facade. |
+| imported | API data policy hooks | File upload/download allowlists, API write/mutation/create/unlink policies, search-field mapping, and download auth subject lookup. | `core_extension_api_policy.py`. |
+| 758-776 | Intent handler registration | Registry compatibility loader delegates to imported handler contribution mapping. | `core_extension_intents.py`. |
+| 779-883 | Capability and form action contributions | Capability registry reads, group contributions, create fallbacks, and payment form business actions. | Facade until registry/handler behavior has focused coverage. |
+| 886-957 | System-init facade | Build `ext_facts`, then delegate page/profile override merge to `core_extension_system_init.py`. | `core_extension_system_init.py` plus wrappers retained in facade. |
 | imported | Projected contract finalization | User-confirmed action ids and final projected contract shaping. | `core_extension_projected_contracts.py`. |
 | imported | Service/menu/navigation policy hooks | Business config refs, relation policy, menu token policy, role resolution, app shell, scene entry specs, acceptance nav. | `core_extension_navigation_policy.py`. |
 
@@ -54,7 +52,7 @@ cross-industry policy.
 - `smart_core_register(registry)`;
 - `smart_core_extend_system_init(data, env, user)`;
 - `smart_core_finalize_projected_contract_data(env, data, context)`;
-- hooks that directly perform ORM reads until their data access behavior is covered;
+- capability/form action hooks that directly perform registry or handler reads until their behavior is covered;
 - menu, permission, or industry semantic changes unrelated to mechanical extraction.
 
 ## Guarded Baseline
@@ -223,3 +221,18 @@ Stage 10 is complete when:
   exports keep working;
 - lazy service imports remain inside hook functions;
 - `core_extension.py` is locked at `<=1422` lines for this stage.
+
+## Stage 11 API Policy Hooks
+
+Stage 11 is complete when:
+
+- `core_extension_api_policy.py` owns API data policy hooks, file
+  upload/download model discovery, API unlink policy builders, account-tax
+  quick-create ACL/execution policy, API search-field mapping, and payment
+  request attachment auth subject lookup;
+- `core_extension.py` imports API policy public hook names directly so existing
+  module-level exports keep working;
+- the extracted module may perform read-only ORM searches required by file
+  model discovery and attachment subject lookup, but must not write records or
+  mutate registries;
+- `core_extension.py` is locked at `<=958` lines for this stage.

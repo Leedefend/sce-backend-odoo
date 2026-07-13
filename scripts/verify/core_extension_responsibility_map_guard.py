@@ -16,8 +16,9 @@ NAVIGATION_POLICY = ROOT / "addons/smart_construction_core/core_extension_naviga
 CONTRACT_PROJECTION = ROOT / "addons/smart_construction_core/core_extension_contract_projection.py"
 PROJECTED_CONTRACTS = ROOT / "addons/smart_construction_core/core_extension_projected_contracts.py"
 SERVICES = ROOT / "addons/smart_construction_core/core_extension_services.py"
+API_POLICY = ROOT / "addons/smart_construction_core/core_extension_api_policy.py"
 DOC = ROOT / "docs/engineering_convergence/core_extension_responsibility_map.md"
-MAX_LINES = 1422
+MAX_LINES = 958
 
 
 def _line_count(path: Path) -> int:
@@ -219,13 +220,38 @@ def main() -> int:
             if token in services_text:
                 errors.append(f"service hook module must not mutate records/registry; found token: {token}")
 
+    if not API_POLICY.is_file():
+        errors.append("core_extension_api_policy.py missing")
+    else:
+        api_policy_text = API_POLICY.read_text(encoding="utf-8")
+        required_api_policy_tokens = [
+            "def _state_unlink_policy(",
+            "API_DATA_DRAFT_UNLINK_POLICIES = {",
+            "API_DATA_UNLINK_POLICIES = {",
+            "def get_file_upload_allowed_model_contributions(",
+            "def get_api_data_write_allowlist_contributions(",
+            "def get_api_data_mutation_policy_contribution(",
+            "def get_intent_permission_model_acl_policy_contribution(",
+            "def get_api_data_create_execution_policy_contribution(",
+            "def get_api_data_unlink_allowed_model_contributions(",
+            "def smart_core_file_download_auth_subject(",
+            "def smart_core_api_data_search_fields(",
+        ]
+        for token in required_api_policy_tokens:
+            if token not in api_policy_text:
+                errors.append(f"api policy module missing token: {token}")
+        forbidden_tokens = (".write(", "requests.", "registry[")
+        for token in forbidden_tokens:
+            if token in api_policy_text:
+                errors.append(f"api policy module must not mutate records/registry; found token: {token}")
+
     if not DOC.is_file():
         errors.append("core_extension responsibility map missing")
     else:
         text = DOC.read_text(encoding="utf-8")
         required_tokens = [
             "Target file: `addons/smart_construction_core/core_extension.py`",
-            "Current line budget: `<=1422`.",
+            "Current line budget: `<=958`.",
             "`core_extension.py` is the construction-industry contribution facade",
             "`smart_core_register(registry)`",
             "`smart_core_extend_system_init(data, env, user)`",
@@ -277,6 +303,10 @@ def main() -> int:
             "`core_extension_services.py` owns scene service class hooks",
             "`core_extension.py` imports those public hook names directly",
             "`core_extension.py` is locked at `<=1422` lines",
+            "Stage 11 API Policy Hooks",
+            "`core_extension_api_policy.py` owns API data policy hooks",
+            "`core_extension.py` imports API policy public hook names directly",
+            "`core_extension.py` is locked at `<=958` lines",
             "future PRs from this branch should include multiple commits",
             "open only when",
         ]

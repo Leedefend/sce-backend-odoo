@@ -4,7 +4,7 @@ Generated from repository source files. This report is informational during the 
 
 ## Summary
 
-- Scanned files: `3872`
+- Scanned files: `3873`
 - Files requiring split plan: `41`
 - Files above warning threshold: `65`
 
@@ -66,7 +66,6 @@ Generated from repository source files. This report is informational during the 
 | 1486 | Vue source | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` |
 | 1444 | Python source | `addons/smart_construction_custom/models/user_preferences.py` |
 | 1432 | Python source | `scripts/product/build_capability_productization_v1.py` |
-| 1422 | Python source | `addons/smart_construction_core/core_extension.py` |
 | 1405 | Python source | `scripts/migration/scbs_visible_hr_tender_strict_fields_backfill_write.py` |
 | 1400 | Python source | `addons/smart_core/handlers/business_config_surface.py` |
 | 1396 | XML data/view | `addons/smart_construction_core/data/view_orchestration_contract_generated_data.xml` |
@@ -98,6 +97,7 @@ Generated from repository source files. This report is informational during the 
 | 985 | Python source | `scripts/migration/history_business_usable_probe.py` |
 | 966 | Python source | `addons/smart_core/handlers/load_contract.py` |
 | 966 | Python source | `scripts/verify/scbsly_direct_project_strict_visible_acceptance.py` |
+| 958 | Python source | `addons/smart_construction_core/core_extension.py` |
 | 944 | Python source | `scripts/ops/scbs_55_user_acceptance_menu_policy_apply.py` |
 | 912 | Vue source | `frontend/apps/web/src/components/action/ActionSurfaceToolbar.vue` |
 | 902 | Python source | `scripts/migration/fresh_db_material_stock_document_projection_write.py` |
@@ -175,7 +175,6 @@ Generated from repository source files. This report is informational during the 
 | 1486 | warning | Vue source | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` |
 | 1444 | warning | Python source | `addons/smart_construction_custom/models/user_preferences.py` |
 | 1432 | warning | Python source | `scripts/product/build_capability_productization_v1.py` |
-| 1422 | warning | Python source | `addons/smart_construction_core/core_extension.py` |
 | 1405 | warning | Python source | `scripts/migration/scbs_visible_hr_tender_strict_fields_backfill_write.py` |
 | 1400 | warning | Python source | `addons/smart_core/handlers/business_config_surface.py` |
 | 1396 | warning | XML data/view | `addons/smart_construction_core/data/view_orchestration_contract_generated_data.xml` |
@@ -208,6 +207,7 @@ Generated from repository source files. This report is informational during the 
 | 985 | warning | Python source | `scripts/migration/history_business_usable_probe.py` |
 | 966 | warning | Python source | `addons/smart_core/handlers/load_contract.py` |
 | 966 | warning | Python source | `scripts/verify/scbsly_direct_project_strict_visible_acceptance.py` |
+| 958 | warning | Python source | `addons/smart_construction_core/core_extension.py` |
 
 ## Interpretation
 
