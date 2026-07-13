@@ -115,14 +115,19 @@ def main() -> int:
 
     required_applier_tokens = [
         "export function applyFormRuntimeStatusEvent",
+        "export function applyFormRuntimeBusyEvent",
         "type FormRuntimeStatusEvent = Extract<FormRuntimeStateEvent, { kind: 'status' }>",
+        "type FormRuntimeBusyEvent = Extract<FormRuntimeStateEvent, { kind: 'begin' } | { kind: 'end' }>",
         "FormRuntimeStatusRefs",
+        "FormRuntimeBusyRefs",
         "INITIAL_FORM_RUNTIME_STATE",
         "reduceFormRuntimeState",
         "status: refs.status.value",
         "errorMessage: refs.errorMessage.value",
+        "busyKind: refs.busyKind.value",
         "refs.status.value = next.status",
         "refs.errorMessage.value = next.errorMessage",
+        "refs.busyKind.value = next.busyKind",
     ]
     for token in required_applier_tokens:
         if token not in applier:
@@ -140,14 +145,13 @@ def main() -> int:
         "writeContractFormRecord",
         "queryRelationOptions",
         "reload(",
-        "busyKind.value",
         "submissionFeedback.value",
         "validationErrors.value",
         "showOne2manyErrors.value",
     ]
     for token in forbidden_applier_tokens:
         if token in applier:
-            errors.append(f"runtimeStateApplier.ts must stay status-only; forbidden token: {token}")
+            errors.append(f"runtimeStateApplier.ts must stay event-only; forbidden token: {token}")
 
     required_type_exports = [
         "FormRuntimeBusyKind as BusyKind",
@@ -178,11 +182,11 @@ def main() -> int:
         (action_runtime, "import type { BusyKind, ContractAction, SubmissionFeedback, UiStatus } from './types';", "useFormActionRuntime.ts"),
         (primary_runtime, "import { applyFormRuntimeStatusEvent } from './runtimeStateApplier';", "usePrimaryFormActionRuntime.ts"),
         (primary_runtime, "import type { BusyKind, ContractAction, SubmissionFeedback, UiStatus } from './types';", "usePrimaryFormActionRuntime.ts"),
-        (form_config_runtime, "import { applyFormRuntimeStatusEvent } from './runtimeStateApplier';", "useFormConfigSaveRuntime.ts"),
+        (form_config_runtime, "import { applyFormRuntimeBusyEvent, applyFormRuntimeStatusEvent } from './runtimeStateApplier';", "useFormConfigSaveRuntime.ts"),
         (form_config_runtime, "UiStatus", "useFormConfigSaveRuntime.ts"),
-        (inline_policy_runtime, "import { applyFormRuntimeStatusEvent } from './runtimeStateApplier';", "useInlineFieldPolicyRuntime.ts"),
+        (inline_policy_runtime, "import { applyFormRuntimeBusyEvent, applyFormRuntimeStatusEvent } from './runtimeStateApplier';", "useInlineFieldPolicyRuntime.ts"),
         (inline_policy_runtime, "UiStatus", "useInlineFieldPolicyRuntime.ts"),
-        (contract_mode_runtime, "import { applyFormRuntimeStatusEvent } from './runtimeStateApplier';", "useContractModeActionRuntime.ts"),
+        (contract_mode_runtime, "import { applyFormRuntimeBusyEvent, applyFormRuntimeStatusEvent } from './runtimeStateApplier';", "useContractModeActionRuntime.ts"),
         (contract_mode_runtime, "UiStatus", "useContractModeActionRuntime.ts"),
     ]
     for source, token, label in required_consumers:
@@ -245,6 +249,31 @@ def main() -> int:
     for source, label, token in stale_config_writes:
         if token in source:
             errors.append(f"{label} still bypasses status applier: {token}")
+
+    config_busy_event_requirements = [
+        (form_config_runtime, "useFormConfigSaveRuntime.ts", "transaction: 'formConfig'"),
+        (inline_policy_runtime, "useInlineFieldPolicyRuntime.ts", "transaction: 'inlinePolicy'"),
+        (contract_mode_runtime, "useContractModeActionRuntime.ts", "transaction: 'contractMode'"),
+    ]
+    for source, label, transaction_token in config_busy_event_requirements:
+        for token in [
+            "applyFormRuntimeBusyEvent(params, {",
+            "kind: 'begin'",
+            "busyKind: 'action'",
+            "kind: 'end'",
+            transaction_token,
+        ]:
+            if token not in source:
+                errors.append(f"{label} missing config busy applier token: {token}")
+
+    stale_config_busy_writes = [
+        (form_config_runtime, "useFormConfigSaveRuntime.ts"),
+        (inline_policy_runtime, "useInlineFieldPolicyRuntime.ts"),
+        (contract_mode_runtime, "useContractModeActionRuntime.ts"),
+    ]
+    for source, label in stale_config_busy_writes:
+        if "params.busyKind.value =" in source:
+            errors.append(f"{label} still bypasses busy applier")
 
     required_page_status_tokens = [
         "transaction: 'formReload'",

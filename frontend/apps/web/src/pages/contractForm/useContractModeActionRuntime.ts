@@ -6,7 +6,7 @@ import {
   contractPromptFieldsFromRule,
   contractPromptParamsFromRule,
 } from './actionContract';
-import { applyFormRuntimeStatusEvent } from './runtimeStateApplier';
+import { applyFormRuntimeBusyEvent, applyFormRuntimeStatusEvent } from './runtimeStateApplier';
 import type { BusyKind, UiStatus } from './types';
 
 export function useContractModeActionRuntime(params: {
@@ -45,7 +45,11 @@ export function useContractModeActionRuntime(params: {
     }
     const actionParams = providedParams || contractPromptParamsFromRule(rule);
     if (actionParams === null) return;
-    params.busyKind.value = 'action';
+    applyFormRuntimeBusyEvent(params, {
+      kind: 'begin',
+      transaction: 'contractMode',
+      busyKind: 'action',
+    });
     try {
       await intentRequest({
         intent,
@@ -62,7 +66,10 @@ export function useContractModeActionRuntime(params: {
         errorMessage: err instanceof Error ? err.message : '表单配置操作失败',
       });
     } finally {
-      params.busyKind.value = null;
+      applyFormRuntimeBusyEvent(params, {
+        kind: 'end',
+        transaction: 'contractMode',
+      });
     }
   }
 
