@@ -11,7 +11,7 @@ CORE_EXTENSION = ROOT / "addons/smart_construction_core/core_extension.py"
 ROWS = ROOT / "addons/smart_construction_core/core_extension_system_init_rows.py"
 CI = ROOT / "make/ci.mk"
 
-MAX_CORE_EXTENSION_LINES = 3476
+MAX_CORE_EXTENSION_LINES = 3351
 
 
 def _read(path: Path) -> str:
@@ -51,10 +51,17 @@ class _FakeModel:
         self._rows = rows
 
     def search_read(self, domain, fields, limit=6, order=None):
-        del domain, order
+        del order
+        rows = list(self._rows)
+        for item in domain or []:
+            if not isinstance(item, tuple) or len(item) != 3:
+                continue
+            field_name, operator, expected = item
+            if operator == "=":
+                rows = [row for row in rows if row.get(field_name) == expected]
         return [
             {field: row.get(field) for field in fields if field in row}
-            for row in self._rows[:limit]
+            for row in rows[:limit]
         ]
 
 
@@ -87,6 +94,9 @@ def main() -> int:
             "return _system_init_rows.build_payment_action_rows(env)",
             "return _system_init_rows.build_risk_action_rows(env)",
             "return _system_init_rows.build_project_action_rows(env, user)",
+            "return _system_init_rows.dictionary_fields(env)",
+            "return _system_init_rows.build_role_entry_contract_rows(env)",
+            "return _system_init_rows.build_home_block_contract_rows(env)",
         ]:
             if token not in core_text:
                 errors.append(f"core_extension.py missing system-init row split token: {token}")
@@ -105,6 +115,9 @@ def main() -> int:
             "def build_payment_action_rows(",
             "def build_risk_action_rows(",
             "def build_project_action_rows(",
+            "def dictionary_fields(",
+            "def build_role_entry_contract_rows(",
+            "def build_home_block_contract_rows(",
             "model.search_read(",
             "fields.Datetime.now()",
         ]:
@@ -125,6 +138,13 @@ def main() -> int:
         if enterprise.get("mainline", {}).get("current_company_id") != 7:
             errors.append("enterprise enablement rows must preserve company id")
         env = _FakeEnv({
+            "sc.dictionary": _FakeModel(
+                {"code", "name", "value_json", "sequence", "scope_type", "scope_ref"},
+                [
+                    {"type": "role_entry", "active": True, "code": "role.menu", "scope_type": "role", "scope_ref": "pm", "value_json": {"entry_type": "menu"}, "sequence": 2},
+                    {"type": "home_block", "active": True, "code": "home.block", "scope_type": "global", "value_json": {"is_enabled": True}, "sequence": 1},
+                ],
+            ),
             "project.task": _FakeModel(
                 {"id", "name", "project_id", "sc_state", "date_deadline", "write_date", "user_id"},
                 [{"id": 3, "name": "跟进", "project_id": [9, "项目A"], "sc_state": "in_progress"}],
@@ -135,7 +155,7 @@ def main() -> int:
             ),
             "project.project": _FakeModel(
                 {"id", "name", "health_state", "lifecycle_state", "write_date", "user_id", "manager_id"},
-                [{"id": 5, "name": "项目A", "health_state": "risk", "lifecycle_state": "draft"}],
+                [{"id": 5, "name": "项目A", "health_state": "risk", "lifecycle_state": "draft", "active": True}],
             ),
         })
         if not rows.build_task_action_rows(env, _FakeUser()):
@@ -144,6 +164,10 @@ def main() -> int:
             errors.append("payment action rows must preserve amount")
         if rows.build_project_action_rows(env, _FakeUser())[0].get("status") != "urgent":
             errors.append("project action rows must preserve risk status")
+        if rows.build_role_entry_contract_rows(env)[0].get("role_code") != "pm":
+            errors.append("role entry rows must preserve role-scoped dictionary entries")
+        if rows.build_home_block_contract_rows(env)[0].get("blocks") != ["home.block"]:
+            errors.append("home block rows must preserve enabled global blocks")
 
     if errors:
         print("[construction_core_extension_system_init_rows_split_guard] FAIL")

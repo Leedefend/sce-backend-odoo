@@ -321,3 +321,137 @@ def build_project_action_rows(env, user) -> List[Dict[str, Any]]:
                 }
             )
     return result
+
+def dictionary_fields(env) -> List[str]:
+    fields_to_read = ["code", "name", "value_json", "sequence"]
+    for field_name in ("scope_type", "scope_ref"):
+        if model_has_field(env, "sc.dictionary", field_name):
+            fields_to_read.append(field_name)
+    return fields_to_read
+
+def build_role_entry_contract_rows(env) -> List[Dict[str, Any]]:
+    rows = safe_search_read(
+        env,
+        "sc.dictionary",
+        domain=[("type", "=", "role_entry"), ("active", "=", True)],
+        fields=dictionary_fields(env),
+        limit=200,
+    )
+    grouped: Dict[str, List[Dict[str, Any]]] = {}
+    for row in rows:
+        scope_type = as_text(row.get("scope_type")) or "global"
+        scope_ref = as_text(row.get("scope_ref"))
+        role_code = ""
+        if scope_type == "role":
+            role_code = scope_ref
+        elif scope_type in {"global", "company"}:
+            role_code = "__global__"
+        if not role_code:
+            continue
+
+        value_json = row.get("value_json") if isinstance(row.get("value_json"), dict) else {}
+        entry_key = (
+            as_text(row.get("code"))
+            or as_text(value_json.get("entry_key"))
+            or as_text(row.get("name"))
+        )
+        if not entry_key:
+            continue
+
+        entry_type = as_text(value_json.get("entry_type")) or "menu"
+        is_enabled = value_json.get("is_enabled")
+        if isinstance(is_enabled, bool):
+            enabled = is_enabled
+        else:
+            enabled = True
+        sequence = int(row.get("sequence") or 10)
+
+        grouped.setdefault(role_code, []).append(
+            {
+                "entry_key": entry_key,
+                "entry_type": entry_type,
+                "is_enabled": enabled,
+                "sequence": sequence,
+            }
+        )
+
+    contract_rows: List[Dict[str, Any]] = []
+    for role_code, entries in grouped.items():
+        sorted_entries = sorted(
+            entries,
+            key=lambda item: (
+                int(item.get("sequence") or 10),
+                str(item.get("entry_key") or ""),
+            ),
+        )
+        contract_rows.append(
+            {
+                "role_code": role_code,
+                "entries": sorted_entries,
+            }
+        )
+
+    return sorted(contract_rows, key=lambda item: str(item.get("role_code") or ""))
+
+def build_home_block_contract_rows(env) -> List[Dict[str, Any]]:
+    rows = safe_search_read(
+        env,
+        "sc.dictionary",
+        domain=[("type", "=", "home_block"), ("active", "=", True)],
+        fields=dictionary_fields(env),
+        limit=200,
+    )
+    grouped: Dict[str, List[Dict[str, Any]]] = {}
+    for row in rows:
+        scope_type = as_text(row.get("scope_type")) or "global"
+        scope_ref = as_text(row.get("scope_ref"))
+        role_code = ""
+        if scope_type == "role":
+            role_code = scope_ref
+        elif scope_type == "global":
+            role_code = "__global__"
+        if not role_code:
+            continue
+
+        value_json = row.get("value_json") if isinstance(row.get("value_json"), dict) else {}
+        block_key = (
+            as_text(row.get("code"))
+            or as_text(value_json.get("block_key"))
+            or as_text(row.get("name"))
+        )
+        if not block_key:
+            continue
+
+        is_enabled = value_json.get("is_enabled")
+        if isinstance(is_enabled, bool):
+            enabled = is_enabled
+        else:
+            enabled = True
+        if not enabled:
+            continue
+
+        sequence = int(row.get("sequence") or 10)
+        grouped.setdefault(role_code, []).append(
+            {
+                "block_key": block_key,
+                "sequence": sequence,
+            }
+        )
+
+    contract_rows: List[Dict[str, Any]] = []
+    for role_code, blocks in grouped.items():
+        sorted_blocks = sorted(
+            blocks,
+            key=lambda item: (
+                int(item.get("sequence") or 10),
+                str(item.get("block_key") or ""),
+            ),
+        )
+        contract_rows.append(
+            {
+                "role_code": role_code,
+                "blocks": [str(item.get("block_key") or "") for item in sorted_blocks if str(item.get("block_key") or "")],
+            }
+        )
+
+    return sorted(contract_rows, key=lambda item: str(item.get("role_code") or ""))

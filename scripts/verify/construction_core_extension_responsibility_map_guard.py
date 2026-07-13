@@ -43,7 +43,7 @@ def main() -> int:
 
     for token in [
         "Construction Core Extension Responsibility Map",
-        "Current size: 3,476 lines",
+        "Current size: 3,351 lines",
         "staged responsibility split",
         "## Public Entry Points",
         "## Responsibility Bands",
@@ -56,7 +56,7 @@ def main() -> int:
         "`core_extension_contract_helpers.py` owns generic contract helper utilities",
         "`core_extension_policy_maps.py` owns static construction policy/map facts",
         "`core_extension_system_init_rows.py` owns read-side system-init row builders",
-        "`core_extension.py` is locked at `<=3476` lines",
+        "`core_extension.py` is locked at `<=3351` lines",
         "Do not move import-time registration side effects",
         "projection-only",
     ]:
@@ -97,6 +97,8 @@ def main() -> int:
             errors.append("core_extension.py must import system init rows module")
         if "return _system_init_rows.build_task_action_rows(env, user)" not in core:
             errors.append("core_extension.py must delegate task action row builder")
+        if "return _system_init_rows.build_home_block_contract_rows(env)" not in core:
+            errors.append("core_extension.py must delegate home block row builder")
 
     split_queue_token = (
         "`addons/smart_construction_core/core_extension.py` | "
