@@ -380,7 +380,6 @@ import {
   type ChatterTimelineEntry,
   type CollaborationUserOption,
 } from '../api/chatter';
-import { fileToBase64, uploadFile } from '../api/files';
 import { triggerOnchange } from '../api/onchange';
 import type { OnchangeLinePatch } from '../api/onchange';
 import type { ActionContract, FieldDescriptor } from '@sc/schema';
@@ -715,6 +714,10 @@ import {
   type FormRecordHydrationTarget,
 } from './contractForm/recordHydration';
 import {
+  useNativeAttachmentRuntime,
+  type NativeAttachmentViewerLike,
+} from './contractForm/useNativeAttachmentRuntime';
+import {
   buildWorkflowTransitions,
   analyzeFormContractReadiness,
   buildRouteContractContext,
@@ -885,10 +888,30 @@ const chatterLoading = ref(false);
 const chatterError = ref('');
 const chatterTimeline = ref<ChatterTimelineEntry[]>([]);
 const activityUpdatingIds = ref<number[]>([]);
-const attachmentUploading = ref(false);
-const attachmentError = ref('');
-const attachmentViewerRef = ref<InstanceType<typeof AttachmentViewer> | null>(null);
-const pendingNativeAttachments = ref<Array<{ key: string; name: string; size: number; file: File }>>([]);
+const attachmentViewerRef = ref<NativeAttachmentViewerLike | null>(null);
+const {
+  uploading: attachmentUploading,
+  error: attachmentError,
+  pendingAttachments: pendingNativeAttachments,
+  clearError: clearNativeAttachmentError,
+  clearPendingAttachments: clearPendingNativeAttachments,
+  onAttachmentSelected: onNativeAttachmentSelected,
+  removePendingAttachment: removePendingNativeAttachment,
+  uploadPendingAttachments: uploadPendingNativeAttachments,
+  openAttachment: openNativeAttachment,
+} = useNativeAttachmentRuntime({
+  model: () => model.value,
+  recordId: () => recordId.value,
+  maxBytes: () => nativeAttachmentMaxBytes.value,
+  resolveLabel: resolveNativeAttachmentLabel,
+  reloadTimeline: loadNativeChatterTimeline,
+  viewerRef: attachmentViewerRef,
+  onPendingUploadFailed: (message) => {
+    validationErrors.value = [message];
+    submissionFeedback.value = { kind: 'error', message };
+    status.value = 'error';
+  },
+});
 const nativeChatterAutoLoadKey = ref('');
 let activeReloadToken = 0;
 let activeReloadIdentity = '';
@@ -5251,9 +5274,9 @@ async function loadRecord() {
   closeNativeChatterComposer();
   chatterError.value = '';
   chatterTimeline.value = [];
-  attachmentError.value = '';
+  clearNativeAttachmentError();
   if (!recordId.value) {
-    pendingNativeAttachments.value = [];
+    clearPendingNativeAttachments();
     nativeChatterAutoLoadKey.value = '';
   }
   Object.keys(formData).forEach((key) => {
@@ -5543,91 +5566,6 @@ async function updateNativeActivity(entry: ChatterTimelineEntry, action: 'done' 
     chatterError.value = err instanceof Error ? err.message : action === 'done' ? '完成计划失败' : '取消计划失败';
   } finally {
     activityUpdatingIds.value = activityUpdatingIds.value.filter((id) => id !== activityId);
-  }
-}
-
-async function onNativeAttachmentSelected(event: Event) {
-  const input = event.target as HTMLInputElement;
-  const file = input.files?.[0];
-  if (!file || !model.value || attachmentUploading.value) return;
-  attachmentError.value = '';
-  if (file.size > nativeAttachmentMaxBytes.value) {
-    attachmentError.value = resolveNativeAttachmentLabel('size_exceeded', '文件过大');
-    input.value = '';
-    return;
-  }
-  if (!recordId.value) {
-    pendingNativeAttachments.value = [
-      ...pendingNativeAttachments.value,
-      {
-        key: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-        name: file.name,
-        size: file.size,
-        file,
-      },
-    ];
-    input.value = '';
-    return;
-  }
-  attachmentUploading.value = true;
-  try {
-    const { data, mimetype } = await fileToBase64(file);
-    await uploadFile({
-      model: model.value,
-      res_id: recordId.value,
-      name: file.name,
-      mimetype,
-      data,
-    });
-    await loadNativeChatterTimeline();
-  } catch (err) {
-    attachmentError.value = err instanceof Error ? err.message : resolveNativeAttachmentLabel('upload_failed', '附件上传失败');
-  } finally {
-    attachmentUploading.value = false;
-    input.value = '';
-  }
-}
-
-function removePendingNativeAttachment(key: string) {
-  pendingNativeAttachments.value = pendingNativeAttachments.value.filter((item) => item.key !== key);
-}
-
-async function uploadPendingNativeAttachments(resId: number): Promise<boolean> {
-  if (!pendingNativeAttachments.value.length || !model.value) return true;
-  attachmentError.value = '';
-  attachmentUploading.value = true;
-  try {
-    for (const item of pendingNativeAttachments.value) {
-      const { data, mimetype } = await fileToBase64(item.file);
-      await uploadFile({
-        model: model.value,
-        res_id: resId,
-        name: item.name,
-        mimetype,
-        data,
-      });
-    }
-    pendingNativeAttachments.value = [];
-    await loadNativeChatterTimeline(resId, model.value);
-    return true;
-  } catch (err) {
-    attachmentError.value = err instanceof Error ? err.message : resolveNativeAttachmentLabel('upload_failed', '附件上传失败');
-    validationErrors.value = [attachmentError.value];
-    submissionFeedback.value = { kind: 'error', message: attachmentError.value };
-    status.value = 'error';
-    return false;
-  } finally {
-    attachmentUploading.value = false;
-  }
-}
-
-async function openNativeAttachment(att: { id?: number; name?: string; mimetype?: string }) {
-  if (!att?.id) return;
-  attachmentError.value = '';
-  try {
-    await attachmentViewerRef.value?.open({ id: Number(att.id) }, att.name);
-  } catch (err) {
-    attachmentError.value = err instanceof Error ? err.message : resolveNativeAttachmentLabel('download_failed', '附件下载失败');
   }
 }
 
