@@ -697,6 +697,7 @@ import { useInlineFieldPolicyRuntime } from './contractForm/useInlineFieldPolicy
 import { useContractModeActionRuntime } from './contractForm/useContractModeActionRuntime';
 import { useActionResponseNavigation } from './contractForm/useActionResponseNavigation';
 import { usePrimaryFormActionRuntime } from './contractForm/usePrimaryFormActionRuntime';
+import { useFormActionRuntime } from './contractForm/useFormActionRuntime';
 import {
   buildWorkflowTransitions,
   analyzeFormContractReadiness,
@@ -1008,6 +1009,30 @@ const {
   status,
   submissionFeedback,
   validationErrors,
+});
+const {
+  runAction,
+} = useFormActionRuntime({
+  actionId: () => actionId.value || 0,
+  applyClientMode: (mode, toggle) => applyClientMode(mode, toggle),
+  applyProjectionRefreshPolicy: (policy) => applyProjectionRefreshPolicy(policy),
+  busyKind,
+  collectActionParams: (action) => collectActionParams(action),
+  confirmActionSafety: (action) => confirmActionSafety(action),
+  currentQuery: () => route.query,
+  ensureSavedBeforeRecordAction: () => ensureSavedBeforeRecordAction(),
+  errorMessage,
+  executeSceneMutation: (input) => executeSceneMutation(input),
+  modelName: () => model.value,
+  navigateActionResponseResult: (result) => navigateActionResponseResult(result),
+  recordId: () => recordId.value,
+  reload: () => reload(),
+  resolveNavigationUrl: (url) => resolveNavigationUrl(url),
+  routeMenuId: () => route.query.menu_id,
+  router,
+  saveRecord: (refreshPolicy) => saveRecord(refreshPolicy),
+  status,
+  submissionFeedback,
 });
 
 function recordVersionPolicy() {
@@ -5876,117 +5901,6 @@ async function saveContractFieldOrder() {
     return false;
   } finally {
     busyKind.value = null;
-  }
-}
-
-async function runAction(action: ContractAction) {
-  if (!action.enabled) return;
-  if (!await confirmActionSafety(action)) return;
-  if (action.intent === 'ui.local_mode' || action.intent === 'ui.mode' || action.clientMode) {
-    applyClientMode(action.clientMode, true);
-    return;
-  }
-  const actionKey = String(action.key || '').trim().toLowerCase();
-  if (actionKey === 'submit_intake' || actionKey === 'save_draft') {
-    await saveRecord(action.refreshPolicy);
-    return;
-  }
-  if (actionKey === 'cancel' && !action.methodName) {
-    await router.push({
-      name: 'workbench',
-      query: pickContractNavQuery(route.query as Record<string, unknown>, {
-        scene: undefined,
-      }),
-    });
-    return;
-  }
-  if (action.kind === 'open') {
-    if (action.actionId) {
-      await router.push({
-        name: 'action',
-        params: { actionId: String(action.actionId) },
-        query: pickContractNavQuery(route.query as Record<string, unknown>, {
-          action_id: action.actionId,
-          target: action.target || undefined,
-          domain_raw: action.domainRaw || undefined,
-        }),
-      });
-      return;
-    }
-    if (action.url) {
-      const navUrl = resolveNavigationUrl(action.url);
-      window.open(navUrl, action.target === 'self' ? '_self' : '_blank', 'noopener,noreferrer');
-      return;
-    }
-    errorMessage.value = '打开操作缺少目标页面';
-    status.value = 'error';
-    return;
-  }
-  if (action.mutation) {
-    const params = await collectActionParams(action);
-    if (params === null) return;
-    busyKind.value = 'action';
-    try {
-      await executeSceneMutation({
-        mutation: action.mutation,
-        actionKey: action.key,
-        recordId: recordId.value,
-        model: action.targetModel || model.value,
-        context: action.context,
-        params,
-      });
-      submissionFeedback.value = {
-        kind: 'success',
-        message: '操作已完成，页面数据已刷新。',
-      };
-      await applyProjectionRefreshPolicy(action.refreshPolicy);
-      return;
-    } catch (err) {
-      errorMessage.value = err instanceof Error ? err.message : '场景操作执行失败';
-      status.value = 'error';
-      return;
-    } finally {
-      busyKind.value = null;
-    }
-  }
-  if ((action.kind === 'object' || action.kind === 'server') && action.methodName && recordId.value) {
-    if (!await ensureSavedBeforeRecordAction()) return;
-    busyKind.value = 'action';
-    try {
-      const response = await executeButton({
-        model: action.targetModel || model.value,
-        res_id: recordId.value,
-        button: { name: action.methodName, type: action.kind === 'server' ? 'server' : 'object' },
-        context: action.context,
-        meta: {
-          menu_id: Number(route.query.menu_id || 0) || undefined,
-          action_id: actionId.value || undefined,
-        },
-      });
-      const result = response?.result;
-      if (await navigateActionResponseResult(result)) {
-        if (action.refreshPolicy) {
-          await applyProjectionRefreshPolicy(action.refreshPolicy);
-        }
-        return;
-      }
-      const refresh = result?.type;
-      if (refresh === 'refresh' && !action.refreshPolicy) {
-        await reload();
-        return;
-      }
-      if (action.refreshPolicy) {
-        await applyProjectionRefreshPolicy(action.refreshPolicy);
-      } else {
-        await reload();
-      }
-      return;
-    } catch (err) {
-      errorMessage.value = err instanceof Error ? err.message : '操作执行失败';
-      status.value = 'error';
-    } finally {
-      busyKind.value = null;
-    }
   }
 }
 
