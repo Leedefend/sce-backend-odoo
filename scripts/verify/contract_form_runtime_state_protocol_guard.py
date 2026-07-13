@@ -167,7 +167,8 @@ def main() -> int:
         (save_helper, "import type { LayoutNode, SubmissionFeedback } from './types';", "saveRecordHelpers.ts"),
         (action_runtime, "import { applyFormRuntimeStatusEvent } from './runtimeStateApplier';", "useFormActionRuntime.ts"),
         (action_runtime, "import type { BusyKind, ContractAction, SubmissionFeedback, UiStatus } from './types';", "useFormActionRuntime.ts"),
-        (primary_runtime, "import type { BusyKind, ContractAction, SubmissionFeedback } from './types';", "usePrimaryFormActionRuntime.ts"),
+        (primary_runtime, "import { applyFormRuntimeStatusEvent } from './runtimeStateApplier';", "usePrimaryFormActionRuntime.ts"),
+        (primary_runtime, "import type { BusyKind, ContractAction, SubmissionFeedback, UiStatus } from './types';", "usePrimaryFormActionRuntime.ts"),
     ]
     for source, token, label in required_consumers:
         if token not in source:
@@ -192,6 +193,24 @@ def main() -> int:
     for token in stale_action_writes:
         if token in action_runtime:
             errors.append(f"useFormActionRuntime.ts still bypasses status applier: {token}")
+
+    required_primary_applier_tokens = [
+        "applyFormRuntimeStatusEvent(params, {",
+        "transaction: 'primaryAction'",
+        "errorMessage: '操作失败：请先保存记录后再执行'",
+        "errorMessage: '提交失败：请先保存记录后再提交'",
+    ]
+    for token in required_primary_applier_tokens:
+        if token not in primary_runtime:
+            errors.append(f"usePrimaryFormActionRuntime.ts missing status applier token: {token}")
+
+    stale_primary_writes = [
+        "params.errorMessage.value = '操作失败：请先保存记录后再执行';",
+        "params.errorMessage.value = '提交失败：请先保存记录后再提交';",
+    ]
+    for token in stale_primary_writes:
+        if token in primary_runtime:
+            errors.append(f"usePrimaryFormActionRuntime.ts still bypasses status applier: {token}")
 
     ci_token = "python3 scripts/verify/contract_form_runtime_state_protocol_guard.py"
     if ci_token not in ci:

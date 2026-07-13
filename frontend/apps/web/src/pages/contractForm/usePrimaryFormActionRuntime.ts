@@ -1,7 +1,8 @@
 import { nextTick, type Ref } from 'vue';
 import { executeButton } from '../../api/executeButton';
 import { sanitizeUiErrorMessage } from './fieldUtils';
-import type { BusyKind, ContractAction, SubmissionFeedback } from './types';
+import { applyFormRuntimeStatusEvent } from './runtimeStateApplier';
+import type { BusyKind, ContractAction, SubmissionFeedback, UiStatus } from './types';
 
 export function usePrimaryFormActionRuntime(params: {
   actionId: () => number;
@@ -17,7 +18,7 @@ export function usePrimaryFormActionRuntime(params: {
   reload: () => Promise<void>;
   routeMenuId: () => unknown;
   saveRecord: (refreshPolicy?: ContractAction['refreshPolicy']) => Promise<boolean | number>;
-  status: Ref<string>;
+  status: Ref<UiStatus>;
   submissionFeedback: Ref<SubmissionFeedback>;
   validationErrors: Ref<string[]>;
 }) {
@@ -46,7 +47,11 @@ export function usePrimaryFormActionRuntime(params: {
       const message = sanitizeUiErrorMessage(err instanceof Error ? err.message : err, '提交失败，请检查填写内容');
       params.validationErrors.value = [message];
       params.submissionFeedback.value = { kind: 'error', message: '提交失败，请检查填写内容' };
-      params.status.value = 'error';
+      applyFormRuntimeStatusEvent(params, {
+        kind: 'status',
+        transaction: 'primaryAction',
+        status: 'error',
+      });
     } finally {
       params.busyKind.value = null;
     }
@@ -60,8 +65,12 @@ export function usePrimaryFormActionRuntime(params: {
       await nextTick();
       const submittedRecordId = typeof saved === 'number' ? saved : params.recordId.value;
       if (!submittedRecordId) {
-        params.errorMessage.value = '操作失败：请先保存记录后再执行';
-        params.status.value = 'error';
+        applyFormRuntimeStatusEvent(params, {
+          kind: 'status',
+          transaction: 'primaryAction',
+          status: 'error',
+          errorMessage: '操作失败：请先保存记录后再执行',
+        });
         return;
       }
       await executePrimarySubmitAction({
@@ -81,8 +90,12 @@ export function usePrimaryFormActionRuntime(params: {
     await nextTick();
     const submittedRecordId = typeof saved === 'number' ? saved : params.recordId.value;
     if (!submittedRecordId) {
-      params.errorMessage.value = '提交失败：请先保存记录后再提交';
-      params.status.value = 'error';
+      applyFormRuntimeStatusEvent(params, {
+        kind: 'status',
+        transaction: 'primaryAction',
+        status: 'error',
+        errorMessage: '提交失败：请先保存记录后再提交',
+      });
       return;
     }
     await executePrimarySubmitAction({
