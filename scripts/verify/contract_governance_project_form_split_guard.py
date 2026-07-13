@@ -9,7 +9,7 @@ GOVERNANCE = ROOT / "addons/smart_core/utils/contract_governance.py"
 PROJECT_FORM = ROOT / "addons/smart_core/utils/contract_governance_project_form.py"
 CI = ROOT / "make/ci.mk"
 
-MAX_GOVERNANCE_LINES = 2559
+MAX_GOVERNANCE_LINES = 2424
 
 
 def _read(path: Path) -> str:
@@ -45,6 +45,7 @@ def main() -> int:
             "contract_governance_project_form.py",
             "return _project_form.normalize_legacy_project_form_profile(",
             "return _project_form.pick_project_form_fields(",
+            "_project_form.govern_project_kanban_contract(",
             "_project_form.filter_project_form_layout(",
             "_project_form.trim_contract_field_maps(data, selected_fields)",
             "_project_form.govern_project_form_search(data, profile=_legacy_project_form_profile(data))",
@@ -61,6 +62,7 @@ def main() -> int:
         for token in [
             "def normalize_legacy_project_form_profile(",
             "def pick_project_form_fields(",
+            "def govern_project_kanban_contract(",
             "def filter_project_form_layout(",
             "def trim_contract_field_maps(",
             "def govern_project_form_search(",
@@ -69,6 +71,7 @@ def main() -> int:
             "def govern_project_task_form(",
             "def build_project_lifecycle_summary(",
             "\"action_noise_markers\"",
+            "\"primary_fields\": primary[:3]",
             "for key in (\"children\", \"tabs\", \"pages\", \"nodes\", \"items\")",
             "\"project_task_form_sheet\"",
             "actions[\"source\"] = \"contract_governance.curated_action_facts\"",
@@ -141,6 +144,71 @@ def main() -> int:
         selected = governance._pick_project_form_fields(profile_data)
         if selected != ["code", "manager_id", "name", "state"]:
             errors.append(f"project form fields must merge primary/page/order/required fields, got {selected!r}")
+        governance.register_legacy_project_kanban_governance_model("project.project")
+        governance.register_legacy_project_kanban_profile(
+            "project.project",
+            {
+                "title_field": "name",
+                "primary_fields": ["name", "code"],
+                "secondary_fields": ["manager_id", "budget_total"],
+                "status_fields": ["state"],
+                "max_meta": 2,
+            },
+        )
+        governance.register_legacy_kanban_row_action(
+            "project.project",
+            {
+                "key": "open_dashboard",
+                "label": "Open dashboard",
+                "target": {"route": "/s/project"},
+            },
+        )
+        kanban_data = {
+            "head": {"model": "project.project", "view_type": "kanban"},
+            "model": "project.project",
+            "view_type": "kanban",
+            "governance": {"primary_model": "project.project"},
+            "views": {
+                "kanban": {
+                    "model": "project.project",
+                    "fields": [{"name": "manager_id"}, {"name": "message_ids"}],
+                    "slots": {
+                        "primary": [{"name": "code"}],
+                        "secondary": ["budget_total"],
+                        "status": ["state"],
+                    },
+                    "row_actions": [{"key": "existing"}],
+                }
+            },
+            "fields": {
+                "name": {"type": "char"},
+                "code": {"type": "char"},
+                "manager_id": {"type": "many2one"},
+                "state": {"type": "selection"},
+                "budget_total": {"type": "float"},
+                "message_ids": {"type": "one2many"},
+            },
+        }
+        governance._govern_project_kanban_contract_for_user(kanban_data)
+        if kanban_data.get("visible_fields") != ["name", "code", "manager_id", "manager_id", "budget_total", "state"]:
+            errors.append("project kanban must preserve current configured/fallback visible-field behavior")
+        kanban = ((kanban_data.get("views") or {}).get("kanban")) or {}
+        if [row.get("name") if isinstance(row, dict) else row for row in kanban.get("fields", [])] != [
+            "manager_id",
+            "name",
+            "code",
+            "budget_total",
+            "state",
+        ]:
+            errors.append("project kanban must merge existing and selected fields while preserving status fields")
+        kanban_profile = kanban_data.get("kanban_profile") or {}
+        if kanban_profile.get("primary_fields") != ["code"]:
+            errors.append("project kanban slot primary override must win")
+        if kanban_profile.get("secondary_fields") != ["budget_total"]:
+            errors.append("project kanban slot secondary override must win")
+        action_keys = [row.get("key") for row in kanban.get("row_actions", []) if isinstance(row, dict)]
+        if action_keys != ["existing", "open_dashboard"]:
+            errors.append("project kanban must append registered row actions without dropping existing actions")
         layout_data = {
             **profile_data,
             "views": {

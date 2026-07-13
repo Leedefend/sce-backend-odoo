@@ -1231,150 +1231,15 @@ def _pick_project_form_fields(data: dict) -> list[str]:
 
 
 def _govern_project_kanban_contract_for_user(data: dict) -> None:
-    fields_map = _as_dict(data.get("fields"))
-    if not fields_map:
-        return
     primary_model = _governance_primary_model(data)
-    registered_profile = _LEGACY_PROJECT_KANBAN_PROFILE_REGISTRY.get(primary_model) or {}
-
-    available = [name for name in fields_map.keys() if not _is_technical_field(name, _as_dict(fields_map.get(name)))]
-    primary: list[str] = []
-    secondary: list[str] = []
-    status: list[str] = []
-
-    def _pick(target: list[str], name: str) -> None:
-        if name in available and name not in target:
-            target.append(name)
-
-    for name in registered_profile.get("primary_fields") or []:
-        _pick(primary, name)
-    for name in registered_profile.get("secondary_fields") or []:
-        _pick(secondary, name)
-    for name in registered_profile.get("status_fields") or []:
-        _pick(status, name)
-
-    if not primary:
-        for fallback in ("name", "display_name"):
-            _pick(primary, fallback)
-            if primary:
-                break
-    if len(primary) < 3:
-        for name in available:
-            _pick(primary, name)
-            if len(primary) >= 3:
-                break
-    if len(secondary) < 4:
-        for name in available:
-            if name in primary:
-                continue
-            _pick(secondary, name)
-            if len(secondary) >= 4:
-                break
-    if not status:
-        for name in ("lifecycle_state", "stage_id", "state"):
-            _pick(status, name)
-            if status:
-                break
-
-    selected = [name for name in primary + secondary if name]
-    selected = selected[:8]
-    data["visible_fields"] = selected
-    configured_title_field = _safe_text(registered_profile.get("title_field"))
-    default_profile = {
-        "title_field": configured_title_field if configured_title_field in fields_map else (primary[0] if primary else "name"),
-        "primary_fields": primary[:3],
-        "secondary_fields": secondary[:4],
-        "status_fields": status[:2],
-        "max_meta": int(registered_profile.get("max_meta") or 4),
-    }
-
-    views = _as_dict(data.get("views"))
-    kanban = _as_dict(views.get("kanban"))
-    existing = kanban.get("fields") if isinstance(kanban.get("fields"), list) else []
-    merged_fields: list[Any] = []
-    merged_names: set[str] = set()
-    orchestrated_names: list[str] = []
-
-    def _field_row_name(row: Any) -> str:
-        if isinstance(row, dict):
-            return _safe_text(row.get("name") or row.get("field") or row.get("field_name"))
-        return _safe_text(row)
-
-    for row in existing:
-        normalized = _field_row_name(row)
-        descriptor = _as_dict(fields_map.get(normalized))
-        if (
-            normalized
-            and normalized in fields_map
-            and not _is_technical_field(normalized, descriptor)
-            and normalized not in merged_names
-        ):
-            merged_fields.append(dict(row) if isinstance(row, dict) else normalized)
-            merged_names.add(normalized)
-            orchestrated_names.append(normalized)
-    for name in selected:
-        normalized = _safe_text(name)
-        descriptor = _as_dict(fields_map.get(normalized))
-        if (
-            normalized
-            and normalized in fields_map
-            and not _is_technical_field(normalized, descriptor)
-            and normalized not in merged_names
-        ):
-            merged_fields.append(normalized)
-            merged_names.add(normalized)
-    kanban["fields"] = merged_fields or ["id", "name"]
-
-    existing_profile = _as_dict(kanban.get("kanban_profile") or data.get("kanban_profile"))
-    slots = _as_dict(kanban.get("slots"))
-
-    def _slot_names(key: str) -> list[str]:
-        raw = slots.get(key)
-        if not isinstance(raw, list):
-            return []
-        out: list[str] = []
-        for item in raw:
-            name = _field_row_name(item)
-            if name and name in fields_map and name not in out:
-                out.append(name)
-        return out
-
-    primary_override = _slot_names("primary")
-    secondary_override = _slot_names("secondary")
-    status_override = _slot_names("status")
-    has_orchestrated_kanban = bool(orchestrated_names or primary_override or secondary_override or status_override)
-    profile = dict(default_profile)
-    profile.update(existing_profile)
-    if has_orchestrated_kanban:
-        if primary_override:
-            profile["primary_fields"] = primary_override
-        elif orchestrated_names:
-            profile["primary_fields"] = orchestrated_names[:3]
-        if secondary_override:
-            profile["secondary_fields"] = secondary_override
-        elif orchestrated_names:
-            profile["secondary_fields"] = orchestrated_names[3:7]
-        if status_override:
-            profile["status_fields"] = status_override[:2]
-        if not _safe_text(profile.get("title_field")):
-            profile["title_field"] = "name" if "name" in fields_map else (orchestrated_names[0] if orchestrated_names else default_profile["title_field"])
-    data["kanban_profile"] = profile
-    kanban["kanban_profile"] = dict(profile)
-    row_actions = kanban.get("row_actions") if isinstance(kanban.get("row_actions"), list) else []
-    existing_keys = {
-        _safe_text(row.get("key") or row.get("name"))
-        for row in row_actions
-        if isinstance(row, dict)
-    }
-    for action in _LEGACY_KANBAN_ROW_ACTION_REGISTRY.get(primary_model, []):
-        action_key = _safe_text(action.get("key") or action.get("name"))
-        if not action_key or action_key in existing_keys:
-            continue
-        row_actions.append(_deep_clone_json_like(action))
-        existing_keys.add(action_key)
-    kanban["row_actions"] = row_actions
-    views["kanban"] = kanban
-    data["views"] = views
+    _project_form.govern_project_kanban_contract(
+        data,
+        primary_model=primary_model,
+        registered_profile=_LEGACY_PROJECT_KANBAN_PROFILE_REGISTRY.get(primary_model) or {},
+        registered_row_actions=_LEGACY_KANBAN_ROW_ACTION_REGISTRY.get(primary_model, []),
+        is_technical_field=_is_technical_field,
+        deep_clone_json_like=_deep_clone_json_like,
+    )
 
 
 def _restructure_project_form_layout(data: dict) -> None:
