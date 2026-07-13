@@ -214,6 +214,28 @@ _native_bridge = _load_native_bridge_module()
 _native_bridge._USER_SURFACE_ACTION_MAX = _USER_SURFACE_ACTION_MAX
 
 
+def _load_labels_module() -> Any:
+    try:
+        from . import contract_governance_labels as labels
+
+        return labels
+    except ImportError:
+        spec = importlib.util.spec_from_file_location(
+            "contract_governance_labels",
+            Path(__file__).with_name("contract_governance_labels.py"),
+        )
+        if spec is None or spec.loader is None:
+            raise
+        labels = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(labels)
+        return labels
+
+
+_labels = _load_labels_module()
+_labels._BUSINESS_FIELD_LABEL_OVERRIDES = _BUSINESS_FIELD_LABEL_OVERRIDES
+_labels._LEGACY_FIELD_PRESENTATION_REGISTRY = _LEGACY_FIELD_PRESENTATION_REGISTRY
+
+
 def source_authority_contract() -> dict[str, Any]:
     return {
         "kind": SOURCE_KIND,
@@ -2030,147 +2052,23 @@ def _ensure_scene_contract_v1_envelope(data: dict) -> None:
 
 
 def _business_field_label(field_name: str, current_label: Any = "", model_name: str = "") -> str:
-    name = _safe_text(field_name)
-    label = _safe_text(current_label)
-    if not name:
-        return label
-    presentation = _legacy_field_presentation(model_name, name)
-    if presentation.get("label"):
-        return presentation["label"]
-    override = _BUSINESS_FIELD_LABEL_OVERRIDES.get(name)
-    if override:
-        return override
-    return label
+    return _labels.business_field_label(field_name, current_label, model_name)
 
 
 def _normalize_business_field_labels(data: dict) -> None:
-    head = _as_dict(data.get("head"))
-    model_name = _safe_text(head.get("model") or data.get("model"))
-
-    def _normalize_column(row: dict) -> None:
-        name = _safe_text(row.get("name") or row.get("field"))
-        label = _business_field_label(name, row.get("label") or row.get("string"), model_name)
-        if not name or not label:
-            return
-        row["label"] = label
-        if "string" in row:
-            row["string"] = label
-
-    fields_map = _as_dict(data.get("fields"))
-    for field_name, raw_descriptor in list(fields_map.items()):
-        descriptor = _as_dict(raw_descriptor)
-        label = _business_field_label(field_name, descriptor.get("string"), model_name)
-        if label:
-            descriptor["string"] = label
-        fields_map[field_name] = descriptor
-    if fields_map:
-        data["fields"] = fields_map
-
-    views = _as_dict(data.get("views"))
-    for view_key in ("tree", "list"):
-        view = _as_dict(views.get(view_key))
-        schema_rows = view.get("columns_schema")
-        if isinstance(schema_rows, list):
-            for row in schema_rows:
-                if isinstance(row, dict):
-                    _normalize_column(row)
-            view["columns_schema"] = schema_rows
-            views[view_key] = view
-    if views:
-        data["views"] = views
-
-    list_profile = _as_dict(data.get("list_profile"))
-    column_labels = _as_dict(list_profile.get("column_labels"))
-    for field_name in list(column_labels.keys()):
-        label = _business_field_label(field_name, column_labels.get(field_name), model_name)
-        if label:
-            column_labels[field_name] = label
-    if column_labels:
-        list_profile["column_labels"] = column_labels
-        data["list_profile"] = list_profile
-
-    semantic_page = _as_dict(data.get("semantic_page"))
-    list_semantics = _as_dict(semantic_page.get("list_semantics"))
-    columns = list_semantics.get("columns")
-    if isinstance(columns, list):
-        for row in columns:
-            if isinstance(row, dict):
-                _normalize_column(row)
-        list_semantics["columns"] = columns
-        semantic_page["list_semantics"] = list_semantics
-        data["semantic_page"] = semantic_page
+    _labels.normalize_business_field_labels(data)
 
 
 def _native_node_label(node: dict) -> str:
-    attributes = node.get("attributes") if isinstance(node.get("attributes"), dict) else {}
-    label = _safe_text(attributes.get("string") or node.get("string"))
-    translations = {
-        "description": "描述",
-        "settings": "设置",
-    }
-    return translations.get(label.strip().lower(), label)
+    return _labels.native_node_label(node)
 
 
 def _preserve_native_layout_labels(data: dict) -> None:
-    views = data.get("views") if isinstance(data.get("views"), dict) else {}
-    form = views.get("form") if isinstance(views.get("form"), dict) else {}
-    layout = form.get("layout")
-    if not isinstance(layout, list):
-        return
-
-    def visit(nodes):
-        for node in nodes or []:
-            if not isinstance(node, dict):
-                continue
-            if _safe_text(node.get("type")).lower() == "page":
-                label = _native_node_label(node)
-                if label:
-                    node["title"] = label
-                    node["label"] = label
-            for key in ("children", "tabs", "pages", "nodes", "items"):
-                nested = node.get(key)
-                if isinstance(nested, list):
-                    visit(nested)
-
-    visit(layout)
-    form["layout"] = layout
-    views["form"] = form
-    data["views"] = views
+    _labels.preserve_native_layout_labels(data)
 
 
 def _emit_relation_entry_semantics(data: dict) -> None:
-    fields_map = data.get("fields") if isinstance(data.get("fields"), dict) else {}
-    entries: list[dict[str, Any]] = []
-    for field_name, descriptor_raw in fields_map.items():
-        descriptor = _as_dict(descriptor_raw)
-        relation_entry = _as_dict(descriptor.get("relation_entry"))
-        if not relation_entry:
-            continue
-        field = _safe_text(field_name)
-        if not field:
-            continue
-        entries.append(
-            {
-                "field": field,
-                "model": _safe_text(relation_entry.get("model") or descriptor.get("relation")),
-                "create_mode": _safe_text(relation_entry.get("create_mode"), "disabled"),
-                "can_read": bool(relation_entry.get("can_read", True)),
-                "can_create": bool(relation_entry.get("can_create", False)),
-                "delete_policy": _as_dict(relation_entry.get("delete_policy")),
-                "reason_code": _safe_text(relation_entry.get("reason_code")),
-                "default_vals": _as_dict(relation_entry.get("default_vals")),
-                "inline_create": _as_dict(relation_entry.get("inline_create")),
-                "action_id": relation_entry.get("action_id"),
-                "menu_id": relation_entry.get("menu_id"),
-                "source": _safe_text(relation_entry.get("source"), "field.relation_entry"),
-            }
-        )
-    if not entries:
-        return
-    semantic_page = _as_dict(data.get("semantic_page"))
-    semantic_page["relation_entries"] = entries
-    semantic_page["relation_entries_owner_layer"] = "scene_orchestration"
-    data["semantic_page"] = semantic_page
+    _labels.emit_relation_entry_semantics(data)
 
 
 def _to_bool(value: Any, fallback: bool = False) -> bool:

@@ -4,7 +4,7 @@ Generated from repository source files. This report is informational during the 
 
 ## Summary
 
-- Scanned files: `3869`
+- Scanned files: `3871`
 - Files requiring split plan: `42`
 - Files above warning threshold: `64`
 
@@ -14,8 +14,8 @@ Generated from repository source files. This report is informational during the 
 | ---: | --- | --- |
 | 5939 | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
 | 4372 | Python source | `addons/smart_construction_core/core_extension.py` |
-| 3932 | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 3849 | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
+| 3830 | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 3773 | Vue source | `frontend/apps/web/src/views/ActionView.vue` |
 | 3684 | Vue source | `frontend/apps/web/src/views/MenuConfigView.vue` |
 | 3633 | Python source | `addons/smart_core/handlers/form_field_configuration.py` |
@@ -130,8 +130,8 @@ Generated from repository source files. This report is informational during the 
 | ---: | --- | --- | --- |
 | 5939 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
 | 4372 | split_plan_required | Python source | `addons/smart_construction_core/core_extension.py` |
-| 3932 | split_plan_required | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 3849 | split_plan_required | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
+| 3830 | split_plan_required | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 3773 | split_plan_required | Vue source | `frontend/apps/web/src/views/ActionView.vue` |
 | 3684 | split_plan_required | Vue source | `frontend/apps/web/src/views/MenuConfigView.vue` |
 | 3633 | split_plan_required | Python source | `addons/smart_core/handlers/form_field_configuration.py` |
