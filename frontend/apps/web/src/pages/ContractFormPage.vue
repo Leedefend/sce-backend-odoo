@@ -330,7 +330,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onActivated, onBeforeUnmount, onDeactivated, onErrorCaptured, onMounted, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onErrorCaptured, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import StatusPanel from '../components/StatusPanel.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
@@ -385,7 +385,6 @@ import { validateContractFormData } from '../app/contractValidation';
 import { resolveActionIdFromContext } from '../app/actionContext';
 import { findActionMeta, findActionMetaByMenu, findMenuNode } from '../app/menu';
 import { pickContractNavQuery } from '../app/navigationContext';
-import { buildCanonicalSceneRouteTarget } from '../app/routeQuery';
 import { readWorkspaceContext } from '../app/workspaceContext';
 import { collectPolicyValidationErrors, evaluateActionPolicy, evaluateFieldPolicy } from '../app/contractPolicies';
 import { buildRuntimeFieldStates } from '../app/modifierEngine';
@@ -697,6 +696,10 @@ import { useActionResponseNavigation } from './contractForm/useActionResponseNav
 import { usePrimaryFormActionRuntime } from './contractForm/usePrimaryFormActionRuntime';
 import { useFormActionRuntime } from './contractForm/useFormActionRuntime';
 import { useFormConfigSaveRuntime } from './contractForm/useFormConfigSaveRuntime';
+import { useContractDebugExportRuntime } from './contractForm/useContractDebugExportRuntime';
+import { useProjectContextChangeRuntime } from './contractForm/useProjectContextChangeRuntime';
+import { useFormPageLifecycleRuntime } from './contractForm/useFormPageLifecycleRuntime';
+import { useFormAuxiliaryWatchersRuntime } from './contractForm/useFormAuxiliaryWatchersRuntime';
 import {
   buildWorkflowTransitions,
   analyzeFormContractReadiness,
@@ -764,6 +767,25 @@ const actionSafetyConfirm = useProductConfirmDialog();
 const actionInputDialog = useProductInputDialog();
 const contract = ref<ActionContract | null>(null);
 const contractMeta = ref<Record<string, unknown> | null>(null);
+const {
+  copyContractJson,
+  exportContractJson,
+} = useContractDebugExportRuntime({
+  actionId: () => actionId.value || 0,
+  contract,
+  contractMeta,
+  modelName: () => model.value,
+});
+const {
+  handleProjectContextChanged,
+} = useProjectContextChangeRuntime({
+  isActive: () => isComponentActive.value,
+  modelName: () => model.value,
+  recordId: () => recordId.value,
+  resolveWorkspaceContextQuery: () => resolveWorkspaceContextQuery(),
+  router,
+  selectedProjectId: () => Number(session.projectContext?.selected?.id || 0) || 0,
+});
 const v2ContractStore = ref<ContractV2NormalizedStore | null>(null);
 const v2ContractDecodeError = ref('');
 const v2ShadowStoreReady = computed(() => Boolean(v2ContractStore.value));
@@ -6084,136 +6106,24 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']): Prom
   return false;
 }
 
-async function copyContractJson() {
-  if (!contract.value) return;
-  const payload = JSON.stringify(
-    {
-      action_id: actionId.value,
-      model: model.value,
-      contract: contract.value,
-      meta: contractMeta.value || {},
-    },
-    null,
-    2,
-  );
-  try {
-    await navigator.clipboard.writeText(payload);
-  } catch {
-    // ignore clipboard failure in locked environments
-  }
-}
-
-function exportContractJson() {
-  if (!contract.value) return;
-  const payload = JSON.stringify(
-    {
-      action_id: actionId.value,
-      model: model.value,
-      contract: contract.value,
-      meta: contractMeta.value || {},
-    },
-    null,
-    2,
-  );
-  const blob = new Blob([payload], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = `contract_form_${model.value || 'unknown'}_${actionId.value || 'na'}.json`;
-  anchor.click();
-  URL.revokeObjectURL(url);
-}
-
-watch(
-  () => formRouteIdentity(),
-  (identity) => {
-    if (!isComponentActive.value) return;
-    if (!instanceRouteIdentity.value && identity) instanceRouteIdentity.value = identity;
-    if (instanceRouteIdentity.value && identity !== instanceRouteIdentity.value) {
-      instanceRouteIdentity.value = identity;
-    }
-    if (identity && identity === retainedRouteIdentity.value && status.value === 'ok') return;
-    void reload();
-  },
-  { immediate: true },
-);
-
-watch(
-  () => route.query.config_mode,
-  (mode) => {
-    applyRouteConfigMode(mode);
-  },
-  { immediate: true },
-);
-
-watch(
-  () => ({
-    label: currentBusinessCategoryLabel.value,
-    code: currentBusinessCategoryCode.value,
-  }),
-  (state) => {
-    if (!isComponentActive.value) return;
-    if (!state.label) return;
-    const hasRouteLabel = String(route.query.current_business_category_label || route.query.default_business_category_label || '').trim();
-    if (hasRouteLabel) return;
-    const query: Record<string, string | string[]> = {
-      ...Object.fromEntries(
-        Object.entries(route.query).map(([key, value]) => [
-          key,
-          Array.isArray(value)
-            ? value.filter((item): item is string => typeof item === 'string')
-            : String(value || ''),
-        ]),
-      ),
-      current_business_category_label: state.label,
-      default_business_category_label: state.label,
-    };
-    if (state.code) {
-      query.current_business_category_code = String(route.query.current_business_category_code || state.code);
-      query.default_business_category_code = String(route.query.default_business_category_code || state.code);
-    }
-    void router.replace({ query });
-  },
-);
-
-function projectContextChangedProjectId(event: Event): number {
-  const detail = event instanceof CustomEvent && event.detail && typeof event.detail === 'object'
-    ? event.detail as Record<string, unknown>
-    : {};
-  return Number(detail.selected_project_id || session.projectContext?.selected?.id || 0) || 0;
-}
-
-function projectContextChangedPreviousProjectId(event: Event): number {
-  const detail = event instanceof CustomEvent && event.detail && typeof event.detail === 'object'
-    ? event.detail as Record<string, unknown>
-    : {};
-  return Number(detail.previous_project_id || 0) || 0;
-}
-
-function handleProjectContextChanged(event: Event): void {
-  if (!isComponentActive.value) return;
-  const selectedProjectId = projectContextChangedProjectId(event);
-  const previousProjectId = projectContextChangedPreviousProjectId(event);
-  if (selectedProjectId > 0 && previousProjectId === selectedProjectId) return;
-  if (model.value === 'project.project' && recordId.value === selectedProjectId) return;
-  if (model.value === 'project.project' && selectedProjectId > 0) {
-    void router.replace({
-      name: 'record',
-      params: { model: 'project.project', id: String(selectedProjectId) },
-      query: resolveWorkspaceContextQuery(),
-    });
-    return;
-  }
-  void router.replace(buildCanonicalSceneRouteTarget('projects.list', {
-    query: {
-      ...resolveWorkspaceContextQuery(),
-      ...(selectedProjectId > 0 ? { project_id: String(selectedProjectId) } : {}),
-    },
-  }));
-}
-
-watch(
-  () => [
+useFormPageLifecycleRuntime({
+  contract,
+  formRouteIdentity: () => formRouteIdentity(),
+  handleProjectContextChanged,
+  instanceRouteIdentity,
+  isComponentActive,
+  onFieldOrderDragEnd,
+  onFieldOrderWindowDragOver,
+  onFieldOrderWindowDragStop,
+  onRelationDialogDocumentKeydown,
+  projectContextChangedEvent: PROJECT_CONTEXT_CHANGED_EVENT,
+  reload: () => reload(),
+  retainedRouteIdentity,
+  status,
+  ensureFormInitialReload: () => ensureFormInitialReload(),
+});
+useFormAuxiliaryWatchersRuntime({
+  autosaveSource: () => [
     intakeAutosaveKey.value,
     formData.name,
     formData.manager_id,
@@ -6224,67 +6134,29 @@ watch(
     formData.start_date,
     formData.end_date,
   ],
-  () => {
-    persistIntakeAutosave();
-  },
-);
+  businessCategoryCode: () => currentBusinessCategoryCode.value,
+  businessCategoryLabel: () => currentBusinessCategoryLabel.value,
+  chatterLoading: () => chatterLoading.value,
+  collaborationReady: () => Boolean(nativeChatterActions.value.length || nativeAttachments.value),
+  currentQuery: () => route.query as Record<string, unknown>,
+  isActive: () => isComponentActive.value,
+  isProjectIntake: () => isProjectIntakeCreateMode.value,
+  loadNativeChatterTimeline: () => loadNativeChatterTimeline(),
+  modelName: () => model.value,
+  nativeChatterAutoLoadKey,
+  persistIntakeAutosave: () => persistIntakeAutosave(),
+  recordId: () => recordId.value,
+  router,
+});
 
 watch(
-  () => ({
-    model: model.value,
-    recordId: recordId.value,
-    collaborationReady: Boolean(nativeChatterActions.value.length || nativeAttachments.value),
-    projectIntake: isProjectIntakeCreateMode.value,
-  }),
-  (state) => {
-    if (!isComponentActive.value) return;
-    if (state.projectIntake || !state.model || !state.recordId || !state.collaborationReady) return;
-    const key = `${state.model}:${state.recordId}`;
-    if (nativeChatterAutoLoadKey.value === key || chatterLoading.value) return;
-    nativeChatterAutoLoadKey.value = key;
-    void loadNativeChatterTimeline();
+  () => route.query.config_mode,
+  (mode) => {
+    applyRouteConfigMode(mode);
   },
   { immediate: true },
 );
 
-onMounted(() => {
-  if (typeof window !== 'undefined') {
-    window.addEventListener(PROJECT_CONTEXT_CHANGED_EVENT, handleProjectContextChanged);
-    window.addEventListener('dragover', onFieldOrderWindowDragOver);
-    window.addEventListener('drop', onFieldOrderWindowDragStop);
-    window.addEventListener('dragend', onFieldOrderWindowDragStop);
-  }
-  if (typeof document !== 'undefined') {
-    document.addEventListener('keydown', onRelationDialogDocumentKeydown);
-  }
-  void nextTick(() => ensureFormInitialReload());
-});
-
-onActivated(() => {
-  isComponentActive.value = true;
-  const identity = formRouteIdentity();
-  if (identity && identity !== retainedRouteIdentity.value) {
-    void reload();
-  }
-  void nextTick(() => ensureFormInitialReload());
-});
-
-onDeactivated(() => {
-  isComponentActive.value = false;
-});
-
-onBeforeUnmount(() => {
-  if (typeof window !== 'undefined') {
-    window.removeEventListener(PROJECT_CONTEXT_CHANGED_EVENT, handleProjectContextChanged);
-    window.removeEventListener('dragover', onFieldOrderWindowDragOver);
-    window.removeEventListener('drop', onFieldOrderWindowDragStop);
-    window.removeEventListener('dragend', onFieldOrderWindowDragStop);
-  }
-  if (typeof document !== 'undefined') {
-    document.removeEventListener('keydown', onRelationDialogDocumentKeydown);
-  }
-  onFieldOrderDragEnd();
-});
 </script>
 
 <style scoped src="./contractForm/ContractFormPage.css"></style>
