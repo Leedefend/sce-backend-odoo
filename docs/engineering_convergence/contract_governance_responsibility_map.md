@@ -3,7 +3,7 @@
 Date: 2026-07-13
 Owner: Platform owner
 Target file: `addons/smart_core/utils/contract_governance.py`
-Current size: 1,973 lines
+Current size: 1,899 lines
 Phase: staged responsibility split
 
 ## Purpose
@@ -74,6 +74,7 @@ and by a smaller public module layout.
 | `contract_governance_form_fields_split_guard.py` | Form field ordering, core/advanced group derivation, required-field resolution, and field policy behavior lock. |
 | `contract_governance_project_form_split_guard.py` | Project form/profile/task/kanban projection, project form orchestration, field selection, layout filtering, search/action helpers, lifecycle summary, and workflow surface projection lock. |
 | `contract_governance_enterprise_forms_split_guard.py` | Enterprise company, department, and user form projection, action cleanup, governance next-action, and user field-policy behavior lock. |
+| `contract_governance_contract_detection_split_guard.py` | Contract surface detection boundary lock for project/enterprise form, project kanban, tree/list, and generic form predicates. |
 
 ## Extraction Order
 
@@ -508,3 +509,17 @@ Stage 28 is complete when:
 - the extracted module remains projection-only: no ORM calls, HTTP calls,
   routing, file IO, or environment access;
 - `contract_governance.py` is locked at `<=1973` lines for this stage.
+
+## Stage 29 Target
+
+Stage 29 is complete when:
+
+- `contract_governance_contract_detection.py` owns pure contract surface
+  detection for project form, enterprise company/user form, project kanban,
+  project task form, model tree/list, and generic form surfaces;
+- `contract_governance.py` keeps registry lookup, primary-model derivation, and
+  render-profile constants in the facade and passes them into the extracted
+  predicates;
+- the extracted module remains read-only: no ORM calls, HTTP calls, routing,
+  file IO, environment access, or registry mutation;
+- `contract_governance.py` is locked at `<=1899` lines for this stage.

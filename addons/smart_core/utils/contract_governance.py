@@ -511,6 +511,26 @@ def _load_enterprise_forms_module() -> Any:
 _enterprise_forms = _load_enterprise_forms_module()
 
 
+def _load_contract_detection_module() -> Any:
+    try:
+        from . import contract_governance_contract_detection as contract_detection
+
+        return contract_detection
+    except ImportError:
+        spec = importlib.util.spec_from_file_location(
+            "contract_governance_contract_detection",
+            Path(__file__).with_name("contract_governance_contract_detection.py"),
+        )
+        if spec is None or spec.loader is None:
+            raise
+        contract_detection = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(contract_detection)
+        return contract_detection
+
+
+_contract_detection = _load_contract_detection_module()
+
+
 def source_authority_contract() -> dict[str, Any]:
     return {
         "kind": SOURCE_KIND,
@@ -1082,28 +1102,11 @@ def _apply_user_surface_policies(data: dict) -> None:
 
 
 def _is_project_form_contract(data: dict) -> bool:
-    head = _as_dict(data.get("head"))
-    views = _as_dict(data.get("views"))
-    form_view = _as_dict(views.get("form"))
-    permissions = _as_dict(data.get("permissions"))
-    model = _safe_text(
-        head.get("model")
-        or data.get("model")
-        or form_view.get("model")
-        or permissions.get("model")
+    return _contract_detection.is_project_form_contract(
+        data,
+        primary_model=_governance_primary_model(data),
+        project_form_models=_LEGACY_PROJECT_FORM_GOVERNANCE_MODELS,
     )
-    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
-    has_form_view = isinstance(views.get("form"), dict)
-    if not view_type and has_form_view:
-        view_type = "form"
-    primary_model = _governance_primary_model(data)
-    if primary_model not in _LEGACY_PROJECT_FORM_GOVERNANCE_MODELS:
-        return False
-    if not primary_model or model != primary_model:
-        return False
-    if has_form_view:
-        return "form" in view_type if view_type else True
-    return view_type == "form"
 
 
 def _legacy_project_form_profile(data: dict) -> dict[str, Any]:
@@ -1115,125 +1118,48 @@ def _legacy_project_form_profile(data: dict) -> dict[str, Any]:
 
 
 def _is_enterprise_company_form_contract(data: dict) -> bool:
-    head = _as_dict(data.get("head"))
-    views = _as_dict(data.get("views"))
-    form_view = _as_dict(views.get("form"))
-    permissions = _as_dict(data.get("permissions"))
-    model = _safe_text(
-        head.get("model")
-        or data.get("model")
-        or form_view.get("model")
-        or permissions.get("model")
+    return _contract_detection.is_enterprise_company_form_contract(
+        data,
+        primary_model=_governance_primary_model(data),
     )
-    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
-    if not view_type and isinstance(views.get("form"), dict):
-        view_type = "form"
-    primary_model = _governance_primary_model(data)
-    return bool(primary_model == "res.company" and model == "res.company" and "form" in view_type)
 
 
 def _is_enterprise_user_form_contract(data: dict) -> bool:
-    head = _as_dict(data.get("head"))
-    views = _as_dict(data.get("views"))
-    form_view = _as_dict(views.get("form"))
-    permissions = _as_dict(data.get("permissions"))
-    model = _safe_text(
-        head.get("model")
-        or data.get("model")
-        or form_view.get("model")
-        or permissions.get("model")
+    return _contract_detection.is_enterprise_user_form_contract(
+        data,
+        primary_model=_governance_primary_model(data),
     )
-    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
-    if not view_type and isinstance(views.get("form"), dict):
-        view_type = "form"
-    primary_model = _governance_primary_model(data)
-    return bool(primary_model == "res.users" and model == "res.users" and "form" in view_type)
 
 
 def _is_project_kanban_contract(data: dict) -> bool:
-    head = _as_dict(data.get("head"))
-    views = _as_dict(data.get("views"))
-    kanban_view = _as_dict(views.get("kanban"))
-    permissions = _as_dict(data.get("permissions"))
-    model = _safe_text(
-        head.get("model")
-        or data.get("model")
-        or kanban_view.get("model")
-        or permissions.get("model")
-    )
-    current_view_type = _safe_text(data.get("view_type")).lower()
-    if current_view_type and current_view_type not in {"kanban", "tree", "list"}:
-        return False
-    render_profile = _safe_text(data.get("render_profile")).lower()
-    if render_profile in {_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY}:
-        return False
-    if _safe_text(data.get("record_id") or data.get("res_id")) and isinstance(views.get("form"), dict):
-        return False
-    view_type = _safe_text(current_view_type or head.get("view_type")).lower()
-    if not view_type and isinstance(views.get("kanban"), dict):
-        view_type = "kanban"
-    primary_model = _governance_primary_model(data)
-    return bool(
-        primary_model
-        and primary_model in _LEGACY_PROJECT_KANBAN_GOVERNANCE_MODELS
-        and model == primary_model
-        and ("kanban" in view_type or isinstance(views.get("kanban"), dict))
+    return _contract_detection.is_project_kanban_contract(
+        data,
+        primary_model=_governance_primary_model(data),
+        project_kanban_models=_LEGACY_PROJECT_KANBAN_GOVERNANCE_MODELS,
+        create_profile=_RENDER_PROFILE_CREATE,
+        edit_profile=_RENDER_PROFILE_EDIT,
+        readonly_profile=_RENDER_PROFILE_READONLY,
     )
 
 
 def _is_project_task_form_contract(data: dict) -> bool:
-    head = _as_dict(data.get("head"))
-    views = _as_dict(data.get("views"))
-    form_view = _as_dict(views.get("form"))
-    permissions = _as_dict(data.get("permissions"))
-    model = _safe_text(
-        head.get("model")
-        or data.get("model")
-        or form_view.get("model")
-        or permissions.get("model")
-    )
-    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
-    if not view_type and isinstance(views.get("form"), dict):
-        view_type = "form"
-    primary_model = _governance_primary_model(data)
-    return bool(
-        primary_model
-        and primary_model in _LEGACY_PROJECT_TASK_FORM_GOVERNANCE_MODELS
-        and model == primary_model
-        and "form" in view_type
+    return _contract_detection.is_project_task_form_contract(
+        data,
+        primary_model=_governance_primary_model(data),
+        task_form_models=_LEGACY_PROJECT_TASK_FORM_GOVERNANCE_MODELS,
     )
 
 
 def _is_model_tree_contract(data: dict, model_name: str) -> bool:
-    head = _as_dict(data.get("head"))
-    views = _as_dict(data.get("views"))
-    tree_view = _as_dict(views.get("tree") or views.get("list"))
-    has_tree_surface = bool(tree_view)
-    permissions = _as_dict(data.get("permissions"))
-    model = _safe_text(
-        head.get("model")
-        or data.get("model")
-        or tree_view.get("model")
-        or permissions.get("model")
-    )
-    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
-    if not view_type and has_tree_surface:
-        view_type = "tree"
-    primary_model = _governance_primary_model(data)
-    return bool(
-        primary_model == model_name
-        and model == model_name
-        and ("tree" in view_type or "list" in view_type or has_tree_surface)
+    return _contract_detection.is_model_tree_contract(
+        data,
+        primary_model=_governance_primary_model(data),
+        model_name=model_name,
     )
 
 
 def _is_form_contract(data: dict) -> bool:
-    head = _as_dict(data.get("head"))
-    views = _as_dict(data.get("views"))
-    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
-    if view_type == "form":
-        return True
-    return isinstance(views.get("form"), dict)
+    return _contract_detection.is_form_contract(data)
 
 
 def _is_technical_field(name: str, descriptor: dict) -> bool:
