@@ -26,6 +26,7 @@ Extracted responsibilities:
 - Form-configuration operation-log state and session-storage lifecycle moved to `frontend/apps/web/src/pages/contractForm/useFormConfigOperationLog.ts`.
 - Required-value checks, comparable-value normalization, numeric parsing, route-default normalization, and navigation URL normalization moved to `frontend/apps/web/src/pages/contractForm/valueUtils.ts`.
 - Workflow phase statusbar normalization moved to `frontend/apps/web/src/pages/contractForm/workflowContract.ts`.
+- Form contract readiness, surface-marker validation, contract model detection, and route context construction moved to `frontend/apps/web/src/pages/contractForm/contractRuntimeVm.ts`.
 - The Web Contract V2 frontend architecture guard is now part of the local `make ci` gate through `verify.unified_page_contract.v2.web_architecture`.
 - High-risk split-plan file growth is now locked by `docs/engineering_convergence/complexity_baseline_lock.json` and `scripts/ci/enforce_complexity_baseline_lock.py`.
 - Frontend page contract boundary, orchestration-consumption, and consumer-intrusion guards are now part of `make ci.local.quick`.
@@ -37,7 +38,7 @@ The route component remains the orchestration shell and still owns runtime state
 
 | File | Before | After |
 | --- | ---: | ---: |
-| `frontend/apps/web/src/pages/ContractFormPage.vue` | 13762 | 7584 |
+| `frontend/apps/web/src/pages/ContractFormPage.vue` | 13762 | 7347 |
 
 ## Boundary Decision
 
@@ -46,7 +47,7 @@ The route component remains the orchestration shell and still owns runtime state
 - No frontend fallback menu, permission, action, or form policy was introduced.
 - No data migration, backend endpoint change, or visual redesign is included in this slice.
 - Existing `groups_xmlids` usage in `ContractFormPage.vue` is locked at 1 occurrence by `scripts/verify/web_contract_v2_frontend_architecture_guard.py`; the next cleanup must remove the final entitlement read fully behind backend contracts.
-- `ContractFormPage.vue` is line-count locked at 7584 lines. Future work must continue extracting or modifying existing owned modules instead of adding new responsibilities to the route component.
+- `ContractFormPage.vue` is line-count locked at 7347 lines. Future work must continue extracting or modifying existing owned modules instead of adding new responsibilities to the route component.
 
 ## Verification
 
