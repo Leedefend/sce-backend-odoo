@@ -249,8 +249,10 @@ def main() -> int:
         "user-surface normalization, list governance, native bridge, form policy, diagnostics, "
         "and keep `apply_contract_governance` as a thin facade."
     )
-    if split_queue_token not in split_queue:
-        errors.append("split plan queue must use contract_governance-specific decomposition direction")
+    if "`addons/smart_core/utils/contract_governance.py`" in split_queue and split_queue_token not in split_queue:
+        errors.append("split plan queue must use contract_governance-specific decomposition direction when listed")
+    if "`addons/smart_core/utils/contract_governance.py`" not in split_queue and "Current size: 1,370 lines" not in doc:
+        errors.append("responsibility map must retain the achieved contract_governance split baseline when removed from queue")
 
     ci_token = "python3 scripts/verify/contract_governance_responsibility_map_guard.py"
     if ci_token not in ci:
