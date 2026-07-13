@@ -60,6 +60,17 @@ export type VisibleNativeLayoutFilterInput<T extends NativeLayoutLikeNode> = {
   isGroupVisible: (title: string) => boolean;
 };
 
+export type NativeFieldOrderPreviewInput<T extends NativeLayoutLikeNode> = {
+  nodes: T[];
+  fieldOrder: string[];
+  movedGroups: Record<string, string>;
+  moveTargetDraft: Record<string, string>;
+  normalizeGroupTitle: (value: unknown) => string;
+  isReadableGroupTitle: (value: unknown) => boolean;
+  groupTitleMatches: (value: unknown, target: string) => boolean;
+  baseGroupTitleForField: (fieldName: string) => string;
+};
+
 export type NativeFieldPresentationInput = {
   node: NativeLayoutLikeNode;
   descriptor?: FieldDescriptor;
@@ -109,6 +120,150 @@ export function filterVisibleNativeLayoutNodes<T extends NativeLayoutLikeNode>(
       });
       return next as T;
     });
+}
+
+export function applyNativeFieldOrderPreview<T extends NativeLayoutLikeNode>(
+  params: NativeFieldOrderPreviewInput<T>,
+): T[] {
+  if (!params.fieldOrder.length) return params.nodes;
+  const rank = new Map(params.fieldOrder.map((fieldName, index) => [fieldName, index]));
+  const movedNames = new Set(Object.keys(params.movedGroups));
+  const movedNodes = new Map<string, T>();
+  const sortDirectFields = (rows: T[]) => {
+    const fields = rows.filter(isNativeFieldLayoutNode).sort((left, right) => {
+      const leftRank = rank.get(String(left.name || '').trim()) ?? Number.MAX_SAFE_INTEGER;
+      const rightRank = rank.get(String(right.name || '').trim()) ?? Number.MAX_SAFE_INTEGER;
+      return leftRank - rightRank;
+    });
+    let index = 0;
+    const sorted = rows.map((row) => (isNativeFieldLayoutNode(row) ? fields[index++] : row));
+    return index < fields.length ? [...sorted, ...fields.slice(index)] : sorted;
+  };
+  const collectMoved = (rows: T[]) => {
+    rows.forEach((node) => {
+      const name = String(node?.name || '').trim();
+      if (isNativeFieldLayoutNode(node) && movedNames.has(name)) movedNodes.set(name, node);
+      CHILD_KEYS.forEach((key) => {
+        const value = node?.[key];
+        if (Array.isArray(value)) collectMoved(value as T[]);
+      });
+    });
+  };
+  collectMoved(params.nodes);
+
+  const cloneWithoutMoved = (rows: T[]): T[] => rows.flatMap((node) => {
+    const name = String(node?.name || '').trim();
+    if (isNativeFieldLayoutNode(node) && movedNames.has(name)) return [];
+    const next = { ...node } as Record<string, unknown>;
+    CHILD_KEYS.forEach((key) => {
+      const value = next[key];
+      if (Array.isArray(value)) next[key] = cloneWithoutMoved(value as T[]);
+    });
+    return [next as T];
+  });
+
+  const withChildren = movedNodes.size
+    ? cloneWithoutMoved(params.nodes)
+    : params.nodes.map((node) => {
+      const next = { ...node } as Record<string, unknown>;
+      CHILD_KEYS.forEach((key) => {
+        const value = next[key];
+        if (Array.isArray(value)) {
+          next[key] = applyNativeFieldOrderPreview({
+            ...params,
+            nodes: value as T[],
+          });
+        }
+      });
+      return next as T;
+    });
+
+  if (movedNodes.size) {
+    const injected = new Set<string>();
+    const injectIntoTarget = (rows: T[]): T[] => rows.map((node) => {
+      const next = { ...node } as Record<string, unknown>;
+      CHILD_KEYS.forEach((key) => {
+        const value = next[key];
+        if (Array.isArray(value)) next[key] = injectIntoTarget(value as T[]);
+      });
+      const children = Array.isArray(next.children) ? next.children as T[] : [];
+      const directFieldGroupTitle = () => {
+        for (const child of children) {
+          const fieldName = String(child?.name || '').trim();
+          if (!isNativeFieldLayoutNode(child) || !fieldName) continue;
+          const title = params.normalizeGroupTitle(params.baseGroupTitleForField(fieldName) || params.movedGroups[fieldName]);
+          if (title) return title;
+        }
+        return '';
+      };
+      const nodeTitle = params.isReadableGroupTitle(next.string || next.label)
+        ? params.normalizeGroupTitle(next.string || next.label)
+        : '';
+      const title = directFieldGroupTitle() || nodeTitle;
+      const directFieldNames = children
+        .filter(isNativeFieldLayoutNode)
+        .map((child) => String(child.name || '').trim())
+        .filter(Boolean);
+      const isFieldGroupContainer = nativeLayoutNodeType(next as NativeLayoutLikeNode) === 'group' && directFieldNames.length > 0;
+      const toAppend = Array.from(movedNodes.entries())
+        .filter(([name]) => (
+          !injected.has(name)
+          && isFieldGroupContainer
+          && (
+            params.groupTitleMatches(params.movedGroups[name], title)
+            || directFieldNames.includes(String(params.moveTargetDraft[name] || '').trim())
+          )
+        ))
+        .map(([name, nodeValue]) => {
+          injected.add(name);
+          return nodeValue;
+        });
+      if (toAppend.length) next.children = sortDirectFields([...children, ...toAppend]);
+      return next as T;
+    });
+    const injectedTree = injectIntoTarget(withChildren);
+    const fallback = Array.from(movedNodes.entries())
+      .filter(([name]) => !injected.has(name))
+      .map(([name, nodeValue]) => {
+        injected.add(name);
+        return nodeValue;
+      });
+    if (fallback.length) {
+      let consumed = false;
+      const injectFallback = (rows: T[]): T[] => rows.map((node) => {
+        if (consumed) return node;
+        const next = { ...node } as Record<string, unknown>;
+        const children = Array.isArray(next.children) ? next.children as T[] : [];
+        const directFieldNames = children
+          .filter(isNativeFieldLayoutNode)
+          .map((child) => String(child.name || '').trim())
+          .filter(Boolean);
+        if (directFieldNames.length) {
+          next.children = sortDirectFields([...children, ...fallback]);
+          consumed = true;
+          return next as T;
+        }
+        CHILD_KEYS.forEach((key) => {
+          const value = next[key];
+          if (Array.isArray(value)) next[key] = injectFallback(value as T[]);
+        });
+        return next as T;
+      });
+      const withFallback = injectFallback(injectedTree);
+      return consumed ? withFallback : [...injectedTree, ...sortDirectFields(fallback)];
+    }
+    return injectedTree;
+  }
+
+  const fieldNodes = withChildren.filter(isNativeFieldLayoutNode);
+  if (fieldNodes.length <= 1) return withChildren;
+  const sortedFields = [...fieldNodes].sort((left, right) => {
+    const leftRank = rank.get(String(left.name || '').trim()) ?? Number.MAX_SAFE_INTEGER;
+    const rightRank = rank.get(String(right.name || '').trim()) ?? Number.MAX_SAFE_INTEGER;
+    return leftRank - rightRank;
+  });
+  let fieldIndex = 0;
+  return withChildren.map((node) => (isNativeFieldLayoutNode(node) ? sortedFields[fieldIndex++] : node));
 }
 
 export type LegacyLayoutNodeInput = {
