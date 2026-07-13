@@ -4,11 +4,12 @@ import type { RelationSearchDialogState } from './RelationSearchDialog.vue';
 import {
   closedRelationSearchDialogState,
   mergeRelationOptionRows,
+  openRelationSearchDialogState,
   relationOptionsWithSelectedFallback,
   selectedRelationOptionsFromValue,
   upsertRelationOptionRows,
 } from './relationDescriptor';
-import type { RelationOption } from './types';
+import type { RelationOption, RelationSearchColumn, RelationSearchRow, RelationUiLabels } from './types';
 
 export function useRelationRuntime() {
   const relationOptions = ref<Record<string, RelationOption[]>>({});
@@ -91,6 +92,65 @@ export function useRelationRuntime() {
     relationSearchDialog.selectedId = row.id;
   }
 
+  async function openRelationSearch(params: {
+    fieldName: string;
+    descriptor?: FieldDescriptor;
+    labels: RelationUiLabels;
+    keyword: string;
+    columns: RelationSearchColumn[];
+    createMode: 'none' | 'quick' | 'page';
+    loadColumns: () => Promise<RelationSearchColumn[]>;
+    runSearch: () => Promise<void>;
+  }) {
+    Object.assign(relationSearchDialog, openRelationSearchDialogState({
+      fieldName: params.fieldName,
+      descriptor: params.descriptor,
+      labels: params.labels,
+      keyword: params.keyword,
+      columns: params.columns,
+      createMode: params.createMode,
+    }));
+    relationSearchDialog.columns = await params.loadColumns();
+    await params.runSearch();
+  }
+
+  async function runRelationSearch(params: {
+    fetchRows: (fieldName: string, keyword: string) => Promise<RelationSearchRow[]>;
+    sanitizeError: (error: unknown, fallback: string) => string;
+  }) {
+    const fieldName = relationSearchDialog.fieldName;
+    if (!fieldName) return;
+    relationSearchDialog.loading = true;
+    relationSearchDialog.error = '';
+    try {
+      const rows = await params.fetchRows(fieldName, relationSearchDialog.keyword);
+      relationSearchDialog.rows = rows;
+      relationSearchDialog.options = rows.map((row) => ({ id: row.id, label: row.label }));
+      relationSearchDialog.selectedId = null;
+      relationOptions.value = {
+        ...relationOptions.value,
+        [fieldName]: relationSearchDialog.options,
+      };
+    } catch (err) {
+      relationSearchDialog.error = params.sanitizeError(err, relationSearchDialog.labels.search_failed || '');
+    } finally {
+      relationSearchDialog.loading = false;
+    }
+  }
+
+  function confirmRelationSearchSelection(selectOption: (option: RelationOption) => void, rowArg?: RelationSearchRow) {
+    const row = rowArg || relationSearchDialog.rows.find((item) => item.id === relationSearchDialog.selectedId);
+    if (!row) return;
+    selectOption({ id: row.id, label: row.label });
+  }
+
+  function selectRelationSearchOption(option: RelationOption, applyOption: (fieldName: string, option: RelationOption) => void) {
+    const fieldName = relationSearchDialog.fieldName;
+    if (!fieldName) return;
+    applyOption(fieldName, option);
+    closeRelationSearchDialog();
+  }
+
   return {
     relationOptions,
     relationFieldDescriptors,
@@ -110,6 +170,10 @@ export function useRelationRuntime() {
     closeRelationSearchDialog,
     setRelationSearchKeyword,
     selectRelationSearchRow,
+    openRelationSearch,
+    runRelationSearch,
+    confirmRelationSearchSelection,
+    selectRelationSearchOption,
     clearRelationRuntime,
   };
 }

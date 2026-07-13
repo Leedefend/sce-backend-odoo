@@ -598,7 +598,6 @@ import {
   mergeRelationDomains,
   normalizeRelationSearchColumns,
   normalizeRouteQueryValues,
-  openRelationSearchDialogState,
   relationDomainFromDescriptor,
   relationCreateMode,
   relationInlineCreate,
@@ -847,6 +846,10 @@ const {
   closeRelationSearchDialog,
   setRelationSearchKeyword,
   selectRelationSearchRow,
+  openRelationSearch: openRelationSearchFromRuntime,
+  runRelationSearch: runRelationSearchFromRuntime,
+  confirmRelationSearchSelection: confirmRelationSearchSelectionFromRuntime,
+  selectRelationSearchOption: selectRelationSearchOptionFromRuntime,
 } = useRelationRuntime();
 const onchangeModifiersPatch = ref<Record<string, Record<string, unknown>>>({});
 const onchangeWarnings = ref<Array<{ title?: string; message?: string; reason_code?: string }>>([]);
@@ -2750,53 +2753,31 @@ async function openRelationSearchDialog(fieldName: string, descriptor?: FieldDes
   if (!relation) return;
   const labels = relationUiLabels(descriptor);
   const resolvedDescriptor = effectiveFieldDescriptor(fieldName);
-  Object.assign(relationSearchDialog, openRelationSearchDialogState({
+  await openRelationSearchFromRuntime({
     fieldName,
     descriptor,
     labels,
     keyword: relationKeyword(fieldName),
     columns: relationSearchColumnsFromContract(relationSearchDialogContract(resolvedDescriptor)),
     createMode: relationCreateMode(resolvedDescriptor),
-  }));
-  relationSearchDialog.columns = await loadRelationSearchColumns(fieldName);
-  await runRelationSearch();
+    loadColumns: () => loadRelationSearchColumns(fieldName),
+    runSearch: runRelationSearch,
+  });
 }
 
 async function runRelationSearch() {
-  const fieldName = relationSearchDialog.fieldName;
-  if (!fieldName) return;
-  relationSearchDialog.loading = true;
-  relationSearchDialog.error = '';
-  try {
-    const rows = await fetchRelationSearchRows(fieldName, relationSearchDialog.keyword, 120);
-    relationSearchDialog.rows = rows;
-    relationSearchDialog.options = rows.map((row) => ({ id: row.id, label: row.label }));
-    relationSearchDialog.selectedId = null;
-    relationOptions.value = {
-      ...relationOptions.value,
-      [fieldName]: relationSearchDialog.options,
-    };
-  } catch (err) {
-    relationSearchDialog.error = sanitizeUiErrorMessage(
-      err instanceof Error ? err.message : err,
-      relationSearchDialog.labels.search_failed || '',
-    );
-  } finally {
-    relationSearchDialog.loading = false;
-  }
+  await runRelationSearchFromRuntime({
+    fetchRows: (fieldName, keyword) => fetchRelationSearchRows(fieldName, keyword, 120),
+    sanitizeError: (error, fallback) => sanitizeUiErrorMessage(error instanceof Error ? error.message : error, fallback),
+  });
 }
 
 function confirmRelationSearchSelection(rowArg?: RelationSearchRow) {
-  const row = rowArg || relationSearchDialog.rows.find((item) => item.id === relationSearchDialog.selectedId);
-  if (!row) return;
-  selectRelationSearchOption({ id: row.id, label: row.label });
+  confirmRelationSearchSelectionFromRuntime(selectRelationSearchOption, rowArg);
 }
 
 function selectRelationSearchOption(option: RelationOption) {
-  const fieldName = relationSearchDialog.fieldName;
-  if (!fieldName) return;
-  setMany2oneOption(fieldName, option);
-  closeRelationSearchDialog();
+  selectRelationSearchOptionFromRuntime(option, setMany2oneOption);
 }
 
 function setMany2oneOption(fieldName: string, option: RelationOption) {
