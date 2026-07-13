@@ -3,7 +3,7 @@
 Date: 2026-07-14
 Owner: Construction backend owner
 Target file: `addons/smart_construction_core/core_extension.py`
-Current size: 3,351 lines
+Current size: 3,145 lines
 Phase: staged responsibility split
 
 ## Purpose
@@ -43,6 +43,7 @@ construction-owned policy.
 | `construction_core_extension_contract_helpers_split_guard.py` | Generic contract helper extraction, v2 layout/status mirrors, governance patch mirrors, content replacement, form layout governance, line lock, and projection-only boundary. |
 | `construction_core_extension_policy_maps_split_guard.py` | Static policy/map extraction, role/nav/file/API/unlink maps, line lock, no import-time registration side effects, and pure-constant boundary. |
 | `construction_core_extension_system_init_rows_split_guard.py` | System-init row builder extraction, read-side search helpers, workspace action rows, enterprise enablement facts, role/home dictionary rows, line lock, and no write/registration side effects. |
+| `construction_core_extension_capability_rows_split_guard.py` | Capability row normalization extraction, identity/ownership/UI/binding/permission/runtime envelope preservation, line lock, and pure-normalization boundary. |
 | `backend_boundary_guard.py` | Core backend ownership and extension-boundary constraints. |
 | `owner_industry_isolation_probe.py` | Industry module isolation and required extension hooks. |
 
@@ -102,6 +103,20 @@ Stage 4 is complete when:
   creates, unlinks, commits, registration side effects, HTTP calls, file IO, or
   routing decisions;
 - `core_extension.py` is locked at `<=3351` lines for this stage.
+
+## Stage 5 Target
+
+Stage 5 is complete when:
+
+- `core_extension_capability_rows.py` owns capability row normalization:
+  identity, ownership, UI, binding, permission, release, lifecycle, runtime, and
+  audit envelopes;
+- `core_extension.py` keeps capability registry imports, error handling,
+  timing payload handling, and compatibility hook names;
+- the extracted module remains pure normalization: no ORM access, registry
+  imports, HTTP calls, file IO, registration side effects, or permission
+  inference beyond copying required roles/groups into the envelope;
+- `core_extension.py` is locked at `<=3145` lines for this stage.
 
 ## Next Candidate
 

@@ -43,7 +43,7 @@ def main() -> int:
 
     for token in [
         "Construction Core Extension Responsibility Map",
-        "Current size: 3,351 lines",
+        "Current size: 3,145 lines",
         "staged responsibility split",
         "## Public Entry Points",
         "## Responsibility Bands",
@@ -52,11 +52,13 @@ def main() -> int:
         "## Stage 2 Target",
         "## Stage 3 Target",
         "## Stage 4 Target",
+        "## Stage 5 Target",
         "`core_extension_project_layout.py` owns pure project form layout helpers",
         "`core_extension_contract_helpers.py` owns generic contract helper utilities",
         "`core_extension_policy_maps.py` owns static construction policy/map facts",
         "`core_extension_system_init_rows.py` owns read-side system-init row builders",
-        "`core_extension.py` is locked at `<=3351` lines",
+        "`core_extension_capability_rows.py` owns capability row normalization",
+        "`core_extension.py` is locked at `<=3145` lines",
         "Do not move import-time registration side effects",
         "projection-only",
     ]:
@@ -68,6 +70,7 @@ def main() -> int:
         "construction_core_extension_contract_helpers_split_guard.py",
         "construction_core_extension_policy_maps_split_guard.py",
         "construction_core_extension_system_init_rows_split_guard.py",
+        "construction_core_extension_capability_rows_split_guard.py",
         "backend_boundary_guard.py",
         "owner_industry_isolation_probe.py",
     ]:
@@ -99,6 +102,10 @@ def main() -> int:
             errors.append("core_extension.py must delegate task action row builder")
         if "return _system_init_rows.build_home_block_contract_rows(env)" not in core:
             errors.append("core_extension.py must delegate home block row builder")
+        if "core_extension_capability_rows as _capability_rows" not in core:
+            errors.append("core_extension.py must import capability rows module")
+        if "return _capability_rows.normalize_capability_rows(capabilities)" not in core:
+            errors.append("core_extension.py must delegate capability rows")
 
     split_queue_token = (
         "`addons/smart_construction_core/core_extension.py` | "
@@ -112,6 +119,7 @@ def main() -> int:
         "python3 scripts/verify/construction_core_extension_contract_helpers_split_guard.py",
         "python3 scripts/verify/construction_core_extension_policy_maps_split_guard.py",
         "python3 scripts/verify/construction_core_extension_system_init_rows_split_guard.py",
+        "python3 scripts/verify/construction_core_extension_capability_rows_split_guard.py",
         "python3 scripts/verify/construction_core_extension_responsibility_map_guard.py",
     ]:
         if ci_token not in ci:
