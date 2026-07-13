@@ -2,6 +2,7 @@ import type { Ref } from 'vue';
 import type { Router, LocationQueryRaw } from 'vue-router';
 import { executeButton } from '../../api/executeButton';
 import { pickContractNavQuery } from '../../app/navigationContext';
+import { buildFormActionExecutionPlan } from './actionExecutionPlan';
 import type { BusyKind, ContractAction } from './types';
 
 type SubmissionFeedback = { kind: 'success' | 'warn' | 'error'; message: string } | null;
@@ -40,16 +41,21 @@ export function useFormActionRuntime(params: {
   async function runAction(action: ContractAction) {
     if (!action.enabled) return;
     if (!await params.confirmActionSafety(action)) return;
-    if (action.intent === 'ui.local_mode' || action.intent === 'ui.mode' || action.clientMode) {
-      params.applyClientMode(action.clientMode, true);
+    const plan = buildFormActionExecutionPlan({
+      action,
+      modelName: params.modelName(),
+      recordId: params.recordId(),
+    });
+    if (plan.kind === 'disabled') return;
+    if (plan.kind === 'local_mode') {
+      params.applyClientMode(plan.mode, plan.toggle);
       return;
     }
-    const actionKey = String(action.key || '').trim().toLowerCase();
-    if (actionKey === 'submit_intake' || actionKey === 'save_draft') {
-      await params.saveRecord(action.refreshPolicy);
+    if (plan.kind === 'save') {
+      await params.saveRecord(plan.refreshPolicy);
       return;
     }
-    if (actionKey === 'cancel' && !action.methodName) {
+    if (plan.kind === 'cancel') {
       await params.router.push({
         name: 'workbench',
         query: pickContractNavQuery(params.currentQuery() as Record<string, unknown>, {
@@ -58,46 +64,46 @@ export function useFormActionRuntime(params: {
       });
       return;
     }
-    if (action.kind === 'open') {
-      if (action.actionId) {
-        await params.router.push({
-          name: 'action',
-          params: { actionId: String(action.actionId) },
-          query: pickContractNavQuery(params.currentQuery() as Record<string, unknown>, {
-            action_id: action.actionId,
-            target: action.target || undefined,
-            domain_raw: action.domainRaw || undefined,
-          }),
-        });
-        return;
-      }
-      if (action.url) {
-        const navUrl = params.resolveNavigationUrl(action.url);
-        window.open(navUrl, action.target === 'self' ? '_self' : '_blank', 'noopener,noreferrer');
-        return;
-      }
+    if (plan.kind === 'open_action') {
+      await params.router.push({
+        name: 'action',
+        params: { actionId: String(plan.actionId) },
+        query: pickContractNavQuery(params.currentQuery() as Record<string, unknown>, {
+          action_id: plan.actionId,
+          target: plan.target || undefined,
+          domain_raw: plan.domainRaw || undefined,
+        }),
+      });
+      return;
+    }
+    if (plan.kind === 'open_url') {
+      const navUrl = params.resolveNavigationUrl(plan.url);
+      window.open(navUrl, plan.target === 'self' ? '_self' : '_blank', 'noopener,noreferrer');
+      return;
+    }
+    if (plan.kind === 'open_missing_target') {
       params.errorMessage.value = '打开操作缺少目标页面';
       params.status.value = 'error';
       return;
     }
-    if (action.mutation) {
+    if (plan.kind === 'scene_mutation') {
       const actionParams = await params.collectActionParams(action);
       if (actionParams === null) return;
       params.busyKind.value = 'action';
       try {
         await params.executeSceneMutation({
-          mutation: action.mutation,
-          actionKey: action.key || '',
-          recordId: params.recordId(),
-          model: action.targetModel || params.modelName(),
-          context: action.context,
+          mutation: plan.mutation,
+          actionKey: plan.actionKey,
+          recordId: plan.recordId,
+          model: plan.model,
+          context: plan.context,
           params: actionParams,
         });
         params.submissionFeedback.value = {
           kind: 'success',
           message: '操作已完成，页面数据已刷新。',
         };
-        await params.applyProjectionRefreshPolicy(action.refreshPolicy);
+        await params.applyProjectionRefreshPolicy(plan.refreshPolicy);
         return;
       } catch (err) {
         params.errorMessage.value = err instanceof Error ? err.message : '场景操作执行失败';
@@ -107,16 +113,15 @@ export function useFormActionRuntime(params: {
         params.busyKind.value = null;
       }
     }
-    const recordId = params.recordId();
-    if ((action.kind === 'object' || action.kind === 'server') && action.methodName && recordId) {
+    if (plan.kind === 'record_button') {
       if (!await params.ensureSavedBeforeRecordAction()) return;
       params.busyKind.value = 'action';
       try {
         const response = await executeButton({
-          model: action.targetModel || params.modelName(),
-          res_id: recordId,
-          button: { name: action.methodName, type: action.kind === 'server' ? 'server' : 'object' },
-          context: action.context,
+          model: plan.model,
+          res_id: plan.recordId,
+          button: { name: plan.methodName, type: plan.buttonType },
+          context: plan.context,
           meta: {
             menu_id: Number(params.routeMenuId() || 0) || undefined,
             action_id: params.actionId() || undefined,
@@ -124,18 +129,18 @@ export function useFormActionRuntime(params: {
         });
         const result = response?.result;
         if (await params.navigateActionResponseResult(result)) {
-          if (action.refreshPolicy) {
-            await params.applyProjectionRefreshPolicy(action.refreshPolicy);
+          if (plan.refreshPolicy) {
+            await params.applyProjectionRefreshPolicy(plan.refreshPolicy);
           }
           return;
         }
         const refresh = result?.type;
-        if (refresh === 'refresh' && !action.refreshPolicy) {
+        if (refresh === 'refresh' && !plan.refreshPolicy) {
           await params.reload();
           return;
         }
-        if (action.refreshPolicy) {
-          await params.applyProjectionRefreshPolicy(action.refreshPolicy);
+        if (plan.refreshPolicy) {
+          await params.applyProjectionRefreshPolicy(plan.refreshPolicy);
         } else {
           await params.reload();
         }

@@ -4,20 +4,20 @@ Generated from `test_inventory.csv`.
 
 ## Totals
 
-- Total assets: `1117`
+- Total assets: `1118`
 - Review queue: `4`
 - Unknown runtime: `3`
 - Long-running assets: `330`
 - Manual gate review: `4`
 - Aggregate-covered assets: `230`
-- PR dedupe candidates: `557`
+- PR dedupe candidates: `558`
 
 ## By Layer
 
 | Layer | Count |
 | --- | ---: |
 | governance | 344 |
-| contract | 276 |
+| contract | 277 |
 | data_migration | 217 |
 | unit | 149 |
 | odoo_integration | 55 |
@@ -30,7 +30,7 @@ Generated from `test_inventory.csv`.
 
 | Decision Gate | Count |
 | --- | ---: |
-| pr_candidate | 781 |
+| pr_candidate | 782 |
 | integration_candidate | 291 |
 | release_candidate | 36 |
 | manual_review | 4 |
@@ -43,7 +43,7 @@ Generated from `test_inventory.csv`.
 
 | Disposition | Count |
 | --- | ---: |
-| deduplicate_before_required | 557 |
+| deduplicate_before_required | 558 |
 | keep_integration_or_release_only | 290 |
 | covered_by_aggregate | 225 |
 | keep_release_only | 36 |
@@ -146,7 +146,7 @@ Generated from `test_inventory.csv`.
 
 | Runtime | Count |
 | --- | ---: |
-| <5m | 783 |
+| <5m | 784 |
 | 10-30m | 292 |
 | 30-60m | 38 |
 | unknown | 3 |
@@ -157,7 +157,7 @@ Generated from `test_inventory.csv`.
 | Owner | Count |
 | --- | ---: |
 | architecture owner | 344 |
-| platform owner | 276 |
+| platform owner | 277 |
 | data owner | 217 |
 | test owner | 150 |
 | backend owner | 55 |
@@ -169,7 +169,7 @@ Generated from `test_inventory.csv`.
 
 | Directory | Count |
 | --- | ---: |
-| scripts/verify | 817 |
+| scripts/verify | 818 |
 | scripts/migration | 215 |
 | scripts/ops | 37 |
 | frontend/apps/web/scripts | 20 |
@@ -278,10 +278,10 @@ Generated from `test_inventory.csv`.
 | T-ASSET-373 | contract | `scripts/verify/contract_envelope_guard.py` | platform owner |
 | T-ASSET-374 | contract | `scripts/verify/contract_evidence_guard.py` | platform owner |
 | T-ASSET-375 | contract | `scripts/verify/contract_evidence_schema_guard.py` | platform owner |
-| T-ASSET-376 | contract | `scripts/verify/contract_form_handling_policy_audit.py` | platform owner |
-| T-ASSET-377 | contract | `scripts/verify/contract_form_lowcode_orchestration_smoke.js` | platform owner |
-| T-ASSET-378 | contract | `scripts/verify/contract_form_save_payload_builder_guard.py` | platform owner |
-| ... | ... | 477 more | ... |
+| T-ASSET-376 | contract | `scripts/verify/contract_form_action_plan_builder_guard.py` | platform owner |
+| T-ASSET-377 | contract | `scripts/verify/contract_form_handling_policy_audit.py` | platform owner |
+| T-ASSET-378 | contract | `scripts/verify/contract_form_lowcode_orchestration_smoke.js` | platform owner |
+| ... | ... | 478 more | ... |
 
 ## Dedupe Hotspots
 
