@@ -385,7 +385,7 @@ import { validateContractFormData } from '../app/contractValidation';
 import { resolveActionIdFromContext } from '../app/actionContext';
 import { findActionMeta, findActionMetaByMenu, findMenuNode } from '../app/menu';
 import { pickContractNavQuery } from '../app/navigationContext';
-import { buildCanonicalSceneRouteTarget, buildEntryTargetRouteTarget } from '../app/routeQuery';
+import { buildCanonicalSceneRouteTarget } from '../app/routeQuery';
 import { readWorkspaceContext } from '../app/workspaceContext';
 import { collectPolicyValidationErrors, evaluateActionPolicy, evaluateFieldPolicy } from '../app/contractPolicies';
 import { buildRuntimeFieldStates } from '../app/modifierEngine';
@@ -439,8 +439,6 @@ import {
   resolveUnifiedPageContractV2VisibleFields,
 } from '../app/contracts/unifiedPageContractV2';
 import {
-  actionResponseNavQuery as actionResponseNavQueryFromResult,
-  actionResponseRouteTarget as actionResponseRouteTargetFromResult,
   buildActiveContractModeActions,
   buildContractFieldActionsFromRules,
   buildFormSettingsFieldActions as buildFormSettingsFieldActionsFromRules,
@@ -697,6 +695,7 @@ import { useFieldOrderMutationRuntime } from './contractForm/useFieldOrderMutati
 import { useFieldVisibilityDraftRuntime } from './contractForm/useFieldVisibilityDraftRuntime';
 import { useInlineFieldPolicyRuntime } from './contractForm/useInlineFieldPolicyRuntime';
 import { useContractModeActionRuntime } from './contractForm/useContractModeActionRuntime';
+import { useActionResponseNavigation } from './contractForm/useActionResponseNavigation';
 import {
   buildWorkflowTransitions,
   analyzeFormContractReadiness,
@@ -734,6 +733,14 @@ async function collectActionParams(action: ContractAction): Promise<Record<strin
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
+const {
+  actionResponseNavQuery,
+  actionResponseRouteTarget,
+  navigateActionResponseResult,
+} = useActionResponseNavigation({
+  router,
+  currentQuery: () => route.query,
+});
 
 function resolveWorkspaceContextQuery() {
   return readWorkspaceContext(route.query as Record<string, unknown>);
@@ -3879,14 +3886,6 @@ const primaryCreateFooterAction = computed<ContractAction | null>(() => {
   });
 });
 
-function actionResponseNavQuery(result: object | null | undefined, extra?: Record<string, unknown>) {
-  return actionResponseNavQueryFromResult(route.query as Record<string, unknown>, result, extra);
-}
-
-function actionResponseRouteTarget(target: unknown, result: object | null | undefined, extra?: Record<string, unknown>) {
-  return actionResponseRouteTargetFromResult(route.query as Record<string, unknown>, target, result, extra);
-}
-
 async function runNativeLayoutAction(row: Record<string, unknown>) {
   const action = contractActionFromNativeRow(row);
   if (!action) return;
@@ -3906,20 +3905,7 @@ async function runNativeLayoutAction(row: Record<string, unknown>) {
         },
       });
       const result = response?.result;
-      if (result?.entry_target) {
-        await router.push(actionResponseRouteTarget(buildEntryTargetRouteTarget(result.entry_target, {
-          query: actionResponseNavQuery(result),
-          actionId: result.action_id,
-        }), result) as never);
-        return;
-      }
-      const nextActionId = toPositiveInt(result?.action_id);
-      if (nextActionId) {
-        await router.push({
-          name: 'action',
-          params: { actionId: String(nextActionId) },
-          query: actionResponseNavQuery(result, { action_id: nextActionId }),
-        });
+      if (await navigateActionResponseResult(result)) {
         return;
       }
       await reload();
@@ -5957,23 +5943,7 @@ async function runAction(action: ContractAction) {
         },
       });
       const result = response?.result;
-      if (result?.entry_target) {
-        await router.push(actionResponseRouteTarget(buildEntryTargetRouteTarget(result.entry_target, {
-          query: actionResponseNavQuery(result),
-          actionId: result.action_id,
-        }), result) as never);
-        if (action.refreshPolicy) {
-          await applyProjectionRefreshPolicy(action.refreshPolicy);
-        }
-        return;
-      }
-      const nextActionId = toPositiveInt(result?.action_id);
-      if (nextActionId) {
-        await router.push({
-          name: 'action',
-          params: { actionId: String(nextActionId) },
-          query: actionResponseNavQuery(result, { action_id: nextActionId }),
-        });
+      if (await navigateActionResponseResult(result)) {
         if (action.refreshPolicy) {
           await applyProjectionRefreshPolicy(action.refreshPolicy);
         }
@@ -6054,20 +6024,7 @@ async function executePrimarySubmitAction(action: ContractAction, resId: number)
       },
     });
     const result = response?.result;
-    if (result?.entry_target) {
-      await router.push(actionResponseRouteTarget(buildEntryTargetRouteTarget(result.entry_target, {
-        query: actionResponseNavQuery(result),
-        actionId: result.action_id,
-      }), result) as never);
-      return;
-    }
-    const nextActionId = toPositiveInt(result?.action_id);
-    if (nextActionId) {
-      await router.push({
-        name: 'action',
-        params: { actionId: String(nextActionId) },
-        query: actionResponseNavQuery(result, { action_id: nextActionId }),
-      });
+    if (await navigateActionResponseResult(result)) {
       return;
     }
     submissionFeedback.value = { kind: 'success', message: '提交成功' };
