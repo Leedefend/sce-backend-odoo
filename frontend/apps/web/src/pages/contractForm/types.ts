@@ -8,6 +8,7 @@ export type {
   FormRuntimeTransactionName,
   FormSubmissionFeedback as SubmissionFeedback,
 } from './runtimeStateProtocol';
+export type { FormRuntimeStateSnapshot } from './runtimeStateReducer';
 
 export const MANY2ONE_CREATE_OPTION = '__create__';
 export const MANY2ONE_SEARCH_MORE_OPTION = '__search_more__';
