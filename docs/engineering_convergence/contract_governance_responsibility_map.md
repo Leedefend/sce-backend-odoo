@@ -3,7 +3,7 @@
 Date: 2026-07-13
 Owner: Platform owner
 Target file: `addons/smart_core/utils/contract_governance.py`
-Current size: 1,812 lines
+Current size: 1,792 lines
 Phase: staged responsibility split
 
 ## Purpose
@@ -75,6 +75,7 @@ and by a smaller public module layout.
 | `contract_governance_project_form_split_guard.py` | Project form/profile/task/kanban projection, project form orchestration, field selection, layout filtering, search/action helpers, lifecycle summary, and workflow surface projection lock. |
 | `contract_governance_enterprise_forms_split_guard.py` | Enterprise company, department, and user form projection, action cleanup, governance next-action, and user field-policy behavior lock. |
 | `contract_governance_contract_detection_split_guard.py` | Contract surface detection boundary lock for project/enterprise form, project kanban, tree/list, and generic form predicates. |
+| `contract_governance_domain_overrides_split_guard.py` | Domain override registry, priority ordering, failure capture, and HUD diagnostic append behavior lock. |
 
 ## Extraction Order
 
@@ -537,3 +538,18 @@ Stage 30 is complete when:
 - the extracted module remains pure projection-only: no ORM calls, HTTP calls,
   routing, file IO, environment access, or direct registry mutation;
 - `contract_governance.py` is locked at `<=1812` lines for this stage.
+
+## Stage 31 Target
+
+Stage 31 is complete when:
+
+- `contract_governance_surface_mapping.py` also owns JSON-like deep cloning used
+  for native/governed surface snapshots and projection callback injection;
+- `contract_governance_domain_overrides.py` owns domain override registration,
+  priority ordering, guarded execution, failure capture, and diagnostic append;
+- `contract_governance.py` keeps `apply_project_form_domain_override` as the
+  business orchestration entry point and public facade wrappers for override
+  registration and diagnostics;
+- the extracted modules remain projection-only: no ORM calls, HTTP calls,
+  routing, file IO, environment access, or backend permission inference;
+- `contract_governance.py` is locked at `<=1792` lines for this stage.

@@ -43,6 +43,7 @@ def main() -> int:
         for token in [
             "def _load_surface_mapping_module()",
             "contract_governance_surface_mapping.py",
+            "return _surface_mapping.deep_clone_json_like(obj)",
             "return _surface_mapping.collect_surface_snapshot(data)",
             "return _surface_mapping.build_surface_mapping(native_snapshot, governed_snapshot)",
         ]:
@@ -55,6 +56,7 @@ def main() -> int:
             "def collect_action_snapshot(",
             "def collect_surface_snapshot(",
             "def build_surface_mapping(",
+            "def deep_clone_json_like(",
             '"native_to_governed"',
             '"reordered": reordered',
         ]:
@@ -108,6 +110,12 @@ def main() -> int:
         layout_fields = mapping.get("layout_fields") or {}
         if layout_fields.get("reordered"):
             errors.append("layout mapping with additions/removals must not be marked reordered-only")
+        original = {"rows": [{"name": "name"}], "meta": {"count": 1}}
+        cloned = governance._deep_clone_json_like(original)
+        cloned["rows"][0]["name"] = "changed"
+        cloned["meta"]["count"] = 2
+        if original != {"rows": [{"name": "name"}], "meta": {"count": 1}}:
+            errors.append("deep_clone_json_like must recursively clone dict/list payloads")
 
     if errors:
         print("[contract_governance_surface_mapping_split_guard] FAIL")

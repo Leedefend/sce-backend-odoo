@@ -19,6 +19,14 @@ def _as_dict(value: Any) -> dict:
     return dict(value) if isinstance(value, dict) else {}
 
 
+def deep_clone_json_like(obj: Any) -> Any:
+    if isinstance(obj, dict):
+        return {k: deep_clone_json_like(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [deep_clone_json_like(v) for v in obj]
+    return obj
+
+
 def collect_layout_snapshot(layout: Any) -> dict[str, Any]:
     field_order: list[str] = []
     node_signatures: list[str] = []

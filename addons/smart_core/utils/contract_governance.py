@@ -277,6 +277,26 @@ _canonicalization = _load_canonicalization_module()
 _canonicalization._CONTRACT_KEY_CANONICAL_MAP = _CONTRACT_KEY_CANONICAL_MAP
 
 
+def _load_domain_overrides_module() -> Any:
+    try:
+        from . import contract_governance_domain_overrides as domain_overrides
+
+        return domain_overrides
+    except ImportError:
+        spec = importlib.util.spec_from_file_location(
+            "contract_governance_domain_overrides",
+            Path(__file__).with_name("contract_governance_domain_overrides.py"),
+        )
+        if spec is None or spec.loader is None:
+            raise
+        domain_overrides = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(domain_overrides)
+        return domain_overrides
+
+
+_domain_overrides = _load_domain_overrides_module()
+
+
 def _load_surface_mapping_module() -> Any:
     try:
         from . import contract_governance_surface_mapping as surface_mapping
@@ -903,7 +923,6 @@ def _governance_primary_model(data: dict) -> str:
         or data.get("model")
         or permissions.get("model")
     )
-_DOMAIN_OVERRIDE_REGISTRY: list[dict[str, Any]] = []
 
 
 def is_truthy(value: Any) -> bool:
@@ -1613,50 +1632,15 @@ def register_contract_domain_override(
     *,
     priority: int = 100,
 ) -> None:
-    if not callable(handler):
-        return
-    normalized_name = _safe_text(name, "unnamed_override")
-    for row in _DOMAIN_OVERRIDE_REGISTRY:
-        if _safe_text(row.get("name")) == normalized_name:
-            row["handler"] = handler
-            row["priority"] = int(priority)
-            return
-    _DOMAIN_OVERRIDE_REGISTRY.append(
-        {
-            "name": normalized_name,
-            "priority": int(priority),
-            "handler": handler,
-        }
-    )
-    _DOMAIN_OVERRIDE_REGISTRY.sort(key=lambda item: int(item.get("priority") or 100))
+    _domain_overrides.register_contract_domain_override(name, handler, priority=priority)
 
 
 def _append_governance_diagnostic(data: dict, key: str, value: Any) -> None:
-    diagnostic = data.get("diagnostic")
-    if not isinstance(diagnostic, dict):
-        diagnostic = {}
-    diagnostic[key] = value
-    data["diagnostic"] = diagnostic
+    _domain_overrides.append_governance_diagnostic(data, key, value)
 
 
 def _apply_domain_overrides(data: dict, contract_mode: str) -> list[dict[str, Any]]:
-    failures: list[dict[str, Any]] = []
-    for row in _DOMAIN_OVERRIDE_REGISTRY:
-        handler = row.get("handler")
-        if not callable(handler):
-            continue
-        try:
-            handler(data, contract_mode)
-        except Exception as exc:
-            failures.append(
-                {
-                    "name": _safe_text(row.get("name")),
-                    "error_type": exc.__class__.__name__,
-                    "message": _safe_text(str(exc))[:240],
-                }
-            )
-            continue
-    return failures
+    return _domain_overrides.apply_domain_overrides(data, contract_mode)
 
 
 def apply_project_form_domain_override(data: dict, contract_mode: str) -> None:
@@ -1711,11 +1695,7 @@ def _apply_semantic_governance(data: dict, contract_mode: str) -> None:
 
 
 def _deep_clone_json_like(obj: Any) -> Any:
-    if isinstance(obj, dict):
-        return {k: _deep_clone_json_like(v) for k, v in obj.items()}
-    if isinstance(obj, list):
-        return [_deep_clone_json_like(v) for v in obj]
-    return obj
+    return _surface_mapping.deep_clone_json_like(obj)
 
 
 def _collect_layout_snapshot(layout: Any) -> dict[str, Any]:
