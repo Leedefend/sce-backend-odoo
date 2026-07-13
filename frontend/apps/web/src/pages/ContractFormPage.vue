@@ -522,13 +522,14 @@ import {
   normalizeConfigPageLabel,
   normalizeFieldGroupTitle,
   normalizeFormConfigAuditResult,
-  normalizeFormConfigOperationLogEntries,
   normalizeLowCodeApplyParams,
   normalizeLowCodeContractListRows,
   moveFieldOrderByDelta,
   moveFieldOrderRelative,
   moveFieldOrderToGroupEnd,
+  persistFormConfigOperationLogEntries,
   readableFallbackFieldLabel,
+  readFormConfigOperationLogEntries,
   resolveFormDesignFieldLabel,
   resolveSelectedFormSettingsFieldGroupTitle,
   type LowCodeLayoutDraftRow,
@@ -1597,26 +1598,19 @@ const formConfigOperationLogStorageKey = computed(() => {
 });
 
 function persistFormConfigOperationLog() {
-  if (typeof window === 'undefined') return;
-  const key = formConfigOperationLogStorageKey.value;
-  if (!key) return;
-  try {
-    window.sessionStorage.setItem(key, JSON.stringify(formConfigOperationLog.value.slice(0, 50)));
-  } catch {
-    // ignore session storage failures
-  }
+  persistFormConfigOperationLogEntries(
+    formConfigOperationLogStorageKey.value,
+    formConfigOperationLog.value,
+    typeof window === 'undefined' ? undefined : window.sessionStorage,
+  );
 }
 
 function hydrateFormConfigOperationLog() {
-  if (typeof window === 'undefined') return;
-  const key = formConfigOperationLogStorageKey.value;
-  if (!key) return;
-  try {
-    const raw = window.sessionStorage.getItem(key);
-    formConfigOperationLog.value = normalizeFormConfigOperationLogEntries(raw ? JSON.parse(raw) : [], formConfigOperatorName.value);
-  } catch {
-    formConfigOperationLog.value = [];
-  }
+  formConfigOperationLog.value = readFormConfigOperationLogEntries(
+    formConfigOperationLogStorageKey.value,
+    typeof window === 'undefined' ? undefined : window.sessionStorage,
+    formConfigOperatorName.value,
+  );
 }
 
 function appendFormConfigOperation(

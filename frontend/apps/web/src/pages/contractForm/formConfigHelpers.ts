@@ -51,6 +51,34 @@ export function buildFormConfigOperationLogStorageKey(params: {
   return `sc_form_config_operation_log:${db}:${modelName}:action:${action}:view:${view}:page:${page}:user:${userId}`;
 }
 
+export function persistFormConfigOperationLogEntries(
+  key: string,
+  entries: FormConfigOperationLogEntry[],
+  storage: Storage | undefined,
+  limit = 50,
+) {
+  if (!key || !storage) return;
+  try {
+    storage.setItem(key, JSON.stringify(entries.slice(0, limit)));
+  } catch {
+    // ignore session storage failures
+  }
+}
+
+export function readFormConfigOperationLogEntries(
+  key: string,
+  storage: Storage | undefined,
+  operator: string,
+) {
+  if (!key || !storage) return [];
+  try {
+    const raw = storage.getItem(key);
+    return normalizeFormConfigOperationLogEntries(raw ? JSON.parse(raw) : [], operator);
+  } catch {
+    return [];
+  }
+}
+
 export function createFormConfigOperationLogEntry(
   action: string,
   summary: string,
