@@ -12,7 +12,7 @@ Generated from repository source files. This report is informational during the 
 
 | Lines | Category | File |
 | ---: | --- | --- |
-| 7644 | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
+| 7584 | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
 | 4820 | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 4491 | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 4400 | Python source | `addons/smart_construction_core/core_extension.py` |
@@ -83,7 +83,7 @@ Generated from repository source files. This report is informational during the 
 | 1256 | Python source | `addons/smart_construction_scene/tests/test_action_only_scene_semantic_supply.py` |
 | 1253 | Python source | `addons/smart_construction_core/models/core/settlement_order.py` |
 | 1251 | Python source | `addons/smart_construction_core/models/core/expense_claim.py` |
-| 1156 | TypeScript source | `frontend/apps/web/src/pages/contractForm/nativeLayoutUtils.ts` |
+| 1228 | TypeScript source | `frontend/apps/web/src/pages/contractForm/nativeLayoutUtils.ts` |
 | 1153 | Python source | `addons/smart_construction_custom/models/user_formal_visible_fields.py` |
 | 1149 | Vue source | `frontend/apps/web/src/components/template/NativeFormTreeRenderer.vue` |
 | 1145 | Python source | `scripts/verify/visible_data_usability_matrix_probe.py` |
@@ -128,7 +128,7 @@ Generated from repository source files. This report is informational during the 
 
 | Lines | Status | Category | File |
 | ---: | --- | --- | --- |
-| 7644 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
+| 7584 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
 | 4820 | split_plan_required | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 4491 | split_plan_required | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 4400 | split_plan_required | Python source | `addons/smart_construction_core/core_extension.py` |
@@ -192,7 +192,7 @@ Generated from repository source files. This report is informational during the 
 | 1256 | warning | Python source | `addons/smart_construction_scene/tests/test_action_only_scene_semantic_supply.py` |
 | 1253 | warning | Python source | `addons/smart_construction_core/models/core/settlement_order.py` |
 | 1251 | warning | Python source | `addons/smart_construction_core/models/core/expense_claim.py` |
-| 1156 | warning | TypeScript source | `frontend/apps/web/src/pages/contractForm/nativeLayoutUtils.ts` |
+| 1228 | warning | TypeScript source | `frontend/apps/web/src/pages/contractForm/nativeLayoutUtils.ts` |
 | 1153 | warning | Python source | `addons/smart_construction_custom/models/user_formal_visible_fields.py` |
 | 1149 | warning | Vue source | `frontend/apps/web/src/components/template/NativeFormTreeRenderer.vue` |
 | 1145 | warning | Python source | `scripts/verify/visible_data_usability_matrix_probe.py` |

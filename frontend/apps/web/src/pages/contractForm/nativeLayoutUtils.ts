@@ -91,6 +91,19 @@ export type RuntimeFieldStateLike = {
   required?: boolean;
 };
 
+export type ContractV2WidgetLike = Record<string, unknown> & {
+  fieldCode?: unknown;
+  label?: unknown;
+  fieldType?: unknown;
+  relation?: unknown;
+  widgetType?: unknown;
+  componentConfig?: unknown;
+};
+
+export type ContractV2ContainerLike = Record<string, unknown> & {
+  widgetList?: unknown;
+};
+
 export type FieldPolicyLike = {
   visible: boolean;
   readonly?: boolean;
@@ -264,6 +277,65 @@ export function applyNativeFieldOrderPreview<T extends NativeLayoutLikeNode>(
   });
   let fieldIndex = 0;
   return withChildren.map((node) => (isNativeFieldLayoutNode(node) ? sortedFields[fieldIndex++] : node));
+}
+
+export function contractV2WidgetToNativeFieldNode(widget: ContractV2WidgetLike): NativeLayoutLikeNode | null {
+  const fieldName = String(widget?.fieldCode || '').trim();
+  if (!fieldName) return null;
+  const componentConfig = widget.componentConfig && typeof widget.componentConfig === 'object'
+    ? widget.componentConfig as Record<string, unknown>
+    : {};
+  const fieldInfo: Record<string, unknown> = {
+    name: fieldName,
+    label: widget.label || fieldName,
+    string: widget.label || fieldName,
+    type: widget.fieldType || componentConfig.fieldType || componentConfig.ttype || 'char',
+    ...(widget.relation || componentConfig.relation ? { relation: widget.relation || componentConfig.relation } : {}),
+    ...(typeof componentConfig.required === 'boolean' ? { required: componentConfig.required } : {}),
+    ...(typeof componentConfig.readonly === 'boolean' ? { readonly: componentConfig.readonly } : {}),
+    ...(Array.isArray(componentConfig.selection) ? { selection: componentConfig.selection } : {}),
+  };
+  return {
+    type: 'field',
+    name: fieldName,
+    string: widget.label || fieldName,
+    label: widget.label || fieldName,
+    widget: widget.widgetType,
+    fieldInfo,
+    field_info: fieldInfo,
+  };
+}
+
+export function normalizeContractV2ContainersForNativeForm<T extends NativeLayoutLikeNode = NativeLayoutLikeNode>(
+  containers: ContractV2ContainerLike[],
+): T[] {
+  const walk = (node: ContractV2ContainerLike): T => {
+    const next = { ...(node as Record<string, unknown>) } as Record<string, unknown>;
+    CHILD_KEYS.forEach((key) => {
+      const value = next[key];
+      if (Array.isArray(value)) next[key] = (value as ContractV2ContainerLike[]).map(walk);
+    });
+    const widgetFields = Array.isArray(node.widgetList)
+      ? node.widgetList
+        .map((widget) => contractV2WidgetToNativeFieldNode(widget as ContractV2WidgetLike))
+        .filter((item): item is NativeLayoutLikeNode => Boolean(item))
+      : [];
+    if (widgetFields.length) {
+      const children = Array.isArray(next.children) ? next.children as NativeLayoutLikeNode[] : [];
+      const existingFieldNames = new Set(
+        children
+          .filter((child) => String(child?.type || '').trim().toLowerCase() === 'field')
+          .map((child) => String(child?.name || '').trim())
+          .filter(Boolean),
+      );
+      next.children = [
+        ...children,
+        ...widgetFields.filter((child) => !existingFieldNames.has(String(child.name || '').trim())),
+      ];
+    }
+    return next as T;
+  };
+  return containers.map(walk);
 }
 
 export type LegacyLayoutNodeInput = {

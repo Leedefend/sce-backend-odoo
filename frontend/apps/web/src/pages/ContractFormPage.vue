@@ -422,9 +422,7 @@ import {
   resolveContractV2MainData,
   resolveContractV2SourceContext,
   resolveContractV2ValueSource,
-  type ContractV2Container,
   type ContractV2NormalizedStore,
-  type ContractV2Widget,
 } from '../app/contracts/v2';
 import { executeSceneMutation } from '../app/sceneMutationRuntime';
 import { isCoreSceneStrictMode } from '../app/contractStrictMode';
@@ -575,6 +573,7 @@ import {
   buildNativeFieldSchemas,
   applyReadonlyFieldValues,
   applyNativeFieldOrderPreview as applyNativeFieldOrderPreviewFromTree,
+  normalizeContractV2ContainersForNativeForm as normalizeContractV2ContainersForNativeFormFromTree,
   shouldShowRequiredMark as shouldShowRequiredMarkFromNativeLayout,
   isNativeFieldVisible as isNativeFieldVisibleFromNativeLayout,
   isNativeLayoutNodeVisible as isNativeLayoutNodeVisibleFromNativeLayout,
@@ -1794,7 +1793,7 @@ const nativeFieldStructureGroups = computed<Array<{ key: string; title: string; 
     : (isContractFieldOrderEditable.value && legacyLayout.length
       ? legacyLayout
       : (containers.length
-        ? normalizeContractV2ContainersForNativeForm(containers as unknown as ContractV2Container[])
+        ? normalizeContractV2ContainersForNativeFormFromTree(containers as unknown as NativeLayoutLikeNode[]) as NativeFormLayoutNode[]
         : legacyLayout));
   return collectNativeFieldStructureGroups(baseLayout as NativeLayoutLikeNode[]);
 });
@@ -4058,7 +4057,7 @@ function runtimeNativeFormLayoutNodes(): NativeFormLayoutNode[] {
     ? storeContainers
     : (Array.isArray(v2?.layoutContract?.containerTree) ? v2.layoutContract.containerTree : []);
   if (containers.length > 0) {
-    return normalizeContractV2ContainersForNativeForm(containers as unknown as ContractV2Container[]);
+    return normalizeContractV2ContainersForNativeFormFromTree(containers as unknown as NativeLayoutLikeNode[]) as NativeFormLayoutNode[];
   }
   return Array.isArray(contract.value?.views?.form?.layout)
     ? contract.value?.views?.form?.layout as unknown as NativeFormLayoutNode[]
@@ -4081,69 +4080,10 @@ const rawNativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
     ? storeContainers
     : (Array.isArray(v2?.layoutContract?.containerTree) ? v2.layoutContract.containerTree : []);
   if (containers.length > 0) {
-    return normalizeContractV2ContainersForNativeForm(containers as unknown as ContractV2Container[]);
+    return normalizeContractV2ContainersForNativeFormFromTree(containers as unknown as NativeLayoutLikeNode[]) as NativeFormLayoutNode[];
   }
   return legacyLayout;
 });
-
-function contractV2WidgetToNativeFieldNode(widget: ContractV2Widget): NativeFormLayoutNode | null {
-  const fieldName = String(widget?.fieldCode || '').trim();
-  if (!fieldName) return null;
-  const componentConfig = widget.componentConfig && typeof widget.componentConfig === 'object'
-    ? widget.componentConfig as Record<string, unknown>
-    : {};
-  const fieldInfo: Record<string, unknown> = {
-    name: fieldName,
-    label: widget.label || fieldName,
-    string: widget.label || fieldName,
-    type: widget.fieldType || componentConfig.fieldType || componentConfig.ttype || 'char',
-    ...(widget.relation || componentConfig.relation ? { relation: widget.relation || componentConfig.relation } : {}),
-    ...(typeof componentConfig.required === 'boolean' ? { required: componentConfig.required } : {}),
-    ...(typeof componentConfig.readonly === 'boolean' ? { readonly: componentConfig.readonly } : {}),
-    ...(Array.isArray(componentConfig.selection) ? { selection: componentConfig.selection } : {}),
-  };
-  return {
-    type: 'field',
-    name: fieldName,
-    string: widget.label || fieldName,
-    label: widget.label || fieldName,
-    widget: widget.widgetType,
-    fieldInfo,
-    field_info: fieldInfo,
-  };
-}
-
-function normalizeContractV2ContainersForNativeForm(containers: ContractV2Container[]): NativeFormLayoutNode[] {
-  const walk = (node: ContractV2Container): NativeFormLayoutNode => {
-    const next = { ...(node as unknown as Record<string, unknown>) } as NativeFormLayoutNode;
-    (['children', 'pages', 'tabs', 'nodes', 'items'] as const).forEach((key) => {
-      const value = next[key];
-      if (Array.isArray(value)) {
-        next[key] = (value as ContractV2Container[]).map(walk);
-      }
-    });
-    const widgetFields = Array.isArray(node.widgetList)
-      ? node.widgetList
-        .map((widget) => contractV2WidgetToNativeFieldNode(widget))
-        .filter((item): item is NativeFormLayoutNode => Boolean(item))
-      : [];
-    if (widgetFields.length) {
-      const children = Array.isArray(next.children) ? next.children : [];
-      const existingFieldNames = new Set(
-        children
-          .filter((child) => String(child?.type || '').trim().toLowerCase() === 'field')
-          .map((child) => String(child?.name || '').trim())
-          .filter(Boolean),
-      );
-      next.children = [
-        ...children,
-        ...widgetFields.filter((child) => !existingFieldNames.has(String(child.name || '').trim())),
-      ];
-    }
-    return next;
-  };
-  return containers.map(walk);
-}
 
 const baseNativeFormLayoutNodes = computed<NativeFormLayoutNode[]>(() => {
   nativeLayoutVisibilityRevision.value;
