@@ -3,7 +3,7 @@
 Date: 2026-07-13
 Owner: Platform owner
 Target file: `addons/smart_core/utils/contract_governance.py`
-Current size: 4,213 lines
+Current size: 4,121 lines
 Phase: staged responsibility split
 
 ## Purpose
@@ -36,7 +36,7 @@ and by a smaller public module layout.
 | 1-446 | Source authority and registry API | Source authority descriptors, legacy profile registration, profile matching. | Keep facade wrappers until import-time compatibility is fully covered. |
 | imported + 595-670 | User surface normalization | Capability and scene normalization are delegated; scene sanitization, search/action noise reduction, and user-surface policies remain in facade/user-surface helpers. | `contract_governance_capabilities.py`, `contract_governance_scenes.py`, and `contract_governance_user_surface.py`. |
 | 1267-2178 | Project and enterprise governance | Scene list metadata, project form/list/kanban/task transforms, enterprise company/department/user forms. | `contract_governance_project_profiles.py` and `contract_governance_enterprise_profiles.py`. |
-| 2181-2596 | Standard list governance | Standard list profile application, toolbar labels, tier-review list shaping. | `contract_governance_list_surface.py`. |
+| 1591-1965 + imported | Standard list governance | Standard list profile application, delegated toolbar labels, tier-review list shaping. | `contract_governance_list_surface.py` plus future standard-list policy module. |
 | 2599-3044 | Native surface and scene bridge | Visible-field access realignment, native surface normalization, scene contract v1 bridge, labels, relation semantics. | `contract_governance_native_bridge.py`. |
 | 3047-4499 | Form policy and render semantics | Render profile, view capabilities, field groups, layout backfill, action policies, validation rules, create-profile noise hiding, canonical key mapping. | `contract_governance_form_policy.py`. |
 | 4502-4742 | Domain override and diagnostics | Domain override registry/application, diagnostics, snapshots, surface mapping. | `contract_governance_diagnostics.py`. |
@@ -59,6 +59,7 @@ and by a smaller public module layout.
 | `contract_governance_user_surface_split_guard.py` | User-surface sanitizer/action grouping extraction compatibility and purity lock. |
 | `contract_governance_capabilities_split_guard.py` | Capability normalization extraction compatibility, shared registry behavior, and purity lock. |
 | `contract_governance_scenes_split_guard.py` | Scene normalization extraction compatibility, shared semantic-profile registry behavior, and purity lock. |
+| `contract_governance_list_surface_split_guard.py` | Standard list toolbar label extraction compatibility and row-open action behavior lock. |
 
 ## Extraction Order
 
@@ -179,3 +180,16 @@ Stage 5 is complete when:
 - the extracted module remains projection-only: no ORM calls, HTTP calls,
   routing, file IO, or environment access;
 - `contract_governance.py` is locked at `<=4213` lines for this stage.
+
+## Stage 6 Target
+
+Stage 6 is complete when:
+
+- `contract_governance_list_surface.py` owns standard list toolbar labels,
+  search labels, and row-open action normalization;
+- `_govern_standard_list_for_user` keeps field selection, schema enrichment,
+  permissions, batch policy, list profile, and semantic-page assembly in the
+  facade until standard-list behavior has narrower fixture coverage;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=4121` lines for this stage.
