@@ -9,7 +9,7 @@ GOVERNANCE = ROOT / "addons/smart_core/utils/contract_governance.py"
 PROJECT_FORM = ROOT / "addons/smart_core/utils/contract_governance_project_form.py"
 CI = ROOT / "make/ci.mk"
 
-MAX_GOVERNANCE_LINES = 2872
+MAX_GOVERNANCE_LINES = 2781
 
 
 def _read(path: Path) -> str:
@@ -43,6 +43,8 @@ def main() -> int:
         for token in [
             "def _load_project_form_module()",
             "contract_governance_project_form.py",
+            "return _project_form.normalize_legacy_project_form_profile(",
+            "return _project_form.pick_project_form_fields(",
             "def _build_project_lifecycle_summary(data: dict) -> None:",
             "_project_form.build_project_lifecycle_summary(data)",
         ]:
@@ -51,7 +53,11 @@ def main() -> int:
 
     if project_form_text:
         for token in [
+            "def normalize_legacy_project_form_profile(",
+            "def pick_project_form_fields(",
             "def build_project_lifecycle_summary(",
+            "\"action_noise_markers\"",
+            "for key in (\"children\", \"tabs\", \"pages\", \"nodes\", \"items\")",
             "\"owner_layer\": \"business_fact\"",
             "\"source\": \"contract_governance.workflow_facts\"",
             "\"progress_percent\": 0 if state_keys else None",
@@ -68,6 +74,60 @@ def main() -> int:
 
     if not errors:
         governance = _load(GOVERNANCE, "contract_governance_project_form_split_under_guard")
+        governance.register_legacy_project_form_governance_model("project.project")
+        governance.register_legacy_project_form_profile(
+            "project.project",
+            {
+                "primary_fields": ["code", "", "message_ids"],
+                "create_hidden_fields": ["state", ""],
+                "action_priorities": ["submit", ""],
+                "action_noise_markers": [" Rating "],
+                "search_noise_markers": [" Filter "],
+                "action_group_labels": {"main": "Main", "": "Ignored"},
+                "max_fields": 4,
+            },
+        )
+        profile_data = {
+            "head": {"model": "project.project", "view_type": "form"},
+            "model": "project.project",
+            "governance": {"primary_model": "project.project"},
+            "views": {
+                "form": {
+                    "model": "project.project",
+                    "layout": [
+                        {
+                            "type": "page",
+                            "name": "business",
+                            "children": [
+                                {"type": "field", "name": "manager_id"},
+                                {"type": "field", "name": "message_ids"},
+                            ],
+                        }
+                    ],
+                }
+            },
+            "fields": {
+                "name": {"type": "char"},
+                "code": {"type": "char"},
+                "manager_id": {"type": "many2one"},
+                "state": {"type": "selection", "required": True, "readonly": False},
+                "budget_total": {"type": "float", "required": True, "readonly": False},
+                "message_ids": {"type": "one2many"},
+            },
+        }
+        profile = governance._legacy_project_form_profile(profile_data)
+        if profile.get("primary_fields") != ["code", "message_ids"]:
+            errors.append("project form profile must normalize primary fields without empty entries")
+        if profile.get("action_noise_markers") != ["rating"]:
+            errors.append("project form profile must lowercase action noise markers")
+        if profile.get("search_noise_markers") != ["filter"]:
+            errors.append("project form profile must lowercase search noise markers")
+        if profile.get("action_group_labels") != {"main": "Main"}:
+            errors.append("project form profile must normalize action group labels")
+        selected = governance._pick_project_form_fields(profile_data)
+        if selected != ["code", "manager_id", "name", "state"]:
+            errors.append(f"project form fields must merge primary/page/order/required fields, got {selected!r}")
+
         transitions = [
             {"trigger": {"label": f"Transition {idx}", "kind": "server"}}
             for idx in range(10)
