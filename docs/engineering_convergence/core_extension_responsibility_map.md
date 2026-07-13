@@ -2,7 +2,7 @@
 
 Target file: `addons/smart_construction_core/core_extension.py`
 
-Current line budget: `<=957`.
+Current line budget: `<=364`.
 
 ## Role
 
@@ -29,12 +29,12 @@ cross-industry policy.
 
 | Lines | Area | Current Responsibility | Candidate Destination |
 | ---: | --- | --- | --- |
-| 1-708 | Imports and eager registrations | Register project scope, reason metadata, capability groups, semantic scene profiles, and legacy governance profiles. | `core_extension_bootstrap.py` or declarative registration specs. |
+| imported | Eager registrations | Register project scope, reason metadata, capability groups, semantic scene profiles, and legacy governance profiles. | `core_extension_bootstrap.py`. |
 | imported | Contract projection helpers | Project field labeling, responsibility groups, v2 container/status patches, diary/company/tax form normalization, workflow injection. | `core_extension_contract_projection.py`. |
 | imported | API data policy hooks | File upload/download allowlists, API write/mutation/create/unlink policies, search-field mapping, and download auth subject lookup. | `core_extension_api_policy.py`. |
-| 758-776 | Intent handler registration | Registry compatibility loader delegates to imported handler contribution mapping. | `core_extension_intents.py`. |
-| 779-883 | Capability and form action contributions | Capability registry reads, group contributions, create fallbacks, and payment form business actions. | Facade until registry/handler behavior has focused coverage. |
-| 886-957 | System-init facade | Build `ext_facts`, then delegate page/profile override merge to `core_extension_system_init.py`. | `core_extension_system_init.py` plus wrappers retained in facade. |
+| 165-183 | Intent handler registration | Registry compatibility loader delegates to imported handler contribution mapping. | `core_extension_intents.py`. |
+| 186-290 | Capability and form action contributions | Capability registry reads, group contributions, create fallbacks, and payment form business actions. | Facade until registry/handler behavior has focused coverage. |
+| 293-364 | System-init facade | Build `ext_facts`, then delegate page/profile override merge to `core_extension_system_init.py`. | `core_extension_system_init.py` plus wrappers retained in facade. |
 | imported | Projected contract finalization | User-confirmed action ids and final projected contract shaping. | `core_extension_projected_contracts.py`. |
 | imported | Service/menu/navigation policy hooks | Business config refs, relation policy, menu token policy, role resolution, app shell, scene entry specs, acceptance nav. | `core_extension_navigation_policy.py`. |
 
@@ -236,3 +236,17 @@ Stage 11 is complete when:
   model discovery and attachment subject lookup, but must not write records or
   mutate registries;
 - `core_extension.py` is locked at `<=957` lines for this stage.
+
+## Stage 12 Bootstrap Registration
+
+Stage 12 is complete when:
+
+- `core_extension_bootstrap.py` owns eager construction registration for project
+  scope metadata, reason-code metadata, capability group profiles, scene
+  semantic profiles, route-only actions, legacy governance profiles, and
+  standard list profiles;
+- `core_extension.py` calls `apply_core_extension_bootstrap()` during import so
+  existing extension-loader side effects stay intact;
+- the extracted module may call existing registration helpers, but must not
+  perform ORM searches/writes, HTTP calls, or direct registry mutation;
+- `core_extension.py` is locked at `<=364` lines for this stage.

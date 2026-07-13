@@ -17,8 +17,9 @@ CONTRACT_PROJECTION = ROOT / "addons/smart_construction_core/core_extension_cont
 PROJECTED_CONTRACTS = ROOT / "addons/smart_construction_core/core_extension_projected_contracts.py"
 SERVICES = ROOT / "addons/smart_construction_core/core_extension_services.py"
 API_POLICY = ROOT / "addons/smart_construction_core/core_extension_api_policy.py"
+BOOTSTRAP = ROOT / "addons/smart_construction_core/core_extension_bootstrap.py"
 DOC = ROOT / "docs/engineering_convergence/core_extension_responsibility_map.md"
-MAX_LINES = 957
+MAX_LINES = 364
 
 
 def _line_count(path: Path) -> int:
@@ -245,13 +246,34 @@ def main() -> int:
             if token in api_policy_text:
                 errors.append(f"api policy module must not mutate records/registry; found token: {token}")
 
+    if not BOOTSTRAP.is_file():
+        errors.append("core_extension_bootstrap.py missing")
+    else:
+        bootstrap_text = BOOTSTRAP.read_text(encoding="utf-8")
+        required_bootstrap_tokens = [
+            "def apply_core_extension_bootstrap():",
+            "register_current_project_scope_model(\"project.project\")",
+            "register_legacy_business_reason_meta(_reason_code, _reason_meta)",
+            "register_capability_group_profile(_capability_group_key, _capability_group_profile)",
+            "register_scene_semantic_profile(_scene_semantic_profile)",
+            "register_kanban_row_action(",
+            "register_legacy_standard_list_profile(",
+        ]
+        for token in required_bootstrap_tokens:
+            if token not in bootstrap_text:
+                errors.append(f"bootstrap module missing token: {token}")
+        forbidden_tokens = (".search(", ".write(", "requests.", "registry[")
+        for token in forbidden_tokens:
+            if token in bootstrap_text:
+                errors.append(f"bootstrap module must not perform ORM/query or registry mutation beyond register helpers; found token: {token}")
+
     if not DOC.is_file():
         errors.append("core_extension responsibility map missing")
     else:
         text = DOC.read_text(encoding="utf-8")
         required_tokens = [
             "Target file: `addons/smart_construction_core/core_extension.py`",
-            "Current line budget: `<=957`.",
+            "Current line budget: `<=364`.",
             "`core_extension.py` is the construction-industry contribution facade",
             "`smart_core_register(registry)`",
             "`smart_core_extend_system_init(data, env, user)`",
@@ -307,6 +329,10 @@ def main() -> int:
             "`core_extension_api_policy.py` owns API data policy hooks",
             "`core_extension.py` imports API policy public hook names directly",
             "`core_extension.py` is locked at `<=957` lines",
+            "Stage 12 Bootstrap Registration",
+            "`core_extension_bootstrap.py` owns eager construction registration",
+            "`core_extension.py` calls `apply_core_extension_bootstrap()`",
+            "`core_extension.py` is locked at `<=364` lines",
             "future PRs from this branch should include multiple commits",
             "open only when",
         ]
