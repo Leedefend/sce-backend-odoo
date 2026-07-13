@@ -4,19 +4,19 @@ Generated from `test_inventory.csv`.
 
 ## Totals
 
-- Total assets: `1148`
+- Total assets: `1149`
 - Review queue: `4`
 - Unknown runtime: `3`
 - Long-running assets: `330`
 - Manual gate review: `4`
 - Aggregate-covered assets: `230`
-- PR dedupe candidates: `588`
+- PR dedupe candidates: `589`
 
 ## By Layer
 
 | Layer | Count |
 | --- | ---: |
-| governance | 346 |
+| governance | 347 |
 | contract | 305 |
 | data_migration | 217 |
 | unit | 149 |
@@ -30,7 +30,7 @@ Generated from `test_inventory.csv`.
 
 | Decision Gate | Count |
 | --- | ---: |
-| pr_candidate | 812 |
+| pr_candidate | 813 |
 | integration_candidate | 291 |
 | release_candidate | 36 |
 | manual_review | 4 |
@@ -43,7 +43,7 @@ Generated from `test_inventory.csv`.
 
 | Disposition | Count |
 | --- | ---: |
-| deduplicate_before_required | 588 |
+| deduplicate_before_required | 589 |
 | keep_integration_or_release_only | 290 |
 | covered_by_aggregate | 225 |
 | keep_release_only | 36 |
@@ -146,7 +146,7 @@ Generated from `test_inventory.csv`.
 
 | Runtime | Count |
 | --- | ---: |
-| <5m | 814 |
+| <5m | 815 |
 | 10-30m | 292 |
 | 30-60m | 38 |
 | unknown | 3 |
@@ -156,7 +156,7 @@ Generated from `test_inventory.csv`.
 
 | Owner | Count |
 | --- | ---: |
-| architecture owner | 346 |
+| architecture owner | 347 |
 | platform owner | 305 |
 | data owner | 217 |
 | test owner | 150 |
@@ -169,7 +169,7 @@ Generated from `test_inventory.csv`.
 
 | Directory | Count |
 | --- | ---: |
-| scripts/verify | 848 |
+| scripts/verify | 849 |
 | scripts/migration | 215 |
 | scripts/ops | 37 |
 | frontend/apps/web/scripts | 20 |
@@ -268,27 +268,27 @@ Generated from `test_inventory.csv`.
 | T-ASSET-361 | governance | `scripts/verify/complexity_guard.py` | architecture owner |
 | T-ASSET-362 | contract | `scripts/verify/construction_contract_history_value_gap_probe.py` | platform owner |
 | T-ASSET-363 | contract | `scripts/verify/construction_core_extension_contract_helpers_split_guard.py` | platform owner |
-| T-ASSET-364 | governance | `scripts/verify/construction_core_extension_project_layout_split_guard.py` | architecture owner |
-| T-ASSET-365 | governance | `scripts/verify/construction_core_extension_responsibility_map_guard.py` | architecture owner |
-| T-ASSET-366 | governance | `scripts/verify/construction_diary_visible_fields_audit.py` | architecture owner |
-| T-ASSET-367 | governance | `scripts/verify/construction_product_menu_release_audit.py` | architecture owner |
-| T-ASSET-368 | contract | `scripts/verify/contract_api_mode_smoke.py` | platform owner |
-| T-ASSET-371 | contract | `scripts/verify/contract_business_category_action_audit.py` | platform owner |
-| T-ASSET-372 | contract | `scripts/verify/contract_business_category_binding_audit.py` | platform owner |
-| T-ASSET-373 | contract | `scripts/verify/contract_catalog_determinism_guard.py` | platform owner |
-| T-ASSET-374 | contract | `scripts/verify/contract_compat_report.py` | platform owner |
-| T-ASSET-375 | contract | `scripts/verify/contract_drift_guard.sh` | platform owner |
-| T-ASSET-376 | contract | `scripts/verify/contract_envelope_guard.py` | platform owner |
-| T-ASSET-377 | contract | `scripts/verify/contract_evidence_guard.py` | platform owner |
-| T-ASSET-378 | contract | `scripts/verify/contract_evidence_schema_guard.py` | platform owner |
-| ... | ... | 508 more | ... |
+| T-ASSET-364 | governance | `scripts/verify/construction_core_extension_policy_maps_split_guard.py` | architecture owner |
+| T-ASSET-365 | governance | `scripts/verify/construction_core_extension_project_layout_split_guard.py` | architecture owner |
+| T-ASSET-366 | governance | `scripts/verify/construction_core_extension_responsibility_map_guard.py` | architecture owner |
+| T-ASSET-367 | governance | `scripts/verify/construction_diary_visible_fields_audit.py` | architecture owner |
+| T-ASSET-368 | governance | `scripts/verify/construction_product_menu_release_audit.py` | architecture owner |
+| T-ASSET-369 | contract | `scripts/verify/contract_api_mode_smoke.py` | platform owner |
+| T-ASSET-372 | contract | `scripts/verify/contract_business_category_action_audit.py` | platform owner |
+| T-ASSET-373 | contract | `scripts/verify/contract_business_category_binding_audit.py` | platform owner |
+| T-ASSET-374 | contract | `scripts/verify/contract_catalog_determinism_guard.py` | platform owner |
+| T-ASSET-375 | contract | `scripts/verify/contract_compat_report.py` | platform owner |
+| T-ASSET-376 | contract | `scripts/verify/contract_drift_guard.sh` | platform owner |
+| T-ASSET-377 | contract | `scripts/verify/contract_envelope_guard.py` | platform owner |
+| T-ASSET-378 | contract | `scripts/verify/contract_evidence_guard.py` | platform owner |
+| ... | ... | 509 more | ... |
 
 ## Dedupe Hotspots
 
 | Family | Count |
 | --- | ---: |
 | `scripts/verify/contract_governance_form` | 5 |
-| `scripts/verify/construction_core_extension` | 3 |
+| `scripts/verify/construction_core_extension` | 4 |
 | `scripts/verify/business_form_policy` | 2 |
 | `scripts/verify/contract_business_category` | 2 |
 | `scripts/verify/contract_form_runtime` | 2 |
@@ -323,7 +323,7 @@ Generated from `test_inventory.csv`.
 | Family | Count | Owner | Gate Decision | Disposition |
 | --- | ---: | --- | --- | --- |
 | `scripts/verify/contract_governance_form` | 5 | test owner | requires owner review | Requires owner review before mapping to an aggregate gate. |
-| `scripts/verify/construction_core_extension` | 3 | test owner | requires owner review | Requires owner review before mapping to an aggregate gate. |
+| `scripts/verify/construction_core_extension` | 4 | test owner | requires owner review | Requires owner review before mapping to an aggregate gate. |
 | `scripts/verify/business_form_policy` | 2 | architecture owner | owner-reviewed PR candidates | Retain as explicit PR candidates; no confirmed aggregate gate covers both policy coverage and field-hit audit. |
 | `scripts/verify/contract_business_category` | 2 | platform owner | owner-reviewed PR candidates | Retain as explicit PR candidates; action audit and binding audit are only wrapped by separate ops scripts. |
 | `scripts/verify/contract_form_runtime` | 2 | test owner | requires owner review | Requires owner review before mapping to an aggregate gate. |
