@@ -60,6 +60,7 @@ REQUIRED_GUARDS = [
     "contract_governance_form_validation_split_guard.py",
     "contract_governance_form_fields_split_guard.py",
     "contract_governance_project_form_split_guard.py",
+    "contract_governance_enterprise_forms_split_guard.py",
 ]
 
 INVARIANTS = [
@@ -95,7 +96,7 @@ def main() -> int:
 
     for token in [
         "Contract Governance Responsibility Map",
-        "Current size: 2,424 lines",
+        "Current size: 2,245 lines",
         "projection-only",
         "Do not start mechanical extraction",
         "## Public Entry Points",
@@ -180,6 +181,9 @@ def main() -> int:
         "## Stage 25 Target",
         "`contract_governance_project_form.py` also owns project kanban projection",
         "`contract_governance.py` is locked at `<=2424` lines",
+        "## Stage 26 Target",
+        "`contract_governance_enterprise_forms.py` owns enterprise company",
+        "`contract_governance.py` is locked at `<=2245` lines",
     ]:
         if token not in doc:
             errors.append(f"responsibility map missing token: {token}")
