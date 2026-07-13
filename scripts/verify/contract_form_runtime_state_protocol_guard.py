@@ -6,6 +6,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 PROTOCOL = ROOT / "frontend/apps/web/src/pages/contractForm/runtimeStateProtocol.ts"
 REDUCER = ROOT / "frontend/apps/web/src/pages/contractForm/runtimeStateReducer.ts"
+APPLIER = ROOT / "frontend/apps/web/src/pages/contractForm/runtimeStateApplier.ts"
 TYPES = ROOT / "frontend/apps/web/src/pages/contractForm/types.ts"
 PAGE = ROOT / "frontend/apps/web/src/pages/ContractFormPage.vue"
 SAVE_HELPER = ROOT / "frontend/apps/web/src/pages/contractForm/saveRecordHelpers.ts"
@@ -22,6 +23,7 @@ def main() -> int:
     errors: list[str] = []
     protocol = _read(PROTOCOL)
     reducer = _read(REDUCER)
+    applier = _read(APPLIER)
     types = _read(TYPES)
     page = _read(PAGE)
     save_helper = _read(SAVE_HELPER)
@@ -33,6 +35,8 @@ def main() -> int:
         errors.append(f"missing protocol: {PROTOCOL.relative_to(ROOT)}")
     if not reducer:
         errors.append(f"missing reducer: {REDUCER.relative_to(ROOT)}")
+    if not applier:
+        errors.append(f"missing applier: {APPLIER.relative_to(ROOT)}")
 
     required_protocol_tokens = [
         "export type FormRuntimeStatus = 'loading' | 'ok' | 'error';",
@@ -101,6 +105,42 @@ def main() -> int:
         if token in reducer:
             errors.append(f"runtimeStateReducer.ts must stay pure; forbidden token: {token}")
 
+    required_applier_tokens = [
+        "export function applyFormRuntimeStatusEvent",
+        "type FormRuntimeStatusEvent = Extract<FormRuntimeStateEvent, { kind: 'status' }>",
+        "FormRuntimeStatusRefs",
+        "INITIAL_FORM_RUNTIME_STATE",
+        "reduceFormRuntimeState",
+        "status: refs.status.value",
+        "errorMessage: refs.errorMessage.value",
+        "refs.status.value = next.status",
+        "refs.errorMessage.value = next.errorMessage",
+    ]
+    for token in required_applier_tokens:
+        if token not in applier:
+            errors.append(f"runtimeStateApplier.ts missing token: {token}")
+
+    forbidden_applier_tokens = [
+        "await ",
+        "async ",
+        "intentRequest",
+        "triggerOnchange",
+        "executeButton",
+        "router.",
+        "window.",
+        "createContractFormRecord",
+        "writeContractFormRecord",
+        "queryRelationOptions",
+        "reload(",
+        "busyKind.value",
+        "submissionFeedback.value",
+        "validationErrors.value",
+        "showOne2manyErrors.value",
+    ]
+    for token in forbidden_applier_tokens:
+        if token in applier:
+            errors.append(f"runtimeStateApplier.ts must stay status-only; forbidden token: {token}")
+
     required_type_exports = [
         "FormRuntimeBusyKind as BusyKind",
         "FormRuntimeStatus as UiStatus",
@@ -125,12 +165,33 @@ def main() -> int:
     required_consumers = [
         (page, "type SubmissionFeedback,", "ContractFormPage.vue"),
         (save_helper, "import type { LayoutNode, SubmissionFeedback } from './types';", "saveRecordHelpers.ts"),
-        (action_runtime, "import type { BusyKind, ContractAction, SubmissionFeedback } from './types';", "useFormActionRuntime.ts"),
+        (action_runtime, "import { applyFormRuntimeStatusEvent } from './runtimeStateApplier';", "useFormActionRuntime.ts"),
+        (action_runtime, "import type { BusyKind, ContractAction, SubmissionFeedback, UiStatus } from './types';", "useFormActionRuntime.ts"),
         (primary_runtime, "import type { BusyKind, ContractAction, SubmissionFeedback } from './types';", "usePrimaryFormActionRuntime.ts"),
     ]
     for source, token, label in required_consumers:
         if token not in source:
             errors.append(f"{label} missing runtime protocol consumer token: {token}")
+
+    required_action_applier_tokens = [
+        "applyFormRuntimeStatusEvent(params, {",
+        "transaction: 'runAction'",
+        "errorMessage: '打开操作缺少目标页面'",
+        "errorMessage: err instanceof Error ? err.message : '场景操作执行失败'",
+        "errorMessage: err instanceof Error ? err.message : '操作执行失败'",
+    ]
+    for token in required_action_applier_tokens:
+        if token not in action_runtime:
+            errors.append(f"useFormActionRuntime.ts missing status applier token: {token}")
+
+    stale_action_writes = [
+        "params.errorMessage.value = '打开操作缺少目标页面';",
+        "params.errorMessage.value = err instanceof Error ? err.message : '场景操作执行失败';",
+        "params.errorMessage.value = err instanceof Error ? err.message : '操作执行失败';",
+    ]
+    for token in stale_action_writes:
+        if token in action_runtime:
+            errors.append(f"useFormActionRuntime.ts still bypasses status applier: {token}")
 
     ci_token = "python3 scripts/verify/contract_form_runtime_state_protocol_guard.py"
     if ci_token not in ci:

@@ -3,7 +3,8 @@ import type { Router, LocationQueryRaw } from 'vue-router';
 import { executeButton } from '../../api/executeButton';
 import { pickContractNavQuery } from '../../app/navigationContext';
 import { buildFormActionExecutionPlan } from './actionExecutionPlan';
-import type { BusyKind, ContractAction, SubmissionFeedback } from './types';
+import { applyFormRuntimeStatusEvent } from './runtimeStateApplier';
+import type { BusyKind, ContractAction, SubmissionFeedback, UiStatus } from './types';
 
 type SceneMutationInput = {
   mutation: NonNullable<ContractAction['mutation']>;
@@ -33,7 +34,7 @@ export function useFormActionRuntime(params: {
   routeMenuId: () => unknown;
   router: Router;
   saveRecord: (refreshPolicy?: ContractAction['refreshPolicy']) => Promise<boolean | number>;
-  status: Ref<string>;
+  status: Ref<UiStatus>;
   submissionFeedback: Ref<SubmissionFeedback>;
 }) {
   async function runAction(action: ContractAction) {
@@ -80,8 +81,12 @@ export function useFormActionRuntime(params: {
       return;
     }
     if (plan.kind === 'open_missing_target') {
-      params.errorMessage.value = '打开操作缺少目标页面';
-      params.status.value = 'error';
+      applyFormRuntimeStatusEvent(params, {
+        kind: 'status',
+        transaction: 'runAction',
+        status: 'error',
+        errorMessage: '打开操作缺少目标页面',
+      });
       return;
     }
     if (plan.kind === 'scene_mutation') {
@@ -104,8 +109,12 @@ export function useFormActionRuntime(params: {
         await params.applyProjectionRefreshPolicy(plan.refreshPolicy);
         return;
       } catch (err) {
-        params.errorMessage.value = err instanceof Error ? err.message : '场景操作执行失败';
-        params.status.value = 'error';
+        applyFormRuntimeStatusEvent(params, {
+          kind: 'status',
+          transaction: 'runAction',
+          status: 'error',
+          errorMessage: err instanceof Error ? err.message : '场景操作执行失败',
+        });
         return;
       } finally {
         params.busyKind.value = null;
@@ -144,8 +153,12 @@ export function useFormActionRuntime(params: {
         }
         return;
       } catch (err) {
-        params.errorMessage.value = err instanceof Error ? err.message : '操作执行失败';
-        params.status.value = 'error';
+        applyFormRuntimeStatusEvent(params, {
+          kind: 'status',
+          transaction: 'runAction',
+          status: 'error',
+          errorMessage: err instanceof Error ? err.message : '操作执行失败',
+        });
       } finally {
         params.busyKind.value = null;
       }

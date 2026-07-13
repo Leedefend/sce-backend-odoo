@@ -6,20 +6,22 @@ set -euo pipefail
 : "${HEAD_SHA:?HEAD_SHA is required}"
 : "${GITHUB_WORKSPACE:?GITHUB_WORKSPACE is required}"
 
-REMOTE_URL="${CI_REMOTE_URL:-https://github.com/Leedefend/sce-backend-odoo.git}"
-FETCH_TIMEOUT_SECONDS="${CI_FETCH_TIMEOUT_SECONDS:-180}"
-FETCH_ATTEMPTS="${CI_FETCH_ATTEMPTS:-4}"
-FETCH_BACKOFF_BASE_SECONDS="${CI_FETCH_BACKOFF_BASE_SECONDS:-15}"
+REMOTE_URL="${CI_REMOTE_URL:-https://gitee.com/leegege/sce-backend-odoo.git}"
+FETCH_BRANCH_TIMEOUT_SECONDS="${CI_FETCH_BRANCH_TIMEOUT_SECONDS:-90}"
+FETCH_SHA_TIMEOUT_SECONDS="${CI_FETCH_SHA_TIMEOUT_SECONDS:-60}"
+FETCH_ATTEMPTS="${CI_FETCH_ATTEMPTS:-5}"
+FETCH_BACKOFF_BASE_SECONDS="${CI_FETCH_BACKOFF_BASE_SECONDS:-10}"
 
 network_diag() {
+  remote_host="$(printf '%s' "${REMOTE_URL}" | sed -E 's#^[^/:]+://([^/@]+@)?([^/:]+).*#\2#; s#^[^@]+@([^:]+):.*#\1#')"
   echo "::group::CI checkout network diagnostics"
   date -Is || true
   echo "remote=${REMOTE_URL}"
+  echo "remote_host=${remote_host}"
   echo "head_ref=${HEAD_REF}"
   echo "head_sha=${HEAD_SHA}"
-  getent hosts github.com || true
-  getent hosts api.github.com || true
-  timeout 20 curl -I --connect-timeout 8 --max-time 20 https://github.com 2>&1 | sed -n '1,12p' || true
+  getent hosts "${remote_host}" || true
+  timeout 20 curl -I --connect-timeout 8 --max-time 20 "https://${remote_host}" 2>&1 | sed -n '1,12p' || true
   timeout 20 git --git-dir="${CI_CACHE_REPO}" ls-remote --heads origin "${HEAD_REF}" 2>&1 | sed -n '1,12p' || true
   echo "::endgroup::"
 }
@@ -28,7 +30,14 @@ configure_git_transport() {
   git config --global protocol.version 2
   git config --global http.version HTTP/1.1
   git config --global http.lowSpeedLimit 1000
-  git config --global http.lowSpeedTime 60
+  git config --global http.lowSpeedTime 30
+}
+
+configure_git_credentials() {
+  if [ -n "${CI_GIT_USERNAME:-}" ] && [ -n "${CI_GIT_PASSWORD:-}" ]; then
+    git config --global credential.helper \
+      '!f() { test "$1" = get || exit 0; echo username=$CI_GIT_USERNAME; echo password=$CI_GIT_PASSWORD; }; f'
+  fi
 }
 
 ensure_cache_repo() {
@@ -49,10 +58,11 @@ fetch_head_sha() {
     return 0
   fi
 
+  network_diag
   for attempt in $(seq 1 "${FETCH_ATTEMPTS}"); do
     echo "Fetching ${HEAD_REF}/${HEAD_SHA} from origin (attempt ${attempt}/${FETCH_ATTEMPTS})"
     set +e
-    timeout "${FETCH_TIMEOUT_SECONDS}" git --git-dir="${CI_CACHE_REPO}" fetch --no-tags --prune origin \
+    timeout "${FETCH_BRANCH_TIMEOUT_SECONDS}" git --git-dir="${CI_CACHE_REPO}" fetch --no-tags --prune origin \
       "+refs/heads/${HEAD_REF}:refs/remotes/origin/${HEAD_REF}"
     branch_status=$?
     if [ "${branch_status}" -eq 0 ] && git --git-dir="${CI_CACHE_REPO}" cat-file -e "${HEAD_SHA}^{commit}" 2>/dev/null; then
@@ -60,7 +70,7 @@ fetch_head_sha() {
       return 0
     fi
 
-    timeout "${FETCH_TIMEOUT_SECONDS}" git --git-dir="${CI_CACHE_REPO}" fetch --no-tags origin "${HEAD_SHA}"
+    timeout "${FETCH_SHA_TIMEOUT_SECONDS}" git --git-dir="${CI_CACHE_REPO}" fetch --no-tags origin "${HEAD_SHA}"
     sha_status=$?
     if [ "${sha_status}" -eq 0 ] && git --git-dir="${CI_CACHE_REPO}" cat-file -e "${HEAD_SHA}^{commit}" 2>/dev/null; then
       set -e
@@ -91,6 +101,7 @@ checkout_workspace() {
 }
 
 configure_git_transport
+configure_git_credentials
 ensure_cache_repo
 fetch_head_sha
 checkout_workspace
