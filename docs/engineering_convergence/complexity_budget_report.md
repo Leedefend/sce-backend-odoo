@@ -4,7 +4,7 @@ Generated from repository source files. This report is informational during the 
 
 ## Summary
 
-- Scanned files: `3889`
+- Scanned files: `3891`
 - Files requiring split plan: `42`
 - Files above warning threshold: `64`
 
@@ -23,9 +23,9 @@ Generated from repository source files. This report is informational during the 
 | 3202 | Python source | `addons/smart_core/tests/test_form_field_configuration_params.py` |
 | 3187 | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
 | 3092 | Python source | `addons/smart_construction_core/models/support/p1_daily_business_visible_alias_fields.py` |
-| 3073 | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 3041 | Python source | `addons/smart_core/core/workspace_home_contract_builder.py` |
 | 3013 | Python source | `addons/smart_core/app_config_engine/services/assemblers/page_assembler.py` |
+| 2930 | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 2903 | Python source | `addons/smart_core/tests/test_menu_configuration_audit.py` |
 | 2830 | Python source | `addons/smart_construction_core/models/core/material_acceptance.py` |
 | 2585 | Python source | `addons/smart_construction_core/tests/test_user_feedback_business_views.py` |
@@ -139,9 +139,9 @@ Generated from repository source files. This report is informational during the 
 | 3202 | split_plan_required | Python source | `addons/smart_core/tests/test_form_field_configuration_params.py` |
 | 3187 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
 | 3092 | split_plan_required | Python source | `addons/smart_construction_core/models/support/p1_daily_business_visible_alias_fields.py` |
-| 3073 | split_plan_required | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 3041 | split_plan_required | Python source | `addons/smart_core/core/workspace_home_contract_builder.py` |
 | 3013 | split_plan_required | Python source | `addons/smart_core/app_config_engine/services/assemblers/page_assembler.py` |
+| 2930 | split_plan_required | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 2903 | split_plan_required | Python source | `addons/smart_core/tests/test_menu_configuration_audit.py` |
 | 2830 | split_plan_required | Python source | `addons/smart_construction_core/models/core/material_acceptance.py` |
 | 2585 | split_plan_required | Python source | `addons/smart_construction_core/tests/test_user_feedback_business_views.py` |

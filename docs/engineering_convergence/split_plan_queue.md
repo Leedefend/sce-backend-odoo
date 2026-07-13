@@ -24,9 +24,9 @@ Generated from `complexity_budget_report.md` split-plan-required files.
 | P1 | 3202 | Platform owner | `addons/smart_core/tests/test_form_field_configuration_params.py` | Split fixtures, scenario builders, and assertion groups by behavior area. |
 | P1 | 3187 | Frontend owner | `frontend/apps/web/src/pages/ListPage.vue` | Extract composables, child panels, data adapters, and action handlers; keep the route component as orchestration shell. |
 | P1 | 3092 | Construction backend owner | `addons/smart_construction_core/models/support/p1_daily_business_visible_alias_fields.py` | Extract service methods for cross-model workflow, amount, and policy logic. |
-| P1 | 3073 | Platform owner | `addons/smart_core/utils/contract_governance.py` | Extract constants/registries, user-surface normalization, list governance, native bridge, form policy, diagnostics, and keep `apply_contract_governance` as a thin facade. |
 | P1 | 3041 | Platform owner | `addons/smart_core/core/workspace_home_contract_builder.py` | Define owner-specific decomposition plan before adding unrelated behavior. |
 | P1 | 3013 | Platform owner | `addons/smart_core/app_config_engine/services/assemblers/page_assembler.py` | Separate parser/assembler/dispatcher responsibilities and preserve backend source-of-truth boundary. |
+| P1 | 2930 | Platform owner | `addons/smart_core/utils/contract_governance.py` | Extract constants/registries, user-surface normalization, list governance, native bridge, form policy, diagnostics, and keep `apply_contract_governance` as a thin facade. |
 | P1 | 2903 | Platform owner | `addons/smart_core/tests/test_menu_configuration_audit.py` | Split fixtures, scenario builders, and assertion groups by behavior area. |
 | P1 | 2443 | Platform owner | `addons/smart_core/core/unified_page_contract_v2_assembler.py` | Define owner-specific decomposition plan before adding unrelated behavior. |
 | P1 | 2306 | Platform owner | `addons/smart_core/handlers/system_init.py` | Extract parsing, validation, assembly, and response mapping into owned services. |
