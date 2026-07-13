@@ -483,7 +483,6 @@ import {
   formConfigOperationStatusLabel,
   fieldGroupTitleMatches,
   formatFormConfigAuditSummary,
-  formConfigSaveOperationSummary as formConfigSaveOperationSummaryFromDraft,
   formatFormConfigOperationSummary as formatFormConfigOperationSummaryText,
   formatFormConfigOperationTime,
   collectNativeLayoutGroupTitles,
@@ -501,7 +500,6 @@ import {
   normalizeConfigPageLabel,
   normalizeFieldGroupTitle,
   normalizeFormConfigAuditResult,
-  normalizeLowCodeApplyParams,
   normalizeLowCodeContractListRows,
   contractFieldSequenceFromOrder,
   readableFallbackFieldLabel,
@@ -698,6 +696,7 @@ import { useContractModeActionRuntime } from './contractForm/useContractModeActi
 import { useActionResponseNavigation } from './contractForm/useActionResponseNavigation';
 import { usePrimaryFormActionRuntime } from './contractForm/usePrimaryFormActionRuntime';
 import { useFormActionRuntime } from './contractForm/useFormActionRuntime';
+import { useFormConfigSaveRuntime } from './contractForm/useFormConfigSaveRuntime';
 import {
   buildWorkflowTransitions,
   analyzeFormContractReadiness,
@@ -1034,7 +1033,6 @@ const {
   status,
   submissionFeedback,
 });
-
 function recordVersionPolicy() {
   const raw = (contract.value as Record<string, unknown> | null)?.record_version;
   if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return null;
@@ -1626,6 +1624,48 @@ const lowCodeContractList = ref<Array<{ id: number; name: string; model: string;
 const lowCodeSelectedContractName = ref('');
 const lowCodeFormLayoutBase = ref<NativeFormLayoutNode[]>([]);
 const lowCodeLayoutDraft = ref<LowCodeLayoutDraftRow[]>([]);
+const {
+  saveContractFieldOrder,
+} = useFormConfigSaveRuntime({
+  appendOperation: appendFormConfigOperation,
+  buildLowCodeViewOrchestration: () => buildLowCodeViewOrchestration(),
+  busyKind,
+  changedFieldGroupDraft: () => changedFieldGroupDraft(),
+  changedFieldVisibilityDraft: () => changedFieldVisibilityDraft(),
+  contractModeFeedback,
+  contractV2ActionRules: () => contractV2ActionRules(),
+  errorMessage,
+  fieldGroupBase,
+  fieldGroupSavedBase,
+  fieldLayoutDirtyKeys,
+  fieldOrderDraft,
+  fieldSizeBase,
+  fieldSizeDraft,
+  fieldVisibilityBase,
+  fieldVisibilityDirty,
+  fieldVisibilityDirtyKeys,
+  formConfigAuditResult,
+  formLayoutColumnsBase,
+  formLayoutColumnsDraft,
+  formLayoutDirty,
+  groupColumnsBase,
+  groupColumnsDraft,
+  groupLayoutDirtyKeys,
+  groupVisibilityBase,
+  groupVisibilityDraft,
+  hasCurrentFormFieldDraftChanges: () => hasCurrentFormFieldDraftChanges.value,
+  hasFieldLayoutChanges: () => hasFieldLayoutChanges.value,
+  hasFieldOrderChanges: () => hasFieldOrderChanges.value,
+  hasFormLayoutChanges: () => hasFormLayoutChanges.value,
+  hasGroupLayoutChanges: () => hasGroupLayoutChanges.value,
+  hydrateLowCodeDraftFromContract: () => hydrateLowCodeDraftFromContract(),
+  lowCodeContractLoaded,
+  lowCodePrecheckWarnings,
+  markPendingOperations: markPendingFormConfigOperations,
+  modelName: () => model.value,
+  reload: () => reload(),
+  status,
+});
 
 const contractModeBaseFieldRows = computed<ContractFieldGovernanceRow[]>(() => {
   const mode = activeContractMode.value;
@@ -5797,111 +5837,6 @@ function returnToBusinessConfigDesigner() {
     path: '/admin/business-config',
     query: lowCodeReturnQuery(),
   });
-}
-
-function formConfigSaveOperationSummary(changedVisibility: Record<string, boolean>, changedGroups: Record<string, string>) {
-  return formConfigSaveOperationSummaryFromDraft({
-    hasFieldOrderChanges: hasFieldOrderChanges.value,
-    changedVisibility,
-    changedGroups,
-    hasFormLayoutChanges: hasFormLayoutChanges.value,
-    hasGroupLayoutChanges: hasGroupLayoutChanges.value,
-    hasFieldLayoutChanges: hasFieldLayoutChanges.value,
-  });
-}
-
-async function saveContractFieldOrder() {
-  if (!hasCurrentFormFieldDraftChanges.value) return true;
-  const configAction = contractV2ActionRules().find((rule) => contractActionRuleKey(rule) === BUSINESS_CONFIG_ACTION_KEYS.currentFormFieldOrderSave);
-  const target = parseMaybeJsonRecord(configAction?.target);
-  const baseParams = normalizeLowCodeApplyParams(parseMaybeJsonRecord(target.params));
-  const changedVisibility = changedFieldVisibilityDraft();
-  const changedGroups = changedFieldGroupDraft();
-  const saveOperationSummary = formConfigSaveOperationSummary(changedVisibility, changedGroups);
-  const applyParams: Record<string, unknown> = { ...baseParams };
-  if (hasFieldOrderChanges.value) {
-    applyParams.field_order = [...fieldOrderDraft.value];
-  }
-  if (Object.keys(changedGroups).length) {
-    applyParams.field_groups = changedGroups;
-  }
-  if (Object.keys(changedVisibility).length) {
-    applyParams.field_visibility = changedVisibility;
-  }
-  const hasFieldApplyParams = 'field_order' in applyParams || 'field_visibility' in applyParams || 'field_groups' in applyParams;
-  if (!hasFieldApplyParams && !hasFormLayoutChanges.value && !hasGroupLayoutChanges.value && !hasFieldLayoutChanges.value) {
-    fieldVisibilityDirty.value = false;
-    contractModeFeedback.value = '';
-    return true;
-  }
-  busyKind.value = 'action';
-  try {
-    if (hasFieldApplyParams) {
-      await intentRequest({
-        intent: BUSINESS_CONFIG_INTENTS.lowCodeApply,
-        params: applyParams,
-        context: { view: 'form' },
-      });
-    }
-    const saveResult = await intentRequest<{
-      precheck?: { warnings?: string[]; errors?: string[] }
-    }>({
-      intent: BUSINESS_CONFIG_INTENTS.contractSave,
-      params: {
-        ...baseParams,
-        name: lowCodeScopedContractName(String(model.value || 'unknown'), baseParams),
-        model: String(model.value || ''),
-        view_type: 'form',
-        publish: true,
-        contract_json: {
-          view_orchestration: buildLowCodeViewOrchestration(),
-        },
-      },
-    });
-    const warnings = Array.isArray(saveResult?.precheck?.warnings) ? saveResult.precheck?.warnings || [] : [];
-    lowCodePrecheckWarnings.value = warnings.map((item) => String(item || '').trim()).filter(Boolean);
-    if (Object.keys(changedVisibility).length) {
-      fieldVisibilityBase.value = {
-        ...fieldVisibilityBase.value,
-        ...changedVisibility,
-      };
-      Object.keys(changedVisibility).forEach((key) => {
-        delete fieldVisibilityDirtyKeys[key];
-      });
-    }
-    if (Object.keys(changedGroups).length) {
-      fieldGroupSavedBase.value = {
-        ...fieldGroupSavedBase.value,
-        ...changedGroups,
-      };
-      fieldGroupBase.value = {
-        ...fieldGroupBase.value,
-        ...changedGroups,
-      };
-    }
-    formLayoutColumnsBase.value = formLayoutColumnsDraft.value;
-    groupVisibilityBase.value = { ...groupVisibilityDraft };
-    groupColumnsBase.value = { ...groupColumnsDraft };
-    fieldSizeBase.value = { ...fieldSizeDraft };
-    formLayoutDirty.value = false;
-    Object.keys(groupLayoutDirtyKeys).forEach((key) => delete groupLayoutDirtyKeys[key]);
-    Object.keys(fieldLayoutDirtyKeys).forEach((key) => delete fieldLayoutDirtyKeys[key]);
-    fieldVisibilityDirty.value = false;
-    lowCodeContractLoaded.value = false;
-    formConfigAuditResult.value = null;
-    contractModeFeedback.value = '表单设置已保存并发布，刷新页面后按新配置生效';
-    markPendingFormConfigOperations('saved');
-    appendFormConfigOperation('保存发布', saveOperationSummary, 'done');
-    await reload();
-    await hydrateLowCodeDraftFromContract();
-    return true;
-  } catch (err) {
-    errorMessage.value = err instanceof Error ? err.message : '表单字段顺序更新失败';
-    status.value = 'error';
-    return false;
-  } finally {
-    busyKind.value = null;
-  }
 }
 
 function isTierValidationActionHidden(methodName: string): boolean {
