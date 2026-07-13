@@ -299,6 +299,9 @@ def main() -> int:
     ci_token = "python3 scripts/verify/contract_form_runtime_state_protocol_guard.py"
     if ci_token not in ci:
         errors.append("ci.local.quick must run contract_form_runtime_state_protocol_guard.py")
+    behavior_ci_token = "scripts/verify/contract_form_runtime_state_behavior_guard.sh"
+    if behavior_ci_token not in ci:
+        errors.append("ci.local.quick must run contract_form_runtime_state_behavior_guard.sh")
 
     if errors:
         print("[contract_form_runtime_state_protocol_guard] FAIL")
