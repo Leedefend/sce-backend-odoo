@@ -120,6 +120,25 @@ export function moveFieldOrderByDelta(order: string[], fieldKey: string, delta: 
   return draft;
 }
 
+export function moveFieldOrderToGroupEnd(params: {
+  order: string[];
+  fieldKey: string;
+  groupTitle: string;
+  resolveFieldGroupTitle: (fieldKey: string) => string;
+}): { order: string[]; anchorFieldKey: string; groupTitle: string } | null {
+  const source = String(params.fieldKey || '').trim();
+  const normalizedTargetGroup = normalizeFieldGroupTitle(params.groupTitle);
+  if (!source || !normalizedTargetGroup) return null;
+  const draft = params.order.filter((key) => key !== source);
+  const targetGroupFieldKeys = draft.filter((key) => (
+    fieldGroupTitleMatches(params.resolveFieldGroupTitle(key), normalizedTargetGroup)
+  ));
+  const anchorFieldKey = targetGroupFieldKeys[targetGroupFieldKeys.length - 1] || '';
+  const anchorIndex = anchorFieldKey ? draft.indexOf(anchorFieldKey) : -1;
+  draft.splice(anchorIndex >= 0 ? anchorIndex + 1 : draft.length, 0, source);
+  return { order: draft, anchorFieldKey, groupTitle: normalizedTargetGroup };
+}
+
 export function formConfigOperationSubject(action: string, summary: string) {
   const normalizedAction = String(action || '').trim();
   const normalizedSummary = String(summary || '').trim();

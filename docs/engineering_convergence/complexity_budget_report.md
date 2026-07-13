@@ -98,8 +98,8 @@ Generated from repository source files. This report is informational during the 
 | 966 | Python source | `addons/smart_core/handlers/load_contract.py` |
 | 966 | Python source | `scripts/verify/scbsly_direct_project_strict_visible_acceptance.py` |
 | 944 | Python source | `scripts/ops/scbs_55_user_acceptance_menu_policy_apply.py` |
+| 925 | TypeScript source | `frontend/apps/web/src/pages/contractForm/formConfigHelpers.ts` |
 | 912 | Vue source | `frontend/apps/web/src/components/action/ActionSurfaceToolbar.vue` |
-| 906 | TypeScript source | `frontend/apps/web/src/pages/contractForm/formConfigHelpers.ts` |
 | 902 | Python source | `scripts/migration/fresh_db_material_stock_document_projection_write.py` |
 | 892 | Python source | `scripts/verify/release_capability_audit.py` |
 | 886 | Python source | `addons/smart_construction_scene/profiles/workspace_home_scene_content.py` |

@@ -525,6 +525,7 @@ import {
   normalizeLowCodeContractListRows,
   moveFieldOrderByDelta,
   moveFieldOrderRelative,
+  moveFieldOrderToGroupEnd,
   readableFallbackFieldLabel,
   resolveSelectedFormSettingsFieldGroupTitle,
   type LowCodeLayoutDraftRow,
@@ -6707,26 +6708,25 @@ function openCentralCustomFieldCreate() {
 
 function moveFieldToGroupEnd(fieldKey: string, groupTitle: string) {
   const sourceFieldKey = String(fieldKey || '').trim();
-  const normalizedTargetGroup = normalizeFieldGroupTitle(groupTitle);
-  if (!sourceFieldKey || !normalizedTargetGroup) return;
+  if (!sourceFieldKey) return;
   ensureFieldOrderDraftStartsFromCurrentLayout();
-  const draft = fieldOrderDraft.value.filter((key) => key !== sourceFieldKey);
-  const targetGroupFieldKeys = draft.filter((key) => (
-    fieldGroupTitleMatches(fieldGroupBase.value[key] || fieldGroupDraft[key], normalizedTargetGroup)
-  ));
-  const anchorFieldKey = targetGroupFieldKeys[targetGroupFieldKeys.length - 1] || '';
-  const anchorIndex = anchorFieldKey ? draft.indexOf(anchorFieldKey) : -1;
-  draft.splice(anchorIndex >= 0 ? anchorIndex + 1 : draft.length, 0, sourceFieldKey);
-  fieldOrderDraft.value = draft;
+  const moved = moveFieldOrderToGroupEnd({
+    order: fieldOrderDraft.value,
+    fieldKey: sourceFieldKey,
+    groupTitle,
+    resolveFieldGroupTitle: (key) => fieldGroupBase.value[key] || fieldGroupDraft[key],
+  });
+  if (!moved) return;
+  fieldOrderDraft.value = moved.order;
   fieldOrderPreviewActive.value = true;
-  fieldGroupDraft[sourceFieldKey] = normalizedTargetGroup;
-  fieldMoveTargetDraft[sourceFieldKey] = anchorFieldKey;
+  fieldGroupDraft[sourceFieldKey] = moved.groupTitle;
+  fieldMoveTargetDraft[sourceFieldKey] = moved.anchorFieldKey;
   selectedFormSettingsFieldKey.value = sourceFieldKey;
   selectedFormSettingsFieldLabel.value = draggingFieldLabel.value || formDesignFieldLabel(sourceFieldKey);
-  selectedFormSettingsFieldGroupTitleDraft.value = normalizedTargetGroup;
-  selectedFormSettingsFieldGroupTitleEdit.value = normalizedTargetGroup;
+  selectedFormSettingsFieldGroupTitleDraft.value = moved.groupTitle;
+  selectedFormSettingsFieldGroupTitleEdit.value = moved.groupTitle;
   formConfigAuditResult.value = null;
-  appendFormConfigOperation('移动分组', `${formDesignFieldLabel(sourceFieldKey)} 移动到 ${normalizedTargetGroup}`);
+  appendFormConfigOperation('移动分组', `${formDesignFieldLabel(sourceFieldKey)} 移动到 ${moved.groupTitle}`);
 }
 
 function moveSelectedFormSettingsFieldToGroup(groupTitle: string) {
