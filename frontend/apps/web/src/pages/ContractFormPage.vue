@@ -586,6 +586,7 @@ import {
   collectOne2manyDraftValidationFromRows,
   ensureOne2manyRows as ensureOne2manyRowsForField,
   initOne2manyRowsFromRelationSource,
+  mergeOne2manyHydratedRecords,
   one2manyCanCreateFromPolicies,
   one2manyColumnDisplayValue,
   one2manyColumnInputType,
@@ -2590,24 +2591,7 @@ async function hydrateOne2manyRows(name: string) {
       fields,
     });
     const records = Array.isArray(response.records) ? response.records : [];
-    const byId = new Map<number, Record<string, unknown>>();
-    records.forEach((record) => {
-      const id = Number((record as Record<string, unknown>).id);
-      if (Number.isFinite(id) && id > 0) byId.set(Math.trunc(id), record as Record<string, unknown>);
-    });
-    rows.forEach((row) => {
-      if (!row.id || row.dirty) return;
-      const record = byId.get(Number(row.id));
-      if (!record) return;
-      row.values = columns.reduce<Record<string, unknown>>((acc, column) => {
-        acc[column.name] = record[column.name] ?? '';
-        return acc;
-      }, {
-        id: record.id,
-        display_name: record.display_name,
-        name: record.name ?? record.display_name ?? row.values?.name ?? `#${row.id}`,
-      });
-    });
+    mergeOne2manyHydratedRecords({ rows, columns, records: records as Array<Record<string, unknown>> });
   } catch {
     // Keep the id/display-name fallback when the child model is not readable.
   }

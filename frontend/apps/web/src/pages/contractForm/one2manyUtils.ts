@@ -228,6 +228,31 @@ export function restoreOne2manyDraftRow(rowsByField: Record<string, One2ManyInli
   return true;
 }
 
+export function mergeOne2manyHydratedRecords(params: {
+  rows: One2ManyInlineRow[];
+  columns: One2ManyColumn[];
+  records: Array<Record<string, unknown>>;
+}) {
+  const byId = new Map<number, Record<string, unknown>>();
+  params.records.forEach((record) => {
+    const id = Number(record.id);
+    if (Number.isFinite(id) && id > 0) byId.set(Math.trunc(id), record);
+  });
+  params.rows.forEach((row) => {
+    if (!row.id || row.dirty) return;
+    const record = byId.get(Number(row.id));
+    if (!record) return;
+    row.values = params.columns.reduce<Record<string, unknown>>((acc, column) => {
+      acc[column.name] = record[column.name] ?? '';
+      return acc;
+    }, {
+      id: record.id,
+      display_name: record.display_name,
+      name: record.name ?? record.display_name ?? row.values?.name ?? `#${row.id}`,
+    });
+  });
+}
+
 export function initOne2manyRowsFromRelationSource(params: {
   source: unknown;
   relationOptions: Array<{ id: number; label: string }>;
