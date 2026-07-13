@@ -3,7 +3,7 @@
 Date: 2026-07-13
 Owner: Platform owner
 Target file: `addons/smart_core/utils/contract_governance.py`
-Current size: 3,453 lines
+Current size: 3,361 lines
 Phase: staged responsibility split
 
 ## Purpose
@@ -67,6 +67,7 @@ and by a smaller public module layout.
 | `contract_governance_surface_mapping_split_guard.py` | Surface snapshot collection and native-to-governed diff behavior lock. |
 | `contract_governance_create_profile_split_guard.py` | Create-profile button, technical field, and state-ribbon cleanup behavior lock. |
 | `contract_governance_field_semantics_split_guard.py` | Field technical classification, semantic annotation, and surface-role behavior lock. |
+| `contract_governance_form_layout_split_guard.py` | Form layout field collection, sheet lookup, field-node creation, and visible-field backfill behavior lock. |
 
 ## Extraction Order
 
@@ -296,3 +297,18 @@ Stage 13 is complete when:
 - the extracted module remains projection-only: no ORM calls, HTTP calls,
   routing, file IO, or environment access;
 - `contract_governance.py` is locked at `<=3453` lines for this stage.
+
+## Stage 14 Target
+
+Stage 14 is complete when:
+
+- `contract_governance_form_layout.py` owns form layout structural helpers:
+  nested field-name collection, sheet lookup, labeled field-node construction,
+  and visible-field layout backfill;
+- `contract_governance.py` keeps the previous private helper names as wrappers
+  so project, enterprise, and form policy callers keep their current call shape;
+- the extracted module receives form/technical-field predicates from the facade
+  instead of acquiring business model authority itself;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=3361` lines for this stage.

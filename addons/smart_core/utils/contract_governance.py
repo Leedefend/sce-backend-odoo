@@ -344,6 +344,28 @@ _field_semantics._RENDER_PROFILE_EDIT = _RENDER_PROFILE_EDIT
 _field_semantics._RENDER_PROFILE_READONLY = _RENDER_PROFILE_READONLY
 
 
+def _load_form_layout_module() -> Any:
+    try:
+        from . import contract_governance_form_layout as form_layout
+
+        return form_layout
+    except ImportError:
+        spec = importlib.util.spec_from_file_location(
+            "contract_governance_form_layout",
+            Path(__file__).with_name("contract_governance_form_layout.py"),
+        )
+        if spec is None or spec.loader is None:
+            raise
+        form_layout = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(form_layout)
+        return form_layout
+
+
+_form_layout = _load_form_layout_module()
+_form_layout._ENTERPRISE_COMPANY_FIELD_LABELS = _ENTERPRISE_COMPANY_FIELD_LABELS
+_form_layout._ENTERPRISE_USER_FIELD_LABELS = _ENTERPRISE_USER_FIELD_LABELS
+
+
 def source_authority_contract() -> dict[str, Any]:
     return {
         "kind": SOURCE_KIND,
@@ -2295,104 +2317,19 @@ def _apply_form_field_groups(data: dict) -> None:
 
 
 def _collect_layout_field_names(nodes: Any) -> list[str]:
-    ordered: list[str] = []
-
-    def _iter_children(node: dict) -> list[list]:
-        rows: list[list] = []
-        for key in ("children", "tabs", "pages", "nodes", "items"):
-            candidate = node.get(key)
-            if isinstance(candidate, list):
-                rows.append(candidate)
-        return rows
-
-    def _collect(items: list) -> None:
-        for node in items:
-            if not isinstance(node, dict):
-                continue
-            if _safe_lower(node.get("type")) == "field":
-                name = _safe_text(node.get("name"))
-                if name and name not in ordered:
-                    ordered.append(name)
-            for children in _iter_children(node):
-                _collect(children)
-
-    if isinstance(nodes, list):
-        _collect(nodes)
-    elif isinstance(nodes, dict):
-        _collect([nodes])
-    return ordered
+    return _form_layout.collect_layout_field_names(nodes)
 
 
 def _find_layout_sheet_node(nodes: Any) -> dict | None:
-    if isinstance(nodes, dict):
-        nodes = [nodes]
-    if not isinstance(nodes, list):
-        return None
-    for node in nodes:
-        if not isinstance(node, dict):
-            continue
-        if _safe_lower(node.get("type")) == "sheet":
-            return node
-        for key in ("children", "tabs", "pages", "nodes", "items"):
-            candidate = node.get(key)
-            if isinstance(candidate, list):
-                found = _find_layout_sheet_node(candidate)
-                if found:
-                    return found
-    return None
+    return _form_layout.find_layout_sheet_node(nodes)
 
 
 def _backfill_form_layout_from_visible_fields(data: dict) -> None:
-    if not _is_form_contract(data):
-        return
-    fields_map = _as_dict(data.get("fields"))
-    if not fields_map:
-        return
-    visible_fields = [
-        _safe_text(name)
-        for name in (data.get("visible_fields") or [])
-        if _safe_text(name) in fields_map
-    ]
-    if not visible_fields:
-        return
-
-    views = _as_dict(data.get("views"))
-    form = _as_dict(views.get("form"))
-    layout = form.get("layout")
-    if not isinstance(layout, list) or not layout:
-        return
-
-    existing = set(_collect_layout_field_names(layout))
-    missing = [
-        name
-        for name in visible_fields
-        if name not in existing and not _is_technical_field(name, _as_dict(fields_map.get(name)))
-    ]
-    if not missing:
-        return
-
-    backfill_group = {
-        "type": "group",
-        "name": "visible_fields_backfill_group",
-        "string": "补充业务信息",
-        "children": [
-            _make_labeled_field_node(name, fields_map)
-            for name in missing
-        ],
-    }
-
-    target = _find_layout_sheet_node(layout)
-    if target:
-        children = target.get("children")
-        if not isinstance(children, list):
-            children = []
-        children.append(backfill_group)
-        target["children"] = children
-    else:
-        layout.append(backfill_group)
-    form["layout"] = layout
-    views["form"] = form
-    data["views"] = views
+    _form_layout.backfill_form_layout_from_visible_fields(
+        data,
+        is_form_contract=_is_form_contract,
+        is_technical_field=_is_technical_field,
+    )
 
 
 def _make_labeled_field_node(
@@ -2400,36 +2337,7 @@ def _make_labeled_field_node(
     fields_map: dict[str, Any],
     preferred_labels: dict[str, str] | None = None,
 ) -> dict[str, Any]:
-    descriptor = _as_dict(fields_map.get(name))
-    label = _safe_text((preferred_labels or {}).get(name), "")
-    if not label:
-        label = _safe_text(_ENTERPRISE_USER_FIELD_LABELS.get(name) or _ENTERPRISE_COMPANY_FIELD_LABELS.get(name), "")
-    if not label:
-        label = _safe_text(descriptor.get("string") if descriptor else "", name)
-    ttype = _safe_lower(descriptor.get("type") or descriptor.get("ttype"))
-    widget = _safe_text(descriptor.get("widget"))
-    if not widget:
-        widget = {
-            "many2one": "many2one",
-            "one2many": "one2many_list",
-            "many2many": "many2many_tags",
-            "boolean": "boolean",
-            "date": "date",
-            "datetime": "datetime",
-            "text": "textarea",
-            "html": "html",
-            "binary": "image",
-        }.get(ttype, "")
-    node = {"type": "field", "name": name}
-    if label:
-        node["string"] = label
-    node["fieldInfo"] = {
-        "name": name,
-        "label": label or name,
-    }
-    if widget:
-        node["fieldInfo"]["widget"] = widget
-    return node
+    return _form_layout.make_labeled_field_node(name, fields_map, preferred_labels)
 
 
 def _infer_action_semantic(action: dict) -> str:
