@@ -11,7 +11,7 @@ CORE_EXTENSION = ROOT / "addons/smart_construction_core/core_extension.py"
 ROWS = ROOT / "addons/smart_construction_core/core_extension_system_init_rows.py"
 CI = ROOT / "make/ci.mk"
 
-MAX_CORE_EXTENSION_LINES = 3351
+MAX_CORE_EXTENSION_LINES = 1858
 
 
 def _read(path: Path) -> str:
@@ -97,6 +97,7 @@ def main() -> int:
             "return _system_init_rows.dictionary_fields(env)",
             "return _system_init_rows.build_role_entry_contract_rows(env)",
             "return _system_init_rows.build_home_block_contract_rows(env)",
+            "return _system_init_rows.apply_system_init_profile_overrides(data)",
         ]:
             if token not in core_text:
                 errors.append(f"core_extension.py missing system-init row split token: {token}")
@@ -118,6 +119,9 @@ def main() -> int:
             "def dictionary_fields(",
             "def build_role_entry_contract_rows(",
             "def build_home_block_contract_rows(",
+            "def apply_system_init_profile_overrides(",
+            '"brand_name": "智能施工企业管理平台"',
+            '"build_urgent_capability_tokens"',
             "model.search_read(",
             "fields.Datetime.now()",
         ]:
@@ -168,6 +172,18 @@ def main() -> int:
             errors.append("role entry rows must preserve role-scoped dictionary entries")
         if rows.build_home_block_contract_rows(env)[0].get("blocks") != ["home.block"]:
             errors.append("home block rows must preserve enabled global blocks")
+        data = rows.apply_system_init_profile_overrides({"ext_facts": {}})
+        ext_facts = data.get("ext_facts") or {}
+        workspace = ext_facts.get("workspace_keyword_overrides") or {}
+        page_texts = (ext_facts.get("page_profile_overrides") or {}).get("page_texts") or {}
+        if workspace.get("business_action_scene_labels", {}).get("finance.payment_requests") != "支付申请":
+            errors.append("system init profile overrides must preserve payment scene label")
+        if "risk" not in workspace.get("token_sets", {}).get("build_urgent_capability_tokens", []):
+            errors.append("system init profile overrides must preserve urgent token sets")
+        if page_texts.get("login", {}).get("brand_name") != "智能施工企业管理平台":
+            errors.append("system init profile overrides must preserve login brand text")
+        if page_texts.get("action", {}).get("primary_action_contract") != "处理合同待办":
+            errors.append("system init profile overrides must preserve action page contract text")
 
     if errors:
         print("[construction_core_extension_system_init_rows_split_guard] FAIL")

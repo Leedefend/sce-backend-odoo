@@ -34,10 +34,10 @@ Generated from repository source files. This report is informational during the 
 | 2289 | Python source | `addons/smart_construction_core/models/core/project_core.py` |
 | 2267 | Vue source | `frontend/apps/web/src/layouts/AppShell.vue` |
 | 2193 | Python source | `addons/smart_core/handlers/api_data.py` |
-| 2065 | Python source | `addons/smart_construction_core/core_extension.py` |
 | 2051 | Python source | `scripts/verify/backend_business_fact_model_audit.py` |
 | 1974 | Python source | `addons/smart_construction_core/models/core/payment_request.py` |
 | 1966 | TypeScript source | `frontend/apps/web/src/stores/session.ts` |
+| 1858 | Python source | `addons/smart_construction_core/core_extension.py` |
 | 1850 | Python source | `addons/smart_core/handlers/menu_configuration.py` |
 | 1847 | Python source | `addons/smart_construction_core/models/support/product_policy_sync.py` |
 | 1844 | Python source | `scripts/migration/scbs_55_legacy_visible_field_full_reconcile_probe.py` |
@@ -150,11 +150,11 @@ Generated from repository source files. This report is informational during the 
 | 2289 | split_plan_required | Python source | `addons/smart_construction_core/models/core/project_core.py` |
 | 2267 | split_plan_required | Vue source | `frontend/apps/web/src/layouts/AppShell.vue` |
 | 2193 | split_plan_required | Python source | `addons/smart_core/handlers/api_data.py` |
-| 2065 | split_plan_required | Python source | `addons/smart_construction_core/core_extension.py` |
 | 2051 | split_plan_required | Python source | `scripts/verify/backend_business_fact_model_audit.py` |
 | 2010 | warning | XML data/view | `addons/smart_construction_core/security/sc_record_rules.xml` |
 | 1974 | split_plan_required | Python source | `addons/smart_construction_core/models/core/payment_request.py` |
 | 1966 | split_plan_required | TypeScript source | `frontend/apps/web/src/stores/session.ts` |
+| 1858 | split_plan_required | Python source | `addons/smart_construction_core/core_extension.py` |
 | 1850 | split_plan_required | Python source | `addons/smart_core/handlers/menu_configuration.py` |
 | 1847 | split_plan_required | Python source | `addons/smart_construction_core/models/support/product_policy_sync.py` |
 | 1844 | split_plan_required | Python source | `scripts/migration/scbs_55_legacy_visible_field_full_reconcile_probe.py` |

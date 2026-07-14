@@ -43,7 +43,7 @@ def main() -> int:
 
     for token in [
         "Construction Core Extension Responsibility Map",
-        "Current size: 2,065 lines",
+        "Current size: 1,858 lines",
         "staged responsibility split",
         "## Public Entry Points",
         "## Responsibility Bands",
@@ -59,6 +59,7 @@ def main() -> int:
         "## Stage 9 Target",
         "## Stage 10 Target",
         "## Stage 11 Target",
+        "## Stage 12 Target",
         "`core_extension_project_layout.py` owns pure project form layout helpers",
         "`core_extension_contract_helpers.py` owns generic contract helper utilities",
         "`core_extension_policy_maps.py` owns static construction policy/map facts",
@@ -70,7 +71,8 @@ def main() -> int:
         "`core_extension_intent_handlers.py` owns lazy construction intent handler",
         "`core_extension_hook_facts.py` also owns static menu delivery token policy",
         "`core_extension_service_builders.py` owns lazy service class and service",
-        "`core_extension.py` is locked at `<=2065` lines",
+        "`core_extension_system_init_rows.py` also owns system-init workspace and page",
+        "`core_extension.py` is locked at `<=1858` lines",
         "Do not move import-time registration side effects",
         "workflow projection reads `env`, registry, records",
         "`smart_core_register(registry)` because registry writes",
@@ -121,6 +123,8 @@ def main() -> int:
             errors.append("core_extension.py must delegate task action row builder")
         if "return _system_init_rows.build_home_block_contract_rows(env)" not in core:
             errors.append("core_extension.py must delegate home block row builder")
+        if "return _system_init_rows.apply_system_init_profile_overrides(data)" not in core:
+            errors.append("core_extension.py must delegate system-init profile overrides")
         if "core_extension_capability_rows as _capability_rows" not in core:
             errors.append("core_extension.py must import capability rows module")
         if "return _capability_rows.normalize_capability_rows(capabilities)" not in core:

@@ -3,7 +3,7 @@
 Date: 2026-07-14
 Owner: Construction backend owner
 Target file: `addons/smart_construction_core/core_extension.py`
-Current size: 2,065 lines
+Current size: 1,858 lines
 Phase: staged responsibility split
 
 ## Purpose
@@ -42,7 +42,7 @@ construction-owned policy.
 | `construction_core_extension_project_layout_split_guard.py` | Project layout helper extraction, user_id pruning, relabeling, responsibility/collaboration group injection, and projection-only boundary. |
 | `construction_core_extension_contract_helpers_split_guard.py` | Generic contract helper extraction, v2 layout/status mirrors, governance patch mirrors, content replacement, form layout governance, line lock, and projection-only boundary. |
 | `construction_core_extension_policy_maps_split_guard.py` | Static policy/map extraction, role/nav/file/API/unlink maps, line lock, no import-time registration side effects, and pure-constant boundary. |
-| `construction_core_extension_system_init_rows_split_guard.py` | System-init row builder extraction, read-side search helpers, workspace action rows, enterprise enablement facts, role/home dictionary rows, line lock, and no write/registration side effects. |
+| `construction_core_extension_system_init_rows_split_guard.py` | System-init row/profile extraction, read-side search helpers, workspace action rows, enterprise enablement facts, role/home dictionary rows, workspace/page profile overrides, line lock, and no write/registration side effects. |
 | `construction_core_extension_capability_rows_split_guard.py` | Capability row normalization extraction, identity/ownership/UI/binding/permission/runtime envelope preservation, line lock, and pure-normalization boundary. |
 | `construction_core_extension_hook_facts_split_guard.py` | Static hook fact extraction, business config refs, low-code/menu delivery refs, product/app shell/scene facts, acceptance nav contract, line lock, and static-facts boundary. |
 | `construction_core_extension_policy_accessors_split_guard.py` | Policy accessor extraction, file model contribution scan, API mutation/create/unlink policies, contract tax quick-create detection, line lock, and read-side policy boundary. |
@@ -209,6 +209,21 @@ Stage 11 is complete when:
   searches, writes, registry mutation, HTTP calls, file IO, or import-time
   registration side effects;
 - `core_extension.py` is locked at `<=2065` lines for this stage.
+
+## Stage 12 Target
+
+Stage 12 is complete when:
+
+- `core_extension_system_init_rows.py` also owns system-init workspace and page
+  profile overrides: business action scene labels, token sets, source scene
+  routes, collection keys, and login/home/my-work/action/record display text;
+- `core_extension.py` keeps the public `smart_core_extend_system_init` facade,
+  contribution assembly, and the `ext_facts` write boundary before delegating
+  profile override application;
+- the extracted profile override helper remains data-shaping only: no ORM
+  writes, creates, unlinks, registry mutation, HTTP calls, file IO, or
+  import-time registration side effects;
+- `core_extension.py` is locked at `<=1858` lines for this stage.
 
 ## Next Candidate
 
