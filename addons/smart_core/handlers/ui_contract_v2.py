@@ -813,44 +813,16 @@ class UiContractV2Handler(BaseIntentHandler):
         self._set_v2_container_tree(contract, container_tree)
 
     def _form_layout_governance(self, source_contract: dict[str, Any] | None) -> dict[str, Any]:
-        if not isinstance(source_contract, dict):
-            return {}
-        profile = source_contract.get("business_operation_profile")
-        if not isinstance(profile, dict):
-            return {}
-        governance = profile.get("form_structure_governance")
-        return governance if isinstance(governance, dict) else {}
+        return _projection.form_layout_governance(source_contract)
 
     def _form_layout_governance_columns(self, source_contract: dict[str, Any] | None, title: str = "") -> int:
-        governance = self._form_layout_governance(source_contract)
-        return self._form_layout_columns_from_governance(governance, title)
+        return _projection.form_layout_governance_columns(source_contract, title)
 
     def _form_layout_columns_from_governance(self, governance: dict[str, Any] | None, title: str = "") -> int:
-        if not isinstance(governance, dict):
-            return 0
-        group_columns = governance.get("group_columns") if isinstance(governance.get("group_columns"), dict) else {}
-        columns = 0
-        key = str(title or "").strip()
-        if key:
-            try:
-                columns = int(group_columns.get(key) or 0)
-            except (TypeError, ValueError):
-                columns = 0
-        if columns <= 0:
-            try:
-                columns = int(governance.get("form_columns") or 0)
-            except (TypeError, ValueError):
-                columns = 0
-        return columns if columns > 0 else 0
+        return _projection.form_layout_columns_from_governance(governance, title)
 
     def _form_layout_group_visible_from_governance(self, governance: dict[str, Any] | None, title: str = "") -> bool:
-        if not isinstance(governance, dict):
-            return True
-        group_visibility = governance.get("group_visibility") if isinstance(governance.get("group_visibility"), dict) else {}
-        key = str(title or "").strip()
-        if not key or key not in group_visibility:
-            return True
-        return bool(group_visibility.get(key))
+        return _projection.form_layout_group_visible_from_governance(governance, title)
 
     def _apply_form_layout_governance_to_group(
         self,
@@ -859,24 +831,11 @@ class UiContractV2Handler(BaseIntentHandler):
         *,
         source_contract: dict[str, Any] | None = None,
     ) -> None:
-        if not isinstance(node, dict):
-            return
-        resolved_title = str(
-            title
-            or node.get("string")
-            or node.get("label")
-            or node.get("title")
-            or node.get("name")
-            or ""
-        ).strip()
-        columns = self._form_layout_governance_columns(source_contract, resolved_title)
-        if columns <= 0:
-            return
-        node["cols"] = columns
-        node["columns"] = columns
-        attrs = node.get("attributes") if isinstance(node.get("attributes"), dict) else {}
-        attrs["col"] = str(columns)
-        node["attributes"] = attrs
+        _projection.apply_form_layout_governance_to_group(
+            node,
+            title,
+            source_contract=source_contract,
+        )
 
     def _apply_legacy_visible_list_layout(self, contract_v2: dict[str, Any], source_contract: dict[str, Any]) -> None:
         profile = source_contract.get("list_profile") if isinstance(source_contract.get("list_profile"), dict) else {}

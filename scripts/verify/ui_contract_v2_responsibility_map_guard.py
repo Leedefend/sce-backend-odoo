@@ -62,23 +62,25 @@ def main() -> int:
 
     for token in [
         "UI Contract V2 Responsibility Map",
-        "Current size: 3,556 lines",
-        "Stage 2 projection helper split",
+        "Current size: 3,515 lines",
+        "Stage 3 form layout governance helper split",
         "## Public Entry Points",
         "## Responsibility Bands",
         "## Current Side-Effect Boundaries",
         "## Do Not Move Yet",
         "## Stage 1 Target",
         "## Stage 2 Target",
-        "## Stage 3 Candidate",
+        "## Stage 3 Target",
+        "## Stage 4 Candidate",
         "## Verification Gaps",
         "## Invariants",
         "`UiContractV2Handler.handle`",
-        "`ui_contract_v2.py` is locked at `<=3556` lines",
+        "`ui_contract_v2.py` is locked at `<=3515` lines",
         "`ui_contract_v2_adapters.py` owns request/result adapters",
         "`ui_contract_v2_adapters.py` also owns pure value builders",
         "`ui_contract_v2_projection.py` owns pure v2 mutation helpers",
         "`ui_contract_v2_projection.py` also owns pure policy/status projection",
+        "`ui_contract_v2_projection.py` also owns pure form layout governance helpers",
         "Do not move these responsibilities before behavior coverage exists",
         "UiContractHandler",
         "PageAssembler",
@@ -94,8 +96,8 @@ def main() -> int:
 
     if handler:
         line_count = handler.count("\n") + (0 if handler.endswith("\n") else 1)
-        if line_count > 3556:
-            errors.append(f"ui_contract_v2.py line budget exceeded: {line_count} > 3556")
+        if line_count > 3515:
+            errors.append(f"ui_contract_v2.py line budget exceeded: {line_count} > 3515")
         methods = _class_method_names(handler)
         for name in REQUIRED_METHODS:
             if name not in methods:
@@ -126,6 +128,11 @@ def main() -> int:
             "_projection.project_v2_source_policies(",
             "_projection.apply_field_policies_to_v2_status(contract_v2, source_contract)",
             "_projection.ensure_native_layout_widget_status_visible(contract_v2)",
+            "return _projection.form_layout_governance(source_contract)",
+            "return _projection.form_layout_governance_columns(source_contract, title)",
+            "return _projection.form_layout_columns_from_governance(governance, title)",
+            "return _projection.form_layout_group_visible_from_governance(governance, title)",
+            "_projection.apply_form_layout_governance_to_group(",
         ]:
             if token not in handler:
                 errors.append(f"ui_contract_v2.py missing orchestration token: {token}")
@@ -172,6 +179,11 @@ def main() -> int:
             "def project_v2_source_policies(",
             "def apply_field_policies_to_v2_status(",
             "def ensure_native_layout_widget_status_visible(",
+            "def form_layout_governance(",
+            "def form_layout_governance_columns(",
+            "def form_layout_columns_from_governance(",
+            "def form_layout_group_visible_from_governance(",
+            "def apply_form_layout_governance_to_group(",
             "_adapters.v2_policy_projection(",
             "set_v2_widget_status(contract_v2, widget_status)",
         ]:

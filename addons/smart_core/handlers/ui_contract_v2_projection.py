@@ -230,3 +230,73 @@ def ensure_native_layout_widget_status_visible(contract_v2: dict[str, Any]) -> N
             "auth": "edit",
         })
     set_v2_widget_status(contract_v2, widget_status)
+
+
+def form_layout_governance(source_contract: dict[str, Any] | None) -> dict[str, Any]:
+    if not isinstance(source_contract, dict):
+        return {}
+    profile = source_contract.get("business_operation_profile")
+    if not isinstance(profile, dict):
+        return {}
+    governance = profile.get("form_structure_governance")
+    return governance if isinstance(governance, dict) else {}
+
+
+def form_layout_governance_columns(source_contract: dict[str, Any] | None, title: str = "") -> int:
+    governance = form_layout_governance(source_contract)
+    return form_layout_columns_from_governance(governance, title)
+
+
+def form_layout_columns_from_governance(governance: dict[str, Any] | None, title: str = "") -> int:
+    if not isinstance(governance, dict):
+        return 0
+    group_columns = governance.get("group_columns") if isinstance(governance.get("group_columns"), dict) else {}
+    columns = 0
+    key = str(title or "").strip()
+    if key:
+        try:
+            columns = int(group_columns.get(key) or 0)
+        except (TypeError, ValueError):
+            columns = 0
+    if columns <= 0:
+        try:
+            columns = int(governance.get("form_columns") or 0)
+        except (TypeError, ValueError):
+            columns = 0
+    return columns if columns > 0 else 0
+
+
+def form_layout_group_visible_from_governance(governance: dict[str, Any] | None, title: str = "") -> bool:
+    if not isinstance(governance, dict):
+        return True
+    group_visibility = governance.get("group_visibility") if isinstance(governance.get("group_visibility"), dict) else {}
+    key = str(title or "").strip()
+    if not key or key not in group_visibility:
+        return True
+    return bool(group_visibility.get(key))
+
+
+def apply_form_layout_governance_to_group(
+    node: dict[str, Any],
+    title: str = "",
+    *,
+    source_contract: dict[str, Any] | None = None,
+) -> None:
+    if not isinstance(node, dict):
+        return
+    resolved_title = str(
+        title
+        or node.get("string")
+        or node.get("label")
+        or node.get("title")
+        or node.get("name")
+        or ""
+    ).strip()
+    columns = form_layout_governance_columns(source_contract, resolved_title)
+    if columns <= 0:
+        return
+    node["cols"] = columns
+    node["columns"] = columns
+    attrs = node.get("attributes") if isinstance(node.get("attributes"), dict) else {}
+    attrs["col"] = str(columns)
+    node["attributes"] = attrs

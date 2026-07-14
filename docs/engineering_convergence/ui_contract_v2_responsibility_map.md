@@ -3,8 +3,8 @@
 Date: 2026-07-14
 Owner: Platform owner
 Target file: `addons/smart_core/handlers/ui_contract_v2.py`
-Current size: 3,556 lines
-Phase: Stage 2 projection helper split
+Current size: 3,515 lines
+Phase: Stage 3 form layout governance helper split
 
 ## Purpose
 
@@ -111,15 +111,23 @@ Stage 2 is complete:
 The extracted module must not import Odoo, read `env`, call extension hooks, or
 infer backend permissions.
 
-## Stage 3 Candidate
+## Stage 3 Target
 
-After Stage 2 is green, consider moving pure form layout governance helpers:
+Stage 3 is complete:
 
-- `_form_layout_governance`;
-- `_form_layout_governance_columns`;
-- `_form_layout_columns_from_governance`;
-- `_form_layout_group_visible_from_governance`;
-- `_apply_form_layout_governance_to_group`.
+- `ui_contract_v2_projection.py` also owns pure form layout governance helpers:
+  `_form_layout_governance`, `_form_layout_governance_columns`,
+  `_form_layout_columns_from_governance`,
+  `_form_layout_group_visible_from_governance`, and
+  `_apply_form_layout_governance_to_group`;
+- `ui_contract_v2.py` keeps compatibility methods and delegates to the
+  projection module;
+- `ui_contract_v2.py` is locked at `<=3515` lines for this stage.
+
+## Stage 4 Candidate
+
+Before moving more code, add behavior coverage around business config form
+group rewrites, list projection, and record hydration.
 
 Do not move `_apply_business_config_form_groups_to_v2` yet; it rewrites the
 container tree based on configured business groups and needs behavior coverage
