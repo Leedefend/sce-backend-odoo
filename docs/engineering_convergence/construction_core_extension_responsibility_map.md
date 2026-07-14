@@ -3,7 +3,7 @@
 Date: 2026-07-14
 Owner: Construction backend owner
 Target file: `addons/smart_construction_core/core_extension.py`
-Current size: 1,858 lines
+Current size: 1,820 lines
 Phase: staged responsibility split
 
 ## Purpose
@@ -45,7 +45,7 @@ construction-owned policy.
 | `construction_core_extension_system_init_rows_split_guard.py` | System-init row/profile extraction, read-side search helpers, workspace action rows, enterprise enablement facts, role/home dictionary rows, workspace/page profile overrides, line lock, and no write/registration side effects. |
 | `construction_core_extension_capability_rows_split_guard.py` | Capability row normalization extraction, identity/ownership/UI/binding/permission/runtime envelope preservation, line lock, and pure-normalization boundary. |
 | `construction_core_extension_hook_facts_split_guard.py` | Static hook fact extraction, business config refs, low-code/menu delivery refs, product/app shell/scene facts, acceptance nav contract, line lock, and static-facts boundary. |
-| `construction_core_extension_policy_accessors_split_guard.py` | Policy accessor extraction, file model contribution scan, API mutation/create/unlink policies, contract tax quick-create detection, line lock, and read-side policy boundary. |
+| `construction_core_extension_policy_accessors_split_guard.py` | Policy accessor extraction, file model contribution scan, API mutation/create/unlink/search-field policies, contract tax quick-create detection, line lock, and read-side policy boundary. |
 | `construction_core_extension_contract_normalizers_split_guard.py` | Contract normalizer extraction, construction diary/general contract tax/company form projection, helper delegation, workflow-injection boundary, line lock, and projection-only boundary. |
 | `construction_core_extension_intent_handlers_split_guard.py` | Intent handler contribution extraction, lazy handler import mapping, approval-policy intent preservation, facade registry boundary, line lock, and no env/registry side effects. |
 | `construction_core_extension_service_builders_split_guard.py` | Service builder extraction, lazy service class/factory imports, facade hook preservation, line lock, and no ORM/registry side effects. |
@@ -224,6 +224,21 @@ Stage 12 is complete when:
   writes, creates, unlinks, registry mutation, HTTP calls, file IO, or
   import-time registration side effects;
 - `core_extension.py` is locked at `<=1858` lines for this stage.
+
+## Stage 13 Target
+
+Stage 13 is complete when:
+
+- `core_extension_policy_accessors.py` also owns API data search-field
+  contribution assembly from alias labels, compatibility labels, confirmed
+  formal visible fields, model label overrides, and optional model `_fields`
+  filtering;
+- `core_extension.py` keeps the public `smart_core_api_data_search_fields`
+  facade and delegates to policy accessors;
+- the extracted helper remains read-side policy access only: no ORM writes,
+  creates, unlinks, registry mutation, HTTP calls, file IO, or import-time
+  registration side effects;
+- `core_extension.py` is locked at `<=1820` lines for this stage.
 
 ## Next Candidate
 

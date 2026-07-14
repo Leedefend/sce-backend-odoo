@@ -43,7 +43,7 @@ def main() -> int:
 
     for token in [
         "Construction Core Extension Responsibility Map",
-        "Current size: 1,858 lines",
+        "Current size: 1,820 lines",
         "staged responsibility split",
         "## Public Entry Points",
         "## Responsibility Bands",
@@ -60,6 +60,7 @@ def main() -> int:
         "## Stage 10 Target",
         "## Stage 11 Target",
         "## Stage 12 Target",
+        "## Stage 13 Target",
         "`core_extension_project_layout.py` owns pure project form layout helpers",
         "`core_extension_contract_helpers.py` owns generic contract helper utilities",
         "`core_extension_policy_maps.py` owns static construction policy/map facts",
@@ -72,7 +73,8 @@ def main() -> int:
         "`core_extension_hook_facts.py` also owns static menu delivery token policy",
         "`core_extension_service_builders.py` owns lazy service class and service",
         "`core_extension_system_init_rows.py` also owns system-init workspace and page",
-        "`core_extension.py` is locked at `<=1858` lines",
+        "`core_extension_policy_accessors.py` also owns API data search-field",
+        "`core_extension.py` is locked at `<=1820` lines",
         "Do not move import-time registration side effects",
         "workflow projection reads `env`, registry, records",
         "`smart_core_register(registry)` because registry writes",
@@ -139,6 +141,8 @@ def main() -> int:
             errors.append("core_extension.py must import policy accessors module")
         if "return _policy_accessors.get_api_data_unlink_allowed_model_contributions(env)" not in core:
             errors.append("core_extension.py must delegate unlink policy accessors")
+        if "return _policy_accessors.get_api_data_search_fields(env, model_name)" not in core:
+            errors.append("core_extension.py must delegate api data search fields")
         if "core_extension_contract_normalizers as _contract_normalizers" not in core:
             errors.append("core_extension.py must import contract normalizers module")
         if "_contract_normalizers.normalize_construction_diary_form(contract, source_contract, model=model, view_type=view_type)" not in core:

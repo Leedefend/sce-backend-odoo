@@ -138,5 +138,46 @@ def get_api_data_unlink_allowed_model_contributions(env):
     }
     return policies
 
+def get_api_data_search_fields(env, model_name: str):
+    try:
+        from odoo.addons.smart_construction_core.models.support.p1_daily_business_visible_alias_fields import (
+            LABEL_SOURCE_OVERRIDES,
+            MODEL_LABEL_SOURCE_OVERRIDES,
+            P1_ALIAS_COMPAT_LABELS,
+            P1_ALIAS_LABELS,
+        )
+        from odoo.addons.smart_construction_core.models.support.user_confirmed_formal_visible_fields import USER_CONFIRMED_FORMAL_VISIBLE_FIELDS
+    except Exception:
+        return []
+
+    normalized_model = str(model_name or "").strip()
+    labels = []
+    for label in list(P1_ALIAS_LABELS.get(normalized_model) or []) + list(P1_ALIAS_COMPAT_LABELS.get(normalized_model) or []):
+        value = str(label or "").strip()
+        if value and value not in labels:
+            labels.append(value)
+    for entry in USER_CONFIRMED_FORMAL_VISIBLE_FIELDS.get(normalized_model) or []:
+        label = str((entry or {}).get("label") or "").strip()
+        if label and label not in labels:
+            labels.append(label)
+    model_overrides = MODEL_LABEL_SOURCE_OVERRIDES.get(normalized_model) or {}
+    for label in model_overrides:
+        value = str(label or "").strip()
+        if value and value not in labels:
+            labels.append(value)
+    names = []
+    for label in labels:
+        for field_name in list(model_overrides.get(label) or []) + list(LABEL_SOURCE_OVERRIDES.get(label) or []):
+            value = str(field_name or "").strip()
+            if value and value not in names:
+                names.append(value)
+    if env is None:
+        return names
+    try:
+        model_fields = getattr(env[normalized_model], "_fields", {}) or {}
+    except Exception:
+        return names
+    return [field_name for field_name in names if field_name in model_fields]
+
 def get_model_code_mapping_contributions(env):
     return dict(_policy_maps.MODEL_CODE_MAPPING)

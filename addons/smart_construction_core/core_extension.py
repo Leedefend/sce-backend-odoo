@@ -1305,45 +1305,7 @@ def smart_core_api_data_unlink_allowed_models(env):
 
 
 def smart_core_api_data_search_fields(env, model_name: str):
-    try:
-        from .models.support.p1_daily_business_visible_alias_fields import (
-            LABEL_SOURCE_OVERRIDES,
-            MODEL_LABEL_SOURCE_OVERRIDES,
-            P1_ALIAS_COMPAT_LABELS,
-            P1_ALIAS_LABELS,
-        )
-        from .models.support.user_confirmed_formal_visible_fields import USER_CONFIRMED_FORMAL_VISIBLE_FIELDS
-    except Exception:
-        return []
-
-    model_name = str(model_name or "").strip()
-    labels = []
-    for label in list(P1_ALIAS_LABELS.get(model_name) or []) + list(P1_ALIAS_COMPAT_LABELS.get(model_name) or []):
-        value = str(label or "").strip()
-        if value and value not in labels:
-            labels.append(value)
-    for entry in USER_CONFIRMED_FORMAL_VISIBLE_FIELDS.get(model_name) or []:
-        label = str((entry or {}).get("label") or "").strip()
-        if label and label not in labels:
-            labels.append(label)
-    model_overrides = MODEL_LABEL_SOURCE_OVERRIDES.get(model_name) or {}
-    for label in model_overrides:
-        value = str(label or "").strip()
-        if value and value not in labels:
-            labels.append(value)
-    names = []
-    for label in labels:
-        for field_name in list(model_overrides.get(label) or []) + list(LABEL_SOURCE_OVERRIDES.get(label) or []):
-            value = str(field_name or "").strip()
-            if value and value not in names:
-                names.append(value)
-    if env is None:
-        return names
-    try:
-        model_fields = getattr(env[model_name], "_fields", {}) or {}
-    except Exception:
-        return names
-    return [field_name for field_name in names if field_name in model_fields]
+    return _policy_accessors.get_api_data_search_fields(env, model_name)
 
 
 def smart_core_model_code_mapping(env):
