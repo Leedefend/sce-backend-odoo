@@ -12,7 +12,7 @@ Generated from repository source files. This report is informational during the 
 
 | Lines | Category | File |
 | ---: | --- | --- |
-| 5949 | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
+| 5947 | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
 | 3684 | Vue source | `frontend/apps/web/src/views/MenuConfigView.vue` |
 | 3681 | Vue source | `frontend/apps/web/src/views/ActionView.vue` |
 | 3633 | Python source | `addons/smart_core/handlers/form_field_configuration.py` |
@@ -128,7 +128,7 @@ Generated from repository source files. This report is informational during the 
 
 | Lines | Status | Category | File |
 | ---: | --- | --- | --- |
-| 5949 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
+| 5947 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
 | 3684 | split_plan_required | Vue source | `frontend/apps/web/src/views/MenuConfigView.vue` |
 | 3681 | split_plan_required | Vue source | `frontend/apps/web/src/views/ActionView.vue` |
 | 3633 | split_plan_required | Python source | `addons/smart_core/handlers/form_field_configuration.py` |
