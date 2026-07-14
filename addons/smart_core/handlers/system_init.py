@@ -2232,6 +2232,16 @@ class SystemInitHandler(BaseIntentHandler):
             }
         if contract_mode == "hud" and isinstance(scene_diagnostics, dict):
             data["scene_diagnostics"] = scene_diagnostics
+        # Carry the already-authorized delivery projection into the startup
+        # contract at the final handler boundary.  This prevents an earlier
+        # minimal-surface/default pass from replacing a non-empty projection
+        # with an empty release payload.
+        _delivery_final = data.get("delivery_engine_v1") if isinstance(data.get("delivery_engine_v1"), dict) else {}
+        _release_final = data.get("release_navigation_v1") if isinstance(data.get("release_navigation_v1"), dict) else {}
+        if isinstance(_delivery_final.get("nav"), list) and _delivery_final.get("nav"):
+            _release_final = dict(_release_final)
+            _release_final["nav"] = _delivery_final["nav"]
+            data["release_navigation_v1"] = _release_final
         data = SystemInitPayloadBuilder.build_startup_surface(
             data,
             params=params,
