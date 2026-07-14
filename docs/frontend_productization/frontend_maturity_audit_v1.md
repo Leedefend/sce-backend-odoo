@@ -95,3 +95,31 @@
 本修复只收紧产品入口与直达导航权威，不修改 ACL、record rule、fixture 业务授权、金额、状态机或字段。项目成员在后端现行规则允许时仍可读取 Project A 下的部分项目/合同业务事实，但不会获得财务管理入口；Project B/C 记录继续由 record rule 拒绝。
 
 验收结果：角色/导航定向 Odoo 测试 4 个方法通过；固定浏览器报告 18 项检查通过。J02 完成 FE Company A→B→A 且记录集合和 company_id 请求上下文同步切换；J03 完成角色标签、权威导航、项目 A/B/C、动态 action/menu/record 直达、HTTP 403、无敏感 payload、logout 后 PM/owner 角色缓存隔离。证据路径为 `artifacts/playwright/frontend-productization-fixture/report.json`，截图目录同级。
+
+## FE-B02R 导航可达性与权限契约事实
+
+FE-B02 合并后的初始权威导航为 74 个叶节点（finance 44、project member 10、PM 14、owner 6）。其中四个节点能进入 release/delivery projection，但 action 首屏的 `api.data.list` 在 `/api/v1/intent` 首次返回 403；这不是合法空列表。失败层级和裁决如下：
+
+| 角色/入口 | menu XML ID | action XML ID / 类型 / 模型 / 视图 | 导航与后端证据 | 产品应保留？ | 处理 |
+| --- | --- | --- | --- | --- | --- |
+| finance / 计划管理 | `smart_construction_core.menu_sc_plan` | `smart_construction_core.action_sc_plan` / `ir.actions.act_window` / `sc.plan` / `tree,form` | menu/action 的 broad group 是 `group_sc_internal_user`，模型有 `access_sc_plan_read`；但正式 capability `construction.plan.manage` 只授权 `pm/executive`，finance 无职责与 capability 证据，403 属 action capability/role-scope 拒绝 | 否 | 以稳定 menu/action XML ID 从 finance role surface 移除 |
+| finance / 计划汇报 | `smart_construction_core.menu_sc_plan_report` | `smart_construction_core.action_sc_plan_report` / `ir.actions.act_window` / `sc.plan.report` / `tree,form` | menu/action 的 broad group 是 `group_sc_internal_user`，模型有 `access_sc_plan_report_read`；但正式 capability `construction.plan.report` 只授权 `pm/executive`，finance 无职责与 capability 证据，403 属 action capability/role-scope 拒绝 | 否 | 以稳定 menu/action XML ID 从 finance role surface 移除 |
+| project member / 投标报名管理 | `smart_construction_core.menu_sc_tender_registration` | `smart_construction_core.action_sc_tender_registration` / `ir.actions.act_window` / `tender.bid` / `tree,form` | menu/action 标注 `group_sc_cap_project_read`，但 `tender.bid` ACL 只有 project manager、project user、config admin，没有 project-read ACL；capability registry 也没有项目成员投标职责证据，首次在模型访问层拒绝 | 否 | 从 project member role surface 移除，模型 ACL 保持不变 |
+| owner / 投标报名管理 | `smart_construction_core.menu_sc_tender_registration` | `smart_construction_core.action_sc_tender_registration` / `ir.actions.act_window` / `tender.bid` / `tree,form` | owner 的产品 project surface 继承了 broad menu group，但没有 `tender.bid` 模型 ACL或专门投标 capability；角色名称和当前菜单可见均不构成扩权依据，首次在模型访问层拒绝 | 否 | 从 owner role surface 移除，模型 ACL 保持不变 |
+
+投影链保持单一：`core_extension_policy_maps.ROLE_SURFACE_OVERRIDES` 提供行业角色的 menu/action XML ID blocklist，`IdentityResolver.filter_nav_for_role_surface` 生成 release navigation，`MenuService._filter_role_surface_nodes` 生成 delivery navigation，二者继续由同一 `system.init` 契约交付。未新增前端隐藏、中文关键词过滤、fixture 账号判断或第二套权限推断，也未修改 ACL、record rule、fixture 授权或数据范围。
+
+运行时守卫 `verify.frontend.navigation.access` 递归读取四角色权威导航并逐叶验证 route 解析、action 初始化、首屏契约、HTTP、结构化错误 payload、console 和 pageerror；合法 200 空列表可通过，权限页、403、伪空列表和初始化错误均失败。最终动态结果为：
+
+```text
+initial_authoritative_leaf_count = 74
+removed_as_unauthorized = 4
+retained_after_authorized_fix = 0
+final_authoritative_leaf_count = 70
+reachable = 70
+forbidden = 0
+unresolved = 0
+role_leaf_counts = finance:42, project_member:9, pm:14, owner:5
+```
+
+四个被移除节点的 action 与 menu 直达均进入统一“无权访问”状态并提供“返回已授权的工作区”，没有业务记录数组、非零金额或 fixture 记录标识泄露。FE-B02 回归再次通过 18 项浏览器检查：finance 付款/结算保留，公司 A→B→A 列表和 `company_id` 同步刷新；project member 仍显示“项目成员”、只见 Project A、敏感入口无回升，action 876/menu 606/越权记录继续拒绝；logout 后 PM/owner 导航未复用前一角色缓存。证据为 `artifacts/playwright/frontend-navigation-access/report.json` 与 `artifacts/playwright/frontend-productization-fixture/report.json`。后续 FE-B03 的权威巡检分母冻结为 70，不再使用历史 115。
