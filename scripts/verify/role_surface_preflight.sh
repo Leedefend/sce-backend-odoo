@@ -28,6 +28,7 @@ required_logins = [
     "demo_role_owner",
     "demo_role_pm",
     "demo_role_finance",
+    "demo_role_project_a_member",
     "demo_role_executive",
 ]
 
