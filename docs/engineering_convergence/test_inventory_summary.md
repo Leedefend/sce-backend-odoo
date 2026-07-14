@@ -4,20 +4,20 @@ Generated from `test_inventory.csv`.
 
 ## Totals
 
-- Total assets: `1157`
+- Total assets: `1158`
 - Review queue: `4`
 - Unknown runtime: `3`
 - Long-running assets: `330`
 - Manual gate review: `4`
 - Aggregate-covered assets: `230`
-- PR dedupe candidates: `597`
+- PR dedupe candidates: `598`
 
 ## By Layer
 
 | Layer | Count |
 | --- | ---: |
 | governance | 352 |
-| contract | 307 |
+| contract | 308 |
 | data_migration | 217 |
 | unit | 149 |
 | odoo_integration | 55 |
@@ -30,7 +30,7 @@ Generated from `test_inventory.csv`.
 
 | Decision Gate | Count |
 | --- | ---: |
-| pr_candidate | 821 |
+| pr_candidate | 822 |
 | integration_candidate | 291 |
 | release_candidate | 36 |
 | manual_review | 4 |
@@ -43,7 +43,7 @@ Generated from `test_inventory.csv`.
 
 | Disposition | Count |
 | --- | ---: |
-| deduplicate_before_required | 597 |
+| deduplicate_before_required | 598 |
 | keep_integration_or_release_only | 290 |
 | covered_by_aggregate | 225 |
 | keep_release_only | 36 |
@@ -146,7 +146,7 @@ Generated from `test_inventory.csv`.
 
 | Runtime | Count |
 | --- | ---: |
-| <5m | 823 |
+| <5m | 824 |
 | 10-30m | 292 |
 | 30-60m | 38 |
 | unknown | 3 |
@@ -157,7 +157,7 @@ Generated from `test_inventory.csv`.
 | Owner | Count |
 | --- | ---: |
 | architecture owner | 352 |
-| platform owner | 307 |
+| platform owner | 308 |
 | data owner | 217 |
 | test owner | 150 |
 | backend owner | 55 |
@@ -169,7 +169,7 @@ Generated from `test_inventory.csv`.
 
 | Directory | Count |
 | --- | ---: |
-| scripts/verify | 857 |
+| scripts/verify | 858 |
 | scripts/migration | 215 |
 | scripts/ops | 37 |
 | frontend/apps/web/scripts | 20 |
@@ -281,7 +281,7 @@ Generated from `test_inventory.csv`.
 | T-ASSET-374 | governance | `scripts/verify/construction_core_extension_system_init_rows_split_guard.py` | architecture owner |
 | T-ASSET-375 | governance | `scripts/verify/construction_diary_visible_fields_audit.py` | architecture owner |
 | T-ASSET-376 | governance | `scripts/verify/construction_product_menu_release_audit.py` | architecture owner |
-| ... | ... | 517 more | ... |
+| ... | ... | 518 more | ... |
 
 ## Dedupe Hotspots
 
@@ -297,6 +297,7 @@ Generated from `test_inventory.csv`.
 | `scripts/verify/intent_smoke_utils` | 2 |
 | `scripts/verify/material_business_category` | 2 |
 | `scripts/verify/material_settlement_payment` | 2 |
+| `scripts/verify/ui_contract_v2` | 2 |
 | `frontend/apps/web/scripts/business_form_all` | 1 |
 | `frontend/apps/web/scripts/business_form_frontend` | 1 |
 | `frontend/apps/web/scripts/handling_entry_catalog` | 1 |
@@ -316,7 +317,6 @@ Generated from `test_inventory.csv`.
 | `scripts/ci/generate_test_inventory` | 1 |
 | `scripts/ci/summarize_test_inventory` | 1 |
 | `scripts/ci/verify_contract_form` | 1 |
-| `scripts/ops/contract_product_acceptance` | 1 |
 
 ## Residual Dedupe Hotspot Disposition
 
@@ -332,3 +332,4 @@ Generated from `test_inventory.csv`.
 | `scripts/verify/intent_smoke_utils` | 2 | platform owner | helper debt, no aggregate gate | Retain as helper debt; utility modules are consumed by multiple smokes and should not be marked covered by one gate. |
 | `scripts/verify/material_business_category` | 2 | architecture owner | owner-reviewed PR candidates | Retain as explicit PR candidates; action and binding audits are only wrapped by separate ops scripts. |
 | `scripts/verify/material_settlement_payment` | 2 | architecture owner | owner-reviewed PR candidates | Retain as explicit PR candidates; approval policy and reversal audits are not covered by the traceability aggregate. |
+| `scripts/verify/ui_contract_v2` | 2 | test owner | requires owner review | Requires owner review before mapping to an aggregate gate. |

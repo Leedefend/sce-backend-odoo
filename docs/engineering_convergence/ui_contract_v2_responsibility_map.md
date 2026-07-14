@@ -3,8 +3,8 @@
 Date: 2026-07-14
 Owner: Platform owner
 Target file: `addons/smart_core/handlers/ui_contract_v2.py`
-Current size: 3,849 lines
-Phase: read-only responsibility audit
+Current size: 3,731 lines
+Phase: Stage 1 request adapter split
 
 ## Purpose
 
@@ -80,17 +80,19 @@ Do not move these responsibilities before behavior coverage exists:
 
 ## Stage 1 Target
 
-Stage 1 should be pure and low risk:
+Stage 1 is complete:
 
-- extract request/result adapters:
+- `ui_contract_v2_adapters.py` owns request/result adapters:
   `_params`, `_headers`, `_trim_limit_params`, `_ui_contract_params`,
   `_envelope`, `_err`;
-- extract pure value builders:
+- `ui_contract_v2_adapters.py` also owns pure value builders:
   `_safe_eval_action_value`, `_standard_chatter_actions`,
   `_v2_policy_projection_source_authority`, `_v2_policy_projection`;
-- keep `handle`, `UiContractHandler`, `PageAssembler`, ORM reads, extension
+- `ui_contract_v2.py` keeps compatibility methods and delegates to the adapter
+  module;
+- `handle`, `UiContractHandler`, `PageAssembler`, ORM reads, extension
   hooks, scene loading, and XML parsing in `ui_contract_v2.py`;
-- lock `ui_contract_v2.py` at `<=3849` lines for this audit baseline.
+- `ui_contract_v2.py` is locked at `<=3731` lines for this stage.
 
 ## Stage 2 Candidate
 
