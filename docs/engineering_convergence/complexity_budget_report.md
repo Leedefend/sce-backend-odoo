@@ -4,7 +4,7 @@ Generated from repository source files. This report is informational during the 
 
 ## Summary
 
-- Scanned files: `3924`
+- Scanned files: `3925`
 - Files requiring split plan: `41`
 - Files above warning threshold: `65`
 
@@ -14,9 +14,9 @@ Generated from repository source files. This report is informational during the 
 | ---: | --- | --- |
 | 5939 | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
 | 3773 | Vue source | `frontend/apps/web/src/views/ActionView.vue` |
-| 3731 | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 3684 | Vue source | `frontend/apps/web/src/views/MenuConfigView.vue` |
 | 3633 | Python source | `addons/smart_core/handlers/form_field_configuration.py` |
+| 3556 | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 3525 | Vue source | `frontend/apps/web/src/views/HomeView.vue` |
 | 3323 | Python source | `addons/smart_construction_core/tests/test_p0_state_closure.py` |
 | 3202 | Python source | `addons/smart_core/tests/test_form_field_configuration_params.py` |
@@ -130,9 +130,9 @@ Generated from repository source files. This report is informational during the 
 | ---: | --- | --- | --- |
 | 5939 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
 | 3773 | split_plan_required | Vue source | `frontend/apps/web/src/views/ActionView.vue` |
-| 3731 | split_plan_required | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 3684 | split_plan_required | Vue source | `frontend/apps/web/src/views/MenuConfigView.vue` |
 | 3633 | split_plan_required | Python source | `addons/smart_core/handlers/form_field_configuration.py` |
+| 3556 | split_plan_required | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 3525 | split_plan_required | Vue source | `frontend/apps/web/src/views/HomeView.vue` |
 | 3323 | split_plan_required | Python source | `addons/smart_construction_core/tests/test_p0_state_closure.py` |
 | 3202 | split_plan_required | Python source | `addons/smart_core/tests/test_form_field_configuration_params.py` |

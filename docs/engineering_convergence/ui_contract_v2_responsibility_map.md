@@ -3,8 +3,8 @@
 Date: 2026-07-14
 Owner: Platform owner
 Target file: `addons/smart_core/handlers/ui_contract_v2.py`
-Current size: 3,731 lines
-Phase: Stage 1 request adapter split
+Current size: 3,556 lines
+Phase: Stage 2 projection helper split
 
 ## Purpose
 
@@ -94,21 +94,36 @@ Stage 1 is complete:
   hooks, scene loading, and XML parsing in `ui_contract_v2.py`;
 - `ui_contract_v2.py` is locked at `<=3731` lines for this stage.
 
-## Stage 2 Candidate
+## Stage 2 Target
 
-After Stage 1 is green, consider moving pure v2 mutation helpers:
+Stage 2 is complete:
 
-- `_set_v2_container_tree`;
-- `_set_v2_widget_status`;
-- `_set_v2_data_meta`;
-- `_replace_v2_contract_content`;
-- `_set_v2_governance_patch`;
-- `_project_v2_source_policies`;
-- `_apply_field_policies_to_v2_status`;
-- `_ensure_native_layout_widget_status_visible`.
+- `ui_contract_v2_projection.py` owns pure v2 mutation helpers:
+  `_set_v2_container_tree`, `_set_v2_widget_status`, `_set_v2_data_meta`,
+  `_replace_v2_contract_content`, and `_set_v2_governance_patch`;
+- `ui_contract_v2_projection.py` also owns pure policy/status projection:
+  `_project_v2_source_policies`, `_apply_field_policies_to_v2_status`, and
+  `_ensure_native_layout_widget_status_visible`;
+- `ui_contract_v2.py` keeps compatibility methods and delegates to the
+  projection module;
+- `ui_contract_v2.py` is locked at `<=3556` lines for this stage.
 
 The extracted module must not import Odoo, read `env`, call extension hooks, or
 infer backend permissions.
+
+## Stage 3 Candidate
+
+After Stage 2 is green, consider moving pure form layout governance helpers:
+
+- `_form_layout_governance`;
+- `_form_layout_governance_columns`;
+- `_form_layout_columns_from_governance`;
+- `_form_layout_group_visible_from_governance`;
+- `_apply_form_layout_governance_to_group`.
+
+Do not move `_apply_business_config_form_groups_to_v2` yet; it rewrites the
+container tree based on configured business groups and needs behavior coverage
+for group order, hidden fields, and node preservation.
 
 ## Verification Gaps
 
