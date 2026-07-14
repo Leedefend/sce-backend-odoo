@@ -1,0 +1,5 @@
+surface_id,role,navigation_path,title,route,menu_xmlid,action_xmlid,model,page_type,actual_component,reachable,load_result,write_capable,screenshot,notes
+FE-AUD-demo_role_finance-EMPTY,demo_role_finance,,,,,,,,unknown,false,timeout,false,,权威导航节点未形成可直接巡检路由
+FE-AUD-demo_role_project_a_member-1,demo_role_project_a_member,业务动作,业务动作,/a/521?menu_id=411&action_id=521,unknown,unknown,unknown,list,ActionViewShell/ListPage,true,ok,false,artifacts/frontend-audit/demo_role_project_a_member-004.png,动态动作入口真实可达
+FE-AUD-demo_role_pm-1,demo_role_pm,业务动作,业务动作,/a/521?menu_id=411&action_id=521,unknown,unknown,unknown,list,ActionViewShell/ListPage,true,ok,false,artifacts/frontend-audit/demo_role_pm-002.png,动态动作入口真实可达
+FE-AUD-demo_role_owner-1,demo_role_owner,业务动作,业务动作,/a/521?menu_id=411&action_id=521,unknown,unknown,unknown,list,ActionViewShell/ListPage,true,ok,false,artifacts/frontend-audit/demo_role_owner-003.png,动态动作入口真实可达
