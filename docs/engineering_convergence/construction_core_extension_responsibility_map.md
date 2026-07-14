@@ -3,7 +3,7 @@
 Date: 2026-07-14
 Owner: Construction backend owner
 Target file: `addons/smart_construction_core/core_extension.py`
-Current size: 1,809 lines
+Current size: 1,787 lines
 Phase: staged responsibility split
 
 ## Purpose
@@ -49,6 +49,7 @@ construction-owned policy.
 | `construction_core_extension_contract_normalizers_split_guard.py` | Contract normalizer extraction, construction diary/general contract tax/company form projection, general contract form policy/alias helpers, helper delegation, workflow-injection boundary, line lock, and projection-only boundary. |
 | `construction_core_extension_intent_handlers_split_guard.py` | Intent handler contribution extraction, lazy handler import mapping, approval-policy intent preservation, facade registry boundary, line lock, and no env/registry side effects. |
 | `construction_core_extension_service_builders_split_guard.py` | Service builder extraction, lazy service class/factory imports, facade hook preservation, line lock, and no ORM/registry side effects. |
+| `construction_core_extension_actor_roles_split_guard.py` | Actor role resolver extraction, explicit role XMLID parsing, capability-derived release roles, line lock, and no ORM/registry side effects. |
 | `backend_boundary_guard.py` | Core backend ownership and extension-boundary constraints. |
 | `owner_industry_isolation_probe.py` | Industry module isolation and required extension hooks. |
 
@@ -253,6 +254,20 @@ Stage 14 is complete when:
   `env` access, ORM calls, writes, registry mutation, HTTP calls, file IO, or
   import-time registration side effects;
 - `core_extension.py` is locked at `<=1809` lines for this stage.
+
+## Stage 15 Target
+
+Stage 15 is complete when:
+
+- `core_extension_actor_roles.py` owns release/usage actor role resolution from
+  explicit construction role XMLIDs and capability groups;
+- `core_extension.py` keeps the public
+  `smart_core_resolve_release_actor_role_codes` and
+  `smart_core_resolve_usage_actor_role_codes` facades;
+- the extracted helper remains user-group inspection only: no `env` access,
+  ORM searches, writes, registry mutation, HTTP calls, file IO, or import-time
+  registration side effects;
+- `core_extension.py` is locked at `<=1787` lines for this stage.
 
 ## Next Candidate
 

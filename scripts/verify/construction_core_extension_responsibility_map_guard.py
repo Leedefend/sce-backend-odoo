@@ -43,7 +43,7 @@ def main() -> int:
 
     for token in [
         "Construction Core Extension Responsibility Map",
-        "Current size: 1,809 lines",
+        "Current size: 1,787 lines",
         "staged responsibility split",
         "## Public Entry Points",
         "## Responsibility Bands",
@@ -62,6 +62,7 @@ def main() -> int:
         "## Stage 12 Target",
         "## Stage 13 Target",
         "## Stage 14 Target",
+        "## Stage 15 Target",
         "`core_extension_project_layout.py` owns pure project form layout helpers",
         "`core_extension_contract_helpers.py` owns generic contract helper utilities",
         "`core_extension_policy_maps.py` owns static construction policy/map facts",
@@ -76,7 +77,8 @@ def main() -> int:
         "`core_extension_system_init_rows.py` also owns system-init workspace and page",
         "`core_extension_policy_accessors.py` also owns API data search-field",
         "`core_extension_contract_normalizers.py` also owns pure form contract policy",
-        "`core_extension.py` is locked at `<=1809` lines",
+        "`core_extension_actor_roles.py` owns release/usage actor role resolution",
+        "`core_extension.py` is locked at `<=1787` lines",
         "Do not move import-time registration side effects",
         "workflow projection reads `env`, registry, records",
         "`smart_core_register(registry)` because registry writes",
@@ -96,6 +98,7 @@ def main() -> int:
         "construction_core_extension_contract_normalizers_split_guard.py",
         "construction_core_extension_intent_handlers_split_guard.py",
         "construction_core_extension_service_builders_split_guard.py",
+        "construction_core_extension_actor_roles_split_guard.py",
         "backend_boundary_guard.py",
         "owner_industry_isolation_probe.py",
     ]:
@@ -169,6 +172,10 @@ def main() -> int:
             errors.append("core_extension.py must delegate service builders")
         if "return _service_builders.build_settlement_slice_service(env)" not in core:
             errors.append("core_extension.py must delegate settlement service builder")
+        if "core_extension_actor_roles as _actor_roles" not in core:
+            errors.append("core_extension.py must import actor roles module")
+        if "return _actor_roles.resolve_release_actor_role_codes(user)" not in core:
+            errors.append("core_extension.py must delegate actor role resolver")
         if "def smart_core_register(registry):" not in core or "registry[intent_name] = handler" not in core:
             errors.append("core_extension.py must keep registry write boundary in facade")
         if "APPROVAL_POLICY_INTENTS" in core:
@@ -192,6 +199,7 @@ def main() -> int:
         "python3 scripts/verify/construction_core_extension_contract_normalizers_split_guard.py",
         "python3 scripts/verify/construction_core_extension_intent_handlers_split_guard.py",
         "python3 scripts/verify/construction_core_extension_service_builders_split_guard.py",
+        "python3 scripts/verify/construction_core_extension_actor_roles_split_guard.py",
         "python3 scripts/verify/construction_core_extension_responsibility_map_guard.py",
     ]:
         if ci_token not in ci:

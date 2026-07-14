@@ -60,6 +60,7 @@ from odoo.addons.smart_construction_core import core_extension_policy_accessors 
 from odoo.addons.smart_construction_core import core_extension_contract_normalizers as _contract_normalizers
 from odoo.addons.smart_construction_core import core_extension_intent_handlers as _intent_handlers
 from odoo.addons.smart_construction_core import core_extension_service_builders as _service_builders
+from odoo.addons.smart_construction_core import core_extension_actor_roles as _actor_roles
 
 _logger = logging.getLogger(__name__)
 
@@ -1754,30 +1755,7 @@ def smart_core_platform_legacy_ownership_module(env):
 
 def smart_core_resolve_release_actor_role_codes(env, user):
     del env
-    if not user:
-        return []
-    roles = set()
-    try:
-        group_xmlids = set(user.groups_id.get_external_id().values())
-    except Exception:
-        group_xmlids = set()
-    prefix = "smart_construction_core.group_sc_role_"
-    for xmlid in group_xmlids:
-        text = str(xmlid or "").strip()
-        if text.startswith(prefix):
-            roles.add(text[len(prefix):])
-    try:
-        if user.has_group("smart_construction_core.group_sc_cap_project_read") or user.has_group(
-            "smart_construction_core.group_sc_cap_project_manager"
-        ):
-            roles.add("pm")
-        if user.has_group("smart_construction_core.group_sc_super_admin") or user.has_group(
-            "smart_construction_core.group_sc_business_full"
-        ):
-            roles.add("executive")
-    except Exception:
-        _logger.debug("Unable to resolve release actor role codes from groups.", exc_info=True)
-    return sorted(roles)
+    return _actor_roles.resolve_release_actor_role_codes(user)
 
 
 def smart_core_resolve_usage_actor_role_codes(env, user):
