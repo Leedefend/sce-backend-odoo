@@ -12,6 +12,7 @@ const PAYMENT_ACTION_ID = Number(process.env.FRONTEND_FIXTURE_PAYMENT_ACTION_ID 
 const PAYMENT_MENU_ID = Number(process.env.FRONTEND_FIXTURE_PAYMENT_MENU_ID || 0);
 
 fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+const stage = (name) => { process.stderr.write(`[browser-stage] ${new Date().toISOString()} ${name}\n`); };
 
 function requireCheck(condition, message) {
   if (!condition) throw new Error(message);
@@ -110,17 +111,22 @@ function actionableErrors(errors) {
 }
 
 async function main() {
+  stage('S05 browser launch start');
   const browser = await launchChromium({ headless: true });
+  stage('S06 browser launch complete');
   const result = { pass: false, base_url: BASE_URL, db: DB_NAME, checks: [], screenshots: [] };
   try {
     const finance = await browser.newPage({ viewport: { width: 1440, height: 900 }, locale: 'zh-CN' });
+    stage('S07 finance page created');
     const financeErrors = [];
     finance.on('console', (msg) => { if (msg.type() === 'error') financeErrors.push(msg.text()); });
     finance.on('pageerror', (error) => financeErrors.push(error.message));
     await login(finance, 'demo_role_finance');
+    stage('S13 navigation complete');
     requireCheck(PAYMENT_ACTION_ID > 0 && PAYMENT_MENU_ID > 0, 'fixture payment action context was not provided');
     const paymentAction = { actionId: PAYMENT_ACTION_ID, menuId: PAYMENT_MENU_ID };
     await openAction(finance, paymentAction);
+    stage('S14 payment page open');
     await selectCompany(finance, 'FE Company A');
     await finance.waitForFunction(() => (document.body.innerText || '').includes('FE-A-PR-001'), null, { timeout: 45000 });
     let text = await bodyText(finance);
@@ -139,10 +145,12 @@ async function main() {
     await finance.screenshot({ path: financeB, fullPage: true });
     result.screenshots.push(financeB);
     requireCheck(actionableErrors(financeErrors).length === 0, `finance browser errors: ${actionableErrors(financeErrors).join(' | ')}`);
+    stage('S15 finance assertions');
     result.checks.push('finance_login', 'finance_company_a_isolation', 'finance_company_b_switch_refresh');
     await finance.close();
 
     const member = await browser.newPage({ viewport: { width: 1440, height: 900 }, locale: 'zh-CN' });
+    stage('S16 member page created');
     const memberErrors = [];
     member.on('console', (msg) => { if (msg.type() === 'error') memberErrors.push(msg.text()); });
     member.on('pageerror', (error) => memberErrors.push(error.message));
@@ -157,10 +165,14 @@ async function main() {
     await member.screenshot({ path: memberShot, fullPage: true });
     result.screenshots.push(memberShot);
     result.checks.push('project_a_member_login', 'project_a_member_project_isolation');
+    stage('S17 member assertions');
     await member.close();
     result.pass = true;
+    stage('S18 report ready');
   } finally {
+    stage('S19 browser close start');
     await browser.close();
+    stage('S20 browser close complete');
     fs.writeFileSync(path.join(OUTPUT_DIR, 'report.json'), `${JSON.stringify(result, null, 2)}\n`, 'utf8');
   }
   console.log('[verify.frontend.fixture.browser] PASS');
