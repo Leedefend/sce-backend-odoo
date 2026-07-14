@@ -3,8 +3,8 @@
 Date: 2026-07-14
 Owner: Frontend owner
 Target file: `frontend/apps/web/src/views/ActionView.vue`
-Current size: 3,773 lines
-Phase: read-only responsibility audit
+Current size: 3,736 lines
+Phase: Stage 2 activity runtime query normalization helper split
 
 ## Purpose
 
@@ -39,6 +39,7 @@ or industry-owned business rules.
 | Contract actions and navigation | Header actions, focus actions, create record flow, business category picker, internal route navigation, external URL navigation. | Keep navigation side effects at current boundary. |
 | List preferences | Visibility/order/width load, save, optimistic status, timer cleanup, and preference policy application. | Extract pure normalization and scope builders before moving API calls. |
 | Lifecycle and error state | Mounted load, menu-only redirect, project context event listener, route watches, retained route full path, render error state. | Keep watch/reload chain in page until regression coverage exists. |
+| Activity runtime query normalization | `normalizeActivityRuntimeRouteQuery` whitelists route query keys and normalizes activity runtime query state. | Pure helper in `actionViewRouteRuntime.ts`; no router, API, session, or notification access. |
 
 ## Current Side-Effect Boundaries
 
@@ -81,14 +82,26 @@ Do not move these responsibilities before behavior coverage exists:
 
 ## Stage 1 Target
 
-Stage 1 is this read-only responsibility audit:
+Stage 1 is complete:
 
 - document the current responsibility bands and side-effect boundaries;
-- `ActionView.vue` is locked at `<=3773` lines;
 - add a guard so the map remains connected to `ci.local.quick`;
 - do not move router, API, session, lifecycle, or window side effects.
 
-The next candidate after this audit is pure route-query/state builder
+## Stage 2 Target
+
+Stage 2 is complete:
+
+- `actionViewRouteRuntime.ts` owns the pure
+  `normalizeActivityRuntimeRouteQuery` helper;
+- `ActionView.vue` imports the helper and keeps only session write
+  orchestration in `updateActivityRuntimeQueryFromRoute` and
+  `syncRouteListState`;
+- `ActionView.vue` is locked at `<=3736` lines;
+- no router, API, session, lifecycle, window, or notification side effects were
+  moved.
+
+The next candidate after this stage remains pure route-query/state builder
 extraction only. That extraction must not import Vue Router, call API helpers,
 read session state directly, or emit notifications.
 

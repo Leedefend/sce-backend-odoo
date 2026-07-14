@@ -49,6 +49,44 @@ export function resolveActionViewRouteSnapshot(query: Dict): ActionViewRouteSnap
   };
 }
 
+export function normalizeActivityRuntimeRouteQuery(source: Dict): Dict {
+  const allowedKeys = new Set([
+    'search',
+    'q',
+    'active_filter',
+    'saved_filter',
+    'group_by',
+    'group_value',
+    'group_sample_limit',
+    'group_sort',
+    'group_collapsed',
+    'group_page',
+    'group_offset',
+    'group_fp',
+    'group_wid',
+    'group_wdg',
+    'group_wik',
+  ]);
+  const next: Dict = {};
+  Object.entries(source).forEach(([key, value]) => {
+    if (!allowedKeys.has(key)) return;
+    if (Array.isArray(value)) {
+      const values = value.map((item) => String(item || '').trim()).filter(Boolean);
+      if (values.length) next[key] = values;
+      return;
+    }
+    const text = String(value || '').trim();
+    if (text) next[key] = text;
+  });
+  if (next.active_filter && !['all', 'active', 'archived'].includes(String(next.active_filter))) {
+    delete next.active_filter;
+  }
+  if (next.group_sort && !['asc', 'desc'].includes(String(next.group_sort).toLowerCase())) {
+    delete next.group_sort;
+  }
+  return next;
+}
+
 import { pickContractNavQuery } from '../navigationContext';
 import { stripWorkspaceContext } from '../workspaceContext';
 import { serializeGroupPageOffsets } from './actionViewGroupWindowRuntime';

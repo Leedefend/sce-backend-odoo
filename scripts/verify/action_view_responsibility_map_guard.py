@@ -6,9 +6,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 DOC = ROOT / "docs/engineering_convergence/action_view_responsibility_map.md"
 VIEW = ROOT / "frontend/apps/web/src/views/ActionView.vue"
+ROUTE_RUNTIME = ROOT / "frontend/apps/web/src/app/runtime/actionViewRouteRuntime.ts"
 CI = ROOT / "make/ci.mk"
 
-LINE_BUDGET = 3773
+LINE_BUDGET = 3736
 
 
 def _read(path: Path) -> str:
@@ -23,29 +24,35 @@ def main() -> int:
     errors: list[str] = []
     doc = _read(DOC)
     view = _read(VIEW)
+    route_runtime = _read(ROUTE_RUNTIME)
     ci = _read(CI)
 
     if not doc:
         errors.append(f"missing responsibility map: {DOC.relative_to(ROOT)}")
     if not view:
         errors.append(f"missing view: {VIEW.relative_to(ROOT)}")
+    if not route_runtime:
+        errors.append(f"missing route runtime: {ROUTE_RUNTIME.relative_to(ROOT)}")
 
     for token in [
         "Action View Responsibility Map",
-        "Current size: 3,773 lines",
-        "Phase: read-only responsibility audit",
+        "Current size: 3,736 lines",
+        "Phase: Stage 2 activity runtime query normalization helper split",
         "## Purpose",
         "## Route Entry",
         "## Responsibility Bands",
         "## Current Side-Effect Boundaries",
         "## Do Not Move Yet",
         "## Stage 1 Target",
+        "## Stage 2 Target",
         "## Verification Gaps",
         "## Invariants",
-        "`ActionView.vue` is locked at `<=3773` lines",
+        "`ActionView.vue` is locked at `<=3736` lines",
         "`usePageContract('action')`",
         "`useActionPageModel`",
         "`useActionViewActionRuntime`",
+        "`actionViewRouteRuntime.ts` owns the pure",
+        "`normalizeActivityRuntimeRouteQuery` helper",
         "runBatchPolicyAction",
         "loadListColumnPreference",
         "handleToggleRecordFavorite",
@@ -69,6 +76,7 @@ def main() -> int:
             "const route = useRoute();",
             "const router = useRouter();",
             "const pageContract = usePageContract('action');",
+            "normalizeActivityRuntimeRouteQuery,",
             "useActionPageModel({",
             "useActionViewActionRuntime({",
             "async function runBatchPolicyAction",
@@ -85,10 +93,36 @@ def main() -> int:
         ]:
             if token not in view:
                 errors.append(f"ActionView.vue missing boundary token: {token}")
+        if "function normalizeActivityRuntimeRouteQuery(" in view:
+            errors.append("ActionView.vue must not locally implement normalizeActivityRuntimeRouteQuery")
+
+    if route_runtime:
+        for token in [
+            "export function normalizeActivityRuntimeRouteQuery(source: Dict): Dict",
+            "'active_filter'",
+            "'group_sort'",
+            "delete next.active_filter",
+            "delete next.group_sort",
+        ]:
+            if token not in route_runtime:
+                errors.append(f"actionViewRouteRuntime.ts missing token: {token}")
+        for token in [
+            "router.push",
+            "router.replace",
+            "window.open",
+            "window.location.assign",
+            "updateActiveActivityRuntimeQuery",
+            "intentRequest",
+        ]:
+            if token in route_runtime:
+                errors.append(f"actionViewRouteRuntime.ts must remain pure; found: {token}")
 
     ci_token = "python3 scripts/verify/action_view_responsibility_map_guard.py"
     if ci_token not in ci:
         errors.append("ci.local.quick must run action_view_responsibility_map_guard.py")
+    smoke_token = "node scripts/verify/action_view_route_runtime_smoke.js"
+    if smoke_token not in ci:
+        errors.append("ci.local.quick must run action_view_route_runtime_smoke.js")
 
     if errors:
         print("[action_view_responsibility_map_guard] FAIL")
