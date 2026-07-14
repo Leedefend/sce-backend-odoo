@@ -8,6 +8,7 @@ export ROOT_DIR
 # defaults or invoking any database/module operation.
 source "$ROOT_DIR/scripts/common/frontend_acceptance_guard.sh"
 guard_frontend_acceptance_scope
+acquire_frontend_acceptance_lock lifecycle
 
 source "$ROOT_DIR/scripts/common/env.sh"
 source "$ROOT_DIR/scripts/common/guard_prod.sh"

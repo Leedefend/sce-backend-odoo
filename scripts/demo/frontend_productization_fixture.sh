@@ -7,6 +7,7 @@ export ROOT_DIR
 # Fail closed before loading defaults or invoking module/database operations.
 source "$ROOT_DIR/scripts/common/frontend_acceptance_guard.sh"
 guard_frontend_acceptance_scope
+acquire_frontend_acceptance_lock lifecycle
 
 source "$ROOT_DIR/scripts/common/env.sh"
 source "$ROOT_DIR/scripts/common/guard_prod.sh"
