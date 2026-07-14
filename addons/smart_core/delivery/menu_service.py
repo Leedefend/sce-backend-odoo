@@ -31,6 +31,26 @@ def register_customer_acceptance_group_label(label: str) -> None:
 
 
 class MenuService:
+    @staticmethod
+    def _project_member_menu_allowed(menu: dict) -> bool:
+        """Restrict delivery navigation without changing record rules."""
+        xmlid = str(menu.get("menu_xmlid") or menu.get("xmlid") or "").strip().lower()
+        label = " ".join(str(menu.get(key) or "") for key in ("label", "title", "name", "group_label")).strip().lower()
+        blocked = ("finance", "payment", "settlement", "tax", "hr", "salary", "payroll", "财务", "税务", "人事", "薪资", "结算", "付款", "收付款")
+        return not any(token in xmlid or token in label for token in blocked)
+
+    @classmethod
+    def _filter_project_member_nodes(cls, nodes: list[dict]) -> list[dict]:
+        filtered = []
+        for node in nodes or []:
+            if not isinstance(node, dict):
+                continue
+            children = cls._filter_project_member_nodes(node.get("children") or [])
+            candidate = dict(node)
+            candidate["children"] = children
+            if children or cls._project_member_menu_allowed(candidate):
+                filtered.append(candidate)
+        return filtered
     SOURCE_KIND = "delivery_menu_projection"
     SOURCE_AUTHORITIES = ("odoo_menu_fact_projection", "menu_delivery_convergence_projection", "delivery_product_policy_projection")
     NO_BUSINESS_FACT_AUTHORITY = True
@@ -1025,6 +1045,7 @@ class MenuService:
                 is_admin=is_admin,
                 is_business_config_admin=is_business_config_admin,
             )
+            and (role_code != "project_member" or self._project_member_menu_allowed(menu))
         ]
         policy_authorized_ids = set()
         policy_authorized_scenes = set()
@@ -1110,6 +1131,8 @@ class MenuService:
                 groups_by_key[group_key].setdefault("config_menu_id", int(native_group_config_ids_by_label[group_label]))
             for menu in group.get("menus") or []:
                 if not isinstance(menu, dict):
+                    continue
+                if role_code == "project_member" and not self._project_member_menu_allowed(menu):
                     continue
                 menu_id = menu.get("menu_id")
                 scene_key = str(menu.get("scene_key") or "").strip()
@@ -1290,6 +1313,8 @@ class MenuService:
             group_nodes.append(group_node)
 
         group_nodes = self._sort_delivery_nodes(group_nodes, top_level=True)
+        if role_code == "project_member":
+            group_nodes = self._filter_project_member_nodes(group_nodes)
         root = build_delivery_menu_root(group_nodes, role_code)
         root["key"] = "root:system_menu"
         root["label"] = "系统菜单"

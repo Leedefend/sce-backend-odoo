@@ -105,6 +105,9 @@ class IdentityResolver:
         return {xml for xml in ext_map.values() if xml}
 
     def resolve_role_code_with_evidence(self, user_xmlids: set) -> tuple[str, dict]:
+        project_member_hits = sorted((self._role_groups_explicit.get("project_member") or set()) & user_xmlids)
+        if project_member_hits:
+            return "project_member", {"source": "explicit", "matched_groups": project_member_hits}
         explicit_hits: Dict[str, List[str]] = {}
         for role in self._role_precedence:
             hits = sorted((self._role_groups_explicit.get(role) or set()) & user_xmlids)

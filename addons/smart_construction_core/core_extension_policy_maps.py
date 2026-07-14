@@ -2,6 +2,22 @@
 from __future__ import annotations
 
 ROLE_SURFACE_OVERRIDES = {
+    "project_member": {
+        "label": "项目成员",
+        "landing_scene_candidates": ["projects.list", "projects.ledger"],
+        "menu_xmlids": [
+            "smart_construction_core.menu_sc_project_center",
+            "smart_construction_core.menu_sc_contract_center",
+            "smart_construction_core.menu_sc_construction_center",
+        ],
+        "menu_blocklist_xmlids": [
+            "smart_construction_core.menu_sc_finance_center",
+            "smart_construction_core.menu_sc_settlement_center",
+            "smart_construction_core.menu_payment_request",
+            "smart_construction_core.menu_sc_tax_center",
+            "smart_construction_core.menu_sc_hr_center",
+        ],
+    },
     "business_config_admin": {
         "label": "业务配置管理员",
         "landing_scene_candidates": ["projects.list", "projects.ledger", "projects.intake"],
@@ -45,6 +61,12 @@ ROLE_SURFACE_OVERRIDES = {
 }
 
 ROLE_GROUPS_EXPLICIT = {
+    "owner": {
+        "smart_construction_custom.group_sc_role_owner",
+    },
+    "project_member": {
+        "smart_construction_core.group_sc_cap_project_read",
+    },
     "business_config_admin": {
         "smart_construction_core.group_sc_cap_business_config_admin",
     },
