@@ -795,6 +795,7 @@ import {
 import {
   buildActionViewClearedPresetQuery,
   buildActionViewPatchedRouteQuery,
+  buildActivityRuntimeRouteState,
   normalizeActivityRuntimeRouteQuery,
   normalizeActionViewRouteQuery,
   resolveActionViewRouteSnapshot,
@@ -2135,17 +2136,16 @@ function updateActivityRuntimeQueryFromRoute(): void {
 function syncRouteListState(extra?: Record<string, unknown>): void {
   suppressNextRouteReload.value = true;
   routePresetRuntime.syncRouteListState(extra);
-  const routeState = normalizeActivityRuntimeRouteQuery({
-    ...normalizeActivityRuntimeRouteQuery(route.query),
-    search: searchTerm.value,
-    active_filter: filterValue.value !== 'all' ? filterValue.value : undefined,
-    saved_filter: activeSavedFilterKey.value,
-    group_by: activeGroupByField.value,
-    group_sample_limit: groupSampleLimit.value,
-    group_sort: groupSort.value,
-    ...extra,
-  });
-  session.updateActiveActivityRuntimeQuery(routeState);
+  session.updateActiveActivityRuntimeQuery(buildActivityRuntimeRouteState({
+    currentQuery: route.query,
+    searchTerm: searchTerm.value,
+    filterValue: filterValue.value,
+    savedFilter: activeSavedFilterKey.value,
+    groupBy: activeGroupByField.value,
+    groupSampleLimit: groupSampleLimit.value,
+    groupSort: groupSort.value,
+    extra,
+  }));
 }
 
 function syncRouteStateAndReload(extra?: Record<string, unknown>): void {

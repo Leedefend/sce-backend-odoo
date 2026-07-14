@@ -37,7 +37,7 @@ def main() -> int:
     for token in [
         "Action View Responsibility Map",
         "Current size: 3,736 lines",
-        "Phase: Stage 2 activity runtime query normalization helper split",
+        "Phase: Stage 3 activity runtime route state builder split",
         "## Purpose",
         "## Route Entry",
         "## Responsibility Bands",
@@ -45,6 +45,7 @@ def main() -> int:
         "## Do Not Move Yet",
         "## Stage 1 Target",
         "## Stage 2 Target",
+        "## Stage 3 Target",
         "## Verification Gaps",
         "## Invariants",
         "`ActionView.vue` is locked at `<=3736` lines",
@@ -53,6 +54,7 @@ def main() -> int:
         "`useActionViewActionRuntime`",
         "`actionViewRouteRuntime.ts` owns the pure",
         "`normalizeActivityRuntimeRouteQuery` helper",
+        "`buildActivityRuntimeRouteState` helper",
         "runBatchPolicyAction",
         "loadListColumnPreference",
         "handleToggleRecordFavorite",
@@ -77,6 +79,7 @@ def main() -> int:
             "const router = useRouter();",
             "const pageContract = usePageContract('action');",
             "normalizeActivityRuntimeRouteQuery,",
+            "buildActivityRuntimeRouteState,",
             "useActionPageModel({",
             "useActionViewActionRuntime({",
             "async function runBatchPolicyAction",
@@ -99,6 +102,7 @@ def main() -> int:
     if route_runtime:
         for token in [
             "export function normalizeActivityRuntimeRouteQuery(source: Dict): Dict",
+            "export function buildActivityRuntimeRouteState(",
             "'active_filter'",
             "'group_sort'",
             "delete next.active_filter",

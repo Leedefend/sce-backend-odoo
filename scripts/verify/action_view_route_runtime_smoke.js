@@ -109,6 +109,37 @@ function main() {
     'drop empty scalar and array values',
   );
 
+  assertDeepEqual(
+    runtime.buildActivityRuntimeRouteState({
+      currentQuery: {
+        search: 'old',
+        active_filter: 'archived',
+        ignored: 'drop',
+        group_wik: 'stable',
+      },
+      searchTerm: 'new search',
+      filterValue: 'all',
+      savedFilter: 'saved-a',
+      groupBy: 'company_id',
+      groupSampleLimit: 9,
+      groupSort: 'asc',
+      extra: {
+        group_page: 'company_id:2',
+        group_sort: 'desc',
+      },
+    }),
+    {
+      search: 'new search',
+      group_wik: 'stable',
+      saved_filter: 'saved-a',
+      group_by: 'company_id',
+      group_sample_limit: '9',
+      group_sort: 'desc',
+      group_page: 'company_id:2',
+    },
+    'build activity runtime route state from current route and local state',
+  );
+
   console.log('[action_view_route_runtime_smoke] PASS');
 }
 

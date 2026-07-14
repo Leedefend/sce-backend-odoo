@@ -87,6 +87,28 @@ export function normalizeActivityRuntimeRouteQuery(source: Dict): Dict {
   return next;
 }
 
+export function buildActivityRuntimeRouteState(options: {
+  currentQuery: Dict;
+  searchTerm: string;
+  filterValue: string;
+  savedFilter: string;
+  groupBy: string;
+  groupSampleLimit: number;
+  groupSort: string;
+  extra?: Dict;
+}): Dict {
+  return normalizeActivityRuntimeRouteQuery({
+    ...normalizeActivityRuntimeRouteQuery(options.currentQuery),
+    search: options.searchTerm,
+    active_filter: options.filterValue !== 'all' ? options.filterValue : undefined,
+    saved_filter: options.savedFilter,
+    group_by: options.groupBy,
+    group_sample_limit: options.groupSampleLimit,
+    group_sort: options.groupSort,
+    ...(options.extra || {}),
+  });
+}
+
 import { pickContractNavQuery } from '../navigationContext';
 import { stripWorkspaceContext } from '../workspaceContext';
 import { serializeGroupPageOffsets } from './actionViewGroupWindowRuntime';

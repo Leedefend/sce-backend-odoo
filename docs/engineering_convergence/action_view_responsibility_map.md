@@ -4,7 +4,7 @@ Date: 2026-07-14
 Owner: Frontend owner
 Target file: `frontend/apps/web/src/views/ActionView.vue`
 Current size: 3,736 lines
-Phase: Stage 2 activity runtime query normalization helper split
+Phase: Stage 3 activity runtime route state builder split
 
 ## Purpose
 
@@ -40,6 +40,7 @@ or industry-owned business rules.
 | List preferences | Visibility/order/width load, save, optimistic status, timer cleanup, and preference policy application. | Extract pure normalization and scope builders before moving API calls. |
 | Lifecycle and error state | Mounted load, menu-only redirect, project context event listener, route watches, retained route full path, render error state. | Keep watch/reload chain in page until regression coverage exists. |
 | Activity runtime query normalization | `normalizeActivityRuntimeRouteQuery` whitelists route query keys and normalizes activity runtime query state. | Pure helper in `actionViewRouteRuntime.ts`; no router, API, session, or notification access. |
+| Activity runtime route state builder | `buildActivityRuntimeRouteState` merges current route query, local list state, and route-sync extras before normalization. | Pure helper in `actionViewRouteRuntime.ts`; page remains responsible for session writes. |
 
 ## Current Side-Effect Boundaries
 
@@ -97,6 +98,18 @@ Stage 2 is complete:
 - `ActionView.vue` imports the helper and keeps only session write
   orchestration in `updateActivityRuntimeQueryFromRoute` and
   `syncRouteListState`;
+- no router, API, session, lifecycle, window, or notification side effects were
+  moved.
+
+## Stage 3 Target
+
+Stage 3 is complete:
+
+- `actionViewRouteRuntime.ts` also owns the pure
+  `buildActivityRuntimeRouteState` helper;
+- `ActionView.vue` keeps `syncRouteListState` as orchestration only:
+  route-preset sync first, activity runtime route state build second, session
+  write last;
 - `ActionView.vue` is locked at `<=3736` lines;
 - no router, API, session, lifecycle, window, or notification side effects were
   moved.
