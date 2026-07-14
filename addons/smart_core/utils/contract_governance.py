@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+import importlib
 import importlib.util
 from pathlib import Path
 from typing import Any
@@ -47,6 +48,18 @@ _REGISTRY_EXPORTS = (
     "_ENTERPRISE_USER_FIELD_LABELS",
     "_PROJECT_FORM_ACTION_GROUP_LIMIT",
     "_PROJECT_FORM_DEFAULT_ACTION_GROUP_LABELS",
+    "_FORM_CORE_FIELD_MAX",
+    "_FORM_ACTION_PRIMARY_KEYWORDS",
+    "_FORM_ACTION_READONLY_KEYWORDS",
+    "_FORM_PRIMARY_DISABLED_REASON",
+    "_FORM_DISABLED_REASON_CAPABILITY",
+    "_FORM_DISABLED_REASON_LIFECYCLE",
+    "_FORM_DISABLED_REASON_GROUP",
+    "_FORM_DISABLED_REASON_ROLE",
+    "_FORM_SCENE_PROFILE_DEFAULT",
+    "_FORM_SCENE_PROFILE_PROJECT",
+    "_CAPABILITY_GROUP_DEFAULTS",
+    "_CONTRACT_KEY_CANONICAL_MAP",
     "_TIER_REVIEW_LIST_NAV_ACTION_PREFIXES",
     "_BUSINESS_FIELD_LABEL_OVERRIDES",
     "_USER_SURFACE_ACTION_GROUP_LABELS",
@@ -62,21 +75,25 @@ _REGISTRY_EXPORTS = (
 )
 
 
-def _load_registry_module() -> Any:
+def _load_sibling_module(module_name: str, file_name: str) -> Any:
     try:
-        from . import contract_governance_registry as registry
-
-        return registry
+        if __package__:
+            return importlib.import_module(f"{__package__}.{module_name}")
     except ImportError:
-        spec = importlib.util.spec_from_file_location(
-            "contract_governance_registry",
-            Path(__file__).with_name("contract_governance_registry.py"),
-        )
-        if spec is None or spec.loader is None:
-            raise
-        registry = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(registry)
-        return registry
+        pass
+    spec = importlib.util.spec_from_file_location(
+        module_name,
+        Path(__file__).with_name(file_name),
+    )
+    if spec is None or spec.loader is None:
+        raise ImportError(f"unable to load {file_name}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _load_registry_module() -> Any:
+    return _load_sibling_module("contract_governance_registry", "contract_governance_registry.py")
 
 
 _registry = _load_registry_module()
@@ -86,23 +103,197 @@ globals().update({name: getattr(_registry, name) for name in _REGISTRY_EXPORTS})
 
 
 def _load_user_surface_module() -> Any:
-    try:
-        from . import contract_governance_user_surface as user_surface
-
-        return user_surface
-    except ImportError:
-        spec = importlib.util.spec_from_file_location(
-            "contract_governance_user_surface",
-            Path(__file__).with_name("contract_governance_user_surface.py"),
-        )
-        if spec is None or spec.loader is None:
-            raise
-        user_surface = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(user_surface)
-        return user_surface
+    return _load_sibling_module("contract_governance_user_surface", "contract_governance_user_surface.py")
 
 
 _user_surface = _load_user_surface_module()
+
+
+def _load_capabilities_module() -> Any:
+    return _load_sibling_module("contract_governance_capabilities", "contract_governance_capabilities.py")
+
+
+_capabilities = _load_capabilities_module()
+_capabilities._CAPABILITY_GROUP_DEFAULTS = _CAPABILITY_GROUP_DEFAULTS
+_capabilities._CAPABILITY_GROUP_PROFILE_REGISTRY = _CAPABILITY_GROUP_PROFILE_REGISTRY
+_has_demo_semantics = _capabilities._has_demo_semantics
+_normalized_tags_for_item = _capabilities._normalized_tags_for_item
+is_internal_or_smoke = _capabilities.is_internal_or_smoke
+
+
+def normalize_capabilities(capabilities: list) -> list[dict]:
+    return _capabilities.normalize_capabilities(capabilities)
+
+
+def _load_scenes_module() -> Any:
+    return _load_sibling_module("contract_governance_scenes", "contract_governance_scenes.py")
+
+
+_scenes = _load_scenes_module()
+_scenes._SCENE_SEMANTIC_PROFILE_REGISTRY = _SCENE_SEMANTIC_PROFILE_REGISTRY
+_normalize_scene_list_profile = _scenes._normalize_scene_list_profile
+_derive_scene_meta = _scenes._derive_scene_meta
+
+
+def normalize_scenes(scenes: list) -> list[dict]:
+    return _scenes.normalize_scenes(scenes)
+
+
+def _load_list_surface_module() -> Any:
+    return _load_sibling_module("contract_governance_list_surface", "contract_governance_list_surface.py")
+
+
+_list_surface = _load_list_surface_module()
+
+
+def _load_native_bridge_module() -> Any:
+    return _load_sibling_module("contract_governance_native_bridge", "contract_governance_native_bridge.py")
+
+
+_native_bridge = _load_native_bridge_module()
+_native_bridge._USER_SURFACE_ACTION_MAX = _USER_SURFACE_ACTION_MAX
+
+
+def _load_labels_module() -> Any:
+    return _load_sibling_module("contract_governance_labels", "contract_governance_labels.py")
+
+
+_labels = _load_labels_module()
+_labels._BUSINESS_FIELD_LABEL_OVERRIDES = _BUSINESS_FIELD_LABEL_OVERRIDES
+_labels._LEGACY_FIELD_PRESENTATION_REGISTRY = _LEGACY_FIELD_PRESENTATION_REGISTRY
+
+
+def _load_access_policy_module() -> Any:
+    return _load_sibling_module("contract_governance_access_policy", "contract_governance_access_policy.py")
+
+
+_access_policy = _load_access_policy_module()
+
+
+def _load_canonicalization_module() -> Any:
+    return _load_sibling_module("contract_governance_canonicalization", "contract_governance_canonicalization.py")
+
+
+_canonicalization = _load_canonicalization_module()
+_canonicalization._CONTRACT_KEY_CANONICAL_MAP = _CONTRACT_KEY_CANONICAL_MAP
+
+
+def _load_domain_overrides_module() -> Any:
+    return _load_sibling_module("contract_governance_domain_overrides", "contract_governance_domain_overrides.py")
+
+
+_domain_overrides = _load_domain_overrides_module()
+
+
+def _load_surface_mapping_module() -> Any:
+    return _load_sibling_module("contract_governance_surface_mapping", "contract_governance_surface_mapping.py")
+
+
+_surface_mapping = _load_surface_mapping_module()
+
+
+def _load_create_profile_module() -> Any:
+    return _load_sibling_module("contract_governance_create_profile", "contract_governance_create_profile.py")
+
+
+_create_profile = _load_create_profile_module()
+_create_profile._RENDER_PROFILE_CREATE = _RENDER_PROFILE_CREATE
+
+
+def _load_field_semantics_module() -> Any:
+    return _load_sibling_module("contract_governance_field_semantics", "contract_governance_field_semantics.py")
+
+
+_field_semantics = _load_field_semantics_module()
+_field_semantics._PROJECT_FORM_PAGE_PRESERVE_FIELDS = _PROJECT_FORM_PAGE_PRESERVE_FIELDS
+_field_semantics._BUSINESS_DETAIL_RELATION_FIELDS = _BUSINESS_DETAIL_RELATION_FIELDS
+_field_semantics._TECHNICAL_RELATION_FIELD_PREFIXES = _TECHNICAL_RELATION_FIELD_PREFIXES
+_field_semantics._RENDER_PROFILE_CREATE = _RENDER_PROFILE_CREATE
+_field_semantics._RENDER_PROFILE_EDIT = _RENDER_PROFILE_EDIT
+_field_semantics._RENDER_PROFILE_READONLY = _RENDER_PROFILE_READONLY
+
+
+def _load_form_layout_module() -> Any:
+    return _load_sibling_module("contract_governance_form_layout", "contract_governance_form_layout.py")
+
+
+_form_layout = _load_form_layout_module()
+_form_layout._ENTERPRISE_COMPANY_FIELD_LABELS = _ENTERPRISE_COMPANY_FIELD_LABELS
+_form_layout._ENTERPRISE_USER_FIELD_LABELS = _ENTERPRISE_USER_FIELD_LABELS
+
+
+def _load_form_actions_module() -> Any:
+    return _load_sibling_module("contract_governance_form_actions", "contract_governance_form_actions.py")
+
+
+_form_actions = _load_form_actions_module()
+_form_actions._RENDER_PROFILE_CREATE = _RENDER_PROFILE_CREATE
+_form_actions._RENDER_PROFILE_EDIT = _RENDER_PROFILE_EDIT
+_form_actions._RENDER_PROFILE_READONLY = _RENDER_PROFILE_READONLY
+_form_actions._RENDER_PROFILES = _RENDER_PROFILES
+_form_actions._FORM_ACTION_PRIMARY_KEYWORDS = _FORM_ACTION_PRIMARY_KEYWORDS
+_form_actions._FORM_ACTION_READONLY_KEYWORDS = _FORM_ACTION_READONLY_KEYWORDS
+_form_actions._FORM_PRIMARY_DISABLED_REASON = _FORM_PRIMARY_DISABLED_REASON
+_form_actions._FORM_DISABLED_REASON_CAPABILITY = _FORM_DISABLED_REASON_CAPABILITY
+_form_actions._FORM_DISABLED_REASON_LIFECYCLE = _FORM_DISABLED_REASON_LIFECYCLE
+_form_actions._FORM_DISABLED_REASON_GROUP = _FORM_DISABLED_REASON_GROUP
+_form_actions._FORM_DISABLED_REASON_ROLE = _FORM_DISABLED_REASON_ROLE
+_form_actions._FORM_SCENE_PROFILE_PROJECT = _FORM_SCENE_PROFILE_PROJECT
+
+
+def _load_form_render_module() -> Any:
+    return _load_sibling_module("contract_governance_form_render", "contract_governance_form_render.py")
+
+
+_form_render = _load_form_render_module()
+_form_render._RENDER_PROFILE_CREATE = _RENDER_PROFILE_CREATE
+_form_render._RENDER_PROFILE_EDIT = _RENDER_PROFILE_EDIT
+_form_render._RENDER_PROFILE_READONLY = _RENDER_PROFILE_READONLY
+_form_render._RENDER_PROFILES = _RENDER_PROFILES
+
+
+def _load_form_validation_module() -> Any:
+    return _load_sibling_module("contract_governance_form_validation", "contract_governance_form_validation.py")
+
+
+_form_validation = _load_form_validation_module()
+_form_validation._RENDER_PROFILE_CREATE = _RENDER_PROFILE_CREATE
+_form_validation._RENDER_PROFILE_EDIT = _RENDER_PROFILE_EDIT
+_form_validation._RENDER_PROFILE_READONLY = _RENDER_PROFILE_READONLY
+_form_validation._RENDER_PROFILES = _RENDER_PROFILES
+
+
+def _load_form_fields_module() -> Any:
+    return _load_sibling_module("contract_governance_form_fields", "contract_governance_form_fields.py")
+
+
+_form_fields = _load_form_fields_module()
+_form_fields._BUSINESS_DETAIL_RELATION_FIELDS = _BUSINESS_DETAIL_RELATION_FIELDS
+_form_fields._FORM_CORE_FIELD_MAX = _FORM_CORE_FIELD_MAX
+_form_fields._RENDER_PROFILE_CREATE = _RENDER_PROFILE_CREATE
+_form_fields._RENDER_PROFILE_EDIT = _RENDER_PROFILE_EDIT
+_form_fields._RENDER_PROFILE_READONLY = _RENDER_PROFILE_READONLY
+
+
+def _load_project_form_module() -> Any:
+    return _load_sibling_module("contract_governance_project_form", "contract_governance_project_form.py")
+
+
+_project_form = _load_project_form_module()
+
+
+def _load_enterprise_forms_module() -> Any:
+    return _load_sibling_module("contract_governance_enterprise_forms", "contract_governance_enterprise_forms.py")
+
+
+_enterprise_forms = _load_enterprise_forms_module()
+
+
+def _load_contract_detection_module() -> Any:
+    return _load_sibling_module("contract_governance_contract_detection", "contract_governance_contract_detection.py")
+
+
+_contract_detection = _load_contract_detection_module()
 
 
 def source_authority_contract() -> dict[str, Any]:
@@ -167,226 +358,59 @@ def _mark_legacy_user_surface_model_policy(data: dict, policy_key: str) -> None:
 
 
 def register_legacy_standard_list_profile(profile: dict[str, Any]) -> None:
-    if not isinstance(profile, dict):
-        return
-    model_name = _safe_text(profile.get("model_name"))
-    if not model_name:
-        return
-    normalized = {
-        "model_name": model_name,
-        "columns_order": [
-            _safe_text(name)
-            for name in (profile.get("columns_order") if isinstance(profile.get("columns_order"), list) else [])
-            if _safe_text(name)
-        ],
-        "column_labels": {
-            _safe_text(key): _safe_text(value)
-            for key, value in (profile.get("column_labels") if isinstance(profile.get("column_labels"), dict) else {}).items()
-            if _safe_text(key)
-        },
-        "row_primary": _safe_text(profile.get("row_primary")),
-        "row_secondary": _safe_text(profile.get("row_secondary")),
-        "status_field": _safe_text(profile.get("status_field")),
-        "strict_columns": bool(profile.get("strict_columns")),
-        "profile_key": _safe_text(profile.get("profile_key")),
-        "signature_any": [
-            _safe_text(item)
-            for item in (profile.get("signature_any") if isinstance(profile.get("signature_any"), list) else [])
-            if _safe_text(item)
-        ],
-    }
-    if not normalized["columns_order"]:
-        return
-    dedupe_key = normalized["profile_key"] or normalized["model_name"]
-    for index, existing in enumerate(_LEGACY_STANDARD_LIST_PROFILE_REGISTRY):
-        existing_key = _safe_text(existing.get("profile_key")) or _safe_text(existing.get("model_name"))
-        if existing_key == dedupe_key:
-            _LEGACY_STANDARD_LIST_PROFILE_REGISTRY[index] = normalized
-            return
-    _LEGACY_STANDARD_LIST_PROFILE_REGISTRY.append(normalized)
+    _registry.register_legacy_standard_list_profile(profile)
 
 
 def register_legacy_record_context_clear_model(model_name: str) -> None:
-    model = _safe_text(model_name)
-    if model:
-        LEGACY_RECORD_CONTEXT_CLEAR_MODELS.add(model)
+    _registry.register_legacy_record_context_clear_model(model_name)
 
 
 def register_legacy_delete_only_model(model_name: str) -> None:
-    model = _safe_text(model_name)
-    if model:
-        LEGACY_DELETE_ONLY_MODELS.add(model)
+    _registry.register_legacy_delete_only_model(model_name)
 
 
 def register_legacy_project_form_governance_model(model_name: str) -> None:
-    model = _safe_text(model_name)
-    if model:
-        _LEGACY_PROJECT_FORM_GOVERNANCE_MODELS.add(model)
+    _registry.register_legacy_project_form_governance_model(model_name)
 
 
 def register_legacy_project_form_profile(model_name: str, profile: dict[str, Any]) -> None:
-    model = _safe_text(model_name)
-    if not model or not isinstance(profile, dict):
-        return
-    primary_fields = [_safe_text(name) for name in (profile.get("primary_fields") or []) if _safe_text(name)]
-    create_hidden_fields = [
-        _safe_text(name)
-        for name in (profile.get("create_hidden_fields") or [])
-        if _safe_text(name)
-    ]
-    action_priorities = [
-        _safe_text(name)
-        for name in (profile.get("action_priorities") or [])
-        if _safe_text(name)
-    ]
-    action_noise_markers = [
-        _safe_lower(name)
-        for name in (profile.get("action_noise_markers") or [])
-        if _safe_text(name)
-    ]
-    search_noise_markers = [
-        _safe_lower(name)
-        for name in (profile.get("search_noise_markers") or [])
-        if _safe_text(name)
-    ]
-    action_group_labels = {
-        _safe_text(key): _safe_text(value)
-        for key, value in _as_dict(profile.get("action_group_labels")).items()
-        if _safe_text(key) and _safe_text(value)
-    }
-    _LEGACY_PROJECT_FORM_PROFILE_REGISTRY[model] = {
-        "primary_fields": primary_fields,
-        "create_hidden_fields": create_hidden_fields,
-        "action_priorities": action_priorities,
-        "action_noise_markers": action_noise_markers,
-        "search_noise_markers": search_noise_markers,
-        "action_group_labels": action_group_labels,
-        "max_fields": int(profile.get("max_fields") or _PROJECT_FORM_FIELD_MAX),
-    }
+    _registry.register_legacy_project_form_profile(
+        model_name,
+        profile,
+        default_max_fields=_PROJECT_FORM_FIELD_MAX,
+    )
 
 
 def register_legacy_project_task_form_governance_model(model_name: str) -> None:
-    model = _safe_text(model_name)
-    if model:
-        _LEGACY_PROJECT_TASK_FORM_GOVERNANCE_MODELS.add(model)
+    _registry.register_legacy_project_task_form_governance_model(model_name)
 
 
 def register_legacy_project_task_form_profile(model_name: str, profile: dict[str, Any]) -> None:
-    model = _safe_text(model_name)
-    if not model or not isinstance(profile, dict):
-        return
-    fields = [_safe_text(name) for name in (profile.get("fields") or []) if _safe_text(name)]
-    if not fields:
-        return
-    labels = {
-        _safe_text(key): _safe_text(value)
-        for key, value in _as_dict(profile.get("field_labels")).items()
-        if _safe_text(key) and _safe_text(value)
-    }
-    description_fields = [
-        _safe_text(name)
-        for name in (profile.get("description_fields") or [])
-        if _safe_text(name)
-    ]
-    _LEGACY_PROJECT_TASK_FORM_PROFILE_REGISTRY[model] = {
-        "fields": fields,
-        "field_labels": labels,
-        "core_group_label": _safe_text(profile.get("core_group_label")) or "基础信息",
-        "description_group_label": _safe_text(profile.get("description_group_label")) or "说明",
-        "description_fields": description_fields,
-    }
+    _registry.register_legacy_project_task_form_profile(model_name, profile)
 
 
 def register_legacy_project_kanban_governance_model(model_name: str) -> None:
-    model = _safe_text(model_name)
-    if model:
-        _LEGACY_PROJECT_KANBAN_GOVERNANCE_MODELS.add(model)
+    _registry.register_legacy_project_kanban_governance_model(model_name)
 
 
 def register_legacy_project_kanban_profile(model_name: str, profile: dict[str, Any]) -> None:
-    model = _safe_text(model_name)
-    if not model or not isinstance(profile, dict):
-        return
-
-    def _field_list(key: str) -> list[str]:
-        return [_safe_text(name) for name in (profile.get(key) or []) if _safe_text(name)]
-
-    _LEGACY_PROJECT_KANBAN_PROFILE_REGISTRY[model] = {
-        "primary_fields": _field_list("primary_fields"),
-        "secondary_fields": _field_list("secondary_fields"),
-        "status_fields": _field_list("status_fields"),
-        "title_field": _safe_text(profile.get("title_field")),
-        "max_meta": int(profile.get("max_meta") or 4),
-    }
+    _registry.register_legacy_project_kanban_profile(model_name, profile)
 
 
 def register_legacy_kanban_row_action(model_name: str, action: dict[str, Any]) -> None:
-    model = _safe_text(model_name)
-    if not model or not isinstance(action, dict):
-        return
-    key = _safe_text(action.get("key") or action.get("name"))
-    if not key:
-        return
-    row = _deep_clone_json_like(action)
-    row["key"] = key
-    row.setdefault("name", key)
-    _LEGACY_KANBAN_ROW_ACTION_REGISTRY.setdefault(model, [])
-    existing = _LEGACY_KANBAN_ROW_ACTION_REGISTRY[model]
-    existing[:] = [item for item in existing if _safe_text(item.get("key") or item.get("name")) != key]
-    existing.append(row)
+    _registry.register_legacy_kanban_row_action(model_name, action)
 
 
 def register_legacy_field_presentation(model_name: str, field_name: str, profile: dict[str, Any]) -> None:
-    model = _safe_text(model_name)
-    field = _safe_text(field_name)
-    if not model or not field or not isinstance(profile, dict):
-        return
-    normalized = {
-        "label": _safe_text(profile.get("label")),
-        "widget": _safe_text(profile.get("widget")),
-        "cell_role": _safe_text(profile.get("cell_role")),
-        "mutation": _deep_clone_json_like(profile.get("mutation")) if isinstance(profile.get("mutation"), dict) else {},
-    }
-    _LEGACY_FIELD_PRESENTATION_REGISTRY[(model, field)] = normalized
+    _registry.register_legacy_field_presentation(model_name, field_name, profile)
 
 
 def register_capability_group_profile(group_key: str, profile: dict[str, Any]) -> None:
-    key = _safe_text(group_key)
-    if not key or not isinstance(profile, dict):
-        return
-    _CAPABILITY_GROUP_PROFILE_REGISTRY[key] = {
-        "label": _safe_text(profile.get("label"), key),
-        "icon": _safe_text(profile.get("icon")),
-        "key_prefixes": tuple(
-            _safe_lower(item)
-            for item in (profile.get("key_prefixes") if isinstance(profile.get("key_prefixes"), list) else [])
-            if _safe_text(item)
-        ),
-    }
+    _registry.register_capability_group_profile(group_key, profile)
 
 
 def register_scene_semantic_profile(profile: dict[str, Any]) -> None:
-    if not isinstance(profile, dict):
-        return
-    purpose = _safe_text(profile.get("purpose"))
-    if not purpose:
-        return
-    normalized = {
-        "purpose": purpose,
-        "code_prefixes": tuple(
-            _safe_lower(item)
-            for item in (profile.get("code_prefixes") if isinstance(profile.get("code_prefixes"), list) else [])
-            if _safe_text(item)
-        ),
-        "code_contains": tuple(
-            _safe_lower(item)
-            for item in (profile.get("code_contains") if isinstance(profile.get("code_contains"), list) else [])
-            if _safe_text(item)
-        ),
-    }
-    if not normalized["code_prefixes"] and not normalized["code_contains"]:
-        return
-    _SCENE_SEMANTIC_PROFILE_REGISTRY.append(normalized)
+    _registry.register_scene_semantic_profile(profile)
 
 
 def _legacy_field_presentation(model_name: str, field_name: str) -> dict[str, Any]:
@@ -446,27 +470,6 @@ def _apply_registered_legacy_standard_list_profiles(data: dict) -> None:
         )
 
 
-_FORM_CORE_FIELD_MAX = 8
-_FORM_ACTION_PRIMARY_KEYWORDS = (
-    "提交",
-    "保存",
-    "创建",
-    "确认",
-    "进入下一阶段",
-    "approve",
-    "submit",
-    "save",
-    "create",
-    "confirm",
-)
-_FORM_ACTION_READONLY_KEYWORDS = (
-    "查看",
-    "打开",
-    "open",
-    "view",
-)
-
-
 def _inject_enterprise_form_governance(data: dict, *, next_action_key: str = "", next_action_label: str = "") -> None:
     governance = _as_dict(data.get("form_governance"))
     governance.update(
@@ -487,10 +490,6 @@ def _inject_enterprise_form_governance(data: dict, *, next_action_key: str = "",
         governance.pop("next_action", None)
     data["form_governance"] = governance
 
-_FORM_PRIMARY_DISABLED_REASON = "请先完成必填字段后再执行主操作"
-_FORM_DISABLED_REASON_CAPABILITY = "缺少执行该操作所需能力"
-
-
 def _governance_primary_model(data: dict) -> str:
     governance = _as_dict(data.get("governance"))
     head = _as_dict(data.get("head"))
@@ -502,39 +501,6 @@ def _governance_primary_model(data: dict) -> str:
         or data.get("model")
         or permissions.get("model")
     )
-_FORM_DISABLED_REASON_LIFECYCLE = "当前生命周期状态不允许该操作"
-_FORM_DISABLED_REASON_GROUP = "当前角色组不满足执行条件"
-_FORM_DISABLED_REASON_ROLE = "当前角色不满足执行条件"
-_FORM_SCENE_PROFILE_DEFAULT = "generic.form"
-_FORM_SCENE_PROFILE_PROJECT = "project.form"
-
-_CAPABILITY_GROUP_DEFAULTS = {
-    "governance": {"label": "Governance", "icon": "shield"},
-    "analytics": {"label": "Analytics", "icon": "chart"},
-    "others": {"label": "Other", "icon": "grid"},
-}
-
-_CONTRACT_KEY_CANONICAL_MAP = {
-    "requiredCapabilities": "required_capabilities",
-    "groupsXmlids": "groups_xmlids",
-    "actionId": "action_id",
-    "menuId": "menu_id",
-    "viewType": "view_type",
-    "recordId": "record_id",
-    "reasonCode": "reason_code",
-    "deliveryLevel": "delivery_level",
-    "targetSceneKey": "target_scene_key",
-    "entryKind": "entry_kind",
-    "capabilityState": "capability_state",
-    "capabilityStateReason": "capability_state_reason",
-    "defaultPayload": "default_payload",
-    "groupKey": "group_key",
-    "groupLabel": "group_label",
-    "groupIcon": "group_icon",
-    "groupSequence": "group_sequence",
-}
-
-_DOMAIN_OVERRIDE_REGISTRY: list[dict[str, Any]] = []
 
 
 def is_truthy(value: Any) -> bool:
@@ -571,266 +537,6 @@ def _safe_text(value: Any, fallback: str = "") -> str:
     return text or fallback
 
 
-def _parse_tags(raw: Any) -> set[str]:
-    if isinstance(raw, list):
-        items = raw
-    else:
-        items = str(raw or "").split(",")
-    out: set[str] = set()
-    for item in items:
-        val = _safe_text(item).lower()
-        if val:
-            out.add(val)
-    return out
-
-
-def _contains_demo_marker(value: Any) -> bool:
-    text = _safe_text(value).lower()
-    if not text:
-        return False
-    return any(marker in text for marker in ("demo", "showcase", "domain_demo"))
-
-
-def _has_demo_semantics(item: dict) -> bool:
-    if not isinstance(item, dict):
-        return False
-    if item.get("is_demo") is True:
-        return True
-    tags = _parse_tags(item.get("tags"))
-    return "demo" in tags or "showcase" in tags
-
-
-def _normalized_tags_for_item(item: dict) -> list[str]:
-    tags = _parse_tags(item.get("tags"))
-    key = _safe_text(item.get("key")).lower()
-    code = _safe_text(item.get("code")).lower()
-    name = _safe_text(item.get("name")).lower()
-    target = item.get("target") if isinstance(item.get("target"), dict) else {}
-    target_text = " ".join(
-        [
-            _safe_text(target.get("menu_xmlid")).lower(),
-            _safe_text(target.get("action_xmlid")).lower(),
-            _safe_text(target.get("route")).lower(),
-        ]
-    ).strip()
-    if item.get("is_test") or item.get("smoke_test"):
-        tags.update({"internal", "smoke"})
-    if "smoke" in key or "smoke" in code or "smoke" in name:
-        tags.update({"internal", "smoke"})
-    if "internal" in key or "internal" in code or "internal" in name:
-        tags.add("internal")
-    combined = f"{key} {code} {name} {target_text}"
-    if "showcase" in combined or "demo" in combined or "domain_demo" in combined:
-        tags.add("demo")
-    return sorted(tags)
-
-
-def is_internal_or_smoke(item: dict) -> bool:
-    if not isinstance(item, dict):
-        return False
-    if item.get("is_internal") is True or item.get("is_smoke") is True:
-        return True
-    tags = _parse_tags(item.get("tags"))
-    if "internal" in tags or "smoke" in tags or "demo" in tags or "showcase" in tags:
-        return True
-    return bool(item.get("is_test") or item.get("smoke_test"))
-
-
-def normalize_capabilities(capabilities: list) -> list[dict]:
-    def _normalize_capability_status(value: Any) -> str:
-        status = _safe_text(value).lower()
-        if status in {"ga", "beta", "alpha"}:
-            return status
-        if status in {"active", "enabled", "ready"}:
-            return "ga"
-        if status in {"preview", "pilot", "pending"}:
-            return "beta"
-        if status in {"disabled", "inactive", "blocked"}:
-            return "alpha"
-        return "ga"
-
-    def _infer_capability_group_key(capability_key: str) -> str:
-        key = _safe_text(capability_key).lower()
-        if not key:
-            return "others"
-        for group_key, profile in _CAPABILITY_GROUP_PROFILE_REGISTRY.items():
-            prefixes = profile.get("key_prefixes") if isinstance(profile, dict) else ()
-            if prefixes and key.startswith(tuple(prefixes)):
-                return group_key
-        if key.startswith(("usage.", "report.", "dashboard.", "analytics.")):
-            return "analytics"
-        if key.startswith(("scene.", "portal.", "config.", "permission.", "subscription.", "pack.")):
-            return "governance"
-        return "others"
-
-    def _normalize_capability_state(value: Any) -> str:
-        state = _safe_text(value).lower()
-        if state in {"allow", "readonly", "deny", "pending", "coming_soon"}:
-            return state
-        return ""
-
-    def _derive_capability_state(status: str, state: str, tags: list[str], reason_code: str) -> str:
-        if state:
-            return state
-        tag_set = {str(tag or "").strip().lower() for tag in tags if str(tag or "").strip()}
-        if "readonly" in tag_set or "read_only" in tag_set:
-            return "readonly"
-        if reason_code in {"PERMISSION_DENIED", "ACCESS_DENIED", "FORBIDDEN"}:
-            return "deny"
-        if status == "alpha":
-            return "coming_soon"
-        if status == "beta":
-            return "pending"
-        return "allow"
-
-    def _extract_scene_key_from_route(route: Any) -> str:
-        route_text = _safe_text(route)
-        if not route_text:
-            return ""
-        if route_text.startswith("/s/"):
-            return route_text.replace("/s/", "", 1).strip("/")
-        marker = "scene="
-        idx = route_text.find(marker)
-        if idx < 0:
-            return ""
-        tail = route_text[idx + len(marker):]
-        scene = tail.split("&", 1)[0].strip()
-        return scene
-
-    def _entry_target_payload(item: dict) -> dict:
-        entry_target = item.get("entry_target") if isinstance(item.get("entry_target"), dict) else {}
-        if not entry_target:
-            return {}
-        payload: dict[str, Any] = {}
-        scene_key = _safe_text(entry_target.get("scene_key"))
-        route = _safe_text(entry_target.get("route"))
-        if not route and scene_key:
-            route = f"/s/{scene_key}"
-        if route:
-            payload["route"] = route
-        if _safe_text(entry_target.get("model")):
-            payload["model"] = _safe_text(entry_target.get("model"))
-        record_entry = entry_target.get("record_entry") if isinstance(entry_target.get("record_entry"), dict) else {}
-        if _safe_text(record_entry.get("model")) and "model" not in payload:
-            payload["model"] = _safe_text(record_entry.get("model"))
-        refs = entry_target.get("compatibility_refs") if isinstance(entry_target.get("compatibility_refs"), dict) else {}
-        for key in ("action_id", "menu_id", "record_id"):
-            value = entry_target.get(key)
-            if value is None:
-                value = record_entry.get(key)
-            if value is None:
-                value = refs.get(key)
-            if value is not None:
-                payload[key] = value
-        return payload
-
-    def _ensure_default_payload(item: dict) -> None:
-        payload = item.get("default_payload")
-        if isinstance(payload, dict) and any(payload.get(key) for key in ("route", "action_id", "menu_id", "model", "scene_key")):
-            return
-        derived = _entry_target_payload(item)
-        if derived:
-            item["default_payload"] = derived
-
-    def _derive_target_scene_key(item: dict) -> str:
-        direct = _safe_text(item.get("target_scene_key"))
-        if direct:
-            return direct
-        payload = item.get("default_payload")
-        if isinstance(payload, dict):
-            payload_scene = _safe_text(payload.get("scene_key"))
-            if payload_scene:
-                return payload_scene
-            route_scene = _extract_scene_key_from_route(payload.get("route"))
-            if route_scene:
-                return route_scene
-        entry_target = item.get("entry_target") if isinstance(item.get("entry_target"), dict) else {}
-        entry_scene = _safe_text(entry_target.get("scene_key"))
-        if entry_scene:
-            return entry_scene
-        route_scene = _extract_scene_key_from_route(entry_target.get("route") if isinstance(entry_target, dict) else "")
-        if route_scene:
-            return route_scene
-        return ""
-
-    def _derive_entry_kind(item: dict, target_scene_key: str) -> str:
-        explicit = _safe_text(item.get("entry_kind")).lower()
-        if explicit in {"exclusive", "alias"}:
-            return explicit
-        payload = item.get("default_payload") if isinstance(item.get("default_payload"), dict) else {}
-        has_direct_entry = bool(payload.get("action_id") or payload.get("menu_id") or payload.get("route"))
-        if target_scene_key and has_direct_entry:
-            return "exclusive"
-        return "alias"
-
-    def _derive_delivery_level(item: dict, target_scene_key: str, entry_kind: str) -> str:
-        explicit = _safe_text(item.get("delivery_level")).lower()
-        if explicit in {"exclusive", "shared", "placeholder"}:
-            return explicit
-        payload = item.get("default_payload") if isinstance(item.get("default_payload"), dict) else {}
-        has_entry = bool(target_scene_key or payload.get("route") or payload.get("action_id") or payload.get("menu_id"))
-        if not has_entry:
-            return "placeholder"
-        if entry_kind == "exclusive":
-            return "exclusive"
-        return "shared"
-
-    out: list[dict] = []
-    for cap in capabilities or []:
-        if not isinstance(cap, dict):
-            continue
-        item = dict(cap)
-        item["key"] = _safe_text(item.get("key"))
-        item["name"] = _safe_text(item.get("name"), item.get("key") or "未命名能力")
-        item["ui_label"] = _safe_text(item.get("ui_label"), item.get("name") or item.get("key") or "未命名能力")
-        item["status"] = _normalize_capability_status(item.get("status"))
-        item["group_key"] = _safe_text(item.get("group_key"), _infer_capability_group_key(item.get("key")))
-        group_meta = (
-            _CAPABILITY_GROUP_PROFILE_REGISTRY.get(item["group_key"])
-            or _CAPABILITY_GROUP_DEFAULTS.get(item["group_key"])
-            or _CAPABILITY_GROUP_DEFAULTS["others"]
-        )
-        item["group_label"] = _safe_text(item.get("group_label"), group_meta.get("label") or item["group_key"])
-        item["group_icon"] = _safe_text(item.get("group_icon"), group_meta.get("icon") or "")
-        try:
-            item["group_sequence"] = int(item.get("group_sequence") or 0)
-        except Exception:
-            item["group_sequence"] = 0
-        _ensure_default_payload(item)
-        item["tags"] = _normalized_tags_for_item(item)
-        state = _normalize_capability_state(item.get("capability_state"))
-        reason_code = _safe_text(item.get("reason_code")).upper()
-        item["capability_state"] = _derive_capability_state(
-            status=item["status"],
-            state=state,
-            tags=item["tags"],
-            reason_code=reason_code,
-        )
-        item["state"] = _safe_text(item.get("state")).upper()
-        if item["state"] not in {"READY", "LOCKED", "PREVIEW"}:
-            if item["capability_state"] in {"deny"}:
-                item["state"] = "LOCKED"
-            elif item["capability_state"] in {"pending", "coming_soon"}:
-                item["state"] = "PREVIEW"
-            else:
-                item["state"] = "READY"
-        reason = _safe_text(item.get("capability_state_reason"))
-        if not reason:
-            if item["capability_state"] == "readonly":
-                reason = "当前能力为只读模式"
-            elif item["capability_state"] == "pending":
-                reason = "能力处于试运行阶段"
-            elif item["capability_state"] == "coming_soon":
-                reason = "能力尚在建设中，即将开放"
-        item["capability_state_reason"] = reason
-        target_scene_key = _derive_target_scene_key(item)
-        item["target_scene_key"] = target_scene_key
-        item["entry_kind"] = _derive_entry_kind(item, target_scene_key)
-        item["delivery_level"] = _derive_delivery_level(item, target_scene_key, item["entry_kind"])
-        out.append(item)
-    return out
-
-
 def _strip_user_mode_fields(obj: Any) -> Any:
     return _user_surface.strip_user_mode_fields(obj)
 
@@ -853,16 +559,6 @@ def _as_dict(value: Any) -> dict:
 
 def _safe_lower(value: Any) -> str:
     return _user_surface.safe_lower(value)
-
-
-def _view_type_tokens(*values: Any) -> set[str]:
-    tokens: set[str] = set()
-    for value in values:
-        for item in _safe_lower(value).replace(";", ",").split(","):
-            token = item.strip()
-            if token:
-                tokens.add(token)
-    return tokens
 
 
 def _is_numeric_token(value: Any) -> bool:
@@ -902,585 +598,104 @@ def _apply_user_surface_noise_reduction(data: dict) -> None:
 
 
 def _apply_user_surface_policies(data: dict) -> None:
-    head = _as_dict(data.get("head"))
-    view_types = _view_type_tokens(head.get("view_type"), data.get("view_type"))
-    model = _safe_text(head.get("model") or data.get("model"))
-    fields_map = _as_dict(data.get("fields"))
-    views = _as_dict(data.get("views"))
-    has_list_view = bool(_as_dict(views.get("tree") or views.get("list")))
-    active_field = "active" if "active" in fields_map else ""
-    filters_primary_max = _USER_SURFACE_PRIMARY_FILTER_MAX
-    actions_primary_max = _USER_SURFACE_PRIMARY_ACTION_MAX
-    record_open_policy = {
-        "carry_query_mode": "preserve",
-    }
-    batch_policy = {
-        "enabled": False,
-        "active_field": "",
-        "archive_value": None,
-        "activate_value": None,
-        "delete_allowed": False,
-        "delete_only_mode": False,
-        "delete_mode": "none",
-        "available_actions": [],
-    }
-    if "form" in view_types and not (view_types & {"tree", "list"} or has_list_view):
-        filters_primary_max = 0
-        actions_primary_max = 3
-    if view_types & {"tree", "list"} or has_list_view:
-        permissions = _as_dict(data.get("permissions"))
-        effective = _as_dict(permissions.get("effective"))
-        rights = _as_dict(effective.get("rights"))
-        write_allowed = bool(rights.get("write"))
-        unlink_right_allowed = bool(rights.get("unlink"))
-        delete_policy = _as_dict(data.get("delete_policy"))
-        unlink_allowed = bool(delete_policy.get("allowed")) and _safe_lower(delete_policy.get("delete_mode")) == "unlink"
-        if model in LEGACY_RECORD_CONTEXT_CLEAR_MODELS:
-            _mark_legacy_user_surface_model_policy(data, f"{model}.record_open_context")
-        if model in LEGACY_DELETE_ONLY_MODELS:
-            _mark_legacy_user_surface_model_policy(data, f"{model}.delete_only")
-        delete_allowed = bool(unlink_right_allowed and unlink_allowed)
-        delete_only_mode = bool(delete_allowed and model in LEGACY_DELETE_ONLY_MODELS)
-        available_actions = []
-        if write_allowed and active_field and not delete_only_mode:
-            available_actions.extend(["archive", "activate"])
-        if delete_allowed:
-            available_actions.append("delete")
-        if model in LEGACY_RECORD_CONTEXT_CLEAR_MODELS:
-            record_open_policy = {
-                "carry_query_mode": "clear_scene_context",
-            }
-        batch_policy = {
-            "enabled": bool(available_actions),
-            "active_field": active_field,
-            "archive_value": False if active_field else None,
-            "activate_value": True if active_field else None,
-            "delete_allowed": delete_allowed,
-            "delete_only_mode": delete_only_mode,
-            "delete_mode": "unlink" if delete_allowed and "delete" in available_actions else "none",
-            "available_actions": available_actions,
-        }
-        if not write_allowed and not unlink_right_allowed:
-            batch_policy["available_actions"] = []
-            batch_policy["enabled"] = False
-            batch_policy["delete_mode"] = "none"
-    primary_model = _governance_primary_model(data)
-    if model and primary_model and model == primary_model:
-        filters_primary_max = min(filters_primary_max, 4)
-        actions_primary_max = min(actions_primary_max, 3)
-    data["surface_policies"] = {
-        "filters_primary_max": filters_primary_max,
-        "actions_primary_max": actions_primary_max,
-        "filters_max": _USER_SURFACE_FILTER_MAX,
-        "actions_max": _USER_SURFACE_ACTION_MAX,
-        "delete_mode": batch_policy.get("delete_mode") or "none",
-        "batch_policy": batch_policy,
-        "record_open_policy": record_open_policy,
-    }
-
-
-def _normalize_scene_list_profile(item: dict) -> dict:
-    raw = item.get("list_profile")
-    profile = dict(raw) if isinstance(raw, dict) else {}
-    columns = profile.get("columns") if isinstance(profile.get("columns"), list) else []
-    hidden = profile.get("hidden_columns") if isinstance(profile.get("hidden_columns"), list) else []
-    row_primary = _safe_text(profile.get("row_primary"))
-    row_secondary = _safe_text(profile.get("row_secondary"))
-    primary_field = _safe_text(profile.get("primary_field"), row_primary or (columns[0] if columns else "name"))
-    status_field = _safe_text(profile.get("status_field"), "lifecycle_state")
-    urgency_score = int(profile.get("urgency_score") or 0)
-    highlight_rule = profile.get("highlight_rule") if isinstance(profile.get("highlight_rule"), dict) else {}
-    if not highlight_rule:
-        highlight_rule = {
-            "overdue": {"field": "end_date", "operator": "lt_today", "level": "danger"},
-            "at_risk": {"field": status_field, "operator": "in", "value": ["paused", "closing"], "level": "warning"},
-        }
-    profile["columns"] = columns
-    profile["hidden_columns"] = sorted({str(col).strip() for col in hidden if str(col).strip()})
-    profile["row_primary"] = row_primary
-    profile["row_secondary"] = row_secondary
-    profile["primary_field"] = primary_field
-    profile["status_field"] = status_field
-    profile["urgency_score"] = urgency_score
-    profile["highlight_rule"] = highlight_rule
-    return profile
-
-
-def _derive_scene_meta(item: dict) -> dict:
-    code = _safe_text(item.get("code") or item.get("key")).lower()
-    purpose = "Business work"
-    for profile in _SCENE_SEMANTIC_PROFILE_REGISTRY:
-        prefixes = profile.get("code_prefixes") if isinstance(profile, dict) else ()
-        contains = profile.get("code_contains") if isinstance(profile, dict) else ()
-        if (prefixes and code.startswith(tuple(prefixes))) or (
-            contains and any(marker in code for marker in contains)
-        ):
-            purpose = _safe_text(profile.get("purpose"), purpose)
-            break
-
-    access = item.get("access") if isinstance(item.get("access"), dict) else {}
-    required_caps = access.get("required_capabilities") if isinstance(access.get("required_capabilities"), list) else []
-    is_allowed = bool(access.get("allowed", True))
-    is_default = bool(item.get("is_default"))
-    base_score = 80
-    if is_default:
-        base_score += 10
-    if not is_allowed:
-        base_score -= 30
-    base_score -= min(30, len(required_caps) * 5)
-    role_relevance_score = max(0, min(100, base_score))
-
-    tiles = item.get("tiles") if isinstance(item.get("tiles"), list) else []
-    action_labels: list[str] = []
-    for tile in tiles:
-        if not isinstance(tile, dict):
-            continue
-        label = _safe_text(tile.get("title") or tile.get("subtitle") or tile.get("key"))
-        if label and label not in action_labels:
-            action_labels.append(label)
-    core_action = action_labels[0] if action_labels else "进入场景"
-    priority_actions = action_labels[:3]
-    return {
-        "purpose": purpose,
-        "core_action": core_action,
-        "priority_actions": priority_actions,
-        "role_relevance_score": role_relevance_score,
-    }
+    _user_surface.apply_user_surface_policies(
+        data,
+        primary_model=_governance_primary_model(data),
+        record_context_clear_models=LEGACY_RECORD_CONTEXT_CLEAR_MODELS,
+        delete_only_models=LEGACY_DELETE_ONLY_MODELS,
+        mark_model_policy=_mark_legacy_user_surface_model_policy,
+        filter_max=_USER_SURFACE_FILTER_MAX,
+        action_max=_USER_SURFACE_ACTION_MAX,
+        primary_filter_max=_USER_SURFACE_PRIMARY_FILTER_MAX,
+        primary_action_max=_USER_SURFACE_PRIMARY_ACTION_MAX,
+    )
 
 
 def _is_project_form_contract(data: dict) -> bool:
-    head = _as_dict(data.get("head"))
-    views = _as_dict(data.get("views"))
-    form_view = _as_dict(views.get("form"))
-    permissions = _as_dict(data.get("permissions"))
-    model = _safe_text(
-        head.get("model")
-        or data.get("model")
-        or form_view.get("model")
-        or permissions.get("model")
+    return _contract_detection.is_project_form_contract(
+        data,
+        primary_model=_governance_primary_model(data),
+        project_form_models=_LEGACY_PROJECT_FORM_GOVERNANCE_MODELS,
     )
-    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
-    has_form_view = isinstance(views.get("form"), dict)
-    if not view_type and has_form_view:
-        view_type = "form"
-    primary_model = _governance_primary_model(data)
-    if primary_model not in _LEGACY_PROJECT_FORM_GOVERNANCE_MODELS:
-        return False
-    if not primary_model or model != primary_model:
-        return False
-    if has_form_view:
-        return "form" in view_type if view_type else True
-    return view_type == "form"
 
 
 def _legacy_project_form_profile(data: dict) -> dict[str, Any]:
     profile = _LEGACY_PROJECT_FORM_PROFILE_REGISTRY.get(_governance_primary_model(data)) or {}
-    max_fields = int(profile.get("max_fields") or _PROJECT_FORM_FIELD_MAX)
-    return {
-        "primary_fields": [
-            _safe_text(name)
-            for name in (profile.get("primary_fields") or [])
-            if _safe_text(name)
-        ],
-        "create_hidden_fields": [
-            _safe_text(name)
-            for name in (profile.get("create_hidden_fields") or [])
-            if _safe_text(name)
-        ],
-        "action_priorities": [
-            _safe_text(name)
-            for name in (profile.get("action_priorities") or [])
-            if _safe_text(name)
-        ],
-        "action_noise_markers": [
-            _safe_lower(name)
-            for name in (profile.get("action_noise_markers") or [])
-            if _safe_text(name)
-        ],
-        "search_noise_markers": [
-            _safe_lower(name)
-            for name in (profile.get("search_noise_markers") or [])
-            if _safe_text(name)
-        ],
-        "action_group_labels": {
-            _safe_text(key): _safe_text(value)
-            for key, value in _as_dict(profile.get("action_group_labels")).items()
-            if _safe_text(key) and _safe_text(value)
-        },
-        "max_fields": max_fields if max_fields > 0 else _PROJECT_FORM_FIELD_MAX,
-    }
+    return _project_form.normalize_legacy_project_form_profile(
+        profile,
+        default_max_fields=_PROJECT_FORM_FIELD_MAX,
+    )
 
 
 def _is_enterprise_company_form_contract(data: dict) -> bool:
-    head = _as_dict(data.get("head"))
-    views = _as_dict(data.get("views"))
-    form_view = _as_dict(views.get("form"))
-    permissions = _as_dict(data.get("permissions"))
-    model = _safe_text(
-        head.get("model")
-        or data.get("model")
-        or form_view.get("model")
-        or permissions.get("model")
+    return _contract_detection.is_enterprise_company_form_contract(
+        data,
+        primary_model=_governance_primary_model(data),
     )
-    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
-    if not view_type and isinstance(views.get("form"), dict):
-        view_type = "form"
-    primary_model = _governance_primary_model(data)
-    return bool(primary_model == "res.company" and model == "res.company" and "form" in view_type)
 
 
 def _is_enterprise_user_form_contract(data: dict) -> bool:
-    head = _as_dict(data.get("head"))
-    views = _as_dict(data.get("views"))
-    form_view = _as_dict(views.get("form"))
-    permissions = _as_dict(data.get("permissions"))
-    model = _safe_text(
-        head.get("model")
-        or data.get("model")
-        or form_view.get("model")
-        or permissions.get("model")
+    return _contract_detection.is_enterprise_user_form_contract(
+        data,
+        primary_model=_governance_primary_model(data),
     )
-    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
-    if not view_type and isinstance(views.get("form"), dict):
-        view_type = "form"
-    primary_model = _governance_primary_model(data)
-    return bool(primary_model == "res.users" and model == "res.users" and "form" in view_type)
 
 
 def _is_project_kanban_contract(data: dict) -> bool:
-    head = _as_dict(data.get("head"))
-    views = _as_dict(data.get("views"))
-    kanban_view = _as_dict(views.get("kanban"))
-    permissions = _as_dict(data.get("permissions"))
-    model = _safe_text(
-        head.get("model")
-        or data.get("model")
-        or kanban_view.get("model")
-        or permissions.get("model")
-    )
-    current_view_type = _safe_text(data.get("view_type")).lower()
-    if current_view_type and current_view_type not in {"kanban", "tree", "list"}:
-        return False
-    render_profile = _safe_text(data.get("render_profile")).lower()
-    if render_profile in {_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY}:
-        return False
-    if _safe_text(data.get("record_id") or data.get("res_id")) and isinstance(views.get("form"), dict):
-        return False
-    view_type = _safe_text(current_view_type or head.get("view_type")).lower()
-    if not view_type and isinstance(views.get("kanban"), dict):
-        view_type = "kanban"
-    primary_model = _governance_primary_model(data)
-    return bool(
-        primary_model
-        and primary_model in _LEGACY_PROJECT_KANBAN_GOVERNANCE_MODELS
-        and model == primary_model
-        and ("kanban" in view_type or isinstance(views.get("kanban"), dict))
+    return _contract_detection.is_project_kanban_contract(
+        data,
+        primary_model=_governance_primary_model(data),
+        project_kanban_models=_LEGACY_PROJECT_KANBAN_GOVERNANCE_MODELS,
+        create_profile=_RENDER_PROFILE_CREATE,
+        edit_profile=_RENDER_PROFILE_EDIT,
+        readonly_profile=_RENDER_PROFILE_READONLY,
     )
 
 
 def _is_project_task_form_contract(data: dict) -> bool:
-    head = _as_dict(data.get("head"))
-    views = _as_dict(data.get("views"))
-    form_view = _as_dict(views.get("form"))
-    permissions = _as_dict(data.get("permissions"))
-    model = _safe_text(
-        head.get("model")
-        or data.get("model")
-        or form_view.get("model")
-        or permissions.get("model")
-    )
-    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
-    if not view_type and isinstance(views.get("form"), dict):
-        view_type = "form"
-    primary_model = _governance_primary_model(data)
-    return bool(
-        primary_model
-        and primary_model in _LEGACY_PROJECT_TASK_FORM_GOVERNANCE_MODELS
-        and model == primary_model
-        and "form" in view_type
+    return _contract_detection.is_project_task_form_contract(
+        data,
+        primary_model=_governance_primary_model(data),
+        task_form_models=_LEGACY_PROJECT_TASK_FORM_GOVERNANCE_MODELS,
     )
 
 
 def _is_model_tree_contract(data: dict, model_name: str) -> bool:
-    head = _as_dict(data.get("head"))
-    views = _as_dict(data.get("views"))
-    tree_view = _as_dict(views.get("tree") or views.get("list"))
-    has_tree_surface = bool(tree_view)
-    permissions = _as_dict(data.get("permissions"))
-    model = _safe_text(
-        head.get("model")
-        or data.get("model")
-        or tree_view.get("model")
-        or permissions.get("model")
-    )
-    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
-    if not view_type and has_tree_surface:
-        view_type = "tree"
-    primary_model = _governance_primary_model(data)
-    return bool(
-        primary_model == model_name
-        and model == model_name
-        and ("tree" in view_type or "list" in view_type or has_tree_surface)
+    return _contract_detection.is_model_tree_contract(
+        data,
+        primary_model=_governance_primary_model(data),
+        model_name=model_name,
     )
 
 
 def _is_form_contract(data: dict) -> bool:
-    head = _as_dict(data.get("head"))
-    views = _as_dict(data.get("views"))
-    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
-    if view_type == "form":
-        return True
-    return isinstance(views.get("form"), dict)
+    return _contract_detection.is_form_contract(data)
 
 
 def _is_technical_field(name: str, descriptor: dict) -> bool:
-    low = _safe_lower(name)
-    if not low:
-        return True
-    if low in _PROJECT_FORM_PAGE_PRESERVE_FIELDS:
-        return False
-    ttype = _safe_lower(descriptor.get("type") or descriptor.get("ttype"))
-    if (
-        ttype in {"one2many", "many2many"}
-        and low in _BUSINESS_DETAIL_RELATION_FIELDS
-        and not low.startswith(_TECHNICAL_RELATION_FIELD_PREFIXES)
-    ):
-        return False
-    if low in {"id", "__last_update", "display_name"}:
-        return True
-    if low.startswith(("create_", "write_", "message_", "activity_", "access_", "alias_", "website_")):
-        return True
-    if low.endswith(("_ids", "_id_count")) and low not in {
-        "project_type_id",
-        "project_category_id",
-        "stage_id",
-        "manager_id",
-        "user_id",
-        "owner_id",
-        "company_id",
-    }:
-        return True
-    if ttype in {"one2many", "many2many", "properties_definition"}:
-        return True
-    return False
+    return _field_semantics.is_technical_field(name, descriptor)
 
 
 def _pick_project_form_fields(data: dict) -> list[str]:
-    fields_map = _as_dict(data.get("fields"))
-    if not fields_map:
-        return []
-    profile = _legacy_project_form_profile(data)
-    primary_fields = profile.get("primary_fields") or []
-    max_fields = int(profile.get("max_fields") or _PROJECT_FORM_FIELD_MAX)
-    ordered_fields = _iter_field_order(data)
-
-    def _collect_page_fields(nodes: list, current_page: str = "", out: list[str] | None = None) -> list[str]:
-        collected = out or []
-        for node in nodes:
-            if not isinstance(node, dict):
-                continue
-            node_type = _safe_lower(node.get("type") or node.get("kind"))
-            page_name = current_page
-            if node_type == "page":
-                page_name = _safe_text(node.get("name") or node.get("label") or node.get("string"))
-            if node_type == "field" and page_name:
-                name = _safe_text(node.get("name"))
-                descriptor = _as_dict(fields_map.get(name))
-                if name and descriptor and not _is_technical_field(name, descriptor) and name not in collected:
-                    collected.append(name)
-            for key in ("children", "tabs", "pages", "nodes", "items"):
-                candidate = node.get(key)
-                if isinstance(candidate, list):
-                    _collect_page_fields(candidate, page_name, collected)
-        return collected
-
-    views = _as_dict(data.get("views"))
-    form = _as_dict(views.get("form"))
-    layout = form.get("layout")
-    page_fields = _collect_page_fields(layout if isinstance(layout, list) else [])
-
-    selected: list[str] = []
-    for name in primary_fields:
-        descriptor = _as_dict(fields_map.get(name))
-        if descriptor and not _is_technical_field(name, descriptor) and name not in selected:
-            selected.append(name)
-
-    for name in page_fields:
-        if len(selected) >= max_fields:
-            break
-        if name not in selected:
-            selected.append(name)
-
-    for name in ordered_fields:
-        if len(selected) >= max_fields:
-            break
-        descriptor = _as_dict(fields_map.get(name))
-        if not descriptor or _is_technical_field(name, descriptor):
-            continue
-        if name not in selected:
-            selected.append(name)
-
-    for name, descriptor_raw in fields_map.items():
-        if len(selected) >= max_fields:
-            break
-        descriptor = _as_dict(descriptor_raw)
-        if _is_technical_field(name, descriptor):
-            continue
-        required = bool(descriptor.get("required"))
-        readonly = bool(descriptor.get("readonly"))
-        if required and not readonly and name not in selected:
-            selected.append(name)
-
-    if "name" in fields_map and "name" not in selected:
-        selected.insert(0, "name")
-    return selected[:max_fields]
+    return _project_form.pick_project_form_fields(
+        data,
+        profile=_legacy_project_form_profile(data),
+        iter_field_order=_iter_field_order,
+        is_technical_field=_is_technical_field,
+        default_max_fields=_PROJECT_FORM_FIELD_MAX,
+    )
 
 
 def _govern_project_kanban_contract_for_user(data: dict) -> None:
-    fields_map = _as_dict(data.get("fields"))
-    if not fields_map:
-        return
     primary_model = _governance_primary_model(data)
-    registered_profile = _LEGACY_PROJECT_KANBAN_PROFILE_REGISTRY.get(primary_model) or {}
-
-    available = [name for name in fields_map.keys() if not _is_technical_field(name, _as_dict(fields_map.get(name)))]
-    primary: list[str] = []
-    secondary: list[str] = []
-    status: list[str] = []
-
-    def _pick(target: list[str], name: str) -> None:
-        if name in available and name not in target:
-            target.append(name)
-
-    for name in registered_profile.get("primary_fields") or []:
-        _pick(primary, name)
-    for name in registered_profile.get("secondary_fields") or []:
-        _pick(secondary, name)
-    for name in registered_profile.get("status_fields") or []:
-        _pick(status, name)
-
-    if not primary:
-        for fallback in ("name", "display_name"):
-            _pick(primary, fallback)
-            if primary:
-                break
-    if len(primary) < 3:
-        for name in available:
-            _pick(primary, name)
-            if len(primary) >= 3:
-                break
-    if len(secondary) < 4:
-        for name in available:
-            if name in primary:
-                continue
-            _pick(secondary, name)
-            if len(secondary) >= 4:
-                break
-    if not status:
-        for name in ("lifecycle_state", "stage_id", "state"):
-            _pick(status, name)
-            if status:
-                break
-
-    selected = [name for name in primary + secondary if name]
-    selected = selected[:8]
-    data["visible_fields"] = selected
-    configured_title_field = _safe_text(registered_profile.get("title_field"))
-    default_profile = {
-        "title_field": configured_title_field if configured_title_field in fields_map else (primary[0] if primary else "name"),
-        "primary_fields": primary[:3],
-        "secondary_fields": secondary[:4],
-        "status_fields": status[:2],
-        "max_meta": int(registered_profile.get("max_meta") or 4),
-    }
-
-    views = _as_dict(data.get("views"))
-    kanban = _as_dict(views.get("kanban"))
-    existing = kanban.get("fields") if isinstance(kanban.get("fields"), list) else []
-    merged_fields: list[Any] = []
-    merged_names: set[str] = set()
-    orchestrated_names: list[str] = []
-
-    def _field_row_name(row: Any) -> str:
-        if isinstance(row, dict):
-            return _safe_text(row.get("name") or row.get("field") or row.get("field_name"))
-        return _safe_text(row)
-
-    for row in existing:
-        normalized = _field_row_name(row)
-        descriptor = _as_dict(fields_map.get(normalized))
-        if (
-            normalized
-            and normalized in fields_map
-            and not _is_technical_field(normalized, descriptor)
-            and normalized not in merged_names
-        ):
-            merged_fields.append(dict(row) if isinstance(row, dict) else normalized)
-            merged_names.add(normalized)
-            orchestrated_names.append(normalized)
-    for name in selected:
-        normalized = _safe_text(name)
-        descriptor = _as_dict(fields_map.get(normalized))
-        if (
-            normalized
-            and normalized in fields_map
-            and not _is_technical_field(normalized, descriptor)
-            and normalized not in merged_names
-        ):
-            merged_fields.append(normalized)
-            merged_names.add(normalized)
-    kanban["fields"] = merged_fields or ["id", "name"]
-
-    existing_profile = _as_dict(kanban.get("kanban_profile") or data.get("kanban_profile"))
-    slots = _as_dict(kanban.get("slots"))
-
-    def _slot_names(key: str) -> list[str]:
-        raw = slots.get(key)
-        if not isinstance(raw, list):
-            return []
-        out: list[str] = []
-        for item in raw:
-            name = _field_row_name(item)
-            if name and name in fields_map and name not in out:
-                out.append(name)
-        return out
-
-    primary_override = _slot_names("primary")
-    secondary_override = _slot_names("secondary")
-    status_override = _slot_names("status")
-    has_orchestrated_kanban = bool(orchestrated_names or primary_override or secondary_override or status_override)
-    profile = dict(default_profile)
-    profile.update(existing_profile)
-    if has_orchestrated_kanban:
-        if primary_override:
-            profile["primary_fields"] = primary_override
-        elif orchestrated_names:
-            profile["primary_fields"] = orchestrated_names[:3]
-        if secondary_override:
-            profile["secondary_fields"] = secondary_override
-        elif orchestrated_names:
-            profile["secondary_fields"] = orchestrated_names[3:7]
-        if status_override:
-            profile["status_fields"] = status_override[:2]
-        if not _safe_text(profile.get("title_field")):
-            profile["title_field"] = "name" if "name" in fields_map else (orchestrated_names[0] if orchestrated_names else default_profile["title_field"])
-    data["kanban_profile"] = profile
-    kanban["kanban_profile"] = dict(profile)
-    row_actions = kanban.get("row_actions") if isinstance(kanban.get("row_actions"), list) else []
-    existing_keys = {
-        _safe_text(row.get("key") or row.get("name"))
-        for row in row_actions
-        if isinstance(row, dict)
-    }
-    for action in _LEGACY_KANBAN_ROW_ACTION_REGISTRY.get(primary_model, []):
-        action_key = _safe_text(action.get("key") or action.get("name"))
-        if not action_key or action_key in existing_keys:
-            continue
-        row_actions.append(_deep_clone_json_like(action))
-        existing_keys.add(action_key)
-    kanban["row_actions"] = row_actions
-    views["kanban"] = kanban
-    data["views"] = views
+    _project_form.govern_project_kanban_contract(
+        data,
+        primary_model=primary_model,
+        registered_profile=_LEGACY_PROJECT_KANBAN_PROFILE_REGISTRY.get(primary_model) or {},
+        registered_row_actions=_LEGACY_KANBAN_ROW_ACTION_REGISTRY.get(primary_model, []),
+        is_technical_field=_is_technical_field,
+        deep_clone_json_like=_deep_clone_json_like,
+    )
 
 
 def _restructure_project_form_layout(data: dict) -> None:
@@ -1500,328 +715,79 @@ def _restructure_project_form_layout(data: dict) -> None:
 
 
 def _filter_project_form_layout(data: dict, selected_fields: list[str]) -> None:
-    views = _as_dict(data.get("views"))
-    form = _as_dict(views.get("form"))
-    layout = form.get("layout")
-    if not isinstance(layout, list):
-        return
-
-    def _iter_children(node: dict) -> list[list]:
-        rows: list[list] = []
-        for key in ("children", "tabs", "pages", "nodes", "items"):
-            candidate = node.get(key)
-            if isinstance(candidate, list):
-                rows.append(candidate)
-        return rows
-
-    def _collect_layout_field_names(nodes: list, out: list[str]) -> None:
-        for node in nodes:
-            if not isinstance(node, dict):
-                continue
-            node_type = _safe_lower(node.get("type"))
-            if node_type == "field":
-                name = _safe_text(node.get("name"))
-                if name and name not in out:
-                    out.append(name)
-            for children in _iter_children(node):
-                _collect_layout_field_names(children, out)
-
-    def _prune_layout(nodes: list, allowed: set[str]) -> list[dict]:
-        cleaned: list[dict] = []
-        for node in nodes:
-            if not isinstance(node, dict):
-                continue
-            node_type = _safe_lower(node.get("type"))
-            if node_type == "field":
-                name = _safe_text(node.get("name"))
-                if name and name in allowed:
-                    cleaned.append(node)
-                continue
-            copied = dict(node)
-            structured_children_present = False
-            for key in ("children", "tabs", "pages", "nodes", "items"):
-                raw_children = node.get(key)
-                if not isinstance(raw_children, list):
-                    continue
-                pruned_children = _prune_layout(raw_children, allowed)
-                copied[key] = pruned_children
-                if key in {"children", "tabs", "pages"} and pruned_children:
-                    structured_children_present = True
-            keep_node = True
-            if node_type in {"group", "page", "notebook", "sheet", "header"}:
-                has_structured_key = any(isinstance(node.get(key), list) for key in ("children", "tabs", "pages"))
-                if has_structured_key and not structured_children_present:
-                    keep_node = False
-            if keep_node:
-                cleaned.append(copied)
-        return cleaned
-
-    selected_order = [name for name in selected_fields if _safe_text(name)]
-    selected_set = set(selected_order)
-    filtered_layout = _prune_layout(layout, selected_set)
-
-    existing_field_names: list[str] = []
-    _collect_layout_field_names(filtered_layout, existing_field_names)
-    if not existing_field_names:
-        primary_fields = _legacy_project_form_profile(data).get("primary_fields") or []
-        for name in primary_fields:
-            if name in selected_fields:
-                filtered_layout.append({"type": "field", "name": name})
-        _collect_layout_field_names(filtered_layout, existing_field_names)
-
-    # Ensure filtered layout covers selected user-surface fields, so frontend can render
-    # a coherent contract-driven form without falling back to unordered field maps.
-    existing_set = set(existing_field_names)
-    missing_selected = [name for name in selected_order if name and name not in existing_set]
-    for name in missing_selected:
-        filtered_layout.append({"type": "field", "name": name})
-    form["layout"] = filtered_layout
-    views["form"] = form
-    data["views"] = views
+    _project_form.filter_project_form_layout(
+        data,
+        selected_fields,
+        profile=_legacy_project_form_profile(data),
+    )
 
 
 def _trim_contract_field_maps(data: dict, selected_fields: list[str]) -> None:
-    selected = [_safe_text(name) for name in selected_fields if _safe_text(name)]
-    if not selected:
-        return
-    allowed = set(selected)
-    fields_map = _as_dict(data.get("fields"))
-    if fields_map:
-        data["fields"] = {name: fields_map[name] for name in selected if name in fields_map}
-    field_policies = _as_dict(data.get("field_policies"))
-    if field_policies:
-        data["field_policies"] = {name: field_policies[name] for name in selected if name in field_policies}
-    field_semantics = _as_dict(data.get("field_semantics"))
-    if field_semantics:
-        data["field_semantics"] = {name: field_semantics[name] for name in selected if name in field_semantics}
-    validation_rules = data.get("validation_rules")
-    if isinstance(validation_rules, list):
-        data["validation_rules"] = [
-            row
-            for row in validation_rules
-            if not isinstance(row, dict) or not _safe_text(row.get("field")) or _safe_text(row.get("field")) in allowed
-        ]
+    _project_form.trim_contract_field_maps(data, selected_fields)
 
 
 def _govern_project_form_search(data: dict) -> None:
-    search = _as_dict(data.get("search"))
-    filters = search.get("filters")
-    if not isinstance(filters, list):
-        return
-    noise_markers = _legacy_project_form_profile(data).get("search_noise_markers") or []
-    cleaned = []
-    seen: set[str] = set()
-    for row in filters:
-        if not isinstance(row, dict):
-            continue
-        key = _safe_text(row.get("key"))
-        label = _safe_text(row.get("label"))
-        if not key or key in seen:
-            continue
-        if not label:
-            continue
-        if any(marker in _safe_lower(label) for marker in noise_markers):
-            continue
-        cleaned.append(row)
-        seen.add(key)
-        if len(cleaned) >= 8:
-            break
-    search["filters"] = cleaned
-    data["search"] = search
+    _project_form.govern_project_form_search(data, profile=_legacy_project_form_profile(data))
 
 
 def _action_priority(action: dict, data: dict | None = None) -> int:
-    label = _safe_text(action.get("label"))
-    priorities = _legacy_project_form_profile(data or {}).get("action_priorities") or []
-    for idx, key in enumerate(priorities):
-        if key and key in label:
-            return idx
-    return len(priorities) + 1
+    return _project_form.action_priority(action, profile=_legacy_project_form_profile(data or {}))
 
 
 def _is_noisy_project_action(action: dict, data: dict | None = None) -> bool:
-    key = _safe_lower(action.get("key"))
-    label = _safe_lower(action.get("label"))
-    if not label and not key:
-        return True
-    if label.isdigit():
-        return True
-    markers = _legacy_project_form_profile(data or {}).get("action_noise_markers") or []
-    for marker in markers:
-        if marker in key or marker in label:
-            return True
-    return False
+    return _project_form.is_noisy_project_action(action, profile=_legacy_project_form_profile(data or {}))
 
 
 def _classify_project_action_group(action: dict) -> str:
-    key = _safe_lower(action.get("key"))
-    label = _safe_lower(action.get("label"))
-    merged = f"{key} {label}"
-    if any(marker in merged for marker in ("阶段", "提交", "审批", "transition", "workflow", "lifecycle")):
-        return "workflow"
-    if any(marker in merged for marker in ("查看", "open", "dashboard", "看板", "列表")):
-        return "drilldown"
-    if any(marker in merged for marker in ("创建", "保存", "提交")):
-        return "basic"
-    return "other"
+    return _project_form.classify_project_action_group(action)
 
 
 def _build_project_action_groups(rows: list[dict], data: dict | None = None) -> list[dict]:
-    grouped: dict[str, list[dict]] = {"basic": [], "workflow": [], "drilldown": [], "other": []}
-    for row in rows:
-        if not isinstance(row, dict):
-            continue
-        group_key = _classify_project_action_group(row)
-        grouped.setdefault(group_key, []).append(row)
-
-    result: list[dict] = []
-    group_labels = dict(_PROJECT_FORM_DEFAULT_ACTION_GROUP_LABELS)
-    group_labels.update(_legacy_project_form_profile(data or {}).get("action_group_labels") or {})
-    for key in ("basic", "workflow", "drilldown", "other"):
-        actions = grouped.get(key) or []
-        if not actions:
-            continue
-        primary = actions[:_PROJECT_FORM_ACTION_GROUP_LIMIT]
-        overflow = actions[_PROJECT_FORM_ACTION_GROUP_LIMIT:]
-        result.append({
-            "key": key,
-            "label": group_labels.get(key, key),
-            "actions": primary,
-            "overflow_actions": overflow,
-            "overflow_count": len(overflow),
-        })
-    return result
+    return _project_form.build_project_action_groups(
+        rows,
+        profile=_legacy_project_form_profile(data or {}),
+        default_group_labels=_PROJECT_FORM_DEFAULT_ACTION_GROUP_LABELS,
+        action_group_limit=_PROJECT_FORM_ACTION_GROUP_LIMIT,
+    )
 
 
 def _emit_scene_action_semantics(data: dict, *, header_rows: list[dict], record_rows: list[dict]) -> None:
-    semantic_page = _as_dict(data.get("semantic_page"))
-    actions = _as_dict(semantic_page.get("actions"))
-    actions["header_actions"] = [dict(row) for row in header_rows if isinstance(row, dict)]
-    actions["record_actions"] = [dict(row) for row in record_rows if isinstance(row, dict)]
-    actions.setdefault("toolbar_actions", [])
-    actions["owner_layer"] = "scene_orchestration"
-    actions["source"] = "contract_governance.curated_action_facts"
-    semantic_page["actions"] = actions
-    data["semantic_page"] = semantic_page
+    _project_form.emit_scene_action_semantics(data, header_rows=header_rows, record_rows=record_rows)
 
 
 def _govern_project_form_actions(data: dict) -> None:
-    toolbar = _as_dict(data.get("toolbar"))
-    if isinstance(toolbar.get("header"), list):
-        toolbar["header"] = []
-    data["toolbar"] = toolbar
-
-    rows = data.get("buttons")
-    if not isinstance(rows, list):
-        return
-    header_rows: list[dict] = []
-    smart_rows: list[dict] = []
-    for row in rows:
-        if not isinstance(row, dict):
-            continue
-        if _is_noisy_project_action(row, data):
-            continue
-        level = _safe_lower(row.get("level"))
-        if level == "header":
-            header_rows.append(row)
-        elif level in {"smart", "row"}:
-            smart_rows.append(row)
-
-    header_rows = sorted(header_rows, key=lambda item: (_action_priority(item, data), _safe_text(item.get("label"))))
-    smart_rows = sorted(smart_rows, key=lambda item: (_action_priority(item, data), _safe_text(item.get("label"))))
-    curated = header_rows[:_PROJECT_FORM_HEADER_ACTION_MAX] + smart_rows[:_PROJECT_FORM_SMART_ACTION_MAX]
-    data["buttons"] = curated
-    _emit_scene_action_semantics(
+    _project_form.govern_project_form_actions(
         data,
-        header_rows=header_rows[:_PROJECT_FORM_HEADER_ACTION_MAX],
-        record_rows=smart_rows[:_PROJECT_FORM_SMART_ACTION_MAX],
+        profile=_legacy_project_form_profile(data),
+        default_group_labels=_PROJECT_FORM_DEFAULT_ACTION_GROUP_LABELS,
+        action_group_limit=_PROJECT_FORM_ACTION_GROUP_LIMIT,
+        header_action_max=_PROJECT_FORM_HEADER_ACTION_MAX,
+        smart_action_max=_PROJECT_FORM_SMART_ACTION_MAX,
     )
-    data["action_groups"] = _build_project_action_groups(curated, data)
 
 
 def _build_project_lifecycle_summary(data: dict) -> None:
-    workflow = _as_dict(data.get("workflow"))
-    states = workflow.get("states")
-    transitions = workflow.get("transitions")
-    if not isinstance(states, list):
-        states = []
-    if not isinstance(transitions, list):
-        transitions = []
-
-    state_keys = []
-    for row in states:
-        if not isinstance(row, dict):
-            continue
-        key = _safe_text(row.get("key"))
-        label = _safe_text(row.get("label"), key)
-        if not key:
-            continue
-        state_keys.append({"key": key, "label": label})
-
-    transition_rows = []
-    for row in transitions:
-        if not isinstance(row, dict):
-            continue
-        trigger = _as_dict(row.get("trigger"))
-        label = _safe_text(trigger.get("label") or trigger.get("name"))
-        if not label:
-            continue
-        transition_rows.append({
-            "label": label,
-            "kind": _safe_text(trigger.get("kind")),
-        })
-
-    data["lifecycle"] = {
-        "state_field": _safe_text(workflow.get("state_field"), "stage_id"),
-        "current_state": "",
-        "steps": state_keys,
-        "allowed_transitions": transition_rows[:8],
-        "blockers": [],
-        "progress_percent": 0 if state_keys else None,
-    }
-    data["workflow_surface"] = {
-        "owner_layer": "business_fact",
-        "source": "contract_governance.workflow_facts",
-        "state_field": _safe_text(workflow.get("state_field"), "stage_id"),
-        "states": state_keys,
-        "transitions": transitions[:8],
-        "highlight_states": workflow.get("highlight_states") if isinstance(workflow.get("highlight_states"), list) else [],
-    }
+    _project_form.build_project_lifecycle_summary(data)
 
 
 def _govern_project_form_contract_for_user(data: dict) -> None:
     selected = _pick_project_form_fields(data)
     profile = _legacy_project_form_profile(data)
-    _trim_contract_field_maps(data, selected)
-    data["visible_fields"] = selected
-    views = _as_dict(data.get("views"))
-    form = _as_dict(views.get("form"))
-    native_layout_fields = _collect_layout_field_names(form.get("layout"))
-    if not native_layout_fields:
-        _backfill_form_layout_from_visible_fields(data)
-    data["form_profile"] = {
-        "core_fields": selected[:8],
-        "advanced_fields": selected[8:],
-        "max_fields": int(profile.get("max_fields") or _PROJECT_FORM_FIELD_MAX),
-    }
-    # Keep parser-native notebook/page tree intact for project form alignment.
-    # Do not prune form layout by selected fields in user mode.
-    views = _as_dict(data.get("views"))
-    form = _as_dict(views.get("form"))
-    form["form_profile"] = _as_dict(data.get("form_profile"))
-    views["form"] = form
-    data["views"] = views
-
-    permissions = _as_dict(data.get("permissions"))
-    field_groups = _as_dict(permissions.get("field_groups"))
-    if field_groups:
-        permissions["field_groups"] = field_groups
-    data["permissions"] = permissions
-
-    _govern_project_form_actions(data)
-    _govern_project_form_search(data)
-    _build_project_lifecycle_summary(data)
-    _realign_access_policy_with_visible_fields(data)
+    _project_form.govern_project_form_contract(
+        data,
+        selected_fields=selected,
+        profile=profile,
+        collect_layout_field_names=_collect_layout_field_names,
+        backfill_form_layout_from_visible_fields=_backfill_form_layout_from_visible_fields,
+        govern_project_form_search=_govern_project_form_search,
+        build_project_lifecycle_summary=_build_project_lifecycle_summary,
+        realign_access_policy_with_visible_fields=_realign_access_policy_with_visible_fields,
+        default_max_fields=_PROJECT_FORM_FIELD_MAX,
+        default_group_labels=_PROJECT_FORM_DEFAULT_ACTION_GROUP_LABELS,
+        action_group_limit=_PROJECT_FORM_ACTION_GROUP_LIMIT,
+        header_action_max=_PROJECT_FORM_HEADER_ACTION_MAX,
+        smart_action_max=_PROJECT_FORM_SMART_ACTION_MAX,
+    )
 
 
 def _govern_project_task_form_for_user(data: dict) -> None:
@@ -1829,68 +795,11 @@ def _govern_project_task_form_for_user(data: dict) -> None:
         return
     primary_model = _governance_primary_model(data)
     profile = _LEGACY_PROJECT_TASK_FORM_PROFILE_REGISTRY.get(primary_model) or {}
-    if not profile:
-        return
-    fields_map = _as_dict(data.get("fields"))
-    configured_fields = [_safe_text(name) for name in (profile.get("fields") or []) if _safe_text(name)]
-    selected = [name for name in configured_fields if name in fields_map]
-    if not selected:
-        return
-    label_map = _as_dict(profile.get("field_labels"))
-    description_fields = set(profile.get("description_fields") or [])
-    core_group_label = _safe_text(profile.get("core_group_label")) or "基础信息"
-    description_group_label = _safe_text(profile.get("description_group_label")) or "说明"
-
-    data["visible_fields"] = selected
-    data["field_groups"] = [
-        {
-            "name": "core",
-            "label": core_group_label,
-            "priority": 1,
-            "collapsible": False,
-            "fields": [name for name in selected if name not in description_fields],
-        },
-        {
-            "name": "advanced",
-            "label": description_group_label,
-            "priority": 2,
-            "collapsible": True,
-            "fields": [name for name in selected if name in description_fields],
-        },
-    ]
-
-    views = _as_dict(data.get("views"))
-    form = _as_dict(views.get("form"))
-    form["layout"] = [
-        {
-            "type": "sheet",
-            "name": "project_task_form_sheet",
-            "children": [
-                {
-                    "type": "group",
-                    "name": "project_task_core_group",
-                    "string": core_group_label,
-                    "children": [
-                        _make_labeled_field_node(name, fields_map, label_map)
-                        for name in selected
-                        if name not in description_fields
-                    ],
-                },
-                {
-                    "type": "group",
-                    "name": "project_task_description_group",
-                    "string": description_group_label,
-                    "children": [
-                        _make_labeled_field_node(name, fields_map, label_map)
-                        for name in selected
-                        if name in description_fields
-                    ],
-                },
-            ],
-        }
-    ]
-    views["form"] = form
-    data["views"] = views
+    _project_form.govern_project_task_form(
+        data,
+        profile=profile,
+        make_labeled_field_node=_make_labeled_field_node,
+    )
 
 
 def _govern_standard_list_for_user(
@@ -1904,1173 +813,132 @@ def _govern_standard_list_for_user(
     status_field: str,
     strict_columns: bool = False,
 ) -> None:
-    if not _is_model_tree_contract(data, model_name):
-        return
-    fields_map = _as_dict(data.get("fields"))
-    selected = [name for name in columns_order if name in fields_map]
-    if not selected:
-        return
-
-    views = _as_dict(data.get("views"))
-    tree = _as_dict(views.get("tree") or views.get("list"))
-    tree_governance = _as_dict(tree.get("governance"))
-    tree_view_orchestration = _as_dict(tree_governance.get("view_orchestration"))
-    tree_source_trace = _as_dict(tree.get("source_trace"))
-    tree_trace_orchestration = _as_dict(tree_source_trace.get("view_orchestration"))
-    has_orchestrated_tree = bool(
-        tree_view_orchestration.get("applied")
-        or tree_trace_orchestration.get("business_config_contracts")
+    _list_surface.govern_standard_list_for_user(
+        data,
+        model_name=model_name,
+        columns_order=columns_order,
+        column_labels=column_labels,
+        row_primary=row_primary,
+        row_secondary=row_secondary,
+        status_field=status_field,
+        strict_columns=strict_columns,
+        is_model_tree_contract=_is_model_tree_contract,
+        legacy_field_presentation=_legacy_field_presentation,
+        deep_clone_json_like=_deep_clone_json_like,
+        apply_standard_search_toolbar_labels=_apply_standard_search_toolbar_labels,
     )
-    native_schema_rows = tree.get("columns_schema") if isinstance(tree.get("columns_schema"), list) else []
-    native_schema_by_name = {
-        _safe_text(row.get("name")): dict(row)
-        for row in native_schema_rows
-        if isinstance(row, dict) and _safe_text(row.get("name"))
-    }
-    native_columns = []
-    for row in tree.get("columns") or []:
-        if isinstance(row, dict):
-            name = _safe_text(row.get("name"))
-        else:
-            name = _safe_text(row)
-        if name and name not in native_columns:
-            native_columns.append(name)
-    for name in native_schema_by_name:
-        if name not in native_columns:
-            native_columns.append(name)
-    # Governance may order and enrich standard business columns. Once a
-    # business orchestration was applied to the native tree block, that
-    # orchestrated order is the user-facing order and standard governance only
-    # appends its defaults.
-    if has_orchestrated_tree and native_columns:
-        selected = [name for name in native_columns if name in fields_map]
-        for name in columns_order:
-            if name in fields_map and name not in selected:
-                selected.append(name)
-    elif strict_columns:
-        selected = [name for name in columns_order if name in fields_map]
-    else:
-        for name in native_columns:
-            if name in fields_map and name not in selected:
-                selected.append(name)
-
-    def _field_label(name: str) -> str:
-        schema_label = _safe_text(native_schema_by_name.get(name, {}).get("label") or native_schema_by_name.get(name, {}).get("string"))
-        field_label = _safe_text(_as_dict(fields_map.get(name)).get("string"))
-        if has_orchestrated_tree and schema_label:
-            return schema_label
-        return column_labels.get(name) or schema_label or field_label or name
-
-    def _column_schema(name: str) -> dict:
-        field = _as_dict(fields_map.get(name))
-        schema = dict(native_schema_by_name.get(name) or {})
-        schema["name"] = name
-        schema["label"] = _field_label(name)
-        schema["string"] = schema["label"]
-        schema["type"] = schema.get("type") or field.get("type") or "char"
-        schema["widget"] = schema.get("widget") or field.get("type") or "char"
-        presentation = _legacy_field_presentation(model_name, name)
-        if presentation:
-            if presentation.get("label"):
-                schema["label"] = presentation["label"]
-                schema["string"] = presentation["label"]
-            if presentation.get("widget"):
-                schema["widget"] = presentation["widget"]
-            if presentation.get("cell_role"):
-                schema["cell_role"] = presentation["cell_role"]
-            if isinstance(presentation.get("mutation"), dict) and presentation["mutation"]:
-                schema["mutation"] = _deep_clone_json_like(presentation["mutation"])
-        if name == status_field:
-            schema["cell_role"] = "status"
-            schema["tone_by_value"] = {
-                "draft": "neutral",
-                "in_progress": "info",
-                "paused": "warning",
-                "done": "success",
-                "closing": "warning",
-                "warranty": "info",
-                "closed": "neutral",
-            }
-        if isinstance(field.get("selection"), list) and not isinstance(schema.get("selection"), list):
-            schema["selection"] = [
-                {"value": item[0], "label": item[1]}
-                for item in field.get("selection")
-                if isinstance(item, (list, tuple)) and len(item) >= 2
-            ]
-        return schema
-
-    tree["columns"] = selected
-    tree["columns_schema"] = [_column_schema(name) for name in selected]
-    views["tree"] = tree
-    data["views"] = views
-
-    metric_fields = [
-        name
-        for name in (
-            "contract_income_total",
-            "contract_amount",
-            "dashboard_invoice_amount",
-            "amount_total",
-            "total_amount",
-            "planned_revenue",
-            "budget_total",
-        )
-        if name in fields_map
-    ]
-    active_field = "active" if "active" in fields_map else ""
-    assignee_field = "user_id" if "user_id" in fields_map else ""
-    surface_policies = _as_dict(data.get("surface_policies"))
-    surface_batch_policy = _as_dict(surface_policies.get("batch_policy"))
-    delete_policy = _as_dict(data.get("delete_policy"))
-    permissions = _as_dict(data.get("permissions"))
-    effective = _as_dict(permissions.get("effective"))
-    rights = _as_dict(effective.get("rights"))
-    write_allowed = bool(rights.get("write"))
-    unlink_right_allowed = bool(rights.get("unlink"))
-    raw_available_actions = (
-        surface_batch_policy.get("available_actions")
-        if isinstance(surface_batch_policy.get("available_actions"), list)
-        else []
-    )
-    if rights and not (write_allowed or unlink_right_allowed):
-        raw_available_actions = []
-    delete_mode = _safe_text(
-        surface_policies.get("delete_mode")
-        or delete_policy.get("delete_mode")
-        or data.get("delete_mode"),
-        "none",
-    )
-    available_actions = []
-    if (write_allowed or unlink_right_allowed) and not raw_available_actions:
-        raw_available_actions = []
-        if active_field:
-            raw_available_actions.extend(["archive", "activate"])
-        if delete_mode == "unlink":
-            raw_available_actions.append("delete")
-    for raw_action in raw_available_actions:
-        action = _safe_lower(raw_action)
-        if action in {"archive", "activate"}:
-            if active_field and write_allowed and action not in available_actions:
-                available_actions.append(action)
-            continue
-        if action == "delete":
-            if unlink_right_allowed and delete_mode == "unlink" and action not in available_actions:
-                available_actions.append(action)
-    batch_policy = {
-        "enabled": bool(available_actions),
-        "active_field": active_field,
-        "assignee_field": assignee_field,
-        "archive_value": False if active_field else None,
-        "activate_value": True if active_field else None,
-        "assignee_options": {
-            "model": "res.users",
-            "fields": ["id", "name"],
-            "domain": [["active", "=", True]],
-            "order": "name asc",
-            "limit": 80,
-        }
-        if assignee_field
-        else None,
-        "delete_mode": delete_mode if "delete" in available_actions else "none",
-        "available_actions": available_actions,
-    }
-
-    list_profile = _as_dict(data.get("list_profile"))
-    list_profile.update(
-        {
-            "source": "contract_governance.curated_list_facts",
-            "columns": selected,
-            "fact_columns": selected,
-            "hidden_columns": [],
-            "column_labels": {name: _field_label(name) for name in selected},
-            "row_primary": row_primary,
-            "row_secondary": row_secondary,
-            "primary_field": row_primary,
-            "status_field": status_field,
-            "metric_fields": metric_fields,
-            "preference_policy": {
-                "scope": "ui_only",
-                "allow_visibility": True,
-                "allow_order": True,
-                "allow_width": True,
-                "locked_columns": [],
-                "must_request_columns": selected,
-            },
-            "batch_policy": batch_policy,
-            "grouping": {
-                "sample_limits": [3, 5, 8],
-                "default_sample_limit": 3,
-                "sort": {
-                    "key": "count",
-                    "default_direction": "desc",
-                    "directions": ["desc", "asc"],
-                },
-            },
-        }
-    )
-    if strict_columns:
-        list_profile["column_policy"] = {
-            "mode": "strict",
-            "reason": "native_tree_columns_are_the_user_visible_business_surface",
-        }
-        list_profile["preference_policy"]["allow_visibility"] = True
-        list_profile["preference_policy"]["allow_order"] = True
-        list_profile["preference_policy"]["locked_columns"] = []
-    data["list_profile"] = list_profile
-    views = _as_dict(data.get("views"))
-    tree_view = _as_dict(views.get("tree") or views.get("list"))
-    if tree_view:
-        tree_view.setdefault("order", "write_date desc, id desc")
-        tree_view.setdefault("default_order", "write_date desc, id desc")
-        if "tree" in views:
-            views["tree"] = tree_view
-        else:
-            views["list"] = tree_view
-        data["views"] = views
-    surface_policies["batch_policy"] = batch_policy
-    surface_policies["delete_mode"] = batch_policy.get("delete_mode") or surface_policies.get("delete_mode") or "none"
-    data["surface_policies"] = surface_policies
-
-    semantic_page = _as_dict(data.get("semantic_page"))
-    list_semantics = _as_dict(semantic_page.get("list_semantics"))
-    list_semantics["owner_layer"] = "scene_orchestration"
-    list_semantics["source"] = "contract_governance.curated_list_facts"
-    list_semantics["columns"] = [
-        {
-            "name": name,
-            "label": _field_label(name),
-            "widget": _column_schema(name).get("widget"),
-            "cell_role": _column_schema(name).get("cell_role") or "text",
-        }
-        for name in selected
-    ]
-    list_semantics["row_primary"] = row_primary
-    list_semantics["row_secondary"] = row_secondary
-    list_semantics["status_field"] = status_field
-    list_semantics["metric_fields"] = metric_fields
-    list_semantics["batch_policy"] = batch_policy
-    semantic_page["list_semantics"] = list_semantics
-    data["semantic_page"] = semantic_page
-    _apply_standard_search_toolbar_labels(data)
 
 
 def _apply_standard_search_toolbar_labels(data: dict) -> None:
-    search = _as_dict(data.get("search"))
-    labels = _as_dict(search.get("ui_labels"))
-    labels.update({
-        "view_switch": "视图",
-        "search_placeholder": "搜索关键字",
-        "search_submit": "搜索",
-        "search_menu_toggle": "展开搜索菜单",
-        "filters": "筛选",
-        "empty_filters": "暂无筛选",
-        "saved_filters": "收藏夹",
-        "empty_saved_filters": "暂无收藏",
-        "group_by": "分组方式",
-        "empty_group_by": "暂无分组",
-        "sort": "排序",
-        "sort_column_asc": "按 {column} 升序",
-        "sort_column_desc": "按 {column} 降序",
-        "create": "新建",
-        "select_field": "选择字段",
-        "select_value": "选择值",
-        "boolean_true": "是",
-        "boolean_false": "否",
-        "input_value": "输入值",
-        "custom_filter": "添加自定义筛选",
-        "custom_group": "添加自定义分组",
-        "favorite_save": "加入收藏",
-        "add": "添加",
-        "cancel": "取消",
-        "save": "保存",
-        "default": "默认",
-        "shared": "共享",
-        "favorite_name": "收藏名称",
-        "favorite_use_by_default": "设为默认筛选",
-        "favorite_shared": "共享给所有用户",
-        "row_open": "打开",
-        "loading_list": "正在加载列表...",
-        "list_load_failed": "列表加载失败",
-        "empty_create_title": "当前还没有数据",
-        "empty_create_message": "可以先新建一条业务记录，开始录入和办理。",
-        "empty_readonly_title": "当前还没有可查看的数据",
-        "empty_readonly_message": "当前账号没有新建权限，可调整筛选条件或联系管理员确认数据与权限。",
-        "empty_retry": "刷新",
-        "pagination_prev": "上一页",
-        "pagination_next": "下一页",
-        "pagination_jump": "跳转",
-        "pagination_page": "第 {current} / {total} 页",
-        "pagination_total_empty": "共 0 条",
-        "pagination_summary": "共 {total} 条，当前 {start}-{end} 条",
-        "pagination_page_size": "每页",
-        "pagination_apply_size": "应用",
-        "record_count": "{count} 条记录",
-        "row_number": "序号",
-        "plain_search_placeholder": "输入关键字搜索",
-        "page_footer_title": "页面统计",
-        "page_footer_count": "当前页 {count} 条",
-        "page_footer_current_total": "当前页合计",
-        "page_footer_grand_total": "总计",
-        "page_footer_current_count": "{count} 条",
-        "page_footer_total_count": "{count} 条",
-        "page_footer_summary": "{column} 汇总",
-        "page_footer_summary_count": "{count} 项",
-        "page_footer_no_numeric": "当前页没有可汇总的数值列",
-        "selected_count": "已选 {count} 条",
-        "clear": "清空",
-        "batch_label_archive": "批量归档",
-        "batch_label_activate": "批量激活",
-        "batch_msg_archive_done_prefix": "批量归档完成：成功 ",
-        "batch_msg_activate_done_prefix": "批量激活完成：成功 ",
-        "batch_msg_done_middle": "，失败 ",
-        "batch_msg_idempotent_replay": "批量操作已幂等处理（重复请求被忽略）",
-        "batch_msg_archive_failed": "批量归档失败",
-        "batch_msg_activate_failed": "批量激活失败",
-        "batch_msg_model_no_active_field": "当前模型不支持归档/激活语义",
-        "batch_msg_action_not_allowed": "当前场景不支持该批量操作",
-        "grouped_result": "分组结果",
-        "expand_all": "全部展开",
-        "collapse_all": "全部收起",
-        "group_sample_limit": "每组 {count} 条",
-        "group_sort_desc": "按数量降序",
-        "group_sort_asc": "按数量升序",
-        "group_toggle_expand": "展开",
-        "group_toggle_collapse": "收起",
-        "group_count": "{count} 条",
-        "group_view_all": "查看全部",
-        "group_page_info": "第 {current} / {total} 页 · {range}",
-        "column_picker": "列",
-        "column_resize": "调整列宽",
-        "column_reset": "恢复默认",
-        "column_saving": "保存中",
-        "column_saved": "已保存",
-        "column_save_error": "保存失败，请重试",
-    })
-    search["ui_labels"] = labels
-    data["search"] = search
-
-    views = _as_dict(data.get("views"))
-    tree = _as_dict(views.get("tree"))
-    row_actions = tree.get("row_actions") if isinstance(tree.get("row_actions"), list) else []
-    for action in row_actions:
-        if not isinstance(action, dict):
-            continue
-        if _safe_text(action.get("name")) != "open_form" and _safe_text(action.get("intent")) != "open":
-            continue
-        action["label"] = labels.get("row_open") or action.get("label") or "打开"
-        action["trigger"] = action.get("trigger") or "row_click"
-        action["display_mode"] = action.get("display_mode") or "row_click"
-        action["level"] = action.get("level") or "row"
-        action["selection"] = action.get("selection") or "single"
-        payload = _as_dict(action.get("payload"))
-        payload["view_mode"] = payload.get("view_mode") or "form"
-        action["payload"] = payload
-    tree["row_actions"] = row_actions
-    views["tree"] = tree
-    data["views"] = views
+    _list_surface.apply_standard_search_toolbar_labels(data)
 
 
 def _govern_tier_review_list_for_user(data: dict) -> None:
-    if not _is_model_tree_contract(data, "tier.review"):
-        return
-    _mark_legacy_industry_governance_profile(data, "tier.review.list")
-
-    def _keep_action(row: Any) -> bool:
-        if not isinstance(row, dict):
-            return False
-        key = _safe_text(row.get("key"))
-        return not any(key.startswith(prefix) for prefix in _TIER_REVIEW_LIST_NAV_ACTION_PREFIXES)
-
-    buttons = data.get("buttons")
-    if isinstance(buttons, list):
-        data["buttons"] = [dict(row) for row in buttons if _keep_action(row)]
-
-    toolbar = _as_dict(data.get("toolbar"))
-    if toolbar:
-        for slot in ("header", "sidebar", "footer"):
-            rows = toolbar.get(slot)
-            if isinstance(rows, list):
-                toolbar[slot] = [dict(row) for row in rows if _keep_action(row)]
-        data["toolbar"] = toolbar
-
-    groups = data.get("action_groups")
-    if isinstance(groups, list):
-        normalized = []
-        for group in groups:
-            if not isinstance(group, dict):
-                continue
-            actions = group.get("actions")
-            if not isinstance(actions, list):
-                continue
-            kept = [dict(row) for row in actions if _keep_action(row)]
-            if not kept:
-                continue
-            next_group = dict(group)
-            next_group["actions"] = kept
-            normalized.append(next_group)
-        data["action_groups"] = normalized
+    _list_surface.govern_tier_review_list_for_user(
+        data,
+        is_model_tree_contract=_is_model_tree_contract,
+        mark_legacy_industry_governance_profile=_mark_legacy_industry_governance_profile,
+        nav_action_prefixes=_TIER_REVIEW_LIST_NAV_ACTION_PREFIXES,
+    )
 
 
 def _realign_access_policy_with_visible_fields(data: dict) -> None:
-    fields_map = _as_dict(data.get("fields"))
-    policy = _as_dict(data.get("access_policy"))
-    if not policy:
-        return
-
-    visible = set()
-    for name in (data.get("visible_fields") or []):
-        field_name = _safe_text(name)
-        if field_name and field_name in fields_map:
-            visible.add(field_name)
-    if not visible:
-        visible = set(fields_map.keys())
-
-    def _normalize_rows(rows: Any) -> list[dict]:
-        out: list[dict] = []
-        if not isinstance(rows, list):
-            return out
-        for row in rows:
-            if not isinstance(row, dict):
-                continue
-            field_name = _safe_text(row.get("field"))
-            if not field_name:
-                continue
-            if field_name != "__model__" and field_name not in visible:
-                continue
-            out.append(
-                {
-                    "field": field_name,
-                    "model": _safe_text(row.get("model")),
-                    "reason_code": _safe_text(row.get("reason_code")),
-                }
-            )
-        return out
-
-    blocked_rows = _normalize_rows(policy.get("blocked_fields"))
-    degraded_rows = _normalize_rows(policy.get("degraded_fields"))
-    mode = "allow"
-    reason_code = ""
-    message = ""
-    if blocked_rows:
-        mode = "block"
-        first = blocked_rows[0]
-        reason_code = _safe_text(first.get("reason_code"), "RELATION_READ_FORBIDDEN_CORE")
-        if reason_code == "RELATION_READ_FORBIDDEN":
-            reason_code = "RELATION_READ_FORBIDDEN_CORE"
-        label = _safe_text(first.get("field") or first.get("model"), "unknown")
-        message = f"core field access blocked: {label}"
-    elif degraded_rows:
-        mode = "degrade"
-        first = degraded_rows[0]
-        reason_code = _safe_text(first.get("reason_code"), "RELATION_READ_FORBIDDEN")
-        label = _safe_text(first.get("field") or first.get("model"), "unknown")
-        message = f"relation access degraded: {label}"
-
-    policy["mode"] = mode
-    policy["reason_code"] = reason_code
-    policy["message"] = message
-    policy["blocked_fields"] = blocked_rows
-    policy["degraded_fields"] = degraded_rows
-    data["access_policy"] = policy
-
-    warnings = data.get("warnings") if isinstance(data.get("warnings"), list) else []
-    warnings = [item for item in warnings if not (_safe_text(item).startswith("access_policy:"))]
-    if mode in {"block", "degrade"}:
-        marker = f"access_policy:{mode}:{reason_code or 'UNKNOWN'}"
-        if marker not in warnings:
-            warnings.append(marker)
-    if warnings:
-        data["warnings"] = warnings
-    else:
-        data.pop("warnings", None)
+    _access_policy.realign_access_policy_with_visible_fields(data)
 
 
 def _normalize_native_view_contract_surface(data: dict) -> None:
-    parser_contract = _as_dict(data.get("parser_contract"))
-    if parser_contract:
-        parser_contract.setdefault("layout", _as_dict(parser_contract.get("layout")))
-        contract_version = _safe_text(data.get("contract_version")) or "native_view.v1"
-        parser_contract.setdefault("contract_version", contract_version)
-        data["parser_contract"] = parser_contract
-
-    view_semantics = _as_dict(data.get("view_semantics"))
-    if view_semantics:
-        view_semantics.setdefault("kind", "view_semantics")
-        view_semantics["capability_flags"] = _as_dict(view_semantics.get("capability_flags"))
-        view_semantics["semantic_meta"] = _as_dict(view_semantics.get("semantic_meta"))
-        data["view_semantics"] = view_semantics
-
-    native_view = _as_dict(data.get("native_view"))
-    if native_view:
-        native_view["views"] = _as_dict(native_view.get("views"))
-        native_view["search"] = _as_dict(native_view.get("search"))
-        native_view["toolbar"] = _as_dict(native_view.get("toolbar"))
-        data["native_view"] = native_view
+    _native_bridge.normalize_native_view_contract_surface(data)
 
 
 def _normalize_scene_semantic_surface(data: dict) -> None:
-    def _normalize_page_surface(page_payload: dict) -> dict:
-        page = _as_dict(page_payload)
-        surface = _as_dict(page.get("surface"))
-        if surface:
-            surface["semantic_view"] = _as_dict(surface.get("semantic_view"))
-            surface["semantic_page"] = _as_dict(surface.get("semantic_page"))
-            page["surface"] = surface
-        return page
-
-    def _normalize_parser_semantic_surface(surface_payload: dict) -> dict:
-        surface = _as_dict(surface_payload)
-        if not surface:
-            return {}
-        parser_contract = _as_dict(surface.get("parser_contract"))
-        if parser_contract:
-            parser_contract.setdefault("layout", _as_dict(parser_contract.get("layout")))
-            parser_contract.setdefault(
-                "contract_version",
-                _safe_text(data.get("contract_version")) or "native_view.v1",
-            )
-            surface["parser_contract"] = parser_contract
-        view_semantics = _as_dict(surface.get("view_semantics"))
-        if view_semantics:
-            view_semantics.setdefault("kind", "view_semantics")
-            view_semantics["capability_flags"] = _as_dict(view_semantics.get("capability_flags"))
-            view_semantics["semantic_meta"] = _as_dict(view_semantics.get("semantic_meta"))
-            surface["view_semantics"] = view_semantics
-        native_view = _as_dict(surface.get("native_view"))
-        if native_view:
-            native_view["views"] = _as_dict(native_view.get("views"))
-            native_view["search"] = _as_dict(native_view.get("search"))
-            native_view["toolbar"] = _as_dict(native_view.get("toolbar"))
-            surface["native_view"] = native_view
-        semantic_page = _as_dict(surface.get("semantic_page"))
-        if semantic_page:
-            surface["semantic_page"] = semantic_page
-        return surface
-
-    scene_contract_standard = _as_dict(data.get("scene_contract_standard_v1"))
-    if scene_contract_standard:
-        scene_contract_standard["page"] = _normalize_page_surface(scene_contract_standard.get("page"))
-        governance = _as_dict(scene_contract_standard.get("governance"))
-        parser_surface = _normalize_parser_semantic_surface(governance.get("parser_semantic_surface"))
-        if parser_surface:
-            governance["parser_semantic_surface"] = parser_surface
-        scene_contract_standard["governance"] = governance
-        data["scene_contract_standard_v1"] = scene_contract_standard
-
-    scene_contract_v1 = _as_dict(data.get("scene_contract_v1"))
-    if scene_contract_v1:
-        scene_contract_v1["page"] = _normalize_page_surface(scene_contract_v1.get("page"))
-        diagnostics = _as_dict(scene_contract_v1.get("diagnostics"))
-        parser_surface = _normalize_parser_semantic_surface(diagnostics.get("parser_semantic_surface"))
-        if parser_surface:
-            diagnostics["parser_semantic_surface"] = parser_surface
-        scene_contract_v1["diagnostics"] = diagnostics
-        data["scene_contract_v1"] = scene_contract_v1
-
-    semantic_runtime = _as_dict(data.get("semantic_runtime"))
-    if semantic_runtime:
-        semantic_runtime["semantic_view"] = _as_dict(semantic_runtime.get("semantic_view"))
-        semantic_runtime["semantic_page"] = _as_dict(semantic_runtime.get("semantic_page"))
-        parser_surface = _normalize_parser_semantic_surface(semantic_runtime.get("parser_semantic_surface"))
-        if parser_surface:
-            semantic_runtime["parser_semantic_surface"] = parser_surface
-        data["semantic_runtime"] = semantic_runtime
-
-    released_scene_surface = _as_dict(data.get("released_scene_semantic_surface"))
-    if released_scene_surface:
-        released_scene_surface["page_surface"] = _normalize_page_surface({"surface": released_scene_surface.get("page_surface")}).get("surface") or {}
-        parser_surface = _normalize_parser_semantic_surface(released_scene_surface.get("parser_semantic_surface"))
-        if parser_surface:
-            released_scene_surface["parser_semantic_surface"] = parser_surface
-        data["released_scene_semantic_surface"] = released_scene_surface
+    _native_bridge.normalize_scene_semantic_surface(data)
 
 
 def _search_surface_from_contract(data: dict) -> dict:
-    search = _as_dict(data.get("search"))
-    if not search:
-        return {}
-    surface: dict[str, Any] = {
-        "owner_layer": "scene_orchestration",
-        "source": "contract_governance.search_surface",
-    }
-    for source_key, target_key in (
-        ("filters", "filters"),
-        ("fields", "fields"),
-        ("group_by", "group_by"),
-        ("groupBy", "group_by"),
-        ("searchpanel", "searchpanel"),
-        ("search_panel", "searchpanel"),
-        ("searchPanel", "searchpanel"),
-        ("native_search_menu", "native_search_menu"),
-        ("nativeSearchMenu", "native_search_menu"),
-        ("default_state", "default_state"),
-    ):
-        value = search.get(source_key)
-        if isinstance(value, (list, dict)) and value:
-            surface[target_key] = _deep_clone_json_like(value)
-    interaction_model = _safe_text(search.get("interaction_model") or search.get("interactionModel"))
-    if interaction_model:
-        surface["interaction_model"] = interaction_model
-    default_sort = _safe_text(search.get("default_sort") or search.get("defaultSort") or data.get("default_sort"))
-    if default_sort:
-        surface["default_sort"] = default_sort
-    mode = _safe_text(search.get("mode"))
-    if mode:
-        surface["mode"] = mode
-    elif any(surface.get(key) for key in ("filters", "group_by", "searchpanel")):
-        surface["mode"] = "faceted"
-    return surface if len(surface) > 2 else {}
+    return _native_bridge.search_surface_from_contract(data)
 
 
 def _scene_actions_from_contract(data: dict) -> dict:
-    semantic_page = _as_dict(data.get("semantic_page"))
-    semantic_actions = _as_dict(semantic_page.get("actions"))
-    out: dict[str, Any] = {}
-
-    header_actions = semantic_actions.get("header_actions")
-    record_actions = semantic_actions.get("record_actions")
-    toolbar_actions = semantic_actions.get("toolbar_actions")
-    if isinstance(header_actions, list) and header_actions:
-        out["primary_actions"] = _deep_clone_json_like(header_actions)
-    if isinstance(record_actions, list) and record_actions:
-        out["contextual_actions"] = _deep_clone_json_like(record_actions)
-    if isinstance(toolbar_actions, list) and toolbar_actions:
-        out["secondary_actions"] = _deep_clone_json_like(toolbar_actions)
-
-    if not out:
-        grouped_rows = data.get("action_groups")
-        if isinstance(grouped_rows, list):
-            for group in grouped_rows:
-                if not isinstance(group, dict):
-                    continue
-                key = _safe_lower(group.get("key"))
-                rows = group.get("actions")
-                if not isinstance(rows, list) or not rows:
-                    continue
-                if key in {"basic", "primary", "workflow"} and "primary_actions" not in out:
-                    out["primary_actions"] = _deep_clone_json_like(rows)
-                elif key in {"drilldown", "record", "contextual"} and "contextual_actions" not in out:
-                    out["contextual_actions"] = _deep_clone_json_like(rows)
-                elif "secondary_actions" not in out:
-                    out["secondary_actions"] = _deep_clone_json_like(rows)
-
-    if not out:
-        rows = data.get("buttons")
-        if isinstance(rows, list) and rows:
-            out["primary_actions"] = _deep_clone_json_like(rows[:_USER_SURFACE_ACTION_MAX])
-
-    if out:
-        out["owner_layer"] = "scene_orchestration"
-        out["source"] = "contract_governance.action_surface"
-    return out
+    return _native_bridge.scene_actions_from_contract(data)
 
 
 def _ensure_scene_contract_v1_envelope(data: dict) -> None:
-    semantic_page = _as_dict(data.get("semantic_page"))
-    list_profile = _as_dict(data.get("list_profile"))
-    if list_profile and not _as_dict(semantic_page.get("list_semantics")):
-        list_semantics = {
-            "owner_layer": "scene_orchestration",
-            "source": "contract_governance.list_profile_bridge",
-            "columns": [
-                {"name": _safe_text(name), "label": _safe_text((_as_dict(list_profile.get("column_labels"))).get(_safe_text(name)), _safe_text(name))}
-                for name in (list_profile.get("columns") if isinstance(list_profile.get("columns"), list) else [])
-                if _safe_text(name)
-            ],
-            "hidden_columns": [
-                _safe_text(name)
-                for name in (list_profile.get("hidden_columns") if isinstance(list_profile.get("hidden_columns"), list) else [])
-                if _safe_text(name)
-            ],
-            "row_primary": _safe_text(list_profile.get("row_primary")),
-            "row_secondary": _safe_text(list_profile.get("row_secondary")),
-            "status_field": _safe_text(list_profile.get("status_field")),
-        }
-        semantic_page["list_semantics"] = list_semantics
-
-    search_surface = _search_surface_from_contract(data)
-    actions = _scene_actions_from_contract(data)
-    if not semantic_page and not search_surface and not actions:
-        return
-
-    scene_contract = _as_dict(data.get("scene_contract_v1"))
-    scene_contract["contract_version"] = "v1"
-    scene_contract.setdefault("owner_layer", "scene_orchestration")
-    scene_contract.setdefault("source", "ui.contract.delivery_surface")
-    if semantic_page:
-        current_semantic_page = _as_dict(scene_contract.get("semantic_page"))
-        current_semantic_page.update(_deep_clone_json_like(semantic_page))
-        scene_contract["semantic_page"] = current_semantic_page
-    if search_surface and not _as_dict(scene_contract.get("search_surface")):
-        scene_contract["search_surface"] = search_surface
-    if actions:
-        current_actions = _as_dict(scene_contract.get("actions"))
-        for key, value in actions.items():
-            current_actions.setdefault(key, value)
-        scene_contract["actions"] = current_actions
-    diagnostics = _as_dict(scene_contract.get("diagnostics"))
-    diagnostics.setdefault("scene_contract_supply", "ui_contract_governance_bridge")
-    diagnostics.setdefault("scene_contract_supply_owner_layer", "scene_orchestration")
-    scene_contract["diagnostics"] = diagnostics
-    data["scene_contract_v1"] = scene_contract
+    _native_bridge.ensure_scene_contract_v1_envelope(data)
 
 
 def _business_field_label(field_name: str, current_label: Any = "", model_name: str = "") -> str:
-    name = _safe_text(field_name)
-    label = _safe_text(current_label)
-    if not name:
-        return label
-    presentation = _legacy_field_presentation(model_name, name)
-    if presentation.get("label"):
-        return presentation["label"]
-    override = _BUSINESS_FIELD_LABEL_OVERRIDES.get(name)
-    if override:
-        return override
-    return label
+    return _labels.business_field_label(field_name, current_label, model_name)
 
 
 def _normalize_business_field_labels(data: dict) -> None:
-    head = _as_dict(data.get("head"))
-    model_name = _safe_text(head.get("model") or data.get("model"))
-
-    def _normalize_column(row: dict) -> None:
-        name = _safe_text(row.get("name") or row.get("field"))
-        label = _business_field_label(name, row.get("label") or row.get("string"), model_name)
-        if not name or not label:
-            return
-        row["label"] = label
-        if "string" in row:
-            row["string"] = label
-
-    fields_map = _as_dict(data.get("fields"))
-    for field_name, raw_descriptor in list(fields_map.items()):
-        descriptor = _as_dict(raw_descriptor)
-        label = _business_field_label(field_name, descriptor.get("string"), model_name)
-        if label:
-            descriptor["string"] = label
-        fields_map[field_name] = descriptor
-    if fields_map:
-        data["fields"] = fields_map
-
-    views = _as_dict(data.get("views"))
-    for view_key in ("tree", "list"):
-        view = _as_dict(views.get(view_key))
-        schema_rows = view.get("columns_schema")
-        if isinstance(schema_rows, list):
-            for row in schema_rows:
-                if isinstance(row, dict):
-                    _normalize_column(row)
-            view["columns_schema"] = schema_rows
-            views[view_key] = view
-    if views:
-        data["views"] = views
-
-    list_profile = _as_dict(data.get("list_profile"))
-    column_labels = _as_dict(list_profile.get("column_labels"))
-    for field_name in list(column_labels.keys()):
-        label = _business_field_label(field_name, column_labels.get(field_name), model_name)
-        if label:
-            column_labels[field_name] = label
-    if column_labels:
-        list_profile["column_labels"] = column_labels
-        data["list_profile"] = list_profile
-
-    semantic_page = _as_dict(data.get("semantic_page"))
-    list_semantics = _as_dict(semantic_page.get("list_semantics"))
-    columns = list_semantics.get("columns")
-    if isinstance(columns, list):
-        for row in columns:
-            if isinstance(row, dict):
-                _normalize_column(row)
-        list_semantics["columns"] = columns
-        semantic_page["list_semantics"] = list_semantics
-        data["semantic_page"] = semantic_page
+    _labels.normalize_business_field_labels(data)
 
 
 def _native_node_label(node: dict) -> str:
-    attributes = node.get("attributes") if isinstance(node.get("attributes"), dict) else {}
-    label = _safe_text(attributes.get("string") or node.get("string"))
-    translations = {
-        "description": "描述",
-        "settings": "设置",
-    }
-    return translations.get(label.strip().lower(), label)
+    return _labels.native_node_label(node)
 
 
 def _preserve_native_layout_labels(data: dict) -> None:
-    views = data.get("views") if isinstance(data.get("views"), dict) else {}
-    form = views.get("form") if isinstance(views.get("form"), dict) else {}
-    layout = form.get("layout")
-    if not isinstance(layout, list):
-        return
-
-    def visit(nodes):
-        for node in nodes or []:
-            if not isinstance(node, dict):
-                continue
-            if _safe_text(node.get("type")).lower() == "page":
-                label = _native_node_label(node)
-                if label:
-                    node["title"] = label
-                    node["label"] = label
-            for key in ("children", "tabs", "pages", "nodes", "items"):
-                nested = node.get(key)
-                if isinstance(nested, list):
-                    visit(nested)
-
-    visit(layout)
-    form["layout"] = layout
-    views["form"] = form
-    data["views"] = views
+    _labels.preserve_native_layout_labels(data)
 
 
 def _emit_relation_entry_semantics(data: dict) -> None:
-    fields_map = data.get("fields") if isinstance(data.get("fields"), dict) else {}
-    entries: list[dict[str, Any]] = []
-    for field_name, descriptor_raw in fields_map.items():
-        descriptor = _as_dict(descriptor_raw)
-        relation_entry = _as_dict(descriptor.get("relation_entry"))
-        if not relation_entry:
-            continue
-        field = _safe_text(field_name)
-        if not field:
-            continue
-        entries.append(
-            {
-                "field": field,
-                "model": _safe_text(relation_entry.get("model") or descriptor.get("relation")),
-                "create_mode": _safe_text(relation_entry.get("create_mode"), "disabled"),
-                "can_read": bool(relation_entry.get("can_read", True)),
-                "can_create": bool(relation_entry.get("can_create", False)),
-                "delete_policy": _as_dict(relation_entry.get("delete_policy")),
-                "reason_code": _safe_text(relation_entry.get("reason_code")),
-                "default_vals": _as_dict(relation_entry.get("default_vals")),
-                "inline_create": _as_dict(relation_entry.get("inline_create")),
-                "action_id": relation_entry.get("action_id"),
-                "menu_id": relation_entry.get("menu_id"),
-                "source": _safe_text(relation_entry.get("source"), "field.relation_entry"),
-            }
-        )
-    if not entries:
-        return
-    semantic_page = _as_dict(data.get("semantic_page"))
-    semantic_page["relation_entries"] = entries
-    semantic_page["relation_entries_owner_layer"] = "scene_orchestration"
-    data["semantic_page"] = semantic_page
+    _labels.emit_relation_entry_semantics(data)
 
 
 def _to_bool(value: Any, fallback: bool = False) -> bool:
-    if isinstance(value, bool):
-        return value
-    if value is None:
-        return fallback
-    lowered = str(value).strip().lower()
-    if lowered in {"1", "true", "yes", "y", "on"}:
-        return True
-    if lowered in {"0", "false", "no", "n", "off"}:
-        return False
-    return fallback
+    return _form_render.to_bool(value, fallback=fallback)
 
 
 def _resolve_render_profile(data: dict) -> str:
-    explicit = _safe_text(data.get("render_profile")).lower()
-    if explicit in _RENDER_PROFILES:
-        return explicit
-    head = _as_dict(data.get("head"))
-    view_type = _safe_text(head.get("view_type") or data.get("view_type")).lower()
-    if view_type and "form" not in view_type:
-        return _RENDER_PROFILE_EDIT
-    effective = _as_dict(_as_dict(data.get("permissions")).get("effective")).get("rights")
-    effective_rights = _as_dict(effective)
-    head_permissions = _as_dict(head.get("permissions"))
-    can_write = _to_bool(
-        effective_rights.get("write", head_permissions.get("write")),
-        fallback=False,
-    )
-    can_create = _to_bool(
-        effective_rights.get("create", head_permissions.get("create")),
-        fallback=False,
-    )
-    if not can_write and not can_create:
-        return _RENDER_PROFILE_READONLY
-    has_record = False
-    for raw in (data.get("res_id"), head.get("res_id"), data.get("id")):
-        if raw in (None, "", False):
-            continue
-        token = str(raw).strip().lower()
-        if token in {"", "0", "new", "false", "null", "none"}:
-            continue
-        try:
-            if int(token) > 0:
-                has_record = True
-                break
-        except Exception:
-            # Non-numeric ids are not treated as persisted records in this projection.
-            continue
-    return _RENDER_PROFILE_EDIT if has_record else _RENDER_PROFILE_CREATE
+    return _form_render.resolve_render_profile(data)
 
 
 def _apply_form_view_capabilities(data: dict) -> None:
-    form = _as_dict(_as_dict(data.get("views")).get("form"))
-    capabilities = _as_dict(form.get("capabilities"))
-    if not capabilities:
-        return
-    permission_root = _as_dict(data.get("permissions"))
-    effective = _as_dict(permission_root.get("effective"))
-    effective_rights = _as_dict(effective.get("rights"))
-    head = _as_dict(data.get("head"))
-    head_permissions = _as_dict(head.get("permissions"))
-
-    if capabilities.get("can_create") is False:
-        effective_rights["create"] = False
-        head_permissions["create"] = False
-    if capabilities.get("can_write") is False:
-        effective_rights["write"] = False
-        head_permissions["write"] = False
-    if capabilities.get("can_delete") is False:
-        effective_rights["unlink"] = False
-        head_permissions["unlink"] = False
-
-    effective["rights"] = effective_rights
-    permission_root["effective"] = effective
-    data["permissions"] = permission_root
-    head["permissions"] = head_permissions
-    data["head"] = head
+    _form_render.apply_form_view_capabilities(data)
 
 
 def _iter_field_order(data: dict) -> list[str]:
-    def _iter_children(node: dict) -> list[list]:
-        rows: list[list] = []
-        for key in ("children", "tabs", "pages", "nodes", "items"):
-            candidate = node.get(key)
-            if isinstance(candidate, list):
-                rows.append(candidate)
-        return rows
-
-    def _collect_fields(nodes: list, out: list[str]) -> None:
-        for node in nodes:
-            if not isinstance(node, dict):
-                continue
-            if _safe_lower(node.get("type")) == "field":
-                name = _safe_text(node.get("name"))
-                if name and name not in out:
-                    out.append(name)
-            for children in _iter_children(node):
-                _collect_fields(children, out)
-
-    ordered: list[str] = []
-    form = _as_dict(_as_dict(data.get("views")).get("form"))
-    layout = form.get("layout")
-    _collect_fields(layout if isinstance(layout, list) else [], ordered)
-    for name in (_as_dict(data.get("fields")) or {}).keys():
-        if name not in ordered:
-            ordered.append(name)
-    return ordered
+    return _form_fields.iter_field_order(data)
 
 
 def _derive_form_core_fields(data: dict) -> list[str]:
-    fields_map = _as_dict(data.get("fields"))
-    ordered = _iter_field_order(data)
-    core: list[str] = []
-    is_project_form = _is_project_form_contract(data)
-    project_form_profile = _legacy_project_form_profile(data)
-    project_form_primary_fields = project_form_profile.get("primary_fields") or []
-    project_form_create_hidden_fields = set(project_form_profile.get("create_hidden_fields") or [])
-
-    def _push(name: str) -> None:
-        if not name or name in core:
-            return
-        descriptor = _as_dict(fields_map.get(name))
-        if not descriptor:
-            return
-        if _is_technical_field(name, descriptor):
-            return
-        if is_project_form and name in project_form_create_hidden_fields:
-            return
-        core.append(name)
-
-    # For project create forms, prioritize stable business fields first.
-    if is_project_form:
-        for name in project_form_primary_fields:
-            _push(name)
-            if len(core) >= _FORM_CORE_FIELD_MAX:
-                break
-
-    for name in ordered:
-        descriptor = _as_dict(fields_map.get(name))
-        if not descriptor:
-            continue
-        required = _to_bool(descriptor.get("required"), fallback=False)
-        readonly = _to_bool(descriptor.get("readonly"), fallback=False)
-        if is_project_form and name in project_form_create_hidden_fields:
-            continue
-        if required and not readonly:
-            _push(name)
-        if len(core) >= _FORM_CORE_FIELD_MAX:
-            break
-
-    if len(core) < _FORM_CORE_FIELD_MAX:
-        for preferred in ("name", "display_name"):
-            _push(preferred)
-            if len(core) >= _FORM_CORE_FIELD_MAX:
-                break
-
-    if len(core) < _FORM_CORE_FIELD_MAX:
-        for name in ordered:
-            _push(name)
-            if len(core) >= _FORM_CORE_FIELD_MAX:
-                break
-    for name in ordered:
-        descriptor = _as_dict(fields_map.get(name))
-        if not descriptor:
-            continue
-        ttype = _safe_lower(descriptor.get("type") or descriptor.get("ttype"))
-        if ttype in {"one2many", "many2many"} and name in _BUSINESS_DETAIL_RELATION_FIELDS and name not in core:
-            if len(core) >= _FORM_CORE_FIELD_MAX:
-                core[-1] = name
-            else:
-                core.append(name)
-            break
-    return core[:_FORM_CORE_FIELD_MAX]
+    return _form_fields.derive_form_core_fields(
+        data,
+        is_project_form=_is_project_form_contract(data),
+        project_form_profile=_legacy_project_form_profile(data),
+        is_technical_field=_is_technical_field,
+        to_bool=lambda value: _to_bool(value, fallback=False),
+    )
 
 
 def _apply_form_field_groups(data: dict) -> None:
-    if not _is_form_contract(data):
-        return
-    existing_groups = data.get("field_groups") if isinstance(data.get("field_groups"), list) else []
-    if existing_groups and (
-        _is_enterprise_company_form_contract(data)
-        or _is_enterprise_user_form_contract(data)
-    ):
-        return
-    fields_map = _as_dict(data.get("fields"))
-    if not fields_map:
-        return
-    core_fields = _derive_form_core_fields(data)
-    core_set = set(core_fields)
-    advanced_fields = [
-        name
-        for name in _iter_field_order(data)
-        if name in fields_map and name not in core_set
-    ]
-    data["field_groups"] = [
-        {
-            "name": "core",
-            "label": "核心信息",
-            "priority": 1,
-            "collapsible": False,
-            "fields": core_fields,
-        },
-        {
-            "name": "advanced",
-            "label": "高级信息",
-            "priority": 2,
-            "collapsible": True,
-            "collapsed_by_default": True,
-            "fields": advanced_fields,
-        },
-    ]
+    _form_fields.apply_form_field_groups(
+        data,
+        is_form_contract=_is_form_contract,
+        is_project_form=_is_project_form_contract(data),
+        project_form_profile=_legacy_project_form_profile(data),
+        is_enterprise_company_form=_is_enterprise_company_form_contract(data),
+        is_enterprise_user_form=_is_enterprise_user_form_contract(data),
+        is_technical_field=_is_technical_field,
+        to_bool=lambda value: _to_bool(value, fallback=False),
+    )
 
 
 def _collect_layout_field_names(nodes: Any) -> list[str]:
-    ordered: list[str] = []
-
-    def _iter_children(node: dict) -> list[list]:
-        rows: list[list] = []
-        for key in ("children", "tabs", "pages", "nodes", "items"):
-            candidate = node.get(key)
-            if isinstance(candidate, list):
-                rows.append(candidate)
-        return rows
-
-    def _collect(items: list) -> None:
-        for node in items:
-            if not isinstance(node, dict):
-                continue
-            if _safe_lower(node.get("type")) == "field":
-                name = _safe_text(node.get("name"))
-                if name and name not in ordered:
-                    ordered.append(name)
-            for children in _iter_children(node):
-                _collect(children)
-
-    if isinstance(nodes, list):
-        _collect(nodes)
-    elif isinstance(nodes, dict):
-        _collect([nodes])
-    return ordered
+    return _form_layout.collect_layout_field_names(nodes)
 
 
 def _find_layout_sheet_node(nodes: Any) -> dict | None:
-    if isinstance(nodes, dict):
-        nodes = [nodes]
-    if not isinstance(nodes, list):
-        return None
-    for node in nodes:
-        if not isinstance(node, dict):
-            continue
-        if _safe_lower(node.get("type")) == "sheet":
-            return node
-        for key in ("children", "tabs", "pages", "nodes", "items"):
-            candidate = node.get(key)
-            if isinstance(candidate, list):
-                found = _find_layout_sheet_node(candidate)
-                if found:
-                    return found
-    return None
+    return _form_layout.find_layout_sheet_node(nodes)
 
 
 def _backfill_form_layout_from_visible_fields(data: dict) -> None:
-    if not _is_form_contract(data):
-        return
-    fields_map = _as_dict(data.get("fields"))
-    if not fields_map:
-        return
-    visible_fields = [
-        _safe_text(name)
-        for name in (data.get("visible_fields") or [])
-        if _safe_text(name) in fields_map
-    ]
-    if not visible_fields:
-        return
-
-    views = _as_dict(data.get("views"))
-    form = _as_dict(views.get("form"))
-    layout = form.get("layout")
-    if not isinstance(layout, list) or not layout:
-        return
-
-    existing = set(_collect_layout_field_names(layout))
-    missing = [
-        name
-        for name in visible_fields
-        if name not in existing and not _is_technical_field(name, _as_dict(fields_map.get(name)))
-    ]
-    if not missing:
-        return
-
-    backfill_group = {
-        "type": "group",
-        "name": "visible_fields_backfill_group",
-        "string": "补充业务信息",
-        "children": [
-            _make_labeled_field_node(name, fields_map)
-            for name in missing
-        ],
-    }
-
-    target = _find_layout_sheet_node(layout)
-    if target:
-        children = target.get("children")
-        if not isinstance(children, list):
-            children = []
-        children.append(backfill_group)
-        target["children"] = children
-    else:
-        layout.append(backfill_group)
-    form["layout"] = layout
-    views["form"] = form
-    data["views"] = views
+    _form_layout.backfill_form_layout_from_visible_fields(
+        data,
+        is_form_contract=_is_form_contract,
+        is_technical_field=_is_technical_field,
+    )
 
 
 def _make_labeled_field_node(
@@ -3078,89 +946,19 @@ def _make_labeled_field_node(
     fields_map: dict[str, Any],
     preferred_labels: dict[str, str] | None = None,
 ) -> dict[str, Any]:
-    descriptor = _as_dict(fields_map.get(name))
-    label = _safe_text((preferred_labels or {}).get(name), "")
-    if not label:
-        label = _safe_text(_ENTERPRISE_USER_FIELD_LABELS.get(name) or _ENTERPRISE_COMPANY_FIELD_LABELS.get(name), "")
-    if not label:
-        label = _safe_text(descriptor.get("string") if descriptor else "", name)
-    ttype = _safe_lower(descriptor.get("type") or descriptor.get("ttype"))
-    widget = _safe_text(descriptor.get("widget"))
-    if not widget:
-        widget = {
-            "many2one": "many2one",
-            "one2many": "one2many_list",
-            "many2many": "many2many_tags",
-            "boolean": "boolean",
-            "date": "date",
-            "datetime": "datetime",
-            "text": "textarea",
-            "html": "html",
-            "binary": "image",
-        }.get(ttype, "")
-    node = {"type": "field", "name": name}
-    if label:
-        node["string"] = label
-    node["fieldInfo"] = {
-        "name": name,
-        "label": label or name,
-    }
-    if widget:
-        node["fieldInfo"]["widget"] = widget
-    return node
+    return _form_layout.make_labeled_field_node(name, fields_map, preferred_labels)
 
 
 def _infer_action_semantic(action: dict) -> str:
-    label = _safe_lower(action.get("label"))
-    key = _safe_lower(action.get("key"))
-    merged = f"{label} {key}"
-    if any(keyword in merged for keyword in _FORM_ACTION_PRIMARY_KEYWORDS):
-        return "primary_action"
-    if any(keyword in merged for keyword in ("删除", "停用", "archive", "unlink", "删除")):
-        return "danger"
-    return "secondary"
+    return _form_actions.infer_action_semantic(action)
 
 
 def _infer_visible_profiles(action: dict) -> list[str]:
-    label = _safe_lower(action.get("label"))
-    key = _safe_lower(action.get("key"))
-    merged = f"{label} {key}"
-    if any(keyword in merged for keyword in ("创建", "提交", "create", "submit")):
-        return [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT]
-    if any(keyword in merged for keyword in ("编辑", "修改", "edit", "write")):
-        return [_RENDER_PROFILE_EDIT]
-    if any(keyword in merged for keyword in _FORM_ACTION_READONLY_KEYWORDS):
-        return [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY]
-    return [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT]
+    return _form_actions.infer_visible_profiles(action)
 
 
 def _annotate_form_actions(data: dict) -> None:
-    if not _is_form_contract(data):
-        return
-    buttons = data.get("buttons")
-    if not isinstance(buttons, list):
-        return
-    primary_assigned = False
-    for row in buttons:
-        if not isinstance(row, dict):
-            continue
-        semantic = _safe_text(row.get("semantic")).lower() or _infer_action_semantic(row)
-        if semantic == "primary_action":
-            if primary_assigned:
-                semantic = "secondary"
-            else:
-                primary_assigned = True
-        row["semantic"] = semantic
-        raw_profiles = row.get("visible_profiles")
-        if isinstance(raw_profiles, list) and raw_profiles:
-            profiles = [
-                _safe_text(item).lower()
-                for item in raw_profiles
-                if _safe_text(item).lower() in _RENDER_PROFILES
-            ]
-        else:
-            profiles = _infer_visible_profiles(row)
-        row["visible_profiles"] = profiles or [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT]
+    _form_actions.annotate_form_actions(data, is_form_contract=_is_form_contract)
 
 
 def _apply_form_render_semantics(data: dict, contract_mode: str) -> None:
@@ -3178,101 +976,27 @@ def _apply_form_render_semantics(data: dict, contract_mode: str) -> None:
 
 
 def _resolve_contract_required_fields(data: dict, fields_map: dict[str, Any]) -> list[str]:
-    if _is_project_form_contract(data):
-        descriptor = _as_dict(fields_map.get("name"))
-        if descriptor and not _to_bool(descriptor.get("readonly"), fallback=False):
-            return ["name"]
-        return []
-    required_fields: list[str] = []
-    for name, descriptor_raw in fields_map.items():
-        descriptor = _as_dict(descriptor_raw)
-        if not descriptor:
-            continue
-        semantic_type = _safe_lower(descriptor.get("semantic_type"))
-        surface_role = _safe_lower(descriptor.get("surface_role"))
-        if semantic_type == "technical" or surface_role == "hidden":
-            continue
-        required = _to_bool(descriptor.get("required"), fallback=False)
-        readonly = _to_bool(descriptor.get("readonly"), fallback=False)
-        if required and not readonly:
-            required_fields.append(name)
-    return required_fields
+    return _form_fields.resolve_contract_required_fields(
+        data,
+        fields_map,
+        is_project_form=_is_project_form_contract(data),
+        to_bool=lambda value: _to_bool(value, fallback=False),
+    )
 
 
 def _build_form_field_policies(data: dict) -> dict[str, dict[str, Any]]:
     fields_map = _as_dict(data.get("fields"))
-    core_group = {}
-    advanced_group = {}
-    for item in data.get("field_groups") if isinstance(data.get("field_groups"), list) else []:
-        if not isinstance(item, dict):
-            continue
-        key = _safe_lower(item.get("name"))
-        rows = item.get("fields")
-        if not isinstance(rows, list):
-            continue
-        normalized = [str(name).strip() for name in rows if str(name).strip()]
-        if key == "core":
-            core_group = {name: True for name in normalized}
-        if key == "advanced":
-            advanced_group = {name: True for name in normalized}
-
-    policies: dict[str, dict[str, Any]] = {}
-    contract_required_fields = set(_resolve_contract_required_fields(data, fields_map))
-    is_project_form = _is_project_form_contract(data)
-    project_form_create_hidden_fields = set(_legacy_project_form_profile(data).get("create_hidden_fields") or [])
-    for name, descriptor_raw in fields_map.items():
-        descriptor = _as_dict(descriptor_raw)
-        if not descriptor:
-            continue
-        required = name in contract_required_fields
-        readonly = _to_bool(descriptor.get("readonly"), fallback=False)
-        visible_profiles = [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY]
-        if name in advanced_group:
-            visible_profiles = [_RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY]
-            if is_project_form and name not in project_form_create_hidden_fields:
-                visible_profiles = [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY]
-        required_profiles = [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT] if required and not readonly else []
-        readonly_profiles = [_RENDER_PROFILE_READONLY]
-        if readonly:
-            readonly_profiles = [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY]
-        policies[name] = {
-            "visible_profiles": visible_profiles,
-            "required_profiles": required_profiles,
-            "readonly_profiles": readonly_profiles,
-            "source_required": required,
-            "source_readonly": readonly,
-            "group": "core" if name in core_group else ("advanced" if name in advanced_group else "secondary"),
-        }
-        # Project create page should not expose system-derived/status fields to end users.
-        if is_project_form and name in project_form_create_hidden_fields:
-            policies[name]["visible_profiles"] = [_RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY]
-            policies[name]["required_profiles"] = []
-            policies[name]["readonly_profiles"] = [
-                _RENDER_PROFILE_CREATE,
-                _RENDER_PROFILE_EDIT,
-                _RENDER_PROFILE_READONLY,
-            ]
-            policies[name]["source_required"] = False
-            policies[name]["source_readonly"] = True
-            policies[name]["group"] = "advanced"
-    return policies
+    return _form_fields.build_form_field_policies(
+        data,
+        contract_required_fields=_resolve_contract_required_fields(data, fields_map),
+        is_project_form=_is_project_form_contract(data),
+        project_form_profile=_legacy_project_form_profile(data),
+        to_bool=lambda value: _to_bool(value, fallback=False),
+    )
 
 
 def _default_action_policy(semantic: str, visible_profiles: list[str], required_fields: list[str]) -> dict[str, Any]:
-    policy = {
-        "visible_profiles": visible_profiles or [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT],
-        "enabled_when": {},
-        "disabled_reason": "",
-        "semantic": semantic,
-    }
-    if semantic == "primary_action":
-        policy["enabled_when"] = {
-            "required_fields": required_fields[:12],
-            "profiles": [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT],
-            "conditions": [],
-        }
-        policy["disabled_reason"] = _FORM_PRIMARY_DISABLED_REASON
-    return policy
+    return _form_actions.default_action_policy(semantic, visible_profiles, required_fields)
 
 
 def _resolve_form_scene_profile(data: dict) -> str:
@@ -3289,16 +1013,15 @@ def _resolve_action_policy_template_keys(
     lifecycle_field: str,
     lifecycle_blocked_states: list[str],
 ) -> list[str]:
-    keys: list[str] = []
-    if semantic == "primary_action":
-        keys.append("base.primary")
-    else:
-        keys.append("base.secondary")
-    if required_capabilities or required_groups or required_roles or (lifecycle_field and lifecycle_blocked_states):
-        keys.append("constraint.access")
-    if scene_profile == _FORM_SCENE_PROFILE_PROJECT and semantic == "primary_action":
-        keys.append("scene.project.form.primary")
-    return keys
+    return _form_actions.resolve_action_policy_template_keys(
+        scene_profile=scene_profile,
+        semantic=semantic,
+        required_capabilities=required_capabilities,
+        required_groups=required_groups,
+        required_roles=required_roles,
+        lifecycle_field=lifecycle_field,
+        lifecycle_blocked_states=lifecycle_blocked_states,
+    )
 
 
 def _apply_action_policy_templates(
@@ -3313,44 +1036,17 @@ def _apply_action_policy_templates(
     required_roles: list[str],
     fields_map: dict[str, Any],
 ) -> None:
-    def _apply_base_primary() -> None:
-        base = _default_action_policy("primary_action", policy.get("visible_profiles") or [], required_fields)
-        policy["enabled_when"] = base.get("enabled_when") or {}
-        policy["disabled_reason"] = base.get("disabled_reason") or policy.get("disabled_reason") or ""
-        policy["semantic"] = "primary_action"
-
-    def _apply_base_secondary() -> None:
-        base = _default_action_policy(
-            _safe_text(policy.get("semantic"), "secondary"),
-            policy.get("visible_profiles") or [],
-            required_fields,
-        )
-        policy["enabled_when"] = base.get("enabled_when") or {}
-        policy["disabled_reason"] = base.get("disabled_reason") or policy.get("disabled_reason") or ""
-
-    def _apply_constraint_access() -> None:
-        _merge_policy_constraints(
-            policy,
-            required_capabilities=required_capabilities,
-            lifecycle_field=lifecycle_field,
-            lifecycle_blocked_states=lifecycle_blocked_states,
-            required_groups=required_groups,
-            required_roles=required_roles,
-        )
-
-    def _apply_scene_project_primary() -> None:
-        _append_primary_action_conditions(policy, fields_map)
-
-    template_registry = {
-        "base.primary": _apply_base_primary,
-        "base.secondary": _apply_base_secondary,
-        "constraint.access": _apply_constraint_access,
-        "scene.project.form.primary": _apply_scene_project_primary,
-    }
-    for key in template_keys:
-        runner = template_registry.get(key)
-        if callable(runner):
-            runner()
+    _form_actions.apply_action_policy_templates(
+        policy,
+        template_keys,
+        required_fields=required_fields,
+        required_capabilities=required_capabilities,
+        lifecycle_field=lifecycle_field,
+        lifecycle_blocked_states=lifecycle_blocked_states,
+        required_groups=required_groups,
+        required_roles=required_roles,
+        fields_map=fields_map,
+    )
 
 
 def _merge_policy_constraints(
@@ -3362,179 +1058,41 @@ def _merge_policy_constraints(
     required_groups: list[str],
     required_roles: list[str],
 ) -> None:
-    enabled_when = policy.get("enabled_when")
-    if not isinstance(enabled_when, dict):
-        enabled_when = {}
-
-    if required_capabilities:
-        enabled_when["required_capabilities"] = required_capabilities
-        if not policy.get("disabled_reason"):
-            policy["disabled_reason"] = _FORM_DISABLED_REASON_CAPABILITY
-    if lifecycle_field and lifecycle_blocked_states:
-        enabled_when["lifecycle"] = {"field": lifecycle_field, "disallow_states": lifecycle_blocked_states}
-        if not policy.get("disabled_reason"):
-            policy["disabled_reason"] = _FORM_DISABLED_REASON_LIFECYCLE
-    if required_groups:
-        enabled_when["required_groups"] = required_groups
-        if not policy.get("disabled_reason"):
-            policy["disabled_reason"] = _FORM_DISABLED_REASON_GROUP
-    if required_roles:
-        enabled_when["required_roles"] = required_roles
-        if not policy.get("disabled_reason"):
-            policy["disabled_reason"] = _FORM_DISABLED_REASON_ROLE
-    policy["enabled_when"] = enabled_when
+    _form_actions.merge_policy_constraints(
+        policy,
+        required_capabilities=required_capabilities,
+        lifecycle_field=lifecycle_field,
+        lifecycle_blocked_states=lifecycle_blocked_states,
+        required_groups=required_groups,
+        required_roles=required_roles,
+    )
 
 
 def _append_primary_action_conditions(policy: dict[str, Any], fields_map: dict[str, Any]) -> None:
-    if _safe_text(policy.get("semantic")) != "primary_action":
-        return
-    enabled_when = policy.get("enabled_when")
-    if not isinstance(enabled_when, dict):
-        enabled_when = {"conditions": []}
-    conditions = enabled_when.get("conditions")
-    if not isinstance(conditions, list):
-        conditions = []
-    if "phase_key" in fields_map:
-        conditions.append({"source": "record", "field": "phase_key", "op": "not_in", "value": ["archive"]})
-    if "stage_id" in fields_map:
-        conditions.append({"source": "record", "field": "stage_id", "op": "truthy"})
-    enabled_when["conditions"] = conditions
-    if conditions:
-        enabled_when["condition_expr"] = {"op": "and", "items": [item for item in conditions if isinstance(item, dict)]}
-    policy["enabled_when"] = enabled_when
+    _form_actions.append_primary_action_conditions(policy, fields_map)
 
 
 def _build_form_action_policies(data: dict) -> dict[str, dict[str, Any]]:
     required_fields = _resolve_contract_required_fields(data, _as_dict(data.get("fields")))
-    policies: dict[str, dict[str, Any]] = {}
-    buttons = data.get("buttons")
-    if not isinstance(buttons, list):
-        return policies
-    lifecycle_field = ""
-    lifecycle_blocked_states: list[str] = []
-    fields_map = _as_dict(data.get("fields"))
     scene_profile = _resolve_form_scene_profile(data)
-    lifecycle_desc = _as_dict(fields_map.get("lifecycle_state"))
-    if lifecycle_desc:
-        lifecycle_field = "lifecycle_state"
-        selection = lifecycle_desc.get("selection")
-        rows = selection if isinstance(selection, list) else []
-        for row in rows:
-            if not isinstance(row, (list, tuple)) or len(row) < 2:
-                continue
-            key = _safe_text(row[0]).lower()
-            label = _safe_text(row[1]).lower()
-            merged = f"{key} {label}"
-            if any(token in merged for token in ("close", "closed", "done", "archive", "竣工", "关闭", "归档")):
-                lifecycle_blocked_states.append(_safe_text(row[0]))
-    for row in buttons:
-        if not isinstance(row, dict):
-            continue
-        key = _safe_text(row.get("key"))
-        if not key:
-            continue
-        semantic = _safe_text(row.get("semantic"), "secondary")
-        visible_profiles = row.get("visible_profiles") if isinstance(row.get("visible_profiles"), list) else []
-        normalized_visible = [
-            _safe_text(item).lower()
-            for item in visible_profiles
-            if _safe_text(item).lower() in _RENDER_PROFILES
-        ]
-        policy = _default_action_policy(semantic, normalized_visible, required_fields)
-        row_groups = row.get("groups_xmlids") if isinstance(row.get("groups_xmlids"), list) else []
-        required_groups = [
-            _safe_text(item)
-            for item in row_groups
-            if _safe_text(item)
-        ]
-        required_roles_raw = row.get("required_roles") if isinstance(row.get("required_roles"), list) else []
-        required_roles = [
-            _safe_text(item).lower()
-            for item in required_roles_raw
-            if _safe_text(item)
-        ]
-        required_capabilities = row.get("required_capabilities")
-        if not isinstance(required_capabilities, list):
-            required_capabilities = row.get("capabilities")
-        required_capabilities = [
-            _safe_text(item)
-            for item in (required_capabilities if isinstance(required_capabilities, list) else [])
-            if _safe_text(item)
-        ]
-        template_keys = _resolve_action_policy_template_keys(
-            scene_profile=scene_profile,
-            semantic=semantic,
-            required_capabilities=required_capabilities,
-            required_groups=required_groups,
-            required_roles=required_roles,
-            lifecycle_field=lifecycle_field,
-            lifecycle_blocked_states=lifecycle_blocked_states,
-        )
-        _apply_action_policy_templates(
-            policy,
-            template_keys,
-            required_fields=required_fields,
-            required_capabilities=required_capabilities,
-            lifecycle_field=lifecycle_field,
-            lifecycle_blocked_states=lifecycle_blocked_states,
-            required_groups=required_groups,
-            required_roles=required_roles,
-            fields_map=fields_map,
-        )
-        policies[key] = policy
-    return policies
+    return _form_actions.build_form_action_policies(
+        data,
+        required_fields=required_fields,
+        scene_profile=scene_profile,
+    )
 
 
 def _govern_enterprise_company_form_for_user(data: dict) -> None:
     if not _is_enterprise_company_form_contract(data):
         return
-    fields_map = _as_dict(data.get("fields"))
-    selected = [name for name in _ENTERPRISE_COMPANY_FORM_FIELDS if name in fields_map]
-    if not selected:
-        return
-    data["visible_fields"] = selected
-    data["field_groups"] = [
-        {
-            "name": "core",
-            "label": "企业基础信息",
-            "priority": 1,
-            "collapsible": False,
-            "fields": selected,
-        },
-    ]
-    views = _as_dict(data.get("views"))
-    form = _as_dict(views.get("form"))
-    form["layout"] = [
-        {
-            "type": "sheet",
-            "name": "enterprise_company_form_sheet",
-            "children": [
-                {
-                    "type": "group",
-                    "name": "enterprise_company_core_group",
-                    "string": "企业基础信息",
-                    "children": [
-                        _make_labeled_field_node(name, fields_map, _ENTERPRISE_COMPANY_FIELD_LABELS)
-                        for name in selected
-                    ],
-                }
-            ],
-        }
-    ]
-    views["form"] = form
-    data["views"] = views
-
-    if _resolve_render_profile(data) == _RENDER_PROFILE_CREATE:
-        toolbar = _as_dict(data.get("toolbar"))
-        if isinstance(toolbar.get("header"), list):
-            toolbar["header"] = []
-        data["toolbar"] = toolbar
-        data["buttons"] = []
-        data["action_groups"] = []
-    _inject_enterprise_form_governance(
+    _enterprise_forms.govern_enterprise_company_form(
         data,
-        next_action_key="department",
-        next_action_label="进入组织架构",
+        form_fields=_ENTERPRISE_COMPANY_FORM_FIELDS,
+        field_labels=_ENTERPRISE_COMPANY_FIELD_LABELS,
+        make_labeled_field_node=_make_labeled_field_node,
+        resolve_render_profile=_resolve_render_profile,
+        render_profile_create=_RENDER_PROFILE_CREATE,
+        inject_enterprise_form_governance=_inject_enterprise_form_governance,
     )
 
 
@@ -3543,333 +1101,53 @@ def _govern_enterprise_department_form_for_user(data: dict) -> None:
         return
     if not _is_form_contract(data):
         return
-    fields_map = _as_dict(data.get("fields"))
-    selected = [name for name in _ENTERPRISE_DEPARTMENT_FORM_FIELDS if name in fields_map]
-    if not selected:
-        return
-    data["visible_fields"] = selected
-    data["field_groups"] = [
-        {
-            "name": "core",
-            "label": "组织基础信息",
-            "priority": 1,
-            "collapsible": False,
-            "fields": selected,
-        },
-    ]
-    views = _as_dict(data.get("views"))
-    form = _as_dict(views.get("form"))
-    form["layout"] = [
-        {
-            "type": "sheet",
-            "name": "enterprise_department_form_sheet",
-            "children": [
-                {
-                    "type": "group",
-                    "name": "enterprise_department_core_group",
-                    "string": "组织基础信息",
-                    "children": [
-                        _make_labeled_field_node(name, fields_map, _ENTERPRISE_DEPARTMENT_FIELD_LABELS)
-                        for name in selected
-                    ],
-                }
-            ],
-        }
-    ]
-    views["form"] = form
-    data["views"] = views
-
-    if _resolve_render_profile(data) == _RENDER_PROFILE_CREATE:
-        toolbar = _as_dict(data.get("toolbar"))
-        if isinstance(toolbar.get("header"), list):
-            toolbar["header"] = []
-        data["toolbar"] = toolbar
-        data["buttons"] = []
-        data["action_groups"] = []
-    _inject_enterprise_form_governance(
+    _enterprise_forms.govern_enterprise_department_form(
         data,
-        next_action_key="user",
-        next_action_label="进入用户设置",
+        form_fields=_ENTERPRISE_DEPARTMENT_FORM_FIELDS,
+        field_labels=_ENTERPRISE_DEPARTMENT_FIELD_LABELS,
+        make_labeled_field_node=_make_labeled_field_node,
+        resolve_render_profile=_resolve_render_profile,
+        render_profile_create=_RENDER_PROFILE_CREATE,
+        inject_enterprise_form_governance=_inject_enterprise_form_governance,
     )
 
 
 def _govern_enterprise_user_form_for_user(data: dict) -> None:
     if not _is_enterprise_user_form_contract(data):
         return
-    fields_map = _as_dict(data.get("fields"))
-    selected = [name for name in _ENTERPRISE_USER_FORM_FIELDS if name in fields_map]
-    if not selected:
-        return
-    data["visible_fields"] = selected
-    data["field_groups"] = [
-        {
-            "name": "account",
-            "label": "账号信息",
-            "priority": 1,
-            "collapsible": False,
-            "fields": [name for name in selected if name in {"login", "name", "active", "password"}],
-        },
-        {
-            "name": "contact",
-            "label": "联系方式",
-            "priority": 2,
-            "collapsible": False,
-            "fields": [name for name in selected if name in {"phone", "email"}],
-        },
-        {
-            "name": "assignment",
-            "label": "组织归属",
-            "priority": 3,
-            "collapsible": False,
-            "fields": [
-                name
-                for name in selected
-                if name in {"company_id", "sc_department_id", "sc_manager_user_id", "sc_role_profile", "sc_role_effective", "sc_role_landing_label"}
-            ],
-        },
-        {
-            "name": "permissions",
-            "label": "业务角色",
-            "priority": 4,
-            "collapsible": False,
-            "fields": [name for name in selected if name in {"sc_user_role_group_ids"}],
-        },
-    ]
-    views = _as_dict(data.get("views"))
-    form = _as_dict(views.get("form"))
-    form["layout"] = [
-        {
-            "type": "sheet",
-            "name": "enterprise_user_form_sheet",
-            "children": [
-                {
-                    "type": "group",
-                    "name": "enterprise_user_basic_group",
-                    "string": "账号信息",
-                    "children": [
-                        _make_labeled_field_node(name, fields_map)
-                        for name in selected
-                        if name in {"login", "name", "active", "password"}
-                    ],
-                },
-                {
-                    "type": "group",
-                    "name": "enterprise_user_contact_group",
-                    "string": "联系方式",
-                    "children": [
-                        _make_labeled_field_node(name, fields_map)
-                        for name in selected
-                        if name in {"phone", "email"}
-                    ],
-                },
-                {
-                    "type": "group",
-                    "name": "enterprise_user_assignment_group",
-                    "string": "组织归属",
-                    "children": [
-                        _make_labeled_field_node(name, fields_map)
-                        for name in selected
-                        if name in {"company_id", "sc_department_id", "sc_manager_user_id", "sc_role_profile", "sc_role_effective", "sc_role_landing_label"}
-                    ],
-                },
-                {
-                    "type": "group",
-                    "name": "enterprise_user_permissions_group",
-                    "string": "业务角色",
-                    "children": [
-                        _make_labeled_field_node(name, fields_map)
-                        for name in selected
-                        if name in {"sc_user_role_group_ids"}
-                    ],
-                },
-            ],
-        }
-    ]
-    form["statusbar"] = {"field": None, "states": []}
-    form["header_buttons"] = []
-    form["button_box"] = []
-    form["stat_buttons"] = []
-    views["form"] = form
-    data["views"] = views
-
-    field_policies = _as_dict(data.get("field_policies"))
-    basic_fields = {"name", "login", "password", "phone", "email", "active", "sc_user_role_group_ids"}
-    readonly_fields = {"sc_role_effective", "sc_role_landing_label"}
-    contract_required_fields = set(_resolve_contract_required_fields(data, fields_map))
-    for name in selected:
-        descriptor = _as_dict(fields_map.get(name))
-        readonly = name in readonly_fields or _to_bool(descriptor.get("readonly"), fallback=False)
-        field_policies[name] = {
-            "visible_profiles": [
-                _RENDER_PROFILE_CREATE,
-                _RENDER_PROFILE_EDIT,
-                _RENDER_PROFILE_READONLY,
-            ],
-            "required_profiles": (
-                [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT]
-                if name in contract_required_fields and not readonly
-                else []
-            ),
-            "readonly_profiles": (
-                [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY]
-                if readonly
-                else [_RENDER_PROFILE_READONLY]
-            ),
-            "source_required": name in contract_required_fields and not readonly,
-            "source_readonly": readonly,
-            "group": "core" if name in basic_fields else "secondary",
-        }
-    data["field_policies"] = field_policies
-
-    toolbar = _as_dict(data.get("toolbar"))
-    if isinstance(toolbar.get("header"), list):
-        toolbar["header"] = []
-    data["toolbar"] = toolbar
-    data["buttons"] = []
-    data["action_groups"] = []
-    _inject_enterprise_form_governance(data)
+    _enterprise_forms.govern_enterprise_user_form(
+        data,
+        form_fields=_ENTERPRISE_USER_FORM_FIELDS,
+        make_labeled_field_node=_make_labeled_field_node,
+        resolve_contract_required_fields=_resolve_contract_required_fields,
+        to_bool=_to_bool,
+        render_profile_create=_RENDER_PROFILE_CREATE,
+        render_profile_edit=_RENDER_PROFILE_EDIT,
+        render_profile_readonly=_RENDER_PROFILE_READONLY,
+        inject_enterprise_form_governance=_inject_enterprise_form_governance,
+    )
 
 
 def _build_form_validation_rules(data: dict, contract_mode: str) -> list[dict[str, Any]]:
-    rules: list[dict[str, Any]] = []
     fields_map = _as_dict(data.get("fields"))
     required_fields = _resolve_contract_required_fields(data, fields_map)
-    for name in required_fields:
-        descriptor = _as_dict(fields_map.get(name))
-        if not descriptor:
-            continue
-        readonly = _to_bool(descriptor.get("readonly"), fallback=False)
-        if not readonly:
-            rules.append(
-                {
-                    "code": "REQUIRED",
-                    "field": name,
-                    "when_profiles": [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT],
-                    "message": f"{_safe_text(descriptor.get('string'), name)} 为必填字段",
-                }
-            )
-    record_rules = _as_dict(_as_dict(data.get("validator")).get("record_rules"))
-    for row in record_rules.get("sql_checks") if isinstance(record_rules.get("sql_checks"), list) else []:
-        if not isinstance(row, dict):
-            continue
-        message = _safe_text(row.get("message"))
-        definition = _safe_text(row.get("definition"))
-        if not message and not definition:
-            continue
-        item = {
-            "code": "SQL_CHECK",
-            "name": _safe_text(row.get("name")),
-            "message": message or definition,
-        }
-        if contract_mode == "hud":
-            item["expr"] = definition
-        rules.append(item)
-    return rules
+    return _form_validation.build_form_validation_rules(
+        data,
+        contract_mode,
+        required_fields=required_fields,
+        to_bool=lambda value: _to_bool(value, fallback=False),
+    )
 
 
 def _normalize_profile_list(raw: Any, fallback: list[str] | None = None) -> list[str]:
-    if not isinstance(raw, list):
-        return list(fallback or [])
-    out: list[str] = []
-    for item in raw:
-        profile = _safe_text(item).lower()
-        if profile in _RENDER_PROFILES and profile not in out:
-            out.append(profile)
-    return out or list(fallback or [])
+    return _form_validation.normalize_profile_list(raw, fallback)
 
 
 def _apply_business_form_policy(data: dict) -> None:
-    policy_root = _as_dict(data.get("business_form_policy"))
-    if not policy_root:
-        return
-    fields_map = _as_dict(data.get("fields"))
-    field_policies = _as_dict(data.get("field_policies"))
-    required_fields = {
-        _safe_text(name)
-        for name in (policy_root.get("required_fields") if isinstance(policy_root.get("required_fields"), list) else [])
-        if _safe_text(name) in fields_map
-    }
-    rows = policy_root.get("fields") if isinstance(policy_root.get("fields"), list) else []
-    for row in rows:
-        if not isinstance(row, dict):
-            continue
-        name = _safe_text(row.get("name") or row.get("field") or row.get("field_name"))
-        if not name or name not in fields_map:
-            continue
-        descriptor = _as_dict(fields_map.get(name))
-        source_readonly = _to_bool(descriptor.get("readonly"), fallback=False)
-        base = _as_dict(field_policies.get(name))
-        visible_profiles = _normalize_profile_list(row.get("visible_profiles"), base.get("visible_profiles") or [
-            _RENDER_PROFILE_CREATE,
-            _RENDER_PROFILE_EDIT,
-            _RENDER_PROFILE_READONLY,
-        ])
-        readonly_profiles = _normalize_profile_list(row.get("readonly_profiles"), base.get("readonly_profiles") or [_RENDER_PROFILE_READONLY])
-        required_profiles = _normalize_profile_list(row.get("required_profiles"), base.get("required_profiles") or [])
-        if name in required_fields and not source_readonly:
-            required_profiles = _normalize_profile_list(
-                required_profiles + [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT],
-                [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT],
-            )
-        if source_readonly:
-            readonly_profiles = [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY]
-            required_profiles = []
-        base.update({
-            "visible_profiles": visible_profiles,
-            "required_profiles": required_profiles,
-            "readonly_profiles": readonly_profiles,
-            "source_required": bool(required_profiles),
-            "source_readonly": source_readonly or bool(row.get("source_readonly")),
-            "group": _safe_text(row.get("group"), base.get("group") or "secondary"),
-        })
-        field_policies[name] = base
-    for name in required_fields:
-        if name not in field_policies:
-            descriptor = _as_dict(fields_map.get(name))
-            readonly = _to_bool(descriptor.get("readonly"), fallback=False)
-            field_policies[name] = {
-                "visible_profiles": [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY],
-                "required_profiles": [] if readonly else [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT],
-                "readonly_profiles": (
-                    [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY]
-                    if readonly
-                    else [_RENDER_PROFILE_READONLY]
-                ),
-                "source_required": not readonly,
-                "source_readonly": readonly,
-                "group": "core",
-            }
-        else:
-            item = _as_dict(field_policies.get(name))
-            if not _to_bool(item.get("source_readonly"), fallback=False):
-                item["required_profiles"] = _normalize_profile_list(
-                    (item.get("required_profiles") if isinstance(item.get("required_profiles"), list) else [])
-                    + [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT],
-                    [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT],
-                )
-                item["source_required"] = True
-                field_policies[name] = item
-    data["field_policies"] = field_policies
-
-    validation_rules = data.get("validation_rules") if isinstance(data.get("validation_rules"), list) else []
-    existing_required = {
-        _safe_text(rule.get("field"))
-        for rule in validation_rules
-        if isinstance(rule, dict) and _safe_text(rule.get("code")).upper() == "REQUIRED"
-    }
-    for name in sorted(required_fields):
-        if name in existing_required:
-            continue
-        descriptor = _as_dict(fields_map.get(name))
-        if _to_bool(descriptor.get("readonly"), fallback=False):
-            continue
-        validation_rules.append({
-            "code": "REQUIRED",
-            "field": name,
-            "when_profiles": [_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT],
-            "message": f"{_safe_text(descriptor.get('string'), name)} 为必填字段",
-        })
-    data["validation_rules"] = validation_rules
+    _form_validation.apply_business_form_policy(
+        data,
+        to_bool=lambda value: _to_bool(value, fallback=False),
+    )
 
 
 def _apply_form_policy_contract(data: dict, contract_mode: str) -> None:
@@ -3880,297 +1158,41 @@ def _apply_form_policy_contract(data: dict, contract_mode: str) -> None:
 
 
 def _classify_field_semantic_type(name: str, descriptor: dict) -> str:
-    low = _safe_lower(name)
-    ttype = _safe_lower(descriptor.get("type") or descriptor.get("ttype"))
-    if _is_technical_field(name, descriptor):
-        return "technical"
-    if ttype in {"many2one", "one2many", "many2many"}:
-        return "relation"
-    if descriptor.get("compute") or descriptor.get("related"):
-        return "computed"
-    if low in {"active", "company_id", "create_uid", "create_date", "write_uid", "write_date"}:
-        return "system"
-    return "business"
+    return _field_semantics.classify_field_semantic_type(name, descriptor)
 
 
 def _annotate_field_semantics(data: dict) -> None:
-    fields_map = _as_dict(data.get("fields"))
-    if not fields_map:
-        return
-    views = _as_dict(data.get("views"))
-    form = _as_dict(views.get("form"))
-    layout_field_set = set(_collect_layout_field_names(form.get("layout")))
-    field_groups = data.get("field_groups") if isinstance(data.get("field_groups"), list) else []
-    core_set: set[str] = set()
-    advanced_set: set[str] = set()
-    for item in field_groups:
-        if not isinstance(item, dict):
-            continue
-        key = _safe_lower(item.get("name"))
-        names = item.get("fields") if isinstance(item.get("fields"), list) else []
-        normalized = {_safe_text(name) for name in names if _safe_text(name)}
-        if key == "core":
-            core_set.update(normalized)
-        elif key == "advanced":
-            advanced_set.update(normalized)
-
-    field_policies = _as_dict(data.get("field_policies"))
-    semantics_map: dict[str, dict[str, Any]] = {}
-    for field_name, raw_descriptor in list(fields_map.items()):
-        descriptor = _as_dict(raw_descriptor)
-        if not descriptor:
-            continue
-        semantic_type = _classify_field_semantic_type(field_name, descriptor)
-        ttype = _safe_lower(descriptor.get("type") or descriptor.get("ttype"))
-        is_layout_relation = (
-            field_name in layout_field_set
-            and ttype in {"many2one", "one2many", "many2many"}
-            and not _safe_lower(field_name).startswith(("message_", "activity_", "rating_", "website_"))
-        )
-        if semantic_type == "technical" and is_layout_relation:
-            semantic_type = "relation"
-        policy = _as_dict(field_policies.get(field_name))
-        policy_group = _safe_lower(policy.get("group"))
-        visible_profiles = policy.get("visible_profiles") if isinstance(policy.get("visible_profiles"), list) else []
-        normalized_profiles = {_safe_lower(item) for item in visible_profiles if _safe_text(item)}
-        has_surface_visibility = bool(normalized_profiles & {_RENDER_PROFILE_CREATE, _RENDER_PROFILE_EDIT, _RENDER_PROFILE_READONLY})
-
-        if policy_group in {"core", "advanced"}:
-            surface_role = policy_group
-        elif field_name in core_set:
-            surface_role = "core"
-        elif field_name in advanced_set:
-            surface_role = "advanced"
-        elif semantic_type == "technical" or not has_surface_visibility:
-            surface_role = "hidden"
-        else:
-            surface_role = "advanced"
-
-        descriptor["semantic_type"] = semantic_type
-        descriptor["surface_role"] = surface_role
-        descriptor["technical"] = semantic_type == "technical"
-        fields_map[field_name] = descriptor
-        semantics_map[field_name] = {
-            "semantic_type": semantic_type,
-            "surface_role": surface_role,
-            "technical": semantic_type == "technical",
-        }
-
-    data["fields"] = fields_map
-    data["field_semantics"] = semantics_map
+    _field_semantics.annotate_field_semantics(data)
 
 
 def _is_create_render_profile(data: dict) -> bool:
-    raw = _safe_lower(data.get("render_profile"))
-    if raw == _RENDER_PROFILE_CREATE:
-        return True
-    head = _as_dict(data.get("head"))
-    raw = _safe_lower(head.get("render_profile"))
-    if raw == _RENDER_PROFILE_CREATE:
-        return True
-    record_id = data.get("record_id") or data.get("res_id") or head.get("record_id") or head.get("res_id")
-    if record_id in (None, "", False, 0, "0", "new", "none", "false"):
-        return True
-    return False
+    return _create_profile.is_create_render_profile(data)
 
 
 def _mark_record_dependent_native_buttons_hidden_on_create(data: dict) -> None:
-    if not _is_form_contract(data) or not _is_create_render_profile(data):
-        return
-    views = _as_dict(data.get("views"))
-    form = _as_dict(views.get("form"))
-    layout = form.get("layout")
-    if not isinstance(layout, list):
-        return
-
-    def _button_requires_record(node: dict) -> bool:
-        action = _as_dict(node.get("action"))
-        level = _safe_lower(action.get("level") or node.get("level"))
-        kind = _safe_lower(action.get("kind") or node.get("kind"))
-        button_type = _safe_lower(node.get("buttonType") or node.get("type"))
-        if level in {"smart", "row", "record"}:
-            return True
-        if button_type == "object" or kind in {"server", "object"}:
-            return True
-        return False
-
-    def _hide(node: dict) -> None:
-        node["invisible"] = {"kind": "static", "value": True, "reason_code": "CREATE_PROFILE_REQUIRES_RECORD"}
-        modifiers = _as_dict(node.get("modifiers"))
-        modifiers["invisible"] = node["invisible"]
-        node["modifiers"] = modifiers
-        action = _as_dict(node.get("action"))
-        if action:
-            profiles = action.get("visible_profiles") if isinstance(action.get("visible_profiles"), list) else []
-            action["visible_profiles"] = [p for p in profiles if _safe_lower(p) != _RENDER_PROFILE_CREATE]
-            action["requires_record"] = True
-            action["hidden_reason_code"] = "CREATE_PROFILE_REQUIRES_RECORD"
-            node["action"] = action
-
-    def _walk(obj: Any) -> None:
-        if isinstance(obj, list):
-            for item in obj:
-                _walk(item)
-            return
-        if not isinstance(obj, dict):
-            return
-        node_type = _safe_lower(obj.get("type") or obj.get("kind"))
-        if node_type == "button" and _button_requires_record(obj):
-            _hide(obj)
-        for key in ("children", "tabs", "pages", "nodes", "items"):
-            _walk(obj.get(key))
-
-    _walk(layout)
-    form["layout"] = layout
-    views["form"] = form
-    data["views"] = views
+    _create_profile.mark_record_dependent_native_buttons_hidden_on_create(
+        data,
+        is_form_contract=_is_form_contract,
+    )
 
 
 def _is_create_profile_noise_field(name: str, descriptor: dict) -> bool:
-    low = _safe_lower(name)
-    if not low:
-        return True
-    if low in {
-        "active",
-        "partner_gid",
-        "additional_info",
-        "same_vat_partner_id",
-        "same_company_registry_partner_id",
-        "commercial_partner_id",
-        "property_account_receivable_id",
-        "property_account_payable_id",
-        "phone_blacklisted",
-        "mobile_blacklisted",
-        "is_blacklisted",
-        "active_lang_count",
-        "duplicated_bank_account_partners_count",
-        "show_credit_limit",
-        "hide_peppol_fields",
-        "fiscal_country_codes",
-        "country_code",
-    }:
-        return True
-    if low.endswith("_count") or low.endswith("_counter"):
-        return True
-    if low.startswith(("same_", "duplicated_", "hide_", "show_", "blacklist", "peppol_")):
-        return True
-    if bool(descriptor.get("readonly")) and (descriptor.get("compute") or descriptor.get("related")):
-        return True
-    return False
+    return _create_profile.is_create_profile_noise_field(name, descriptor)
 
 
 def _hide_create_profile_noise_fields(data: dict) -> None:
-    if not _is_form_contract(data) or not _is_create_render_profile(data):
-        return
-    fields_map = _as_dict(data.get("fields"))
-    if not fields_map:
-        return
-    hidden_names: set[str] = set()
-    semantics_map = _as_dict(data.get("field_semantics"))
-    for name, raw_descriptor in list(fields_map.items()):
-        descriptor = _as_dict(raw_descriptor)
-        if _is_enterprise_user_form_contract(data) and _safe_lower(name) == "active":
-            continue
-        if not descriptor or not _is_create_profile_noise_field(name, descriptor):
-            continue
-        descriptor["semantic_type"] = "technical"
-        descriptor["surface_role"] = "hidden"
-        descriptor["technical"] = True
-        fields_map[name] = descriptor
-        semantics_map[name] = {
-            "semantic_type": "technical",
-            "surface_role": "hidden",
-            "technical": True,
-        }
-        hidden_names.add(_safe_text(name))
-    if not hidden_names:
-        return
-    data["fields"] = fields_map
-    data["field_semantics"] = semantics_map
-
-    views = _as_dict(data.get("views"))
-    form = _as_dict(views.get("form"))
-    layout = form.get("layout")
-    if not isinstance(layout, list):
-        return
-
-    hidden_modifier = {"kind": "static", "value": True, "reason_code": "CREATE_PROFILE_TECHNICAL_FIELD"}
-
-    def _walk(obj: Any) -> None:
-        if isinstance(obj, list):
-            for item in obj:
-                _walk(item)
-            return
-        if not isinstance(obj, dict):
-            return
-        node_type = _safe_lower(obj.get("type") or obj.get("kind"))
-        node_name = _safe_text(obj.get("name"))
-        if node_type == "field" and node_name in hidden_names:
-            obj["invisible"] = hidden_modifier
-            modifiers = _as_dict(obj.get("modifiers"))
-            modifiers["invisible"] = hidden_modifier
-            obj["modifiers"] = modifiers
-        for key in ("children", "tabs", "pages", "nodes", "items"):
-            _walk(obj.get(key))
-
-    _walk(layout)
-    form["layout"] = layout
-    views["form"] = form
-    data["views"] = views
+    _create_profile.hide_create_profile_noise_fields(
+        data,
+        is_form_contract=_is_form_contract,
+        is_enterprise_user_form_contract=_is_enterprise_user_form_contract,
+    )
 
 
 def _hide_create_profile_state_ribbons(data: dict) -> None:
-    if not _is_form_contract(data) or not _is_create_render_profile(data):
-        return
-    views = _as_dict(data.get("views"))
-    form = _as_dict(views.get("form"))
-    layout = form.get("layout")
-    if not isinstance(layout, list):
-        return
-
-    hidden_modifier = {"kind": "static", "value": True, "reason_code": "CREATE_PROFILE_STATE_WIDGET"}
-
-    def _is_archive_ribbon(node: dict) -> bool:
-        if _safe_lower(node.get("type") or node.get("kind")) != "widget":
-            return False
-        widget = _safe_lower(node.get("widget") or node.get("name"))
-        if widget != "web_ribbon":
-            return False
-        attrs = _as_dict(node.get("attributes"))
-        merged = " ".join(
-            _safe_text(value)
-            for value in (
-                node.get("title"),
-                node.get("string"),
-                node.get("label"),
-                node.get("class"),
-                attrs.get("title"),
-                attrs.get("class"),
-                attrs.get("bg_color"),
-            )
-            if value is not None
-        ).lower()
-        return any(token in merged for token in ("archive", "archived", "归档"))
-
-    def _walk(obj: Any) -> None:
-        if isinstance(obj, list):
-            for item in obj:
-                _walk(item)
-            return
-        if not isinstance(obj, dict):
-            return
-        if _is_archive_ribbon(obj):
-            obj["invisible"] = hidden_modifier
-            modifiers = _as_dict(obj.get("modifiers"))
-            modifiers["invisible"] = hidden_modifier
-            obj["modifiers"] = modifiers
-        for key in ("children", "tabs", "pages", "nodes", "items"):
-            _walk(obj.get(key))
-
-    _walk(layout)
-    form["layout"] = layout
-    views["form"] = form
-    data["views"] = views
+    _create_profile.hide_create_profile_state_ribbons(
+        data,
+        is_form_contract=_is_form_contract,
+    )
 
 
 def _canonicalize_contract_keys(
@@ -4179,39 +1201,7 @@ def _canonicalize_contract_keys(
     path: str = "$",
     conflicts: list[dict[str, Any]] | None = None,
 ) -> Any:
-    conflicts = conflicts if isinstance(conflicts, list) else []
-    if isinstance(obj, list):
-        return [
-            _canonicalize_contract_keys(item, path=f"{path}[{idx}]", conflicts=conflicts)
-            for idx, item in enumerate(obj)
-        ]
-    if not isinstance(obj, dict):
-        return obj
-    out: dict[str, Any] = {}
-    source_keys: dict[str, str] = {}
-    for raw_key, raw_val in obj.items():
-        key = str(raw_key)
-        canonical = _CONTRACT_KEY_CANONICAL_MAP.get(key, key)
-        normalized_val = _canonicalize_contract_keys(raw_val, path=f"{path}.{canonical}", conflicts=conflicts)
-        if canonical not in out:
-            out[canonical] = normalized_val
-            source_keys[canonical] = key
-            continue
-        previous = source_keys.get(canonical, canonical)
-        snake_preferred = canonical
-        should_replace = key == snake_preferred and previous != snake_preferred
-        conflicts.append(
-            {
-                "path": f"{path}.{canonical}",
-                "canonical": canonical,
-                "kept_from": key if should_replace else previous,
-                "dropped_from": previous if should_replace else key,
-            }
-        )
-        if should_replace:
-            out[canonical] = normalized_val
-            source_keys[canonical] = key
-    return out
+    return _canonicalization.canonicalize_contract_keys(obj, path=path, conflicts=conflicts)
 
 
 def register_contract_domain_override(
@@ -4220,50 +1210,15 @@ def register_contract_domain_override(
     *,
     priority: int = 100,
 ) -> None:
-    if not callable(handler):
-        return
-    normalized_name = _safe_text(name, "unnamed_override")
-    for row in _DOMAIN_OVERRIDE_REGISTRY:
-        if _safe_text(row.get("name")) == normalized_name:
-            row["handler"] = handler
-            row["priority"] = int(priority)
-            return
-    _DOMAIN_OVERRIDE_REGISTRY.append(
-        {
-            "name": normalized_name,
-            "priority": int(priority),
-            "handler": handler,
-        }
-    )
-    _DOMAIN_OVERRIDE_REGISTRY.sort(key=lambda item: int(item.get("priority") or 100))
+    _domain_overrides.register_contract_domain_override(name, handler, priority=priority)
 
 
 def _append_governance_diagnostic(data: dict, key: str, value: Any) -> None:
-    diagnostic = data.get("diagnostic")
-    if not isinstance(diagnostic, dict):
-        diagnostic = {}
-    diagnostic[key] = value
-    data["diagnostic"] = diagnostic
+    _domain_overrides.append_governance_diagnostic(data, key, value)
 
 
 def _apply_domain_overrides(data: dict, contract_mode: str) -> list[dict[str, Any]]:
-    failures: list[dict[str, Any]] = []
-    for row in _DOMAIN_OVERRIDE_REGISTRY:
-        handler = row.get("handler")
-        if not callable(handler):
-            continue
-        try:
-            handler(data, contract_mode)
-        except Exception as exc:
-            failures.append(
-                {
-                    "name": _safe_text(row.get("name")),
-                    "error_type": exc.__class__.__name__,
-                    "message": _safe_text(str(exc))[:240],
-                }
-            )
-            continue
-    return failures
+    return _domain_overrides.apply_domain_overrides(data, contract_mode)
 
 
 def apply_project_form_domain_override(data: dict, contract_mode: str) -> None:
@@ -4317,144 +1272,24 @@ def _apply_semantic_governance(data: dict, contract_mode: str) -> None:
         _apply_form_render_semantics(data, contract_mode)
 
 
-def normalize_scenes(scenes: list) -> list[dict]:
-    out: list[dict] = []
-    for scene in scenes or []:
-        if not isinstance(scene, dict):
-            continue
-        item = dict(scene)
-        code = _safe_text(item.get("code") or item.get("key"))
-        item["code"] = code or item.get("code")
-        item["key"] = _safe_text(item.get("key"), code)
-        item["name"] = _safe_text(item.get("name"), code or "未命名场景")
-        item["list_profile"] = _normalize_scene_list_profile(item)
-        item["scene_meta"] = _derive_scene_meta(item)
-        item["tags"] = _normalized_tags_for_item(item)
-        out.append(item)
-    return out
-
-
 def _deep_clone_json_like(obj: Any) -> Any:
-    if isinstance(obj, dict):
-        return {k: _deep_clone_json_like(v) for k, v in obj.items()}
-    if isinstance(obj, list):
-        return [_deep_clone_json_like(v) for v in obj]
-    return obj
+    return _surface_mapping.deep_clone_json_like(obj)
 
 
 def _collect_layout_snapshot(layout: Any) -> dict[str, Any]:
-    field_order: list[str] = []
-    node_signatures: list[str] = []
-
-    def walk(node: Any) -> None:
-        if isinstance(node, list):
-            for item in node:
-                walk(item)
-            return
-        if not isinstance(node, dict):
-            return
-        node_type = _safe_lower(node.get("type"))
-        node_name = _safe_text(node.get("name"))
-        node_label = _safe_text(node.get("string") or node.get("label"))
-        node_signatures.append(f"{node_type}:{node_name or node_label}")
-        if node_type == "field":
-            if node_name and node_name not in field_order:
-                field_order.append(node_name)
-        for key in ("children", "tabs", "pages", "nodes", "items"):
-            walk(node.get(key))
-
-    walk(layout)
-    return {
-        "field_order": field_order,
-        "node_signatures": node_signatures,
-    }
+    return _surface_mapping.collect_layout_snapshot(layout)
 
 
 def _collect_action_snapshot(rows: Any) -> list[str]:
-    out: list[str] = []
-    if not isinstance(rows, list):
-        return out
-    for row in rows:
-        if not isinstance(row, dict):
-            continue
-        key = _safe_text(row.get("key"))
-        name = _safe_text(row.get("name"))
-        method = _safe_text(_as_dict(row.get("payload")).get("method"))
-        label = _safe_text(row.get("label"))
-        signature = key or name or method or label
-        if signature and signature not in out:
-            out.append(signature)
-    return out
+    return _surface_mapping.collect_action_snapshot(rows)
 
 
 def _collect_surface_snapshot(data: dict) -> dict[str, Any]:
-    fields_map = _as_dict(data.get("fields"))
-    views = _as_dict(data.get("views"))
-    form = _as_dict(views.get("form"))
-    layout = form.get("layout")
-    layout_info = _collect_layout_snapshot(layout if isinstance(layout, list) else [])
-    field_modifiers = _as_dict(form.get("field_modifiers"))
-    buttons = _collect_action_snapshot(data.get("buttons"))
-    header_buttons = _collect_action_snapshot(form.get("header_buttons"))
-    stat_buttons = _collect_action_snapshot(form.get("stat_buttons"))
-
-    return {
-        "fields": list(fields_map.keys()),
-        "layout_field_order": layout_info.get("field_order") or [],
-        "layout_nodes": layout_info.get("node_signatures") or [],
-        "buttons": buttons,
-        "header_buttons": header_buttons,
-        "stat_buttons": stat_buttons,
-        "field_modifiers": list(field_modifiers.keys()),
-    }
+    return _surface_mapping.collect_surface_snapshot(data)
 
 
 def _build_surface_mapping(native_snapshot: dict[str, Any], governed_snapshot: dict[str, Any]) -> dict[str, Any]:
-    native_fields = [x for x in native_snapshot.get("fields", []) if _safe_text(x)]
-    governed_fields = [x for x in governed_snapshot.get("fields", []) if _safe_text(x)]
-    native_layout_fields = [x for x in native_snapshot.get("layout_field_order", []) if _safe_text(x)]
-    governed_layout_fields = [x for x in governed_snapshot.get("layout_field_order", []) if _safe_text(x)]
-
-    def diff(native_rows: list[str], governed_rows: list[str]) -> dict[str, Any]:
-        native_set = set(native_rows)
-        governed_set = set(governed_rows)
-        removed = sorted([x for x in native_rows if x not in governed_set])
-        added = sorted([x for x in governed_rows if x not in native_set])
-        reordered = bool(native_rows and governed_rows and native_rows != governed_rows and not removed and not added)
-        return {
-            "native_count": len(native_rows),
-            "governed_count": len(governed_rows),
-            "removed": removed,
-            "added": added,
-            "reordered": reordered,
-        }
-
-    return {
-        "native_to_governed": {
-            "fields": diff(native_fields, governed_fields),
-            "layout_fields": diff(native_layout_fields, governed_layout_fields),
-            "layout_nodes": diff(
-                [x for x in native_snapshot.get("layout_nodes", []) if _safe_text(x)],
-                [x for x in governed_snapshot.get("layout_nodes", []) if _safe_text(x)],
-            ),
-            "buttons": diff(
-                [x for x in native_snapshot.get("buttons", []) if _safe_text(x)],
-                [x for x in governed_snapshot.get("buttons", []) if _safe_text(x)],
-            ),
-            "header_buttons": diff(
-                [x for x in native_snapshot.get("header_buttons", []) if _safe_text(x)],
-                [x for x in governed_snapshot.get("header_buttons", []) if _safe_text(x)],
-            ),
-            "stat_buttons": diff(
-                [x for x in native_snapshot.get("stat_buttons", []) if _safe_text(x)],
-                [x for x in governed_snapshot.get("stat_buttons", []) if _safe_text(x)],
-            ),
-            "field_modifiers": diff(
-                [x for x in native_snapshot.get("field_modifiers", []) if _safe_text(x)],
-                [x for x in governed_snapshot.get("field_modifiers", []) if _safe_text(x)],
-            ),
-        }
-    }
+    return _surface_mapping.build_surface_mapping(native_snapshot, governed_snapshot)
 
 
 def apply_contract_governance(

@@ -44,6 +44,25 @@ REQUIRED_GUARDS = [
     "list_batch_action_closure_guard.py",
     "contract_governance_registry_split_guard.py",
     "contract_governance_user_surface_split_guard.py",
+    "contract_governance_capabilities_split_guard.py",
+    "contract_governance_scenes_split_guard.py",
+    "contract_governance_list_surface_split_guard.py",
+    "contract_governance_native_bridge_split_guard.py",
+    "contract_governance_labels_split_guard.py",
+    "contract_governance_access_policy_split_guard.py",
+    "contract_governance_canonicalization_split_guard.py",
+    "contract_governance_surface_mapping_split_guard.py",
+    "contract_governance_create_profile_split_guard.py",
+    "contract_governance_field_semantics_split_guard.py",
+    "contract_governance_form_layout_split_guard.py",
+    "contract_governance_form_actions_split_guard.py",
+    "contract_governance_form_render_split_guard.py",
+    "contract_governance_form_validation_split_guard.py",
+    "contract_governance_form_fields_split_guard.py",
+    "contract_governance_project_form_split_guard.py",
+    "contract_governance_enterprise_forms_split_guard.py",
+    "contract_governance_contract_detection_split_guard.py",
+    "contract_governance_domain_overrides_split_guard.py",
 ]
 
 INVARIANTS = [
@@ -79,7 +98,7 @@ def main() -> int:
 
     for token in [
         "Contract Governance Responsibility Map",
-        "Current size: 4,820 lines",
+        "Current size: 1,370 lines",
         "projection-only",
         "Do not start mechanical extraction",
         "## Public Entry Points",
@@ -95,6 +114,100 @@ def main() -> int:
         "## Stage 2 Target",
         "`contract_governance_user_surface.py` owns recursive user-mode field stripping",
         "`contract_governance.py` is locked at `<=4535` lines",
+        "## Stage 3 Target",
+        "`contract_governance_registry.py` also owns form policy constants",
+        "`contract_governance.py` is locked at `<=4490` lines",
+        "## Stage 4 Target",
+        "`contract_governance_capabilities.py` owns capability normalization",
+        "`contract_governance.py` is locked at `<=4272` lines",
+        "## Stage 5 Target",
+        "`contract_governance_scenes.py` owns scene normalization",
+        "`contract_governance.py` is locked at `<=4213` lines",
+        "## Stage 6 Target",
+        "`contract_governance_list_surface.py` owns standard list toolbar labels",
+        "`contract_governance.py` is locked at `<=4121` lines",
+        "## Stage 7 Target",
+        "`contract_governance_native_bridge.py` owns native and scene bridge normalization",
+        "`contract_governance.py` is locked at `<=3932` lines",
+        "## Stage 8 Target",
+        "`contract_governance_labels.py` owns business labels and relation semantics",
+        "`contract_governance.py` is locked at `<=3830` lines",
+        "## Stage 9 Target",
+        "`contract_governance_access_policy.py` owns access policy realignment",
+        "`contract_governance.py` is locked at `<=3780` lines",
+        "## Stage 10 Target",
+        "`contract_governance_canonicalization.py` owns recursive contract key",
+        "`contract_governance.py` is locked at `<=3769` lines",
+        "## Stage 11 Target",
+        "`contract_governance_surface_mapping.py` owns surface snapshot collection",
+        "`contract_governance.py` is locked at `<=3690` lines",
+        "## Stage 12 Target",
+        "`contract_governance_create_profile.py` owns create-profile projection cleanup",
+        "`contract_governance.py` is locked at `<=3528` lines",
+        "## Stage 13 Target",
+        "`contract_governance_field_semantics.py` owns field technical classification",
+        "`contract_governance.py` is locked at `<=3453` lines",
+        "## Stage 14 Target",
+        "`contract_governance_form_layout.py` owns form layout structural helpers",
+        "`contract_governance.py` is locked at `<=3361` lines",
+        "## Stage 15 Target",
+        "`contract_governance_form_actions.py` owns form action semantic inference",
+        "`contract_governance.py` is locked at `<=3212` lines",
+        "## Stage 16 Target",
+        "`contract_governance_form_render.py` owns boolean coercion",
+        "`contract_governance.py` is locked at `<=3169` lines",
+        "## Stage 17 Target",
+        "`contract_governance_form_validation.py` owns validation rule assembly",
+        "`contract_governance.py` is locked at `<=3073` lines",
+        "## Stage 18 Target",
+        "`contract_governance_form_fields.py` owns form field ordering",
+        "`contract_governance.py` is locked at `<=2930` lines",
+        "## Stage 19 Target",
+        "`contract_governance_list_surface.py` also owns tier-review list",
+        "`contract_governance.py` is locked at `<=2898` lines",
+        "## Stage 20 Target",
+        "`contract_governance_project_form.py` owns project lifecycle summary",
+        "`contract_governance.py` is locked at `<=2872` lines",
+        "## Stage 21 Target",
+        "`contract_governance_project_form.py` also owns legacy project form profile",
+        "`contract_governance.py` is locked at `<=2781` lines",
+        "## Stage 22 Target",
+        "`contract_governance_project_form.py` also owns project form layout filtering",
+        "`contract_governance.py` is locked at `<=2708` lines",
+        "## Stage 23 Target",
+        "`contract_governance_project_form.py` also owns project field-map trimming",
+        "`contract_governance.py` is locked at `<=2616` lines",
+        "## Stage 24 Target",
+        "`contract_governance_project_form.py` also owns project task form projection",
+        "`contract_governance.py` is locked at `<=2559` lines",
+        "## Stage 25 Target",
+        "`contract_governance_project_form.py` also owns project kanban projection",
+        "`contract_governance.py` is locked at `<=2424` lines",
+        "## Stage 26 Target",
+        "`contract_governance_enterprise_forms.py` owns enterprise company",
+        "`contract_governance.py` is locked at `<=2245` lines",
+        "## Stage 27 Target",
+        "`contract_governance_project_form.py` also owns project form action",
+        "`contract_governance.py` is locked at `<=2207` lines",
+        "## Stage 28 Target",
+        "`contract_governance_list_surface.py` owns standard list projection",
+        "`contract_governance.py` is locked at `<=1973` lines",
+        "## Stage 29 Target",
+        "`contract_governance_contract_detection.py` owns pure contract surface",
+        "`contract_governance.py` is locked at `<=1899` lines",
+        "## Stage 30 Target",
+        "`contract_governance_user_surface.py` also owns user-surface policy",
+        "`contract_governance.py` is locked at `<=1812` lines",
+        "## Stage 31 Target",
+        "`contract_governance_surface_mapping.py` also owns JSON-like deep cloning",
+        "`contract_governance_domain_overrides.py` owns domain override registration",
+        "`contract_governance.py` is locked at `<=1792` lines",
+        "## Stage 32 Target",
+        "`contract_governance.py` uses one shared sibling-module loader",
+        "`contract_governance.py` is locked at `<=1537` lines",
+        "## Stage 33 Target",
+        "`contract_governance_registry.py` owns legacy registration normalization",
+        "`contract_governance.py` is locked at `<=1370` lines",
     ]:
         if token not in doc:
             errors.append(f"responsibility map missing token: {token}")
@@ -126,14 +239,20 @@ def main() -> int:
             errors.append("apply_contract_governance must still emit surface_mapping")
         if "if normalized_surface == \"native\":" not in governance:
             errors.append("apply_contract_governance must retain native surface branch")
+        if "def _load_sibling_module(module_name: str, file_name: str) -> Any:" not in governance:
+            errors.append("contract_governance.py must keep the shared sibling module loader")
+        if "return _load_sibling_module(\"contract_governance_registry\", \"contract_governance_registry.py\")" not in governance:
+            errors.append("contract_governance.py must route registry loading through the shared loader")
 
     split_queue_token = (
         "`addons/smart_core/utils/contract_governance.py` | Extract constants/registries, "
         "user-surface normalization, list governance, native bridge, form policy, diagnostics, "
         "and keep `apply_contract_governance` as a thin facade."
     )
-    if split_queue_token not in split_queue:
-        errors.append("split plan queue must use contract_governance-specific decomposition direction")
+    if "`addons/smart_core/utils/contract_governance.py`" in split_queue and split_queue_token not in split_queue:
+        errors.append("split plan queue must use contract_governance-specific decomposition direction when listed")
+    if "`addons/smart_core/utils/contract_governance.py`" not in split_queue and "Current size: 1,370 lines" not in doc:
+        errors.append("responsibility map must retain the achieved contract_governance split baseline when removed from queue")
 
     ci_token = "python3 scripts/verify/contract_governance_responsibility_map_guard.py"
     if ci_token not in ci:

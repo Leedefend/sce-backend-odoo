@@ -4,17 +4,15 @@ Generated from repository source files. This report is informational during the 
 
 ## Summary
 
-- Scanned files: `3861`
-- Files requiring split plan: `42`
-- Files above warning threshold: `64`
+- Scanned files: `3922`
+- Files requiring split plan: `41`
+- Files above warning threshold: `65`
 
 ## Split Plan Required
 
 | Lines | Category | File |
 | ---: | --- | --- |
 | 5939 | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
-| 4535 | Python source | `addons/smart_core/utils/contract_governance.py` |
-| 4372 | Python source | `addons/smart_construction_core/core_extension.py` |
 | 3849 | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 3773 | Vue source | `frontend/apps/web/src/views/ActionView.vue` |
 | 3684 | Vue source | `frontend/apps/web/src/views/MenuConfigView.vue` |
@@ -42,6 +40,7 @@ Generated from repository source files. This report is informational during the 
 | 1850 | Python source | `addons/smart_core/handlers/menu_configuration.py` |
 | 1847 | Python source | `addons/smart_construction_core/models/support/product_policy_sync.py` |
 | 1844 | Python source | `scripts/migration/scbs_55_legacy_visible_field_full_reconcile_probe.py` |
+| 1787 | Python source | `addons/smart_construction_core/core_extension.py` |
 | 1745 | Python source | `addons/smart_core/tests/test_ui_contract_v2_boundaries.py` |
 | 1741 | Python source | `addons/smart_core/core/page_contracts_builder.py` |
 | 1741 | Vue source | `frontend/apps/web/src/views/SceneView.vue` |
@@ -72,6 +71,7 @@ Generated from repository source files. This report is informational during the 
 | 1396 | XML data/view | `addons/smart_construction_core/data/view_orchestration_contract_generated_data.xml` |
 | 1383 | XML data/view | `addons/smart_construction_core/views/support/legacy_direct_acceptance_views.xml` |
 | 1380 | XML data/view | `addons/smart_construction_core/views/support/audit_list_fields_views.xml` |
+| 1370 | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 1336 | Python source | `scripts/verify/release_v2_0_0_control_docs_guard.py` |
 | 1330 | Python source | `addons/smart_core/delivery/menu_service.py` |
 | 1323 | Python source | `addons/smart_core/app_config_engine/models/app_view_config.py` |
@@ -129,8 +129,6 @@ Generated from repository source files. This report is informational during the 
 | Lines | Status | Category | File |
 | ---: | --- | --- | --- |
 | 5939 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
-| 4535 | split_plan_required | Python source | `addons/smart_core/utils/contract_governance.py` |
-| 4372 | split_plan_required | Python source | `addons/smart_construction_core/core_extension.py` |
 | 3849 | split_plan_required | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 3773 | split_plan_required | Vue source | `frontend/apps/web/src/views/ActionView.vue` |
 | 3684 | split_plan_required | Vue source | `frontend/apps/web/src/views/MenuConfigView.vue` |
@@ -160,6 +158,7 @@ Generated from repository source files. This report is informational during the 
 | 1847 | split_plan_required | Python source | `addons/smart_construction_core/models/support/product_policy_sync.py` |
 | 1844 | split_plan_required | Python source | `scripts/migration/scbs_55_legacy_visible_field_full_reconcile_probe.py` |
 | 1807 | warning | XML data/view | `addons/smart_construction_core/data/business_category_seed.xml` |
+| 1787 | split_plan_required | Python source | `addons/smart_construction_core/core_extension.py` |
 | 1745 | split_plan_required | Python source | `addons/smart_core/tests/test_ui_contract_v2_boundaries.py` |
 | 1741 | split_plan_required | Python source | `addons/smart_core/core/page_contracts_builder.py` |
 | 1741 | split_plan_required | Vue source | `frontend/apps/web/src/views/SceneView.vue` |
@@ -181,6 +180,7 @@ Generated from repository source files. This report is informational during the 
 | 1396 | warning | XML data/view | `addons/smart_construction_core/data/view_orchestration_contract_generated_data.xml` |
 | 1383 | warning | XML data/view | `addons/smart_construction_core/views/support/legacy_direct_acceptance_views.xml` |
 | 1380 | warning | XML data/view | `addons/smart_construction_core/views/support/audit_list_fields_views.xml` |
+| 1370 | warning | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 1336 | warning | Python source | `scripts/verify/release_v2_0_0_control_docs_guard.py` |
 | 1330 | warning | Python source | `addons/smart_core/delivery/menu_service.py` |
 | 1323 | warning | Python source | `addons/smart_core/app_config_engine/models/app_view_config.py` |

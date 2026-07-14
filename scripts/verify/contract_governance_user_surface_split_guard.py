@@ -25,6 +25,7 @@ USER_SURFACE_FUNCTIONS = [
     "build_user_surface_action_groups",
     "sanitize_user_action_rows",
     "apply_user_surface_noise_reduction",
+    "apply_user_surface_policies",
 ]
 
 
@@ -63,6 +64,8 @@ def main() -> int:
             "return _user_surface.sanitize_capability_for_user(item)",
             "return _user_surface.build_user_surface_action_groups(rows)",
             "_user_surface.apply_user_surface_noise_reduction(data)",
+            "_user_surface.apply_user_surface_policies(",
+            "mark_model_policy=_mark_legacy_user_surface_model_policy",
         ]:
             if token not in governance_text:
                 errors.append(f"contract_governance.py missing user-surface facade token: {token}")
@@ -105,6 +108,37 @@ def main() -> int:
         user_surface.sanitize_user_search_filters(data)
         if data.get("search", {}).get("filters") != [{"key": "status", "label": "状态"}]:
             errors.append("sanitize_user_search_filters must remove demo/noise filters")
+        policy_marks: list[str] = []
+        policy_data = {
+            "head": {"model": "project.project", "view_type": "tree"},
+            "model": "project.project",
+            "fields": {"name": {"type": "char"}, "active": {"type": "boolean"}},
+            "views": {"tree": {"model": "project.project"}},
+            "permissions": {"effective": {"rights": {"write": True, "unlink": True}}},
+            "delete_policy": {"allowed": True, "delete_mode": "unlink"},
+        }
+        user_surface.apply_user_surface_policies(
+            policy_data,
+            primary_model="project.project",
+            record_context_clear_models={"project.project"},
+            delete_only_models=set(),
+            mark_model_policy=lambda _data, key: policy_marks.append(key),
+            filter_max=10,
+            action_max=8,
+            primary_filter_max=6,
+            primary_action_max=5,
+        )
+        policies = policy_data.get("surface_policies") or {}
+        if policies.get("filters_primary_max") != 4 or policies.get("actions_primary_max") != 3:
+            errors.append("apply_user_surface_policies must cap primary model limits")
+        batch_policy = policies.get("batch_policy") or {}
+        if batch_policy.get("available_actions") != ["archive", "activate", "delete"]:
+            errors.append("apply_user_surface_policies must derive archive/activate/delete batch actions")
+        record_open = policies.get("record_open_policy") or {}
+        if record_open.get("carry_query_mode") != "clear_scene_context":
+            errors.append("apply_user_surface_policies must preserve legacy record-open context policy")
+        if policy_marks != ["project.project.record_open_context"]:
+            errors.append("apply_user_surface_policies must emit legacy model policy markers through callback")
 
     if errors:
         print("[contract_governance_user_surface_split_guard] FAIL")

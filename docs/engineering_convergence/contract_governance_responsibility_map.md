@@ -3,8 +3,8 @@
 Date: 2026-07-13
 Owner: Platform owner
 Target file: `addons/smart_core/utils/contract_governance.py`
-Current size: 4,820 lines
-Phase: read-only responsibility audit
+Current size: 1,370 lines
+Phase: staged responsibility split
 
 ## Purpose
 
@@ -32,12 +32,12 @@ and by a smaller public module layout.
 
 | Lines | Band | Current responsibility | Extraction candidate |
 | --- | --- | --- | --- |
-| 1-252 | Constants and registries | Source authority metadata, user-surface allowlists, project/enterprise field profiles, render profiles. | `contract_governance_constants.py` and typed registry definitions. |
-| 253-591 | Source authority and registry API | Source authority descriptors, legacy profile registration, profile matching. | `contract_governance_registry.py`. |
-| 615-1264 | User surface normalization | Capability normalization, scene sanitization, search/action noise reduction, user-surface policies. | `contract_governance_user_surface.py`. |
+| imported | Constants and registries | Source authority metadata, user-surface allowlists, project/enterprise field profiles, render profiles, form policy constants, and contract key canonical map. | `contract_governance_registry.py`. |
+| 1-446 | Source authority and registry API | Source authority descriptors, legacy profile registration, profile matching. | Keep facade wrappers until import-time compatibility is fully covered. |
+| imported + 595-670 | User surface normalization | Capability and scene normalization are delegated; scene sanitization, search/action noise reduction, and user-surface policies remain in facade/user-surface helpers. | `contract_governance_capabilities.py`, `contract_governance_scenes.py`, and `contract_governance_user_surface.py`. |
 | 1267-2178 | Project and enterprise governance | Scene list metadata, project form/list/kanban/task transforms, enterprise company/department/user forms. | `contract_governance_project_profiles.py` and `contract_governance_enterprise_profiles.py`. |
-| 2181-2596 | Standard list governance | Standard list profile application, toolbar labels, tier-review list shaping. | `contract_governance_list_surface.py`. |
-| 2599-3044 | Native surface and scene bridge | Visible-field access realignment, native surface normalization, scene contract v1 bridge, labels, relation semantics. | `contract_governance_native_bridge.py`. |
+| 1591-1965 + imported | Standard list governance | Standard list profile application, delegated toolbar labels, tier-review list shaping. | `contract_governance_list_surface.py` plus future standard-list policy module. |
+| imported | Native surface and scene bridge | Visible-field access realignment, native surface normalization, scene semantic surface normalization, scene contract v1 envelope, search/action bridge, business labels, native labels, and relation semantics are delegated. | `contract_governance_access_policy.py`, `contract_governance_native_bridge.py`, and `contract_governance_labels.py`. |
 | 3047-4499 | Form policy and render semantics | Render profile, view capabilities, field groups, layout backfill, action policies, validation rules, create-profile noise hiding, canonical key mapping. | `contract_governance_form_policy.py`. |
 | 4502-4742 | Domain override and diagnostics | Domain override registry/application, diagnostics, snapshots, surface mapping. | `contract_governance_diagnostics.py`. |
 | 4745-4820 | Main pipeline | Orchestrates all projection transforms and attaches metadata. | Keep as thin facade in `contract_governance.py`. |
@@ -57,6 +57,25 @@ and by a smaller public module layout.
 | `list_batch_action_closure_guard.py` | Batch action policy behavior through governed list contracts. |
 | `contract_governance_registry_split_guard.py` | Constants/registry extraction compatibility and line-budget lock. |
 | `contract_governance_user_surface_split_guard.py` | User-surface sanitizer/action grouping extraction compatibility and purity lock. |
+| `contract_governance_capabilities_split_guard.py` | Capability normalization extraction compatibility, shared registry behavior, and purity lock. |
+| `contract_governance_scenes_split_guard.py` | Scene normalization extraction compatibility, shared semantic-profile registry behavior, and purity lock. |
+| `contract_governance_list_surface_split_guard.py` | Standard list projection, toolbar labels, batch policy, semantic list surface, and tier-review list action filtering behavior lock. |
+| `contract_governance_native_bridge_split_guard.py` | Native/scene bridge extraction compatibility, envelope derivation, search surface, and action bridge behavior lock. |
+| `contract_governance_labels_split_guard.py` | Business label normalization, shared field presentation registry, native layout labels, and relation-entry semantics lock. |
+| `contract_governance_access_policy_split_guard.py` | Access policy visible-field realignment and warning marker behavior lock. |
+| `contract_governance_canonicalization_split_guard.py` | Contract key canonicalization extraction compatibility, alias conflict behavior, and purity lock. |
+| `contract_governance_surface_mapping_split_guard.py` | Surface snapshot collection and native-to-governed diff behavior lock. |
+| `contract_governance_create_profile_split_guard.py` | Create-profile button, technical field, and state-ribbon cleanup behavior lock. |
+| `contract_governance_field_semantics_split_guard.py` | Field technical classification, semantic annotation, and surface-role behavior lock. |
+| `contract_governance_form_layout_split_guard.py` | Form layout field collection, sheet lookup, field-node creation, and visible-field backfill behavior lock. |
+| `contract_governance_form_actions_split_guard.py` | Form action semantic inference, visible-profile derivation, and action-policy constraint behavior lock. |
+| `contract_governance_form_render_split_guard.py` | Form render profile resolution, boolean coercion, and form capability permission projection lock. |
+| `contract_governance_form_validation_split_guard.py` | Form validation rule assembly, profile normalization, and business form policy merge behavior lock. |
+| `contract_governance_form_fields_split_guard.py` | Form field ordering, core/advanced group derivation, required-field resolution, and field policy behavior lock. |
+| `contract_governance_project_form_split_guard.py` | Project form/profile/task/kanban projection, project form orchestration, field selection, layout filtering, search/action helpers, lifecycle summary, and workflow surface projection lock. |
+| `contract_governance_enterprise_forms_split_guard.py` | Enterprise company, department, and user form projection, action cleanup, governance next-action, and user field-policy behavior lock. |
+| `contract_governance_contract_detection_split_guard.py` | Contract surface detection boundary lock for project/enterprise form, project kanban, tree/list, and generic form predicates. |
+| `contract_governance_domain_overrides_split_guard.py` | Domain override registry, priority ordering, failure capture, and HUD diagnostic append behavior lock. |
 
 ## Extraction Order
 
@@ -130,3 +149,435 @@ Stage 2 is complete when:
   remain in the facade until their registry and model-policy dependencies are
   isolated separately;
 - `contract_governance.py` is locked at `<=4535` lines for this stage.
+
+## Stage 3 Target
+
+Stage 3 is complete when:
+
+- `contract_governance_registry.py` also owns form policy constants, primary and
+  readonly action keyword sets, disabled-reason copy, form scene profile names,
+  capability group defaults, and the contract key canonical map;
+- `contract_governance.py` continues to export those names via `_REGISTRY_EXPORTS`
+  for direct import compatibility;
+- the registry module remains static data plus mutable legacy registries: no ORM
+  calls, HTTP calls, routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=4490` lines for this stage.
+
+## Stage 4 Target
+
+Stage 4 is complete when:
+
+- `contract_governance_capabilities.py` owns capability normalization, capability
+  state derivation, default payload derivation, delivery-level derivation, and
+  demo/internal capability filtering helpers;
+- `contract_governance.py` keeps `normalize_capabilities`,
+  `is_internal_or_smoke`, and `_has_demo_semantics` available through loaded
+  module aliases for existing callers and the main pipeline;
+- direct `spec_from_file_location` loading shares the capability group registry
+  object with `contract_governance.py`, so `register_capability_group_profile`
+  affects later normalization;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=4272` lines for this stage.
+
+## Stage 5 Target
+
+Stage 5 is complete when:
+
+- `contract_governance_scenes.py` owns scene normalization, scene list-profile
+  normalization, scene meta derivation, role relevance scoring, and normalized
+  scene tags;
+- `contract_governance.py` keeps `normalize_scenes`,
+  `_normalize_scene_list_profile`, and `_derive_scene_meta` available through
+  loaded module aliases for existing callers and the main pipeline;
+- direct `spec_from_file_location` loading shares the scene semantic profile
+  registry object with `contract_governance.py`, so
+  `register_scene_semantic_profile` affects later normalization;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=4213` lines for this stage.
+
+## Stage 6 Target
+
+Stage 6 is complete when:
+
+- `contract_governance_list_surface.py` owns standard list toolbar labels,
+  search labels, and row-open action normalization;
+- `_govern_standard_list_for_user` keeps field selection, schema enrichment,
+  permissions, batch policy, list profile, and semantic-page assembly in the
+  facade until standard-list behavior has narrower fixture coverage;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=4121` lines for this stage.
+
+## Stage 7 Target
+
+Stage 7 is complete when:
+
+- `contract_governance_native_bridge.py` owns native and scene bridge normalization,
+  native-view contract surface normalization, scene semantic surface
+  normalization, search-surface derivation, scene action derivation, and scene
+  contract v1 envelope construction;
+- `contract_governance.py` keeps the previous private helper names as wrappers
+  so the main pipeline order and direct helper references remain stable;
+- visible-field access realignment, business labels, and relation-entry
+  semantics remain in the facade until their behavior has narrower fixture
+  coverage;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=3932` lines for this stage.
+
+## Stage 8 Target
+
+Stage 8 is complete when:
+
+- `contract_governance_labels.py` owns business labels and relation semantics,
+  including legacy field presentation labels, business label overrides, native
+  page label preservation, and relation-entry semantic export;
+- `contract_governance.py` keeps the previous private helper names as wrappers
+  so the main pipeline order and direct helper references remain stable;
+- direct `spec_from_file_location` loading shares the legacy field presentation
+  registry object with `contract_governance.py`, so
+  `register_legacy_field_presentation` affects later label normalization;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=3830` lines for this stage.
+
+## Stage 9 Target
+
+Stage 9 is complete when:
+
+- `contract_governance_access_policy.py` owns access policy realignment against
+  visible fields, blocked/degraded field filtering, mode/reason/message
+  derivation, and warning marker refresh;
+- `contract_governance.py` keeps `_realign_access_policy_with_visible_fields`
+  as a wrapper so the main pipeline order remains stable;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=3780` lines for this stage.
+
+## Stage 10 Target
+
+Stage 10 is complete when:
+
+- `contract_governance_canonicalization.py` owns recursive contract key
+  canonicalization, alias replacement precedence, and conflict recording;
+- `contract_governance.py` keeps `_canonicalize_contract_keys` as a wrapper so
+  the main pipeline order and direct helper references remain stable;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=3769` lines for this stage.
+
+## Stage 11 Target
+
+Stage 11 is complete when:
+
+- `contract_governance_surface_mapping.py` owns surface snapshot collection,
+  layout/action signature extraction, and native-to-governed diff mapping;
+- `contract_governance.py` keeps the previous private helper names as wrappers
+  so the main pipeline order and direct helper references remain stable;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=3690` lines for this stage.
+
+## Stage 12 Target
+
+Stage 12 is complete when:
+
+- `contract_governance_create_profile.py` owns create-profile projection cleanup:
+  record-dependent native button hiding, technical/noise field hiding, state
+  ribbon hiding, and create-profile detection;
+- `contract_governance.py` keeps the previous private helper names as wrappers
+  so the main pipeline order and direct helper references remain stable;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=3528` lines for this stage.
+
+## Stage 13 Target
+
+Stage 13 is complete when:
+
+- `contract_governance_field_semantics.py` owns field technical classification,
+  semantic type derivation, layout relation handling, and field surface-role
+  annotation;
+- `contract_governance.py` keeps the previous private helper names as wrappers
+  so project/form policy callers keep their current call shape;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=3453` lines for this stage.
+
+## Stage 14 Target
+
+Stage 14 is complete when:
+
+- `contract_governance_form_layout.py` owns form layout structural helpers:
+  nested field-name collection, sheet lookup, labeled field-node construction,
+  and visible-field layout backfill;
+- `contract_governance.py` keeps the previous private helper names as wrappers
+  so project, enterprise, and form policy callers keep their current call shape;
+- the extracted module receives form/technical-field predicates from the facade
+  instead of acquiring business model authority itself;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=3361` lines for this stage.
+
+## Stage 15 Target
+
+Stage 15 is complete when:
+
+- `contract_governance_form_actions.py` owns form action semantic inference,
+  visible-profile derivation, action policy defaults, policy template
+  resolution, enabled_when constraints, and primary action condition assembly;
+- `contract_governance.py` keeps the previous private helper names as wrappers
+  so form policy callers keep their current call shape;
+- project scene selection and required-field derivation remain in the facade and
+  are passed into the extracted module instead of being recomputed there;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=3212` lines for this stage.
+
+## Stage 16 Target
+
+Stage 16 is complete when:
+
+- `contract_governance_form_render.py` owns boolean coercion, render profile
+  resolution, and form-view capability projection into effective/head
+  permissions;
+- `contract_governance.py` keeps the previous private helper names as wrappers
+  so form policy callers keep their current call shape;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=3169` lines for this stage.
+
+## Stage 17 Target
+
+Stage 17 is complete when:
+
+- `contract_governance_form_validation.py` owns validation rule assembly,
+  render-profile list normalization, and business form policy projection into
+  field policies and validation rules;
+- `contract_governance.py` keeps required-field resolution in the facade and
+  passes the resulting field list into the extracted module;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=3073` lines for this stage.
+
+## Stage 18 Target
+
+Stage 18 is complete when:
+
+- `contract_governance_form_fields.py` owns form field ordering, core field
+  derivation, default field group generation, required-field resolution, and
+  field policy assembly;
+- `contract_governance.py` keeps project/enterprise model detection and legacy
+  profile lookup in the facade and passes those inputs into the extracted
+  module;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=2930` lines for this stage.
+
+## Stage 19 Target
+
+Stage 19 is complete when:
+
+- `contract_governance_list_surface.py` also owns tier-review list navigation
+  action filtering for buttons, toolbar slots, and action groups;
+- `contract_governance.py` keeps `_govern_tier_review_list_for_user` as a
+  wrapper that injects model matching, legacy profile marking, and navigation
+  action prefixes from the facade;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=2898` lines for this stage.
+
+## Stage 20 Target
+
+Stage 20 is complete when:
+
+- `contract_governance_project_form.py` owns project lifecycle summary and
+  workflow surface projection from parser workflow facts;
+- `contract_governance.py` keeps `_build_project_lifecycle_summary` as a
+  wrapper so project form orchestration order remains stable;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=2872` lines for this stage.
+
+## Stage 21 Target
+
+Stage 21 is complete when:
+
+- `contract_governance_project_form.py` also owns legacy project form profile
+  normalization and project form field selection from parser form facts;
+- `contract_governance.py` keeps registry lookup, technical-field predicate,
+  and field-order callbacks in the facade and passes them into the extracted
+  module;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=2781` lines for this stage.
+
+## Stage 22 Target
+
+Stage 22 is complete when:
+
+- `contract_governance_project_form.py` also owns project form layout filtering,
+  container pruning, primary-field fallback, and selected-field backfill;
+- `contract_governance.py` keeps `_filter_project_form_layout` as a wrapper and
+  passes the normalized legacy project form profile into the extracted module;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=2708` lines for this stage.
+
+## Stage 23 Target
+
+Stage 23 is complete when:
+
+- `contract_governance_project_form.py` also owns project field-map trimming,
+  search filter cleanup, action priority/noise classification, action grouping,
+  and scene action semantic emission;
+- `contract_governance.py` keeps `_govern_project_form_actions` as the action
+  orchestration wrapper and passes legacy project form profile data into the
+  extracted helper functions;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=2616` lines for this stage.
+
+## Stage 24 Target
+
+Stage 24 is complete when:
+
+- `contract_governance_project_form.py` also owns project task form projection:
+  configured field selection, core/description grouping, and generated form
+  sheet layout;
+- `contract_governance.py` keeps task-form model detection and task profile
+  registry lookup in the facade, and passes the labeled-field-node callback into
+  the extracted module;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=2559` lines for this stage.
+
+## Stage 25 Target
+
+Stage 25 is complete when:
+
+- `contract_governance_project_form.py` also owns project kanban projection:
+  visible-field/profile derivation, orchestrated slot overrides, kanban field
+  merging, and registered row-action injection;
+- `contract_governance.py` keeps project kanban model detection, profile/row
+  action registry lookup, technical-field predicate, and JSON cloning callback
+  in the facade;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=2424` lines for this stage.
+
+## Stage 26 Target
+
+Stage 26 is complete when:
+
+- `contract_governance_enterprise_forms.py` owns enterprise company,
+  department, and user form projection: visible fields, field groups, generated
+  layouts, native action cleanup, form governance next actions, and user field
+  policy projection;
+- `contract_governance.py` keeps model detection, render-profile resolution,
+  required-field resolution, boolean coercion, and enterprise governance
+  injection callbacks in the facade;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=2245` lines for this stage.
+
+## Stage 27 Target
+
+Stage 27 is complete when:
+
+- `contract_governance_project_form.py` also owns project form action
+  orchestration and project form contract orchestration using callbacks for
+  layout collection, layout backfill, lifecycle summary, search cleanup, and
+  access-policy realignment;
+- `contract_governance.py` keeps project form model detection, profile lookup,
+  selected-field derivation, and callback wiring in the facade;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=2207` lines for this stage.
+
+## Stage 28 Target
+
+Stage 28 is complete when:
+
+- `contract_governance_list_surface.py` owns standard list projection:
+  selected/native column merging, schema enrichment, batch policy derivation,
+  list profile projection, semantic list surface projection, and toolbar/search
+  label normalization;
+- `contract_governance.py` keeps tree-contract model detection, legacy field
+  presentation lookup, and JSON cloning callbacks in the facade;
+- the extracted module remains projection-only: no ORM calls, HTTP calls,
+  routing, file IO, or environment access;
+- `contract_governance.py` is locked at `<=1973` lines for this stage.
+
+## Stage 29 Target
+
+Stage 29 is complete when:
+
+- `contract_governance_contract_detection.py` owns pure contract surface
+  detection for project form, enterprise company/user form, project kanban,
+  project task form, model tree/list, and generic form surfaces;
+- `contract_governance.py` keeps registry lookup, primary-model derivation, and
+  render-profile constants in the facade and passes them into the extracted
+  predicates;
+- the extracted module remains read-only: no ORM calls, HTTP calls, routing,
+  file IO, environment access, or registry mutation;
+- `contract_governance.py` is locked at `<=1899` lines for this stage.
+
+## Stage 30 Target
+
+Stage 30 is complete when:
+
+- `contract_governance_user_surface.py` also owns user-surface policy
+  projection: primary filter/action limits, list batch action derivation,
+  delete-only policy, and record-open context behavior;
+- `contract_governance.py` keeps primary-model derivation, legacy model policy
+  registries, and the policy marker callback in the facade and passes them into
+  the extracted function;
+- the extracted module remains pure projection-only: no ORM calls, HTTP calls,
+  routing, file IO, environment access, or direct registry mutation;
+- `contract_governance.py` is locked at `<=1812` lines for this stage.
+
+## Stage 31 Target
+
+Stage 31 is complete when:
+
+- `contract_governance_surface_mapping.py` also owns JSON-like deep cloning used
+  for native/governed surface snapshots and projection callback injection;
+- `contract_governance_domain_overrides.py` owns domain override registration,
+  priority ordering, guarded execution, failure capture, and diagnostic append;
+- `contract_governance.py` keeps `apply_project_form_domain_override` as the
+  business orchestration entry point and public facade wrappers for override
+  registration and diagnostics;
+- the extracted modules remain projection-only: no ORM calls, HTTP calls,
+  routing, file IO, environment access, or backend permission inference;
+- `contract_governance.py` is locked at `<=1792` lines for this stage.
+
+## Stage 32 Target
+
+Stage 32 is complete when:
+
+- `contract_governance.py` uses one shared sibling-module loader for all
+  extracted governance modules, while preserving every `_load_*_module()` facade
+  and direct-file fallback for standalone guard execution;
+- extracted module filename tokens remain visible in the facade so existing
+  split guards continue to lock module boundaries;
+- this stage changes import/loading mechanics only and does not move projection
+  behavior, domain override ordering, or `apply_contract_governance` pipeline
+  order;
+- `contract_governance.py` is locked at `<=1537` lines for this stage.
+
+## Stage 33 Target
+
+Stage 33 is complete when:
+
+- `contract_governance_registry.py` owns legacy registration normalization for
+  standard list profiles, record context/delete-only models, project
+  form/task/kanban profiles, kanban row actions, field presentation, capability
+  group profiles, and scene semantic profiles;
+- `contract_governance.py` keeps the public registration entry points as facade
+  wrappers so external imports and construction override modules remain stable;
+- registry mutation still happens on the same loaded registry object shared
+  through `globals().update(...)`;
+- `contract_governance.py` is locked at `<=1370` lines for this stage.

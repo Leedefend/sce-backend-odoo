@@ -690,6 +690,37 @@ ci.local.quick: guard.prod.forbid architecture.complexity_baseline_lock verify.u
 	@python3 scripts/verify/contract_governance_responsibility_map_guard.py
 	@python3 scripts/verify/contract_governance_registry_split_guard.py
 	@python3 scripts/verify/contract_governance_user_surface_split_guard.py
+	@python3 scripts/verify/contract_governance_capabilities_split_guard.py
+	@python3 scripts/verify/contract_governance_scenes_split_guard.py
+	@python3 scripts/verify/contract_governance_list_surface_split_guard.py
+	@python3 scripts/verify/contract_governance_native_bridge_split_guard.py
+	@python3 scripts/verify/contract_governance_labels_split_guard.py
+	@python3 scripts/verify/contract_governance_access_policy_split_guard.py
+	@python3 scripts/verify/contract_governance_canonicalization_split_guard.py
+	@python3 scripts/verify/contract_governance_surface_mapping_split_guard.py
+	@python3 scripts/verify/contract_governance_create_profile_split_guard.py
+	@python3 scripts/verify/contract_governance_field_semantics_split_guard.py
+	@python3 scripts/verify/contract_governance_form_layout_split_guard.py
+	@python3 scripts/verify/contract_governance_form_actions_split_guard.py
+	@python3 scripts/verify/contract_governance_form_render_split_guard.py
+	@python3 scripts/verify/contract_governance_form_validation_split_guard.py
+	@python3 scripts/verify/contract_governance_form_fields_split_guard.py
+	@python3 scripts/verify/contract_governance_project_form_split_guard.py
+	@python3 scripts/verify/contract_governance_enterprise_forms_split_guard.py
+	@python3 scripts/verify/contract_governance_contract_detection_split_guard.py
+	@python3 scripts/verify/contract_governance_domain_overrides_split_guard.py
+	@python3 scripts/verify/construction_core_extension_project_layout_split_guard.py
+	@python3 scripts/verify/construction_core_extension_contract_helpers_split_guard.py
+	@python3 scripts/verify/construction_core_extension_policy_maps_split_guard.py
+	@python3 scripts/verify/construction_core_extension_system_init_rows_split_guard.py
+	@python3 scripts/verify/construction_core_extension_capability_rows_split_guard.py
+	@python3 scripts/verify/construction_core_extension_hook_facts_split_guard.py
+	@python3 scripts/verify/construction_core_extension_policy_accessors_split_guard.py
+	@python3 scripts/verify/construction_core_extension_contract_normalizers_split_guard.py
+	@python3 scripts/verify/construction_core_extension_intent_handlers_split_guard.py
+	@python3 scripts/verify/construction_core_extension_service_builders_split_guard.py
+	@python3 scripts/verify/construction_core_extension_actor_roles_split_guard.py
+	@python3 scripts/verify/construction_core_extension_responsibility_map_guard.py
 	@python3 scripts/verify/frontend_page_contract_boundary_guard.py
 	@python3 scripts/verify/frontend_page_contract_orchestration_consumption_guard.py
 	@python3 scripts/verify/frontend_contract_consumer_intrusion_guard.py
