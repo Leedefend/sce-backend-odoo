@@ -2,10 +2,6 @@
 <template>
   <section
     class="page sc-page sc-product-workspace-stack"
-    :class="{
-      'sc-project-list-page': model === 'project.project',
-      'sc-contract-list-page': model === 'construction.contract',
-    }"
     data-product-page-mode="list"
   >
     <PageHeader

@@ -55,6 +55,14 @@
       <template #actions>
         <span class="contract-header-action-label">办理操作</span>
         <button
+          v-if="!isProjectIntakeCreateMode"
+          class="sc-btn sc-btn-ghost sc-btn-sm"
+          :disabled="busy"
+          type="button" @click="router.back()"
+        >
+          返回列表
+        </button>
+        <button
           v-if="showReturnToBusinessConfigAction"
           class="sc-btn sc-btn-ghost sc-btn-sm"
           :disabled="busy"
