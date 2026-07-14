@@ -20,7 +20,7 @@ Generated from repository source files. This report is informational during the 
 | 3518 | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 3323 | Python source | `addons/smart_construction_core/tests/test_p0_state_closure.py` |
 | 3202 | Python source | `addons/smart_core/tests/test_form_field_configuration_params.py` |
-| 3187 | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
+| 3191 | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
 | 3092 | Python source | `addons/smart_construction_core/models/support/p1_daily_business_visible_alias_fields.py` |
 | 3041 | Python source | `addons/smart_core/core/workspace_home_contract_builder.py` |
 | 3013 | Python source | `addons/smart_core/app_config_engine/services/assemblers/page_assembler.py` |
@@ -136,7 +136,7 @@ Generated from repository source files. This report is informational during the 
 | 3518 | split_plan_required | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 3323 | split_plan_required | Python source | `addons/smart_construction_core/tests/test_p0_state_closure.py` |
 | 3202 | split_plan_required | Python source | `addons/smart_core/tests/test_form_field_configuration_params.py` |
-| 3187 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
+| 3191 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
 | 3092 | split_plan_required | Python source | `addons/smart_construction_core/models/support/p1_daily_business_visible_alias_fields.py` |
 | 3041 | split_plan_required | Python source | `addons/smart_core/core/workspace_home_contract_builder.py` |
 | 3013 | split_plan_required | Python source | `addons/smart_core/app_config_engine/services/assemblers/page_assembler.py` |

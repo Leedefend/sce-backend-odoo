@@ -365,6 +365,25 @@
   justify-content: flex-end;
 }
 
+/* FE-P02: stable visual identity for the contract-driven project list. */
+.sc-project-list-page .list-toolbar {
+  border-bottom: 1px solid var(--sc-app-border-strong);
+}
+
+.sc-project-list-page .list-title h2 {
+  letter-spacing: -0.01em;
+}
+
+.sc-project-list-page .table {
+  border-color: var(--sc-app-border);
+}
+
+@media (max-width: 900px) {
+  .sc-project-list-page .list-header-toolbar {
+    width: 100%;
+  }
+}
+
 .sc-product-panel-gap {
   gap: var(--sc-product-panel-gap);
 }
