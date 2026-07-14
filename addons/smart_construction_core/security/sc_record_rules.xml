@@ -30,7 +30,7 @@
         <!-- =========================================================
              项目中心：项目 record rules
              - read/user: 仅限负责或关注的项目
-             - manager: 放行全部
+             - manager: 仅限允许公司
         ========================================================== -->
         <record id="rule_sc_project_read_project_project" model="ir.rule">
             <field name="name">SC Project Read - project.project member only</field>
@@ -460,9 +460,9 @@
              - manager: 放行全部
         ========================================================== -->
         <record id="rule_sc_business_initiator_payment_request" model="ir.rule">
-            <field name="name">SC Business Initiator - payment.request own or project member</field>
+            <field name="name">SC Business Initiator - payment.request by project member</field>
             <field name="model_id" ref="model_payment_request"/>
-            <field name="domain_force">['|','|', ('create_uid', '=', user.id), ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="domain_force">['&amp;', ('company_id', 'in', company_ids), '|', ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="True"/>
@@ -473,7 +473,7 @@
         <record id="rule_sc_finance_read_payment_request" model="ir.rule">
             <field name="name">SC Finance Read - payment.request by project member</field>
             <field name="model_id" ref="model_payment_request"/>
-            <field name="domain_force">['|', ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="domain_force">['&amp;', ('company_id', 'in', company_ids), '|', ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="False"/>
@@ -484,7 +484,7 @@
         <record id="rule_sc_finance_user_payment_request" model="ir.rule">
             <field name="name">SC Finance User - payment.request by project member</field>
             <field name="model_id" ref="model_payment_request"/>
-            <field name="domain_force">['|', ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="domain_force">['&amp;', ('company_id', 'in', company_ids), '|', ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="True"/>
@@ -493,9 +493,9 @@
         </record>
 
         <record id="rule_sc_finance_manager_payment_request" model="ir.rule">
-            <field name="name">SC Finance Manager - payment.request ALL</field>
+            <field name="name">SC Finance Manager - payment.request by allowed company</field>
             <field name="model_id" ref="model_payment_request"/>
-            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="True"/>
@@ -512,6 +512,50 @@
             <field name="perm_create" eval="True"/>
             <field name="perm_unlink" eval="True"/>
             <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_business_config_admin'))]"/>
+        </record>
+
+        <record id="rule_sc_business_initiator_payment_execution" model="ir.rule">
+            <field name="name">SC Business Initiator - sc.payment.execution by project member</field>
+            <field name="model_id" ref="model_sc_payment_execution"/>
+            <field name="domain_force">['&amp;', ('company_id', 'in', company_ids), '|', ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_business_initiator'))]"/>
+        </record>
+
+        <record id="rule_sc_finance_read_payment_execution" model="ir.rule">
+            <field name="name">SC Finance Read - sc.payment.execution by project member</field>
+            <field name="model_id" ref="model_sc_payment_execution"/>
+            <field name="domain_force">['&amp;', ('company_id', 'in', company_ids), '|', ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="False"/>
+            <field name="perm_create" eval="False"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_read'))]"/>
+        </record>
+
+        <record id="rule_sc_finance_user_payment_execution" model="ir.rule">
+            <field name="name">SC Finance User - sc.payment.execution by project member</field>
+            <field name="model_id" ref="model_sc_payment_execution"/>
+            <field name="domain_force">['&amp;', ('company_id', 'in', company_ids), '|', ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="False"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_user'))]"/>
+        </record>
+
+        <record id="rule_sc_finance_manager_payment_execution" model="ir.rule">
+            <field name="name">SC Finance Manager - sc.payment.execution by allowed company</field>
+            <field name="model_id" ref="model_sc_payment_execution"/>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
+            <field name="perm_read" eval="True"/>
+            <field name="perm_write" eval="True"/>
+            <field name="perm_create" eval="True"/>
+            <field name="perm_unlink" eval="True"/>
+            <field name="groups" eval="[(4, ref('smart_construction_core.group_sc_cap_finance_manager'))]"/>
         </record>
 
         <record id="rule_sc_business_initiator_payment_request_line" model="ir.rule">
@@ -550,7 +594,7 @@
         <!-- =========================================================
              财务中心：付款台账 record rules
              - read/user: 仅限负责或关注的项目
-             - manager: 放行全部
+             - manager: 仅限允许公司
         ========================================================== -->
         <record id="rule_sc_finance_read_payment_ledger" model="ir.rule">
             <field name="name">SC Finance Read - payment.ledger by project member</field>
@@ -1736,7 +1780,7 @@
         <record id="rule_sc_settlement_read_order" model="ir.rule">
             <field name="name">SC Settlement Read - sc.settlement.order by project member</field>
             <field name="model_id" ref="model_sc_settlement_order"/>
-            <field name="domain_force">['|', ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="domain_force">['&amp;', ('company_id', 'in', company_ids), '|', ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="False"/>
@@ -1750,7 +1794,7 @@
         <record id="rule_sc_settlement_user_order" model="ir.rule">
             <field name="name">SC Settlement User - sc.settlement.order by project member</field>
             <field name="model_id" ref="model_sc_settlement_order"/>
-            <field name="domain_force">['|', ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
+            <field name="domain_force">['&amp;', ('company_id', 'in', company_ids), '|', ('project_id.user_id', '=', user.id), ('project_id.message_is_follower', '=', True)]</field>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="True"/>
@@ -1759,9 +1803,9 @@
         </record>
 
         <record id="rule_sc_settlement_manager_order" model="ir.rule">
-            <field name="name">SC Settlement Manager - sc.settlement.order ALL</field>
+            <field name="name">SC Settlement Manager - sc.settlement.order by allowed company</field>
             <field name="model_id" ref="model_sc_settlement_order"/>
-            <field name="domain_force">[(1,'=',1)]</field>
+            <field name="domain_force">[('company_id', 'in', company_ids)]</field>
             <field name="perm_read" eval="True"/>
             <field name="perm_write" eval="True"/>
             <field name="perm_create" eval="True"/>

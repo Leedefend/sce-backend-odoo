@@ -635,6 +635,11 @@ class ScPaymentExecution(models.Model):
             if rec.contract_id and request.contract_id and rec.contract_id != request.contract_id:
                 raise UserError(_("付款登记合同必须与付款申请合同一致。"))
 
+    @api.constrains("payment_request_id", "project_id", "partner_id", "contract_id")
+    def _check_payment_request_scope_consistency(self):
+        """Reject forged execution anchors at ORM create/write, not only at actions."""
+        self._check_payment_request_scope_or_raise()
+
     def _company_contractor_payment_responsibility_failures(self, summary, paid_amount):
         return self._company_contractor_responsibility_balance_failures(summary, paid_amount, _("本次实付金额"))
 
