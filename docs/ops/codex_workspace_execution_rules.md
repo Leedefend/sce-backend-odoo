@@ -19,7 +19,7 @@
 
 2. **分支校验**
    - 必须执行：`git branch --show-current`
-   - 分支必须匹配 allowlist：`feat/*`、`feature/*`、`codex/*`、`experiment/*`。
+   - 分支必须匹配 allowlist：`feat/*`、`feature/*`、`fix/*`、`codex/*`、`experiment/*`。
    - 若不匹配，立即停止执行。
    - 例外：人工监督的生产部署协助允许 `main`、tag 或冻结 commit，但仅限只读检查和
      生产策略允许的 Makefile target，禁止任何写文件或 Git 写操作。
