@@ -3,7 +3,7 @@
 Date: 2026-07-14
 Owner: Construction backend owner
 Target file: `addons/smart_construction_core/core_extension.py`
-Current size: 2,243 lines
+Current size: 2,120 lines
 Phase: staged responsibility split
 
 ## Purpose
@@ -44,7 +44,7 @@ construction-owned policy.
 | `construction_core_extension_policy_maps_split_guard.py` | Static policy/map extraction, role/nav/file/API/unlink maps, line lock, no import-time registration side effects, and pure-constant boundary. |
 | `construction_core_extension_system_init_rows_split_guard.py` | System-init row builder extraction, read-side search helpers, workspace action rows, enterprise enablement facts, role/home dictionary rows, line lock, and no write/registration side effects. |
 | `construction_core_extension_capability_rows_split_guard.py` | Capability row normalization extraction, identity/ownership/UI/binding/permission/runtime envelope preservation, line lock, and pure-normalization boundary. |
-| `construction_core_extension_hook_facts_split_guard.py` | Static hook fact extraction, business config refs, low-code menu refs, product/app shell/scene facts, acceptance nav contract, line lock, and static-facts boundary. |
+| `construction_core_extension_hook_facts_split_guard.py` | Static hook fact extraction, business config refs, low-code/menu delivery refs, product/app shell/scene facts, acceptance nav contract, line lock, and static-facts boundary. |
 | `construction_core_extension_policy_accessors_split_guard.py` | Policy accessor extraction, file model contribution scan, API mutation/create/unlink policies, contract tax quick-create detection, line lock, and read-side policy boundary. |
 | `construction_core_extension_contract_normalizers_split_guard.py` | Contract normalizer extraction, construction diary/general contract tax/company form projection, helper delegation, workflow-injection boundary, line lock, and projection-only boundary. |
 | `construction_core_extension_intent_handlers_split_guard.py` | Intent handler contribution extraction, lazy handler import mapping, approval-policy intent preservation, facade registry boundary, line lock, and no env/registry side effects. |
@@ -180,6 +180,19 @@ Stage 9 is complete when:
   calls, registry mutation, HTTP calls, file IO, or import-time registration
   side effects;
 - `core_extension.py` is locked at `<=2243` lines for this stage.
+
+## Stage 10 Target
+
+Stage 10 is complete when:
+
+- `core_extension_hook_facts.py` also owns static menu delivery token policy:
+  business config tokens, user/admin path tokens, hidden technical labels, and
+  label rename facts;
+- `core_extension.py` keeps the public `smart_core_menu_delivery_token_policy`
+  facade and delegates to hook facts;
+- the extracted policy remains static facts only: no `env` access, ORM calls,
+  HTTP calls, routing, file IO, or registration side effects;
+- `core_extension.py` is locked at `<=2120` lines for this stage.
 
 ## Next Candidate
 

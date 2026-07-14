@@ -9,7 +9,7 @@ CORE_EXTENSION = ROOT / "addons/smart_construction_core/core_extension.py"
 FACTS = ROOT / "addons/smart_construction_core/core_extension_hook_facts.py"
 CI = ROOT / "make/ci.mk"
 
-MAX_CORE_EXTENSION_LINES = 2884
+MAX_CORE_EXTENSION_LINES = 2120
 
 
 def _read(path: Path) -> str:
@@ -45,6 +45,7 @@ def main() -> int:
             "return _hook_facts.business_config_admin_group_xmlids()",
             "return _hook_facts.lowcode_system_config_menu_xmlids()",
             "return _hook_facts.product_policy_catalog_source(source_env=source_env)",
+            "return _hook_facts.menu_delivery_token_policy()",
             "return _hook_facts.app_shell_contract()",
             "return _hook_facts.scene_entry_orchestrator_specs()",
             "return _hook_facts.user_data_acceptance_nav_contract()",
@@ -57,12 +58,15 @@ def main() -> int:
             "def business_config_admin_group_xmlids(",
             "def lowcode_system_config_menu_xmlids(",
             "def business_nav_group_display_order(",
+            "def menu_delivery_token_policy(",
             "def product_policy_catalog_source(",
             "def product_policy_catalog_label(",
             "def app_shell_contract(",
             "def scene_entry_orchestrator_specs(",
             "def user_data_acceptance_nav_contract(",
             '"smart_construction_core.menu_sc_business_config_center"',
+            '"项目管理（后台）"',
+            '"直营项目系统菜单"',
             '"ProjectDashboardSceneOrchestrator"',
         ]:
             if token not in facts_text:
@@ -82,6 +86,13 @@ def main() -> int:
             errors.append("hook facts must preserve native config root menu")
         if facts.product_policy_catalog_label({"edition_key": "preview"}) != "施工管理预览版":
             errors.append("hook facts must preserve preview product label")
+        menu_policy = facts.menu_delivery_token_policy()
+        if "项目管理（后台）" not in menu_policy.get("always_hidden_technical_tokens", []):
+            errors.append("hook facts must preserve hidden technical menu token")
+        if "直营项目系统菜单" not in menu_policy.get("user_allowed_path_tokens", []):
+            errors.append("hook facts must preserve user menu delivery tokens")
+        if menu_policy.get("rename_labels", {}).get("开票申请") != "销项开票申请":
+            errors.append("hook facts must preserve menu delivery label rename")
         if facts.app_shell_contract().get("taxonomy", {}).get("projects", {}).get("primary_scene") != "projects.list":
             errors.append("hook facts must preserve app shell project scene")
         if "ProjectDashboardSceneOrchestrator" not in facts.scene_entry_orchestrator_specs():
