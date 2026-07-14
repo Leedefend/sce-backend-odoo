@@ -119,6 +119,16 @@ async function main() {
     const finance = await browser.newPage({ viewport: { width: 1440, height: 900 }, locale: 'zh-CN' });
     stage('S07 finance page created');
     const financeErrors = [];
+    finance.on('response', async (response) => {
+      if (!response.url().includes('/api/v1/intent')) return;
+      try {
+        const body = await response.json();
+        const data = body?.result || body?.data || body;
+        const d = data?.delivery_engine_v1?.nav;
+        const r = data?.release_navigation_v1?.nav;
+        process.stderr.write(`[system-init-wire] status=${response.status()} delivery=${Array.isArray(d) ? d.length : 'missing'} release=${Array.isArray(r) ? r.length : 'missing'} result=${Array.isArray(data?.nav) ? data.nav.length : 'missing'}\n`);
+      } catch {}
+    });
     finance.on('console', (msg) => { if (msg.type() === 'error') financeErrors.push(msg.text()); });
     finance.on('pageerror', (error) => financeErrors.push(error.message));
     await login(finance, 'demo_role_finance');
