@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any */
 <template>
-  <StatusPanel v-if="directRouteDenied" title="无权访问" message="当前角色无权访问此业务入口。请返回已授权的工作区。" variant="error" :on-retry="goBackFromDeniedRoute" />
-  <section v-else class="page sc-page sc-product-workspace-stack" data-product-page-mode="list">
+  <section class="page sc-page sc-product-workspace-stack" data-product-page-mode="list">
     <!-- Page intent: 在列表场景中先判断状态，再给出下一步可执行动作。 -->
     <StatusPanel
       v-if="renderErrorMessage"
@@ -1102,7 +1101,7 @@ const actionId = computed(() => {
   if (Number.isFinite(fromParam) && fromParam > 0) return fromParam;
   const fromQuery = Number(route.query.action_id || 0);
   return Number.isFinite(fromQuery) && fromQuery > 0 ? fromQuery : 0;
-}); const directRouteDenied = computed(() => session.isReady && session.roleSurface?.role_code === 'project_member' && actionId.value > 0 && !findActionMeta(session.menuTree, actionId.value)); function goBackFromDeniedRoute(): void { if (window.history.length > 1) router.back(); else void router.push('/'); }
+});
 const actionMeta = computed(() => session.currentAction);
 function resolveActionProjectScopeContext(): Record<string, unknown> {
   const policy = String(

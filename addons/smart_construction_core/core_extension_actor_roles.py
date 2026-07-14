@@ -21,8 +21,10 @@ def resolve_release_actor_role_codes(user) -> list[str]:
         if text.startswith(role_prefix):
             roles.add(text[len(role_prefix):])
     try:
-        if user.has_group("smart_construction_core.group_sc_cap_project_manager") or user.has_group("smart_construction_core.group_sc_cap_project_read"):
+        if user.has_group("smart_construction_core.group_sc_cap_project_manager"):
             roles.add("pm")
+        elif user.has_group("smart_construction_core.group_sc_cap_project_read"):
+            roles.add("project_member")
         if user.has_group("smart_construction_core.group_sc_super_admin") or user.has_group("smart_construction_core.group_sc_business_full"):
             roles.add("executive")
     except Exception:

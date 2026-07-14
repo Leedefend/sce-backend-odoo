@@ -32,24 +32,39 @@ def register_customer_acceptance_group_label(label: str) -> None:
 
 class MenuService:
     @staticmethod
-    def _project_member_menu_allowed(menu: dict) -> bool:
-        """Restrict delivery navigation without changing record rules."""
+    def _role_surface_menu_allowed(menu: dict, role_surface: dict | None) -> bool:
+        """Apply identifier-based role projection without owning industry semantics."""
+        surface = role_surface if isinstance(role_surface, dict) else {}
+        meta = menu.get("meta") if isinstance(menu.get("meta"), dict) else {}
         xmlid = str(menu.get("menu_xmlid") or menu.get("xmlid") or "").strip().lower()
-        label = " ".join(str(menu.get(key) or "") for key in ("label", "title", "name", "group_label")).strip().lower()
-        blocked = ("finance", "payment", "settlement", "tax", "hr", "salary", "payroll", "财务", "税务", "人事", "薪资", "结算", "付款", "支付", "收付款")
-        return not any(token in xmlid or token in label for token in blocked)
+        action_xmlid = str(menu.get("action_xmlid") or meta.get("action_xmlid") or "").strip().lower()
+        model = str(menu.get("model") or meta.get("model") or "").strip().lower()
+        blocked_xmlids = {str(item).strip().lower() for item in surface.get("menu_blocklist_xmlids") or [] if str(item).strip()}
+        blocked_actions = {str(item).strip().lower() for item in surface.get("action_blocklist_xmlids") or [] if str(item).strip()}
+        blocked_models = {str(item).strip().lower() for item in surface.get("model_blocklist") or [] if str(item).strip()}
+        blocked_prefixes = tuple(str(item).strip().lower() for item in surface.get("model_prefix_blocklist") or [] if str(item).strip())
+        group_key = str(meta.get("group_key") or menu.get("group_key") or menu.get("key") or "").removeprefix("group:").strip().lower()
+        blocked_group_keys = {str(item).strip().lower() for item in surface.get("group_key_blocklist") or [] if str(item).strip()}
+        return not (
+            xmlid in blocked_xmlids
+            or action_xmlid in blocked_actions
+            or model in blocked_models
+            or (model and model.startswith(blocked_prefixes))
+            or group_key in blocked_group_keys
+        )
 
     @classmethod
-    def _filter_project_member_nodes(cls, nodes: list[dict]) -> list[dict]:
+    def _filter_role_surface_nodes(cls, nodes: list[dict], role_surface: dict | None) -> list[dict]:
         filtered = []
         for node in nodes or []:
             if not isinstance(node, dict):
                 continue
-            children = cls._filter_project_member_nodes(node.get("children") or [])
+            if not cls._role_surface_menu_allowed(node, role_surface):
+                continue
+            children = cls._filter_role_surface_nodes(node.get("children") or [], role_surface)
             candidate = dict(node)
             candidate["children"] = children
-            if children or cls._project_member_menu_allowed(candidate):
-                filtered.append(candidate)
+            filtered.append(candidate)
         return filtered
     SOURCE_KIND = "delivery_menu_projection"
     SOURCE_AUTHORITIES = ("odoo_menu_fact_projection", "menu_delivery_convergence_projection", "delivery_product_policy_projection")
@@ -1045,7 +1060,7 @@ class MenuService:
                 is_admin=is_admin,
                 is_business_config_admin=is_business_config_admin,
             )
-            and (role_code != "project_member" or self._project_member_menu_allowed(menu))
+            and self._role_surface_menu_allowed(menu, role_surface)
         ]
         policy_authorized_ids = set()
         policy_authorized_scenes = set()
@@ -1132,7 +1147,7 @@ class MenuService:
             for menu in group.get("menus") or []:
                 if not isinstance(menu, dict):
                     continue
-                if role_code == "project_member" and not self._project_member_menu_allowed(menu):
+                if not self._role_surface_menu_allowed(menu, role_surface):
                     continue
                 menu_id = menu.get("menu_id")
                 scene_key = str(menu.get("scene_key") or "").strip()
@@ -1313,8 +1328,7 @@ class MenuService:
             group_nodes.append(group_node)
 
         group_nodes = self._sort_delivery_nodes(group_nodes, top_level=True)
-        if role_code == "project_member":
-            group_nodes = self._filter_project_member_nodes(group_nodes)
+        group_nodes = self._filter_role_surface_nodes(group_nodes, role_surface)
         root = build_delivery_menu_root(group_nodes, role_code)
         root["key"] = "root:system_menu"
         root["label"] = "系统菜单"

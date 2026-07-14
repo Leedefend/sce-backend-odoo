@@ -105,9 +105,6 @@ class IdentityResolver:
         return {xml for xml in ext_map.values() if xml}
 
     def resolve_role_code_with_evidence(self, user_xmlids: set) -> tuple[str, dict]:
-        project_member_hits = sorted((self._role_groups_explicit.get("project_member") or set()) & user_xmlids)
-        if project_member_hits:
-            return "project_member", {"source": "explicit", "matched_groups": project_member_hits}
         explicit_hits: Dict[str, List[str]] = {}
         for role in self._role_precedence:
             hits = sorted((self._role_groups_explicit.get(role) or set()) & user_xmlids)
@@ -123,6 +120,10 @@ class IdentityResolver:
                 if len(explicit_hits) > 1:
                     evidence["candidate_roles"] = sorted(explicit_hits.keys())
                 return role, evidence
+
+        project_member_hits = sorted((self._role_groups_explicit.get("project_member") or set()) & user_xmlids)
+        if project_member_hits:
+            return "project_member", {"source": "capability_role", "matched_groups": project_member_hits}
 
         capability_hits: Dict[str, List[str]] = {}
         for role in ("pm", "finance"):
@@ -163,7 +164,15 @@ class IdentityResolver:
         role_override = role_surface_overrides.get(role_code)
         if not isinstance(role_override, dict):
             return merged
-        for field in ("landing_scene_candidates", "menu_xmlids", "menu_blocklist_xmlids"):
+        for field in (
+            "landing_scene_candidates",
+            "menu_xmlids",
+            "menu_blocklist_xmlids",
+            "action_blocklist_xmlids",
+            "model_blocklist",
+            "model_prefix_blocklist",
+            "group_key_blocklist",
+        ):
             value = role_override.get(field)
             if isinstance(value, list):
                 merged[field] = value
@@ -262,6 +271,10 @@ class IdentityResolver:
         )
         menu_candidates = list(role_meta.get("menu_xmlids") or [])
         menu_blocklist_xmlids = list(role_meta.get("menu_blocklist_xmlids") or [])
+        action_blocklist_xmlids = list(role_meta.get("action_blocklist_xmlids") or [])
+        model_blocklist = list(role_meta.get("model_blocklist") or [])
+        model_prefix_blocklist = list(role_meta.get("model_prefix_blocklist") or [])
+        group_key_blocklist = list(role_meta.get("group_key_blocklist") or [])
         landing_scene_key = self._pick_landing_scene(scene_candidates, scene_keys)
         nav_index = self._index_nav_by_xmlid(nav_tree)
         landing_menu_xmlid = ""
@@ -285,6 +298,10 @@ class IdentityResolver:
             "scene_candidates": scene_candidates,
             "menu_xmlids": menu_candidates,
             "menu_blocklist_xmlids": menu_blocklist_xmlids,
+            "action_blocklist_xmlids": action_blocklist_xmlids,
+            "model_blocklist": model_blocklist,
+            "model_prefix_blocklist": model_prefix_blocklist,
+            "group_key_blocklist": group_key_blocklist,
         }
         landing_entry_target = build_scene_entry_target(
             scene_key=landing_scene_key,
@@ -304,6 +321,10 @@ class IdentityResolver:
                 "scene_candidates": list(role_meta.get("landing_scene_candidates") or []),
                 "menu_xmlids": list(role_meta.get("menu_xmlids") or []),
                 "menu_blocklist_xmlids": list(role_meta.get("menu_blocklist_xmlids") or []),
+                "action_blocklist_xmlids": list(role_meta.get("action_blocklist_xmlids") or []),
+                "model_blocklist": list(role_meta.get("model_blocklist") or []),
+                "model_prefix_blocklist": list(role_meta.get("model_prefix_blocklist") or []),
+                "group_key_blocklist": list(role_meta.get("group_key_blocklist") or []),
             }
         return payload
 
@@ -340,12 +361,24 @@ class IdentityResolver:
 
         allow_xmlids = {x for x in (role_surface.get("menu_xmlids") or []) if isinstance(x, str) and x}
         block_xmlids = {x for x in (role_surface.get("menu_blocklist_xmlids") or []) if isinstance(x, str) and x}
+        block_action_xmlids = {x for x in (role_surface.get("action_blocklist_xmlids") or []) if isinstance(x, str) and x}
+        block_models = {x for x in (role_surface.get("model_blocklist") or []) if isinstance(x, str) and x}
+        block_model_prefixes = tuple(x for x in (role_surface.get("model_prefix_blocklist") or []) if isinstance(x, str) and x)
+        block_group_keys = {x for x in (role_surface.get("group_key_blocklist") or []) if isinstance(x, str) and x}
 
         def walk(node: dict, in_allowed_branch: bool):
             if not isinstance(node, dict):
                 return None, False
             xmlid = self._node_xmlid(node)
             if xmlid and xmlid in block_xmlids:
+                return None, False
+            meta = node.get("meta") if isinstance(node.get("meta"), dict) else {}
+            group_key = str(meta.get("group_key") or node.get("group_key") or node.get("key") or "").removeprefix("group:").strip()
+            if group_key in block_group_keys:
+                return None, False
+            action_xmlid = str(meta.get("action_xmlid") or node.get("action_xmlid") or "").strip()
+            model = str(meta.get("model") or node.get("model") or "").strip()
+            if action_xmlid in block_action_xmlids or model in block_models or (model and model.startswith(block_model_prefixes)):
                 return None, False
 
             current_allowed = in_allowed_branch or (bool(xmlid) and xmlid in allow_xmlids)

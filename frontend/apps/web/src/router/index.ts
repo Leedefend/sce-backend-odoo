@@ -32,6 +32,7 @@ function routeTitle(routeName: string | symbol | null | undefined): string {
     'form-field-config': '表单字段配置',
     'model-form': '业务表单',
     record: '业务记录',
+    'access-denied': '无权访问',
   };
   return map[name] || '系统';
 }
@@ -265,6 +266,7 @@ const router = createRouter({
     { path: '/s/projects.intake', name: 'projects-intake', component: () => import('../views/ProjectsIntakeView.vue'), meta: { layout: 'shell', sceneKey: 'projects.intake' } },
     { path: '/s/:sceneKey', name: 'scene', component: () => import('../views/SceneView.vue'), meta: { layout: 'shell' } },
     { path: '/m/:menuId', name: 'menu', component: () => import('../views/MenuView.vue'), meta: { layout: 'shell' } },
+    { path: '/access-denied', name: 'access-denied', component: () => import('../views/AccessDeniedView.vue'), meta: { layout: 'shell' } },
     // Diagnostic-only surface; must not be used as product navigation.
     { path: '/workbench', name: 'workbench', component: () => import('../views/WorkbenchView.vue'), meta: { layout: 'shell' } },
     { path: '/admin/scene-health', name: 'scene-health', component: () => import('../views/SceneHealthView.vue'), meta: { layout: 'shell', adminOnly: true } },
@@ -298,6 +300,20 @@ router.beforeEach(async (to) => {
         return { name: 'login', query: { redirect: to.fullPath } };
       }
       return true;
+    }
+  }
+  if (!isLoginRoute && to.name !== 'access-denied' && session.isReady) {
+    const actionId = positiveInteger(to.params.actionId || to.query.action_id);
+    const menuId = positiveInteger(to.params.menuId || to.query.menu_id);
+    const actionAuthorized = actionId <= 0 || Boolean(findActionMeta(session.menuTree, actionId));
+    const menuAuthorized = menuId <= 0 || Boolean(findMenuNode(session.menuTree, menuId));
+    const authorityBoundRoute = to.name === 'action' || to.name === 'menu'
+      || ((to.name === 'record' || to.name === 'model-form') && (actionId > 0 || menuId > 0));
+    if (authorityBoundRoute && (!actionAuthorized || !menuAuthorized)) {
+      return {
+        name: 'access-denied',
+        query: { from: to.fullPath, reason: 'NAVIGATION_AUTHORITY_DENIED' },
+      };
     }
   }
   if (to.name === 'form-field-config') {

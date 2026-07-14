@@ -17,6 +17,25 @@ ROLE_SURFACE_OVERRIDES = {
             "smart_construction_core.menu_sc_tax_center",
             "smart_construction_core.menu_sc_hr_center",
         ],
+        "model_blocklist": [
+            "payment.request",
+            "sc.payment.execution",
+            "sc.settlement.order",
+        ],
+        "model_prefix_blocklist": [
+            "account.",
+            "hr.",
+            "payment.",
+            "sc.finance.",
+            "sc.payment.",
+            "sc.settlement.",
+            "sc.tax.",
+        ],
+        "group_key_blocklist": [
+            "construction.财务中心",
+            "construction.税务中心",
+            "construction.人事行政",
+        ],
     },
     "business_config_admin": {
         "label": "业务配置管理员",
@@ -100,7 +119,7 @@ ROLE_GROUPS_CAPABILITY_FALLBACK = {
     },
 }
 
-ROLE_PRECEDENCE = ("business_config_admin", "executive", "pm", "finance")
+ROLE_PRECEDENCE = ("business_config_admin", "executive", "owner", "pm", "finance")
 
 NAV_MENU_SCENE_MAP = {
     "smart_construction_core.menu_sc_project_initiation": "projects.intake",

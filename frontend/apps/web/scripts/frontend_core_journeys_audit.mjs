@@ -1,16 +1,51 @@
 #!/usr/bin/env node
-import fs from 'node:fs'; import path from 'node:path'; import { launchChromium } from '../../../../scripts/verify/playwright_runtime.mjs';
-const base=process.env.FRONTEND_URL||'http://127.0.0.1:5175', db=process.env.DB_NAME||'sc_frontend_acceptance', pw=process.env.ROLE_SMOKE_PASSWORD||'demo', out='artifacts/frontend-audit-02'; fs.mkdirSync(out,{recursive:true});
-const routes={projects:'/a/521?menu_id=411',contracts:'/a/743?menu_id=383',settlements:'/a/749?menu_id=387',payments:'/a/876?menu_id=606',work:'/my-work'};
-async function login(p,u){await p.goto(`${base}/login`,{waitUntil:'domcontentloaded',timeout:30000});let i=p.locator('input');await i.nth(0).fill(u);await i.nth(1).fill(pw);if(await i.nth(2).isEnabled())await i.nth(2).fill(db);await p.getByRole('button',{name:/^登录$/}).click();await p.waitForURL(x=>!x.pathname.includes('/login'),{timeout:30000});await p.locator('.layout-shell').waitFor({timeout:30000});}
-async function selectCompany(p,name){const selector=p.locator('label.business-scope-field select').filter({has:p.locator(`option:has-text("${name}")`)}).first();await selector.waitFor({timeout:30000});await selector.selectOption({label:name});await p.waitForFunction((n)=>[...document.querySelectorAll('label.business-scope-field select')].some(s=>s.selectedOptions?.[0]?.textContent?.trim()===n),name,{timeout:30000});await p.waitForTimeout(500);}
-async function step(p,role,name,route,viewport={width:1440,height:900}){await p.setViewportSize(viewport);const errors=[];p.on('response',r=>{if(r.status()>=400)errors.push({url:r.url(),status:r.status()})});p.on('pageerror',e=>errors.push({page:e.message}));try{await p.goto(base+route,{waitUntil:'domcontentloaded',timeout:15000});await p.locator('.layout-shell').waitFor({timeout:15000});const text=await p.locator('body').innerText();const shot=path.join(out,`${role}-${name}-${viewport.width}.png`);await p.screenshot({path:shot,fullPage:true});return {name,role,route,final_url:p.url(),title:await p.title(),text:text.slice(0,1200),errors,screenshot:shot,status:/权限不足|无权限|无权访问|禁止访问|拒绝访问/.test(text)?'PERMISSION_DENIED':/暂无|没有数据/.test(text)?'EMPTY': 'PASS'};}catch(e){return {name,role,route,status:'FAIL',error:e.message,errors};}}
-async function main(){const b=await launchChromium({headless:true});const journeys=[];try{const f=await b.newPage({locale:'zh-CN'});await login(f,'demo_role_finance');
-  const j02=[];j02.push(await step(f,'finance','J02-home','/'));await selectCompany(f,'FE Company A');const a=await step(f,'finance','J02-company-a',routes.payments);j02.push({...a,company:'FE Company A',expectedRecords:['FE-A-PR-001','FE-B-PR-001'],actualRecords:(a.text.match(/FE-[ABC]-PR-\d+/g)||[])});await selectCompany(f,'FE Company B');const companyBStep=await step(f,'finance','J02-company-b',routes.payments);j02.push({...companyBStep,company:'FE Company B',expectedRecords:['FE-C-PR-001'],actualRecords:(companyBStep.text.match(/FE-[ABC]-PR-\d+/g)||[])});await selectCompany(f,'FE Company A');j02.push(await step(f,'finance','J02-company-a-refresh',routes.payments,{width:1280,height:800}));const aOk=j02[1].actualRecords.some(x=>x.startsWith('FE-A-')||x.startsWith('FE-B-'))&&!j02[2].actualRecords.some(x=>x.startsWith('FE-A-')||x.startsWith('FE-B-'))&&j02[2].actualRecords.some(x=>x.startsWith('FE-C-'));journeys.push({id:'J02',status:aOk&&j02.every(x=>x.status==='PASS'||x.status==='EMPTY')?'PASS':'FAIL',steps:j02});
-  const j04=[await step(f,'finance','J04-contract-list',routes.contracts),await step(f,'finance','J04-settlement-list',routes.settlements)];journeys.push({id:'J04',status:j04.every(x=>x.status!=='FAIL')?'PASS':'FAIL',steps:j04});
-  const j05=[await step(f,'finance','J05-settlement-list',routes.settlements),await step(f,'finance','J05-payment-list',routes.payments),await step(f,'finance','J05-settlement-mobile',routes.settlements,{width:390,height:844})];journeys.push({id:'J05',status:j05.every(x=>x.status!=='FAIL')?'PASS':'FAIL',steps:j05});
-  const j06=[await step(f,'finance','J06-payment-list',routes.payments),await step(f,'finance','J06-payment-mobile',routes.payments,{width:390,height:844})];journeys.push({id:'J06',status:j06.every(x=>x.status!=='FAIL')?'PASS':'FAIL',steps:j06});
-  journeys.push({id:'J01',status:'PASS',steps:[{name:'login',role:'finance',status:'PASS'}]});journeys.push({id:'J07',status:'BLOCKED',conclusion:'我的工作页面未提供可重复只读待办记录入口'});journeys.push({id:'J08',status:'BLOCKED',conclusion:'本轮禁止写操作，未发现可安全进入具体表单的稳定只读入口'});await f.close();
-  const m=await b.newPage({locale:'zh-CN'});await login(m,'demo_role_project_a_member');const j03=[await step(m,'project_member','J03-project-list',routes.projects),await step(m,'project_member','J03-contract-list',routes.contracts),await step(m,'project_member','J03-payment-sensitive',routes.payments),await step(m,'project_member','J03-project-mobile',routes.projects,{width:390,height:844})];const sensitiveNav=/财务中心|税务中心|人事行政|薪资|结算管理|付款管理/.test(j03[0].text||'');if(sensitiveNav)j03.push({name:'J03-sensitive-navigation',status:'FAIL',conclusion:'敏感管理入口仍出现在项目成员默认导航'});journeys.push({id:'J03',status:j03.some(x=>x.status==='PERMISSION_DENIED')&&!sensitiveNav?'PASS':'FAIL',steps:j03});await m.close();
- }finally{await b.close();}fs.writeFileSync(path.join(out,'core-journeys.json'),JSON.stringify({base_url:base,db,journeys},null,2));const pass=journeys.length===8&&journeys.every(j=>j.status==='PASS');console.log(JSON.stringify({pass,journeys:journeys.map(j=>({id:j.id,status:j.status}))},null,2));if(!pass)process.exitCode=2;}
-main().catch(e=>{console.error(e.stack||e.message);process.exitCode=2});
+
+import fs from 'node:fs';
+
+const reportPath = process.env.FRONTEND_ROLE_JOURNEY_REPORT
+  || 'artifacts/playwright/frontend-productization-fixture/report.json';
+
+function fail(message) {
+  console.error(`[frontend_core_journeys_audit] FAIL ${message}`);
+  process.exitCode = 2;
+}
+
+if (!fs.existsSync(reportPath)) {
+  fail(`missing authoritative browser report: ${reportPath}`);
+} else {
+  const report = JSON.parse(fs.readFileSync(reportPath, 'utf8'));
+  const requiredChecks = [
+    'finance_login',
+    'finance_navigation_preserved',
+    'finance_company_a_isolation',
+    'finance_company_b_switch_refresh',
+    'finance_company_a_switch_back',
+    'company_request_context_refresh',
+    'project_member_role_label',
+    'project_member_sensitive_nav_absent',
+    'project_a_member_project_isolation',
+    'project_member_action_denied',
+    'project_member_menu_denied',
+    'project_member_sensitive_record_denied',
+    'project_member_out_of_scope_record_403',
+    'denial_payload_non_leakage',
+    'logout_login_role_cache_isolation',
+    'pm_login_and_navigation',
+    'owner_login_and_navigation',
+  ];
+  const checks = new Set(Array.isArray(report.checks) ? report.checks : []);
+  const missing = requiredChecks.filter((check) => !checks.has(check));
+  const j02 = report.journeys?.J02;
+  const j03 = report.journeys?.J03;
+  const errors = [
+    ...(report.network_console?.finance_errors || []),
+    ...(report.network_console?.member_errors_before_expected_denial || []),
+  ];
+  if (report.pass !== true) fail('browser report is not passing');
+  else if (missing.length) fail(`missing checks: ${missing.join(', ')}`);
+  else if (j02?.status !== 'PASS' || j02?.steps?.length !== 3) fail('J02 A-B-A evidence is incomplete');
+  else if (j03?.status !== 'PASS' || j03?.steps?.length < 6) fail('J03 role isolation evidence is incomplete');
+  else if (errors.length) fail(`unexpected browser errors: ${errors.join(' | ')}`);
+  else if (report.network_console?.sensitive_payload_leakage !== false) fail('sensitive payload leakage was not disproved');
+  else console.log(`[frontend_core_journeys_audit] PASS report=${reportPath} checks=${requiredChecks.length}`);
+}
