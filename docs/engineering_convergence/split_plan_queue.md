@@ -35,8 +35,8 @@ Generated from `complexity_budget_report.md` split-plan-required files.
 | P1 | 1634 | Platform owner | `addons/smart_core/core/scene_ready_contract_builder.py` | Define owner-specific decomposition plan before adding unrelated behavior. |
 | P1 | 1552 | Platform owner | `addons/smart_core/tests/test_odoo_native_alignment_boundaries.py` | Split fixtures, scenario builders, and assertion groups by behavior area. |
 | P1 | 1546 | Platform owner | `addons/smart_core/app_config_engine/services/view_Parser/parsers Tree Form.py` | Separate parser/assembler/dispatcher responsibilities and preserve backend source-of-truth boundary. |
-| P2 | 2884 | Construction backend owner | `addons/smart_construction_core/core_extension.py` | Define owner-specific decomposition plan before adding unrelated behavior. |
 | P2 | 2830 | Construction backend owner | `addons/smart_construction_core/models/core/material_acceptance.py` | Extract service methods for cross-model workflow, amount, and policy logic. |
+| P2 | 2780 | Construction backend owner | `addons/smart_construction_core/core_extension.py` | Define owner-specific decomposition plan before adding unrelated behavior. |
 | P2 | 2585 | Construction backend owner | `addons/smart_construction_core/tests/test_user_feedback_business_views.py` | Split fixtures, scenario builders, and assertion groups by behavior area. |
 | P2 | 2529 | Construction backend owner | `addons/smart_construction_core/views/menu_business_taxonomy.xml` | Split data/view records by product domain and manifest load order. |
 | P2 | 2521 | Frontend owner | `frontend/apps/web/src/views/MyWorkView.vue` | Extract composables, child panels, data adapters, and action handlers; keep the route component as orchestration shell. |
