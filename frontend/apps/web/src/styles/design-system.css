@@ -2,6 +2,23 @@
 @import '../../../../packages/design-tokens/dist/web/tokens.dark.css';
 
 :root {
+  --sc-product-space-1: 8px;
+  --sc-product-space-2: 16px;
+  --sc-product-space-3: 24px;
+  --sc-product-space-4: 32px;
+  --sc-product-page-gutter: 32px;
+  --sc-product-page-max-width: 1440px;
+  --sc-product-text-sm: 12px;
+  --sc-product-text-body: 14px;
+  --sc-product-text-section: 16px;
+  --sc-product-text-title: 24px;
+  --sc-product-line-body: 22px;
+  --sc-product-control-height: 36px;
+  --sc-product-table-row-height: 44px;
+  --sc-product-toolbar-height: 52px;
+  --sc-product-radius-control: 6px;
+  --sc-product-radius-panel: 8px;
+  --sc-product-shadow-overlay: 0 12px 32px rgb(15 23 42 / 16%);
   --sc-app-bg: var(--sc-semantic-surface-page);
   --sc-app-panel: var(--sc-semantic-surface-panel);
   --sc-app-text-primary: var(--sc-semantic-text-primary);
@@ -26,6 +43,14 @@
   --sc-app-info-bg: var(--sc-semantic-state-info-bg);
   --sc-app-info-border: var(--sc-semantic-state-info-border);
   --sc-app-info-text: var(--sc-semantic-state-info-text);
+}
+
+@media (max-width: 1280px) {
+  :root { --sc-product-page-gutter: 24px; }
+}
+
+@media (max-width: 768px) {
+  :root { --sc-product-page-gutter: 16px; }
 }
 
 :root[data-sc-theme="dark"] {
