@@ -1,6 +1,3 @@
-from odoo import api, SUPERUSER_ID
-
-
 def merge_construction_product_base_keys(env):
     params = env['ir.config_parameter'].sudo()
     key = 'smart_core.release_operator.product_base_keys'
@@ -16,6 +13,5 @@ def merge_construction_product_base_keys(env):
         params.set_param(key, canonical)
 
 
-def post_init_hook(cr, registry):
-    env = api.Environment(cr, SUPERUSER_ID, {})
+def post_init_hook(env):
     merge_construction_product_base_keys(env)
