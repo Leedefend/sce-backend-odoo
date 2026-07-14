@@ -3,8 +3,8 @@
 Date: 2026-07-14
 Owner: Frontend owner
 Target file: `frontend/apps/web/src/views/ActionView.vue`
-Current size: 3,736 lines
-Phase: Stage 3 activity runtime route state builder split
+Current size: 3,735 lines
+Phase: Stage 4 activity route key builder split
 
 ## Purpose
 
@@ -41,6 +41,7 @@ or industry-owned business rules.
 | Lifecycle and error state | Mounted load, menu-only redirect, project context event listener, route watches, retained route full path, render error state. | Keep watch/reload chain in page until regression coverage exists. |
 | Activity runtime query normalization | `normalizeActivityRuntimeRouteQuery` whitelists route query keys and normalizes activity runtime query state. | Pure helper in `actionViewRouteRuntime.ts`; no router, API, session, or notification access. |
 | Activity runtime route state builder | `buildActivityRuntimeRouteState` merges current route query, local list state, and route-sync extras before normalization. | Pure helper in `actionViewRouteRuntime.ts`; page remains responsible for session writes. |
+| Activity route key builder | `buildActionActivityRouteKey` builds the action/menu activity runtime key from route params and query values. | Pure helper in `actionViewRouteRuntime.ts`; page remains responsible for reading route state. |
 
 ## Current Side-Effect Boundaries
 
@@ -111,6 +112,18 @@ Stage 3 is complete:
   route-preset sync first, activity runtime route state build second, session
   write last;
 - `ActionView.vue` is locked at `<=3736` lines;
+- no router, API, session, lifecycle, window, or notification side effects were
+  moved.
+
+## Stage 4 Target
+
+Stage 4 is complete:
+
+- `actionViewRouteRuntime.ts` also owns the pure
+  `buildActionActivityRouteKey` helper;
+- `ActionView.vue` keeps `currentActionActivityRouteKey` as route-read
+  orchestration only;
+- `ActionView.vue` is locked at `<=3735` lines;
 - no router, API, session, lifecycle, window, or notification side effects were
   moved.
 

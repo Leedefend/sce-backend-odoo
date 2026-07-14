@@ -109,6 +109,16 @@ export function buildActivityRuntimeRouteState(options: {
   });
 }
 
+export function buildActionActivityRouteKey(options: {
+  actionId: unknown;
+  queryActionId: unknown;
+  menuId: unknown;
+}): string {
+  const currentActionId = String(options.actionId || options.queryActionId || '').trim();
+  const currentMenuId = String(options.menuId || '').trim() || '0';
+  return currentActionId ? `action:${currentActionId}:menu:${currentMenuId}` : '';
+}
+
 import { pickContractNavQuery } from '../navigationContext';
 import { stripWorkspaceContext } from '../workspaceContext';
 import { serializeGroupPageOffsets } from './actionViewGroupWindowRuntime';

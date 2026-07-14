@@ -795,6 +795,7 @@ import {
 import {
   buildActionViewClearedPresetQuery,
   buildActionViewPatchedRouteQuery,
+  buildActionActivityRouteKey,
   buildActivityRuntimeRouteState,
   normalizeActivityRuntimeRouteQuery,
   normalizeActionViewRouteQuery,
@@ -881,9 +882,7 @@ function requestLoadPage(): Promise<void> {
 }
 
 function currentActionActivityRouteKey(): string {
-  const currentActionId = String(route.params.actionId || route.query.action_id || '').trim();
-  const currentMenuId = String(route.query.menu_id || '').trim() || '0';
-  return currentActionId ? `action:${currentActionId}:menu:${currentMenuId}` : '';
+  return buildActionActivityRouteKey({ actionId: route.params.actionId, queryActionId: route.query.action_id, menuId: route.query.menu_id });
 }
 
 let clearSelectionInvoker: () => void = () => {};

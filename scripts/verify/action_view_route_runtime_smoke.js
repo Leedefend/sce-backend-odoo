@@ -140,6 +140,16 @@ function main() {
     'build activity runtime route state from current route and local state',
   );
 
+  if (runtime.buildActionActivityRouteKey({ actionId: 42, queryActionId: 7, menuId: 9 }) !== 'action:42:menu:9') {
+    throw new Error('activity route key must prefer route params action id');
+  }
+  if (runtime.buildActionActivityRouteKey({ actionId: '', queryActionId: '7', menuId: '' }) !== 'action:7:menu:0') {
+    throw new Error('activity route key must fall back to query action id and default menu');
+  }
+  if (runtime.buildActionActivityRouteKey({ actionId: '', queryActionId: '', menuId: 9 }) !== '') {
+    throw new Error('activity route key must be empty without an action id');
+  }
+
   console.log('[action_view_route_runtime_smoke] PASS');
 }
 

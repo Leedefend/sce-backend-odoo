@@ -9,7 +9,7 @@ VIEW = ROOT / "frontend/apps/web/src/views/ActionView.vue"
 ROUTE_RUNTIME = ROOT / "frontend/apps/web/src/app/runtime/actionViewRouteRuntime.ts"
 CI = ROOT / "make/ci.mk"
 
-LINE_BUDGET = 3736
+LINE_BUDGET = 3735
 
 
 def _read(path: Path) -> str:
@@ -36,8 +36,8 @@ def main() -> int:
 
     for token in [
         "Action View Responsibility Map",
-        "Current size: 3,736 lines",
-        "Phase: Stage 3 activity runtime route state builder split",
+        "Current size: 3,735 lines",
+        "Phase: Stage 4 activity route key builder split",
         "## Purpose",
         "## Route Entry",
         "## Responsibility Bands",
@@ -46,15 +46,17 @@ def main() -> int:
         "## Stage 1 Target",
         "## Stage 2 Target",
         "## Stage 3 Target",
+        "## Stage 4 Target",
         "## Verification Gaps",
         "## Invariants",
-        "`ActionView.vue` is locked at `<=3736` lines",
+        "`ActionView.vue` is locked at `<=3735` lines",
         "`usePageContract('action')`",
         "`useActionPageModel`",
         "`useActionViewActionRuntime`",
         "`actionViewRouteRuntime.ts` owns the pure",
         "`normalizeActivityRuntimeRouteQuery` helper",
         "`buildActivityRuntimeRouteState` helper",
+        "`buildActionActivityRouteKey` helper",
         "runBatchPolicyAction",
         "loadListColumnPreference",
         "handleToggleRecordFavorite",
@@ -80,6 +82,7 @@ def main() -> int:
             "const pageContract = usePageContract('action');",
             "normalizeActivityRuntimeRouteQuery,",
             "buildActivityRuntimeRouteState,",
+            "buildActionActivityRouteKey,",
             "useActionPageModel({",
             "useActionViewActionRuntime({",
             "async function runBatchPolicyAction",
@@ -103,6 +106,7 @@ def main() -> int:
         for token in [
             "export function normalizeActivityRuntimeRouteQuery(source: Dict): Dict",
             "export function buildActivityRuntimeRouteState(",
+            "export function buildActionActivityRouteKey(",
             "'active_filter'",
             "'group_sort'",
             "delete next.active_filter",
