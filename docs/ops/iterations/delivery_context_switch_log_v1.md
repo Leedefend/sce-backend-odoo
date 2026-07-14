@@ -16,6 +16,16 @@ Each entry must include:
 
 ## Entries
 
+### 2026-07-14T16:21:16+08:00
+- blocker_key: `t1_a_core_amount_formula_conflict`
+- layer_target: `P1 Domain Layer documentation`
+- module: `addons/smart_construction_core + docs/engineering_convergence/core_amount_fact_audit.md`
+- reason: `为 T1-B 精准补测建立合同、付款申请、付款台账、付款执行和结算余额的代码事实地图；本批只读审计，不改变金额公式。`
+- completed_step: `确认 origin/main 基线 58335481f；记录合同原始/最终金额、结算占额、申请台账累计、合同执行累计、调整后金额、状态/舍入/隔离路径及测试缺口；发现累计已付三套状态口径和调整后金额未进入可付余额公式，按停止条件不扩展或选择公式。`
+- verification: `git diff --check PASS；金额相关定向测试 6 methods: 4 PASS / 2 FAIL（合同金额方法在金额断言后因审批状态期望失败；合同执行累计方法因未登记发票过滤期望失败，均为现有基线测试漂移）；make ci.local.quick PASS；收尾单次 make ci PASS。`
+- active_commit: `58335481f`
+- next_step: `由业务所有者裁决“已付”数据源/状态和调整后可付基数后，再实施 T1-B 最小金额测试矩阵。`
+
 ### 2026-07-01T08:00:00+08:00
 - blocker_key: `core_history_field_physical_separation_budget`
 - layer_target: `P1 core model boundary + P2/P4 history data separation`
