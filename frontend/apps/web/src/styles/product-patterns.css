@@ -15,6 +15,43 @@
   color: var(--sc-app-text-primary);
 }
 
+.sc-product-page-frame {
+  width: min(100%, var(--sc-product-page-max-width));
+  margin: 0 auto;
+  padding: var(--sc-product-page-gutter);
+}
+
+.sc-product-page-title {
+  margin: 0;
+  font-size: var(--sc-product-text-title);
+  line-height: 32px;
+  letter-spacing: -0.01em;
+}
+
+.sc-product-page-context {
+  color: var(--sc-app-text-secondary);
+  font-size: var(--sc-product-text-body);
+  line-height: var(--sc-product-line-body);
+}
+
+.sc-product-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--sc-product-text-body);
+}
+
+.sc-product-table th,
+.sc-product-table td {
+  min-height: var(--sc-product-table-row-height);
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--sc-app-border);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.sc-product-table th { color: var(--sc-app-text-secondary); font-weight: 600; }
+.sc-product-table .amount { text-align: right; font-variant-numeric: tabular-nums; }
+
 .sc-page-surface {
   min-height: 100%;
   background: var(--sc-app-bg);
