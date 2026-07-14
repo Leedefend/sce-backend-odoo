@@ -1,8 +1,14 @@
 # Phase 0 and Phase 1 Status
 
-Date: 2026-07-12
-Branch: `topic/v1.1-engineering-convergence`
-Remote branch: `origin/topic/v1.1-engineering-convergence`
+Date: 2026-07-14
+Branch: `main`
+Remote branch: `origin/main`
+Mainline checkpoint: `7d2f86ec973594d8919474a1f075c0672e557b65`
+
+This document records the v1.1 engineering convergence state after the
+mainline absorption of the P4-P0 split work and the subsequent responsibility
+baseline PRs. Historical PR and issue evidence is retained below; stale next
+steps have been replaced with the current Phase 5/6 evidence focus.
 
 ## Completed Locally
 
@@ -62,6 +68,12 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 | CI boundary audit artifact output | Done | `audit.boundary.smart_core.ci` writes to `artifacts/ci/boundary_audit/*` |
 | P4 split-plan queue | Done | `split_plan_queue.md`, `scripts/ci/generate_split_plan_queue.py` |
 | P4 P0 split-plan execution order | Done | `p0_split_plan_execution.md`; P0 owners, PR sequence, dependencies, non-scope, and gates fixed |
+| P4-P0-01 Makefile split | Done on main | `Makefile` is 272 lines; PR `#1031` merged as `d5c74cf6`; root Makefile exited the generated split queue |
+| P4-P0-02 Business config surface split | Done on main | `BusinessConfigSurfaceView.vue` is 1486 lines; PR `#1032` merged as part of the mainline frontend split; file exited the generated split queue |
+| P4-P0-03 Contract form route shell split | Done on main | `ContractFormPage.vue` is 5939 lines; PR `#1032` merged as `57b8175f`; `verify_contract_form_split_evidence.py` reports `lines=5939` |
+| Contract governance responsibility baseline | Done on main | PR `#1052` merged as `b9d9e8cf`; `quality_gate` check succeeded on PR head |
+| UI contract v2 responsibility baseline | Done on main | PR `#1053` merged as `815697e`; `quality_gate` check succeeded on PR head |
+| ActionView responsibility baseline | Done on main | PR `#1054` merged as `7d2f86e`; `ActionView.vue` is 3681 lines; latest main workflow-run evidence still needs to be attached |
 
 ## Verified
 
@@ -83,6 +95,11 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 | `make test.e2e.preflight` | Passed, BOQ import, BOQ-to-WBS/task generation, and settlement approval preflight |
 | `python3 scripts/ci/python_syntax_check.py addons/smart_construction_core/tests/test_e2e_fixed_journeys.py scripts/e2e` | Passed |
 | `git push -u origin topic/v1.1-engineering-convergence` | Passed |
+| PR `#1031` `v1.1 quality gate / quality_gate` | Passed; merge commit `d5c74cf6e75ab1395b755887306235a0dd1dfaa0` |
+| PR `#1032` `v1.1 quality gate / quality_gate` | Passed; merge commit `57b8175f1d00a8a657cde53d882c337c94a4a229` |
+| PR `#1052` `v1.1 quality gate / quality_gate` | Passed; merge commit `b9d9e8cf294501370c3fef9541b053cfec7bdfbe` |
+| PR `#1053` `v1.1 quality gate / quality_gate` | Passed; merge commit `815697e906483317b5edcdfd493178158280499b` |
+| Latest `origin/main` commit `7d2f86ec973594d8919474a1f075c0672e557b65` remote quality gate | Needs workflow run evidence; GitHub commit status API returned no completed check-runs for this SHA during this reconciliation |
 
 ## Requires GitHub Admin Follow-Up
 
@@ -96,4 +113,14 @@ Remote branch: `origin/topic/v1.1-engineering-convergence`
 
 ## Next Execution Focus
 
-1. Start P4-P0-01 from `p0_split_plan_execution.md`: split root `Makefile` into stable included fragments without changing public targets.
+The P4-P0 split sequence is no longer the next execution focus. Current focus
+is Phase 5/6 evidence required before controlled pilot:
+
+1. Core amount calculation tests for budget, contract, payment, settlement,
+   tax, and accumulated values.
+2. Permission and project-isolation verification across menus, models, Intent
+   APIs, and fixed-data role journeys.
+3. Backup and filestore restore drill with RPO/RTO evidence.
+4. Performance baseline for large BOQ/import/data-scale paths.
+5. Controlled pilot readiness: issue/evidence loop, daily metrics, exit
+   criteria, and sign-off template.

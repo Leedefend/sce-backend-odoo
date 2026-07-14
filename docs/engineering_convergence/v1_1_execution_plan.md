@@ -41,3 +41,19 @@ Duration: 6 weeks
 ## Phase Exit Rule
 
 A phase is not complete until its evidence is committed or linked in the milestone. "Development complete" is not an exit criterion.
+
+## Current Checkpoint
+
+As of `origin/main` `7d2f86ec973594d8919474a1f075c0672e557b65`,
+the initial Phase 4 P4-P0 split sequence has landed on mainline. The next
+focus is Phase 5/6 evidence closure:
+
+- core amount calculation tests;
+- permission and project-isolation verification;
+- backup and filestore restore drill;
+- performance baseline;
+- controlled pilot readiness.
+
+The latest `origin/main` commit currently needs a linked workflow-run evidence
+record before this document can claim that the mainline commit itself passed
+the remote quality gate.

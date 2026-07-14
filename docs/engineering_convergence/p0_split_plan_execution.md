@@ -1,12 +1,21 @@
 # P0 Split Plan Execution
 
-Date: 2026-07-12
-Branch: `topic/v1.1-engineering-convergence`
+Date: 2026-07-14
+Branch: `main`
 Tracked issue: `#1029`
 
 ## Decision
 
-`split_plan_queue.md` remains generated from the complexity budget report. This document is the accountable execution plan for the three P0 split-plan files.
+`split_plan_queue.md` remains generated from the complexity budget report. This
+document is the accountable execution plan and current mainline status for the
+three original P0 split-plan files.
+
+The original P4-P0-01, P4-P0-02, and P4-P0-03 sequence has completed on
+mainline. The generated queue now has one remaining P0 file:
+`frontend/apps/web/src/pages/ContractFormPage.vue` at 5939 lines. It is below
+the stage target of 6000 lines and remains under a no-regrowth evidence guard;
+future work should be driven by behavior coverage and side-effect maps, not by
+mechanical line-count reduction.
 
 All P0 split-plan work has one accountable owner:
 
@@ -56,4 +65,22 @@ All P0 split-plan work has one accountable owner:
 | --- | --- | --- | --- |
 | `Makefile` | P4-P0-01 split completed: root Makefile reduced from 6062 to 272 lines, target bodies moved into stable `make/*.mk` fragments, and the file exited the generated P0 split-plan queue. | `@Leedefend` | Local and remote gates passed |
 | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` | P4-P0-02 split completed: current slices extracted formatters, snapshot remediation, navigation lookup, scoped styles, start/coverage/audit/approval/version/editor panels, shared field-chip editor, approval/version/snapshot/field-editor/coverage/workbench composables, and workbench utilities; route component reduced from 5447 to 1486 lines and exited the generated P0 split-plan queue. | `@Leedefend` | Local and remote gates passed |
-| `frontend/apps/web/src/pages/ContractFormPage.vue` | P4-P0-03 split completed on mainline: shared contract form types/constants, action parsing/navigation helpers, contract record helpers, field/date/relation display helpers, access-policy normalization, relation descriptor/search helpers, one2many pure value/helpers, workflow parsing/statusbar helpers, UI label helpers, form-config/layout helpers, native-layout/descriptor/modifier helpers, value helpers, focused runtimes, and child panels extracted; route component reduced from 13762 to 5947 lines without changing product behavior. | `@Leedefend` | Local quick and full CI pending on mainline branch |
+| `frontend/apps/web/src/pages/ContractFormPage.vue` | P4-P0-03 split completed on mainline: shared contract form types/constants, action parsing/navigation helpers, contract record helpers, field/date/relation display helpers, access-policy normalization, relation descriptor/search helpers, one2many pure value/helpers, workflow parsing/statusbar helpers, UI label helpers, form-config/layout helpers, native-layout/descriptor/modifier helpers, value helpers, focused runtimes, and child panels extracted; route component is currently 5939 lines without changing product behavior. | `@Leedefend` | PR `#1032` merged with remote `quality_gate` success; local `ci.local.quick` evidence reports `contract_form_split_evidence lines=5939`; latest `origin/main` workflow-run evidence for `7d2f86e` still needs to be attached |
+
+## Mainline Evidence Snapshot
+
+| Item | Current mainline fact | Evidence |
+| --- | --- | --- |
+| P4-P0-01 | `Makefile` is 272 lines and no longer appears in `split_plan_queue.md`. | PR `#1031` merged as `d5c74cf6`; `quality_gate` succeeded on PR head. |
+| P4-P0-02 | `BusinessConfigSurfaceView.vue` is 1486 lines and no longer appears in `split_plan_queue.md`. | PR `#1032` merged as `57b8175f`; `quality_gate` succeeded on PR head. |
+| P4-P0-03 | `ContractFormPage.vue` is 5939 lines and remains the only generated P0 file. | PR `#1032` merged as `57b8175f`; `scripts/ci/verify_contract_form_split_evidence.py` reports `lines=5939`. |
+| Contract governance baseline | `contract_governance.py` is 1370 lines after responsibility-helper extraction. | PR `#1052` merged as `b9d9e8cf`; `quality_gate` succeeded on PR head. |
+| UI contract v2 baseline | `ui_contract_v2.py` is 3518 lines after helper extraction. | PR `#1053` merged as `815697e`; `quality_gate` succeeded on PR head. |
+| ActionView baseline | `ActionView.vue` is 3681 lines after pure helper extraction and responsibility map guard. | PR `#1054` merged as `7d2f86e`; latest `origin/main` workflow-run evidence still needs to be attached. |
+
+## Current Next Step
+
+Do not start another P4-P0 mechanical split from this plan. The next execution
+focus is evidence closure for Phase 5/6: core amount calculation tests,
+permission and project-isolation verification, backup/restore drill,
+performance baseline, and controlled pilot readiness.
