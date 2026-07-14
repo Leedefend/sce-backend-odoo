@@ -4,12 +4,12 @@ Generated from `test_inventory.csv`.
 
 ## Totals
 
-- Total assets: `1164`
+- Total assets: `1165`
 - Review queue: `4`
 - Unknown runtime: `3`
-- Long-running assets: `332`
+- Long-running assets: `333`
 - Manual gate review: `4`
-- Aggregate-covered assets: `231`
+- Aggregate-covered assets: `232`
 - PR dedupe candidates: `602`
 
 ## By Layer
@@ -20,7 +20,7 @@ Generated from `test_inventory.csv`.
 | contract | 309 |
 | data_migration | 217 |
 | unit | 150 |
-| odoo_integration | 57 |
+| odoo_integration | 58 |
 | e2e | 38 |
 | security | 21 |
 | frontend_acceptance | 16 |
@@ -34,8 +34,8 @@ Generated from `test_inventory.csv`.
 | integration_candidate | 292 |
 | release_candidate | 36 |
 | manual_review | 4 |
+| integration_required | 3 |
 | release_required | 2 |
-| integration_required | 2 |
 | local_iteration | 1 |
 | pr_required | 1 |
 
@@ -47,7 +47,7 @@ Generated from `test_inventory.csv`.
 | keep_integration_or_release_only | 291 |
 | covered_by_aggregate | 225 |
 | keep_release_only | 36 |
-| canonical_entry | 6 |
+| canonical_entry | 7 |
 | review_or_archive | 4 |
 
 ## By Aggregate Target
@@ -98,6 +98,7 @@ Generated from `test_inventory.csv`.
 | make test.e2e | 1 |
 | make test.odoo.integration | 1 |
 | TEST_TAGS=core_amount | 1 |
+| TEST_TAGS=permission_isolation | 1 |
 | make test.e2e.fixed_data.odoo | 1 |
 | verify.business_config.config_workbench_operation_acceptance | 1 |
 | verify.portal.ar_ap_company_summary_smoke.container | 1 |
@@ -148,7 +149,7 @@ Generated from `test_inventory.csv`.
 | Runtime | Count |
 | --- | ---: |
 | <5m | 828 |
-| 10-30m | 294 |
+| 10-30m | 295 |
 | 30-60m | 38 |
 | unknown | 3 |
 | 10-15m | 1 |
@@ -163,7 +164,7 @@ Generated from `test_inventory.csv`.
 | test owner | 151 |
 | backend owner | 57 |
 | qa owner | 38 |
-| security owner | 21 |
+| security owner | 22 |
 | frontend owner | 17 |
 
 ## By Directory
@@ -179,8 +180,8 @@ Generated from `test_inventory.csv`.
 | scripts/e2e | 5 |
 | scripts/audit | 4 |
 | scripts/diag | 4 |
+| addons/smart_construction_core | 2 |
 | scripts/prod | 2 |
-| addons/smart_construction_core | 1 |
 
 ## Review Queue
 

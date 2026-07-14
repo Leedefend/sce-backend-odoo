@@ -106,6 +106,22 @@ MANUAL_ENTRIES = [
         "notes": "Run through scripts/ci/run_ci.sh with TEST_TAGS=core_amount on a clean Odoo test database.",
     },
     {
+        "id": "T-ODOO-003",
+        "layer": "odoo_integration",
+        "entrypoint": "addons/smart_construction_core/tests/test_permission_project_isolation_evidence.py",
+        "purpose": (
+            "Current Odoo post-test evidence for role menu/action permissions, "
+            "project-scoped record rules, and payment execution intent authorization."
+        ),
+        "estimated_runtime": "10-30m",
+        "owner": "security owner",
+        "status": "active",
+        "decision_gate": "integration_required",
+        "disposition": "canonical_entry",
+        "aggregate_target": "TEST_TAGS=permission_isolation",
+        "notes": "Run through scripts/ci/run_ci.sh with TEST_TAGS=permission_isolation on a clean Odoo test database.",
+    },
+    {
         "id": "T-E2E-ODOO-001",
         "layer": "e2e",
         "entrypoint": "make test.e2e.fixed_data.odoo",
