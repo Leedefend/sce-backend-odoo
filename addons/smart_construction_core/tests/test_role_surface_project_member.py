@@ -5,14 +5,14 @@ from odoo.addons.smart_core.delivery.menu_service import MenuService
 
 
 class TestProjectMemberRoleSurface(TestCase):
-    def test_project_read_capability_is_project_member_not_pm(self):
+    def test_project_read_capability_preserves_project_manager_actor_role(self):
         class User:
             groups_id = type("Groups", (), {"get_external_id": lambda self: {1: "base.group_user"}})()
 
             def has_group(self, xmlid):
                 return xmlid == "smart_construction_core.group_sc_cap_project_read"
 
-        self.assertEqual(resolve_release_actor_role_codes(User()), ["project_member"])
+        self.assertEqual(resolve_release_actor_role_codes(User()), ["pm"])
 
     def test_project_member_menu_blocklist_is_semantic(self):
         self.assertFalse(MenuService._project_member_menu_allowed({"label": "支付申请", "menu_xmlid": "x"}))

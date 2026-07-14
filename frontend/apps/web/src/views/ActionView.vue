@@ -1097,15 +1097,12 @@ type BusinessCategoryCreateOption = {
   categoryId?: number;
   defaultValues: Record<string, unknown>;
 };
-
 const actionId = computed(() => {
   const fromParam = Number(route.params.actionId || 0);
   if (Number.isFinite(fromParam) && fromParam > 0) return fromParam;
   const fromQuery = Number(route.query.action_id || 0);
   return Number.isFinite(fromQuery) && fromQuery > 0 ? fromQuery : 0;
-});
-const directRouteDenied = computed(() => session.isReady && session.roleSurface?.role_code === 'project_member' && actionId.value > 0 && !findActionMeta(session.menuTree, actionId.value));
-function goBackFromDeniedRoute(): void { if (window.history.length > 1) router.back(); else void router.push('/'); }
+}); const directRouteDenied = computed(() => session.isReady && session.roleSurface?.role_code === 'project_member' && actionId.value > 0 && !findActionMeta(session.menuTree, actionId.value)); function goBackFromDeniedRoute(): void { if (window.history.length > 1) router.back(); else void router.push('/'); }
 const actionMeta = computed(() => session.currentAction);
 function resolveActionProjectScopeContext(): Record<string, unknown> {
   const policy = String(
