@@ -1308,6 +1308,7 @@ class MenuService:
             "strategy": "unified_system_menu",
             "source_authority": self.source_authority_contract(),
         }
+        logging.getLogger(__name__).warning("NAV_RESULT uid=%s roots=%s leaves=%s", getattr(getattr(self.env, "user", None), "id", None), len(group_nodes), self._count_leaf_nodes([root]))
         return [root]
 
     def _count_leaf_nodes(self, nodes: list[dict] | None) -> int:
