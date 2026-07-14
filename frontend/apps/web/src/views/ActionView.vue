@@ -641,6 +641,8 @@ import { useActionViewTextRuntime } from '../app/action_runtime/useActionViewTex
 import { useActionViewTemplateUiStateRuntime } from '../app/action_runtime/useActionViewTemplateUiStateRuntime';
 import { useActionViewFilterUiStateRuntime } from '../app/action_runtime/useActionViewFilterUiStateRuntime';
 import { useActionViewPageDisplayStateRuntime } from '../app/action_runtime/useActionViewPageDisplayStateRuntime';
+import { buildActionPageIdentity, resolveRoutePageIdentity } from '../app/pageIdentityAdapters';
+import { usePublishedPageIdentity } from '../app/usePublishedPageIdentity';
 import { useActionViewHudEntriesRuntime } from '../app/action_runtime/useActionViewHudEntriesRuntime';
 import { useActionViewHudEntriesInputRuntime } from '../app/action_runtime/useActionViewHudEntriesInputRuntime';
 import { useActionViewSurfaceIntentRuntime } from '../app/action_runtime/useActionViewSurfaceIntentRuntime';
@@ -1631,7 +1633,7 @@ const {
 const actionMetaName = computed(() => String(actionMeta.value?.name || '').trim());
 const baseErrorMessage = computed(() => (error.value?.code ? `code=${error.value.code} · ${error.value.message}` : error.value?.message || ''));
 const {
-  pageTitle,
+  pageTitle: legacyPageTitle,
   emptyReasonText,
   showHud,
   errorMessage,
@@ -1648,17 +1650,16 @@ const {
   route,
   isHudEnabled,
 });
+const actionIdentityInput = computed(() => buildActionPageIdentity({
+    action: actionMeta.value, breadcrumbs: resolveRoutePageIdentity(route, session.menuTree).breadcrumbs,
+    actionContractTitle: actionContract.value?.head?.title || actionMetaName.value,
+    legacyTitle: legacyPageTitle.value, menuName: currentMenuTitle.value,
+    modelName: resolvedModelRef.value || model.value, status: status.value, subtitle: subtitle.value,
+}));
+const pageIdentity = usePublishedPageIdentity(actionIdentityInput, { routeKey: () => route.fullPath,
+  active: () => isComponentActive.value, onTitle: (title) => session.updateActiveActivityTitle(title), immediate: true });
+const pageTitle = computed(() => pageIdentity.value.title);
 const showSceneBlocksDebug = computed(() => isSceneBlocksDebugEnabled(route));
-
-watch(
-  pageTitle,
-  (title) => {
-    if (!isComponentActive.value) return;
-    session.updateActiveActivityTitle(title);
-  },
-  { immediate: true },
-);
-
 function resolveContractActionCountForHud() {
   const contract = actionContract.value;
   if (!contract) return 0;

@@ -36,6 +36,12 @@ verify.frontend.typecheck.strict: guard.prod.forbid
 verify.frontend.lint.src: guard.prod.forbid
 	@scripts/dev/pnpm_exec.sh -C frontend/apps/web lint:src
 
+.PHONY: verify.frontend.page_identity
+verify.frontend.page_identity: guard.prod.forbid
+	@node scripts/verify/frontend_page_identity_smoke.js
+	@node scripts/verify/frontend_page_identity_lifecycle_smoke.js
+	@python3 scripts/verify/frontend_page_identity_guard.py
+
 .PHONY: verify.frontend.style_system.guard
 verify.frontend.style_system.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_style_system_guard.py
@@ -221,7 +227,7 @@ verify.grouped.governance.bundle: guard.prod.forbid verify.frontend.grouped_rows
 verify.contract.operation_gateway.guard: guard.prod.forbid
 	@python3 scripts/verify/operation_gateway_contract_guard.py
 
-verify.frontend.quick.gate: guard.prod.forbid verify.frontend.relation_entry.contract_guard verify.frontend.relation_read_closure.guard verify.frontend.modifiers_runtime.guard verify.frontend.onchange_roundtrip.guard verify.frontend.onchange_contract_schema.guard verify.frontend.onchange_line_patch.guard verify.frontend.x2many_command_semantic.guard verify.frontend.x2many_inline_edit.guard verify.contract.subviews.guard verify.frontend.view_type_render_coverage.guard verify.frontend.view_type_contract_semantic.guard verify.frontend.search_groupby_savedfilters.guard verify.frontend.group_summary_runtime.guard verify.frontend.grouped_rows_runtime.guard verify.frontend.grouped_pagination_semantic.guard verify.frontend.grouped_pagination_semantic_drift.guard verify.frontend.grouped_contract_consistency.guard verify.frontend.grouped_drift_summary.baseline.guard verify.frontend.typecheck.strict verify.frontend.build
+verify.frontend.quick.gate: guard.prod.forbid verify.frontend.page_identity verify.frontend.relation_entry.contract_guard verify.frontend.relation_read_closure.guard verify.frontend.modifiers_runtime.guard verify.frontend.onchange_roundtrip.guard verify.frontend.onchange_contract_schema.guard verify.frontend.onchange_line_patch.guard verify.frontend.x2many_command_semantic.guard verify.frontend.x2many_inline_edit.guard verify.contract.subviews.guard verify.frontend.view_type_render_coverage.guard verify.frontend.view_type_contract_semantic.guard verify.frontend.search_groupby_savedfilters.guard verify.frontend.group_summary_runtime.guard verify.frontend.grouped_rows_runtime.guard verify.frontend.grouped_pagination_semantic.guard verify.frontend.grouped_pagination_semantic_drift.guard verify.frontend.grouped_contract_consistency.guard verify.frontend.grouped_drift_summary.baseline.guard verify.frontend.typecheck.strict verify.frontend.build
 	@echo "[OK] verify.frontend.quick.gate done"
 
 verify.frontend.suggested_action.contract_guard: guard.prod.forbid
@@ -268,4 +274,3 @@ verify.portal.scene_observability.structure_guard.update: guard.prod.forbid
 
 verify.frontend.suggested_action.all: guard.prod.forbid verify.frontend.suggested_action.contract_guard verify.frontend.suggested_action.parser_guard verify.frontend.suggested_action.runtime_guard verify.frontend.suggested_action.import_boundary_guard verify.frontend.suggested_action.usage_guard verify.frontend.suggested_action.trace_export_guard verify.frontend.suggested_action.topk_guard verify.frontend.suggested_action.since_filter_guard verify.frontend.suggested_action.hud_export_guard verify.frontend.cross_stack_smoke verify.frontend.no_new_any_guard verify.frontend.suggested_action.catalog verify.frontend.typecheck.strict verify.frontend.build
 	@echo "[OK] verify.frontend.suggested_action.all done"
-

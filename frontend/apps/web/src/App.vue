@@ -19,12 +19,24 @@
 </template>
 
 <script setup lang="ts">
+import { watch } from 'vue';
 import type { RouteLocationNormalizedLoaded } from 'vue-router';
 import { findActionMeta, findActionMetaByMenu } from './app/menu';
+import { PRODUCT_APP_TITLE } from './app/pageIdentity';
+import { usePageIdentityRuntime } from './app/pageIdentityRuntime';
 import AppShell from './layouts/AppShell.vue';
 import { useSessionStore } from './stores/session';
 
 const session = useSessionStore();
+const pageIdentity = usePageIdentityRuntime();
+
+watch(
+  [() => pageIdentity.identity.value.documentTitle, () => session.token],
+  ([documentTitle, token]) => {
+    document.title = token ? documentTitle : `登录 - ${PRODUCT_APP_TITLE}`;
+  },
+  { immediate: true },
+);
 
 function routeText(value: unknown): string {
   if (Array.isArray(value)) return String(value[0] || '').trim();

@@ -2,20 +2,21 @@
 
 ## 执行摘要
 
-本审计修正版基于 `origin/main@7c21f9e1d8bec136812081d6c7a3cce9f2f71c50`、固定验收数据库 `sc_frontend_acceptance`、独立验收前端和 Odoo runtime。审计只读，不执行创建、编辑、提交、审批、删除、导入、发布或付款操作。付款菜单、列表和详情属于可安全巡检的导航表面；仅页面内写操作被标记，不以“付款”文字过滤导航。
+当前审计基于 FE-B02R 基线 `origin/main@803453c965`、固定验收数据库 `sc_frontend_acceptance`、独立验收前端和 Odoo runtime。权威导航分母已冻结为 70；历史 115 个表面和 FE-B02 后的临时 74 个表面只作为问题演进背景，不再参与当前通过率计算。
 
 已有真实证据确认：四个固定账号可登录；finance 公司 A/B 数据隔离；project member 仅可见项目 A；B/C 敏感业务记录访问被拒绝；付款列表基础旅程通过。
 
-修正版按权威导航递归展开容器、可导航叶节点和无法解析叶节点，并记录实际 route 与组件。四角色叶节点均完成 1440×900 只读巡检；J01–J08 生成独立结论文件，未由表面巡检冒充深度旅程通过。
+Page Identity 修正版按权威导航递归展开容器和业务叶节点，并记录 menu/action XML ID、实际 route、组件、heading、浏览器标题、面包屑、identity source、HTTP、console/pageerror 与技术回退。四角色 70 个叶节点均完成 1440×900 只读巡检；另有 16 个列表、详情、表单、状态和上下文切换深度场景。
 
 ## 覆盖统计
 
 | 项目 | 结果 |
 | --- | --- |
 | 角色登录检查 | 4/4 |
-| 全表面机器记录 | 115 条可导航叶节点 |
-| 角色叶节点 | finance 44；project member 51；PM 14；owner 6 |
-| 叶节点可达率 | 4/4 角色均 100%（115/115） |
+| 全表面机器记录 | 70 条权威可导航叶节点 |
+| 角色叶节点 | finance 42；project member 9；PM 14；owner 5 |
+| 叶节点可达率 | 4/4 角色均 100%（70/70） |
+| 页面身份通过率 | 70/70；通用“业务动作”、技术模型名、裸 ID、undefined/null 均为 0 |
 | 1440×900 | 全部叶节点已巡检并截图 |
 | 1280×800 | 独立核心旅程证据未在本轮表面脚本执行，标记 N/A |
 | 390×844 | 独立代表页面证据未在本轮表面脚本执行，标记 N/A |
@@ -33,11 +34,11 @@
 
 | 维度 | 当前分数 | 依据 |
 | --- | ---: | --- |
-| 信息架构 | 3 | 115 个权威叶节点可解析并可达 |
+| 信息架构 | 3 | 70 个当前权威叶节点可解析、可达且具备稳定页面身份 |
 | 视觉层级 | 3 | FE-P00/P01 已建立 token 与壳层基线，跨 surface 仍有漂移 |
 | 一致性 | 2 | 列表、详情、表单 contract surface 尚未完成统一证据 |
 | 信息密度 | 3 | 桌面列表可用，完整业务域未验证 |
-| 文案 | 2 | 已发现 record 技术标题回退风险 |
+| 文案 | 3 | 70 个导航表面和 16 个深度场景均使用契约驱动业务标题，技术回退为 0 |
 | 状态反馈 | 3 | 加载/空/错/权限已有基础分支，统一度需审计 |
 | 操作安全 | 3 | 权限隔离有证据，写操作全量审计未完成 |
 | 导航 | 3 | 递归导航和动态 action/menu route 已有全量表面证据 |
@@ -55,17 +56,16 @@
 
 ## 最严重问题
 
-1. record 路由技术标题回退。
-2. 深度旅程（J01–J08）仍需独立浏览器步骤证据。
-3. 1280/390、可访问性和性能尚未达到全量证据门槛。
-4. 结算/付款详情关系链缺少完整浏览器证据。
-5. 全量可访问性没有证据。
-6. 全量性能没有基线。
+1. 结算、付款和合同之间的业务关系链仍缺少完整用户操作闭环。
+2. 1280/390、可访问性和性能尚未达到全量证据门槛。
+3. 全量可访问性没有证据。
+4. 全量性能没有基线。
 
 ## 证据索引
 
-- `artifacts/frontend-audit/full-surface-report.json`
-- `artifacts/frontend-audit/full-surface-report.csv`
+- `artifacts/frontend-page-identity/full-surface-report.json`
+- `artifacts/frontend-page-identity/full-surface-report.csv`
+- `artifacts/frontend-page-identity-deep/report.json`
 - `artifacts/frontend-audit/journeys.json`
 - `artifacts/frontend-audit/responsive-report.json`
 - `artifacts/frontend-audit/accessibility-report.json`
@@ -75,9 +75,9 @@
 - `docs/frontend_productization/frontend_delivery_readiness_v1.md`
 - `scripts/verify/frontend_productization_fixture_browser.mjs`
 
-## 审计边界
+## 原始审计边界
 
-本任务未修改产品页面、样式、后端、API、权限、fixture、数据库或 runtime；后续修复分支必须由本审计 backlog 重新编排。
+原始 FE-AUDIT-01R 仅生成证据，没有修改产品页面、样式、后端、API、权限、fixture、数据库或 runtime；后续 FE-B02/FE-B02R/FE-B03 分支按 backlog 分别完成角色边界、导航可达性和页面身份收口。
 
 ## FE-B02 角色可信边界事实
 
@@ -123,3 +123,23 @@ role_leaf_counts = finance:42, project_member:9, pm:14, owner:5
 ```
 
 四个被移除节点的 action 与 menu 直达均进入统一“无权访问”状态并提供“返回已授权的工作区”，没有业务记录数组、非零金额或 fixture 记录标识泄露。FE-B02 回归再次通过 18 项浏览器检查：finance 付款/结算保留，公司 A→B→A 列表和 `company_id` 同步刷新；project member 仍显示“项目成员”、只见 Project A、敏感入口无回升，action 876/menu 606/越权记录继续拒绝；logout 后 PM/owner 导航未复用前一角色缓存。证据为 `artifacts/playwright/frontend-navigation-access/report.json` 与 `artifacts/playwright/frontend-productization-fixture/report.json`。后续 FE-B03 的权威巡检分母冻结为 70，不再使用历史 115。
+
+## FE-B03 页面身份契约事实
+
+原页面身份链在 router 和 AppShell 中按路由类型拼接通用标题；action 列表没有把 menu/action 的正式中文名称提升为统一页面身份，详情异步读取前只能看到技术 model 与数据库 ID，多个页面组件又分别计算 heading、breadcrumb 与浏览器标题，因此直接刷新、异步完成、KeepAlive 快速切换、公司切换和 logout 后都可能出现通用“业务动作”、`model #id` 或上一上下文残留。
+
+最终权威数据链如下：
+
+1. Odoo menu/action metadata 由 `system.init` 的 release/delivery navigation 交付；menu 正式中文名称来自节点 `label/name/title`，action 场景名称按 `ui_title -> scene_title -> menu_title -> name` 读取，model 业务名称来自 action contract 的 `model_label`。
+2. record 详情契约在 `api.data.get`/form load 中显式读取 `display_name`；若缺失，resolver 只按 contract 声明的主标识字段和通用业务标识字段取值，不建立模型名称到中文标题的前端字典。
+3. `resolveRoutePageIdentity` 在全局路由 guard 完成后用 menu tree、action metadata 和 route state 建立初始 identity；详情页此时先得到带业务上下文的 loading identity。
+4. `ActionView`、`RecordView` 和通用 `ContractFormPage` 在 action/record contract 异步到达后只向同一个 runtime 发布权威输入；`PageIdentityCoordinator` 以 `route.fullPath` 拒绝旧 route 的迟到结果，避免快速切换记录、公司或角色时复用旧标题。
+5. `resolveProductPageIdentity` 是唯一最终解析器，输出 `title/subtitle/documentTitle/breadcrumbs/source`；AppShell、通用页面和 PermissionDenied/NotFound 只消费该结果。仓库业务页面仅由 `App.vue` 一个 watcher 同步 `document.title`，logout 清空 runtime 并恢复登录标题。
+
+标题优先级为：列表 `action -> menu -> model_label -> 业务列表`；详情 `record.display_name -> contract 主标识 -> action/menu + 详情 -> model_label + 详情 -> 记录详情`；新建为 `新建 + action/menu/model`；编辑为 `编辑 + record display_name`，否则 `编辑 + 业务对象`。loading/empty/error 保留已授权业务上下文；denied 和 not-found 丢弃 record identity，分别使用安全的无权状态和“记录不存在”，从而不泄露目标记录名称。最终浏览器标签统一为 `{页面标题} - 智能施工企业管理平台`。
+
+面包屑由当前 menu 的权威祖先路径、action 和 record identity 归一化生成。只有节点本身存在真实 route/action/scene target 才带链接；纯分组节点为文本；当前节点永不链接自身。归一化会删除重复节点以及技术模型名、裸数字 ID、action/menu/record ID 和空值；无权限页不会加入目标 record 名称，无法证明祖先时允许缩短而不伪造层级。
+
+最终机器巡检结果：finance 42、project member 9、PM 14、owner 5，共 `authoritative_leaf_count=70`、`scanned=70`、`reachable=70`、`identity_pass=70`；menu/action XML ID 缺失为 0，通用“业务动作”标题、技术模型标题、裸 ID、undefined/null、403、unresolved 均为 0，70 个导航表面的 identity source 均为 action。证据为 `artifacts/frontend-page-identity/full-surface-report.json` 和同步生成的 `docs/frontend_productization/frontend_surface_inventory_v1.csv`。
+
+16 个深度场景全部 PASS：项目列表/Project A 详情、合同列表/详情由具备正式访问职责的 PM 验证；finance 验证结算、付款申请、付款执行的列表/详情以及合法新建、编辑、404 和公司 A→B→A；project member 验证 logout 后不残留 finance identity 以及敏感 action 的安全拒绝。每个常规页面均检查 heading、`document.title`、breadcrumb、identity source、刷新稳定性、console/pageerror 和 HTTP；权限拒绝报告同时确认响应不包含目标记录名称。项目成员详情附属请求仍受既有权限边界约束，本分支没有为深度场景修改 ACL、record rule、role policy、fixture 或导航。

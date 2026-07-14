@@ -3,7 +3,7 @@
     <StatusPanel
       :title="pageIdentity.title.value"
       hide-title
-      :message="pageText('message', '当前角色无权访问此业务入口。请返回已授权的工作区。')"
+      :message="pageText('message', '该页面或记录不存在，可能已被删除或链接已经失效。')"
       variant="error"
       :on-retry="returnSafely"
     />
@@ -18,8 +18,7 @@ import { usePageIdentityRuntime } from '../app/pageIdentityRuntime';
 
 const router = useRouter();
 const pageIdentity = usePageIdentityRuntime();
-const pageContract = usePageContract('access-denied');
-const pageText = pageContract.text;
+const pageText = usePageContract('not-found').text;
 
 function returnSafely(): void {
   if (window.history.length > 1) router.back();

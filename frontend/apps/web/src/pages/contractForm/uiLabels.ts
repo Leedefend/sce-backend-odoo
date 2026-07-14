@@ -69,7 +69,7 @@ export function resolvePageDisplaySubtitle(params: {
   if (params.currentBusinessCategoryLabel && params.pageTitle !== params.currentBusinessCategoryLabel) return params.pageTitle;
   const recordTitle = String(params.recordTitle || '').trim();
   if (recordTitle && recordTitle !== params.pageDisplayTitle) return recordTitle;
-  return params.recordId ? `记录 #${params.recordId}` : '';
+  return params.recordId ? '记录详情' : '';
 }
 
 export function resolveSubmitButtonLabel(params: {

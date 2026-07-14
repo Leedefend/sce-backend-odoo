@@ -5,10 +5,9 @@ import { ApiError } from '../api/client';
 import { buildCanonicalSceneRouteTarget, normalizeEmbeddedSceneQuery, normalizeLegacyWorkbenchPath, parseSceneKeyFromQuery } from '../app/routeQuery';
 import { getSceneByKey } from '../app/resolvers/sceneRegistry';
 import { findActionMeta, findActionMetaByMenu, findActionNodeByModel, findMenuNode } from '../app/menu';
-import { config } from '../config';
 import { BUSINESS_CONFIG_MODELS } from '../app/businessConfigBoundaries';
-
-const APP_TITLE = config.appTitle;
+import { beginPageIdentity } from '../app/pageIdentityRuntime';
+import { resolveRoutePageIdentity } from '../app/pageIdentityRoute';
 
 function routeTitle(routeName: string | symbol | null | undefined): string {
   const name = typeof routeName === 'string' ? routeName : '';
@@ -21,7 +20,7 @@ function routeTitle(routeName: string | symbol | null | undefined): string {
     'projects-intake': '项目立项',
     scene: '业务场景',
     menu: '业务菜单',
-    action: '业务动作',
+    action: '业务列表',
     workbench: '诊断页',
     'scene-health': '场景健康',
     'scene-packages': '场景发布包',
@@ -30,15 +29,11 @@ function routeTitle(routeName: string | symbol | null | undefined): string {
     'business-config': '配置工作台',
     'menu-config': '菜单配置',
     'form-field-config': '表单字段配置',
-    'model-form': '业务表单',
-    record: '业务记录',
+    'model-form': '记录表单',
+    record: '记录详情',
     'access-denied': '无权访问',
   };
   return map[name] || '系统';
-}
-
-function applyDocumentTitle(routeName: string | symbol | null | undefined) {
-  document.title = `${routeTitle(routeName)} - ${APP_TITLE}`;
 }
 
 function splitRoutePath(rawPath: string) {
@@ -175,7 +170,6 @@ function resolveActivityTitle(to: RouteLocationNormalized, session: ReturnType<t
     return String(meta?.ui_title || meta?.scene_title || meta?.menu_title || menuNode?.label || meta?.name || `动作 ${actionId}`).trim();
   }
   if (to.name === 'record' || to.name === 'model-form') {
-    const model = routeQueryText(to.params.model);
     const id = routeQueryText(to.params.id);
     if (id === 'new') {
       const actionId = positiveInteger(to.query.action_id);
@@ -188,7 +182,7 @@ function resolveActivityTitle(to: RouteLocationNormalized, session: ReturnType<t
       const baseTitle = String(meta?.ui_title || meta?.scene_title || meta?.menu_title || menuNode?.label || meta?.name || '').trim();
       return baseTitle ? `新建${baseTitle}` : '新建业务表单';
     }
-    return `${model || '记录'} #${id || ''}`.trim();
+    return routeTitle(to.name);
   }
   return routeTitle(to.name);
 }
@@ -279,11 +273,11 @@ const router = createRouter({
     { path: '/a/:actionId', name: 'action', component: () => import('../views/ActionViewShell.vue'), meta: { layout: 'shell' } },
     { path: '/f/:model/:id', name: 'model-form', component: () => import('../pages/ContractFormPage.vue'), meta: { layout: 'shell' } },
     { path: '/r/:model/:id', name: 'record', component: () => import('../pages/ContractFormPage.vue'), meta: { layout: 'shell' } },
+    { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('../views/NotFoundView.vue'), meta: { layout: 'shell' } },
   ],
 });
 
 router.beforeEach(async (to) => {
-  applyDocumentTitle(to.name);
   const session = useSessionStore();
   const isLoginRoute = to.name === 'login' || to.name === 'platform-admin-login';
   const wantsPlatformAdminEntry = to.path.startsWith('/platform-admin') || String(to.query.platform_admin || '') === '1';
@@ -369,6 +363,8 @@ router.beforeEach(async (to) => {
 });
 
 router.afterEach((to) => {
+  const session = useSessionStore();
+  beginPageIdentity(to.fullPath, resolveRoutePageIdentity(to, session.menuTree));
   registerRouteActivity(to);
 });
 

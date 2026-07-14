@@ -6,6 +6,8 @@
     :data-layout-kind="activeLayout.kind"
     :data-sidebar-mode="activeLayout.sidebar"
     :data-header-mode="activeLayout.header"
+    :data-page-identity-source="pageIdentity.identity.value.source"
+    :data-page-identity-title="pageTitle"
   >
     <aside v-if="!sidebarHidden" class="sidebar sidebar-nav" :class="sidebarClass" data-component="SidebarNav">
       <div class="brand">
@@ -293,7 +295,7 @@ import { resolveMenuAction } from '../app/resolvers/menuResolver';
 import { isDeliveryModeEnabled, isHudEnabled } from '../config/debug';
 import { buildCanonicalSceneRouteTarget, buildEntryTargetRouteTarget, parseSceneKeyFromQuery } from '../app/routeQuery';
 import { buildRuntimeNavigationRegistry } from '../app/navigationRegistry';
-import { BUSINESS_CONFIG_MODES, BUSINESS_CONFIG_ROUTE_FLAGS } from '../app/businessConfigBoundaries';
+import { clearPageIdentity, usePageIdentityRuntime } from '../app/pageIdentityRuntime';
 import { applyTheme, nextTheme, persistTheme, type ScTheme } from '../styles/theme';
 import { config } from '../config';
 import { openAction } from '../services/action_service';
@@ -548,7 +550,15 @@ const useMinimalTopbar = computed(() =>
   || isConfigurationRoute.value
   || businessRouteUsesCompactTopbar.value,
 );
-const showTopbarHeadline = computed(() => !sceneHeaderMinimal.value && (!useMinimalTopbar.value || route.name === 'record'));
+const compactRouteKeepsHeadline = computed(() => [
+  'action',
+  'menu',
+  'record',
+  'model-form',
+  'access-denied',
+  'not-found',
+].includes(String(route.name || '')));
+const showTopbarHeadline = computed(() => !sceneHeaderMinimal.value && (!useMinimalTopbar.value || compactRouteKeepsHeadline.value));
 const sidebarClass = computed(() =>
   activeLayout.value.sidebar === 'scroll' ? 'sidebar--scroll' : 'sidebar--fixed'
 );
@@ -872,86 +882,9 @@ async function clearProjectSelection() {
   emitProjectContextChanged(previousProjectId);
 }
 
-function resolveActionBusinessTitle(action: unknown) {
-  const source = asDict(action);
-  if (!source) return '';
-  const uiTitle = asText(source.ui_title);
-  if (uiTitle) return uiTitle;
-  const sceneTitle = asText(source.scene_title);
-  if (sceneTitle) return sceneTitle;
-  const menuTitle = asText(source.menu_title);
-  if (menuTitle) return menuTitle;
-  const actionName = asText(source.name);
-  if (actionName) return actionName;
-  return '';
-}
-
-const routeBusinessCategoryLabel = computed(() => asText(
-  route.query.current_business_category_label
-  || route.query.default_business_category_label,
-));
-
-const configurationRouteTitle = computed(() => {
-  if (route.name === 'menu-config') return '菜单配置';
-  if (route.name === 'business-config') return '配置工作台';
-  if (route.path.startsWith('/admin/')) return '配置中心';
-  return '';
-});
-const businessConfigFormTitle = computed(() => {
-  if (route.query.config_mode !== BUSINESS_CONFIG_MODES.lowCode) return '';
-  const pageLabel = asText(route.query.page_label)
-    || asText(route.query.pageLabel)
-    || asText(route.query[BUSINESS_CONFIG_ROUTE_FLAGS.returnPageLabel]);
-  return pageLabel ? `配置：${pageLabel}` : '表单配置';
-});
-
-const pageTitle = computed(() => {
-  if (businessConfigFormTitle.value) {
-    return businessConfigFormTitle.value;
-  }
-  if (configurationRouteTitle.value) {
-    return configurationRouteTitle.value;
-  }
-  if (routeBusinessCategoryLabel.value) {
-    return routeBusinessCategoryLabel.value;
-  }
-  const sceneKey = routeSceneKey.value;
-  if (sceneKey) {
-    const scene = getSceneByKey(sceneKey);
-    if (scene?.label) {
-      return scene.label;
-    }
-  }
-  if (menuLabel.value) {
-    return menuLabel.value;
-  }
-  const actionBusinessTitle = resolveActionBusinessTitle(session.currentAction);
-  if (actionBusinessTitle) {
-    return actionBusinessTitle;
-  }
-  if (hudEnabled.value) {
-    const currentAction = asDict(session.currentAction);
-    const modelLabel = asText(currentAction?.model_label) || asText(currentAction?.model);
-    if (modelLabel) {
-      return modelLabel;
-    }
-  }
-  if (route.name === 'workbench') {
-    return '导航异常';
-  }
-  if (route.name === 'record') {
-    return '记录';
-  }
-  return '角色首页';
-});
-
-const topbarSubtitle = computed(() => {
-  const sceneKey = String(routeSceneKey.value || '').trim();
-  if (sceneKey === 'projects.intake') {
-    return '创建项目 · 填写基础信息完成立项';
-  }
-  return '';
-});
+const pageIdentity = usePageIdentityRuntime();
+const pageTitle = computed(() => pageIdentity.title.value);
+const topbarSubtitle = computed(() => pageIdentity.subtitle.value);
 
 const sceneHeaderMinimal = computed(() => [
   'projects.intake',
@@ -1305,55 +1238,7 @@ function findMenuIdBySceneKey(nodes: NavNode[], sceneKey?: string): number | und
   return walk(nodes);
 }
 
-function isRootContainerMenuId(menuId?: number): boolean {
-  const root = rootNode.value;
-  if (!root || !menuId) return false;
-  const rootId = Number(root.menu_id || root.id || 0);
-  return rootId > 0 && rootId === Number(menuId);
-}
-
-const breadcrumb = computed(() => {
-  const crumbs: Array<{ label: string; to?: string }> = [];
-  if (configurationRouteTitle.value) {
-    crumbs.push({ label: '配置中心', to: route.name === 'business-config' ? undefined : '/admin/business-config' });
-    crumbs.push({ label: configurationRouteTitle.value });
-    return crumbs;
-  }
-  const menuId = activeMenuId.value;
-  const menuPath = findMenuPath(menuTree.value, menuId);
-  if (menuPath.length) {
-    menuPath.forEach((node) => {
-      const label = node.title || node.name || node.label || '菜单';
-      const id = node.menu_id ?? node.id;
-      if (id) {
-        crumbs.push({ label, to: isRootContainerMenuId(Number(id)) ? undefined : `/m/${id}` });
-      }
-    });
-  }
-  if (route.name === 'action') {
-    const label = routeBusinessCategoryLabel.value || session.currentAction?.name || `动作 ${route.params.actionId ?? ''}`.trim();
-    crumbs.push({ label });
-  }
-  if (route.name === 'record') {
-    const recordLabel = routeBusinessCategoryLabel.value || `记录 ${route.params.id ?? ''}`.trim();
-    crumbs.push({ label: recordLabel });
-  }
-  if (!crumbs.length) {
-    crumbs.push({ label: '角色首页' });
-  }
-  return crumbs;
-});
-
-const displayBreadcrumb = computed(() => {
-  const title = pageTitle.value.trim();
-  const crumbs = breadcrumb.value;
-  if (!title || !crumbs.length) return crumbs;
-  const last = crumbs[crumbs.length - 1];
-  if (!last.to && last.label.trim() === title) {
-    return crumbs.slice(0, -1);
-  }
-  return crumbs;
-});
+const displayBreadcrumb = computed(() => pageIdentity.breadcrumbs.value);
 
 const showRefresh = computed(
   () => !isDeliveryMode.value && (import.meta.env.DEV || localStorage.getItem('DEBUG_INTENT') === '1'),
@@ -1515,6 +1400,7 @@ async function refreshInit() {
 
 async function logout() {
   await session.logout();
+  clearPageIdentity();
   router.push('/login');
 }
 </script>

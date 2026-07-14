@@ -15,7 +15,7 @@ Generated from `complexity_budget_report.md` split-plan-required files.
 | --- | ---: | --- | --- | --- |
 | P0 | 5947 | Frontend owner | `frontend/apps/web/src/pages/ContractFormPage.vue` | Extract composables, child panels, data adapters, and action handlers; keep the route component as orchestration shell. |
 | P1 | 3684 | Frontend owner | `frontend/apps/web/src/views/MenuConfigView.vue` | Extract composables, child panels, data adapters, and action handlers; keep the route component as orchestration shell. |
-| P1 | 3680 | Frontend owner | `frontend/apps/web/src/views/ActionView.vue` | Extract composables, child panels, data adapters, and action handlers; keep the route component as orchestration shell. |
+| P1 | 3681 | Frontend owner | `frontend/apps/web/src/views/ActionView.vue` | Extract composables, child panels, data adapters, and action handlers; keep the route component as orchestration shell. |
 | P1 | 3633 | Platform owner | `addons/smart_core/handlers/form_field_configuration.py` | Extract parsing, validation, assembly, and response mapping into owned services. |
 | P1 | 3525 | Frontend owner | `frontend/apps/web/src/views/HomeView.vue` | Extract composables, child panels, data adapters, and action handlers; keep the route component as orchestration shell. |
 | P1 | 3518 | Platform owner | `addons/smart_core/handlers/ui_contract_v2.py` | Extract parsing, validation, assembly, and response mapping into owned services. |
@@ -40,7 +40,7 @@ Generated from `complexity_budget_report.md` split-plan-required files.
 | P2 | 2529 | Construction backend owner | `addons/smart_construction_core/views/menu_business_taxonomy.xml` | Split data/view records by product domain and manifest load order. |
 | P2 | 2521 | Frontend owner | `frontend/apps/web/src/views/MyWorkView.vue` | Extract composables, child panels, data adapters, and action handlers; keep the route component as orchestration shell. |
 | P2 | 2289 | Construction backend owner | `addons/smart_construction_core/models/core/project_core.py` | Extract service methods for cross-model workflow, amount, and policy logic. |
-| P2 | 2274 | Frontend owner | `frontend/apps/web/src/layouts/AppShell.vue` | Extract composables, child panels, data adapters, and action handlers; keep the route component as orchestration shell. |
+| P2 | 2160 | Frontend owner | `frontend/apps/web/src/layouts/AppShell.vue` | Extract composables, child panels, data adapters, and action handlers; keep the route component as orchestration shell. |
 | P2 | 2051 | DevOps owner | `scripts/verify/backend_business_fact_model_audit.py` | Define owner-specific decomposition plan before adding unrelated behavior. |
 | P2 | 1975 | Frontend owner | `frontend/apps/web/src/stores/session.ts` | Define owner-specific decomposition plan before adding unrelated behavior. |
 | P2 | 1971 | Construction backend owner | `addons/smart_construction_core/models/core/payment_request.py` | Extract service methods for cross-model workflow, amount, and policy logic. |
@@ -52,7 +52,7 @@ Generated from `complexity_budget_report.md` split-plan-required files.
 | P2 | 1597 | Construction backend owner | `addons/smart_construction_core/models/support/direct_acceptance_formal_visible_fields.py` | Extract service methods for cross-model workflow, amount, and policy logic. |
 | P2 | 1555 | Construction backend owner | `addons/smart_construction_core/models/support/contract_center.py` | Extract service methods for cross-model workflow, amount, and policy logic. |
 | P2 | 1523 | Construction backend owner | `addons/smart_construction_core/wizard/project_boq_import_wizard.py` | Define owner-specific decomposition plan before adding unrelated behavior. |
-| P2 | 1502 | Frontend owner | `frontend/apps/web/src/views/RecordView.vue` | Extract composables, child panels, data adapters, and action handlers; keep the route component as orchestration shell. |
+| P2 | 1521 | Frontend owner | `frontend/apps/web/src/views/RecordView.vue` | Extract composables, child panels, data adapters, and action handlers; keep the route component as orchestration shell. |
 | P2 | 599 | DevOps owner | `scripts/audit/smoke_role_matrix.sh` | Move reusable logic into small scripts and keep shell as thin entrypoint. |
 | P2 | 551 | DevOps owner | `scripts/ops/audit_project_actions.sh` | Move reusable logic into small scripts and keep shell as thin entrypoint. |
 
