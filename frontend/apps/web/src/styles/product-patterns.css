@@ -365,49 +365,6 @@
   justify-content: flex-end;
 }
 
-/* FE-P02: stable visual identity for the contract-driven project list. */
-.sc-project-list-page .list-toolbar {
-  border-bottom: 1px solid var(--sc-app-border-strong);
-}
-
-.sc-project-list-page .list-title h2 {
-  letter-spacing: -0.01em;
-}
-
-.sc-project-list-page .table {
-  border-color: var(--sc-app-border);
-}
-
-/* FE-B01: contracts use the same dense list language and context boundary. */
-.sc-contract-list-page .list-toolbar,
-.sc-contract-detail-page .sc-product-main-surface {
-  border-color: var(--sc-app-border);
-}
-
-.sc-contract-list-page .table {
-  border-radius: var(--sc-component-table-radius);
-}
-
-.sc-contract-detail-page .sc-product-main-surface {
-  box-shadow: none;
-}
-
-/* FE-P03: project details are an intentionally read-only overview surface. */
-.sc-project-detail-page .sc-product-main-surface {
-  border-color: var(--sc-app-border);
-  box-shadow: none;
-}
-
-.sc-project-detail-page .record-l1 {
-  border-bottom: 1px solid var(--sc-app-border);
-}
-
-@media (max-width: 900px) {
-  .sc-project-list-page .list-header-toolbar {
-    width: 100%;
-  }
-}
-
 .sc-product-panel-gap {
   gap: var(--sc-product-panel-gap);
 }

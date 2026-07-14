@@ -1,10 +1,6 @@
 <template>
   <section
     class="page sc-page sc-product-workspace-stack"
-    :class="{
-      'sc-project-detail-page': model === 'project.project',
-      'sc-contract-detail-page': model === 'construction.contract',
-    }"
     data-product-page-mode="detail"
   >
     <!-- Page intent: surface record status, risks, metrics, and next actions. -->
@@ -39,7 +35,7 @@
         </button>
         <span class="pill" :class="statusTone">{{ statusLabel }}</span>
         <button class="ghost" @click="goBack">{{ pageText('action_back', 'Back') }}</button>
-        <button v-if="status === 'ok' && canEdit && !['project.project', 'construction.contract'].includes(model)" @click="startEdit">{{ pageText('action_edit', 'Edit') }}</button>
+        <button v-if="status === 'ok' && canEdit" @click="startEdit">{{ pageText('action_edit', 'Edit') }}</button>
         <button v-if="status === 'editing'" :disabled="isSaveDisabled" @click="save">{{ pageText('action_save', 'Save') }}</button>
         <button v-if="status === 'editing'" class="ghost" @click="cancelEdit">{{ pageText('action_cancel', 'Cancel') }}</button>
         <button class="ghost" :disabled="status === 'loading' || status === 'saving'" @click="reload">{{ pageText('action_reload', 'Reload') }}</button>
