@@ -1639,7 +1639,11 @@ class PaymentRequest(models.Model):
                 risk = False
                 for settlement in rec.env["sc.settlement.order"].browse(settlement_amounts.keys()):
                     amount = settlement_amounts.get(settlement.id, 0.0)
-                    metrics = opm.compute_settlement_reservable_excluding_request(rec, settlement, amount)
+                    try:
+                        metrics = opm.compute_settlement_reservable_excluding_request(rec, settlement, amount)
+                    except ValidationError:
+                        risk = True
+                        break
                     payable = metrics["payable"]
                     precision = metrics["precision"]
                     if float_compare(amount, payable, precision_rounding=precision) == 1:
@@ -1647,7 +1651,11 @@ class PaymentRequest(models.Model):
                         break
                 rec.is_overpay_risk = risk
                 continue
-            metrics = opm.compute_payment_payable_excluding_self(rec)
+            try:
+                metrics = opm.compute_payment_payable_excluding_self(rec)
+            except ValidationError:
+                rec.is_overpay_risk = True
+                continue
             payable = metrics["payable"]
             precision = metrics["precision"]
             rec.is_overpay_risk = float_compare(rec.amount or 0.0, payable, precision_rounding=precision) == 1

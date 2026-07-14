@@ -558,6 +558,14 @@ class TestCorePaymentAmountSemantics(TransactionCase):
         )
         with self.assertRaises(ValidationError):
             self._request("T1-B Request Currency Mismatch", 1.0, currency=foreign)
+        legacy_mismatch = self._request("T1-B Legacy Currency Mismatch", 1.0)
+        legacy_mismatch.flush_recordset(["currency_id"])
+        self.env.cr.execute(
+            "UPDATE payment_request SET currency_id=%s WHERE id=%s",
+            (foreign.id, legacy_mismatch.id),
+        )
+        self.env.invalidate_all()
+        self.assertTrue(legacy_mismatch.is_overpay_risk)
         foreign_contract = self._contract(
             "T1-B Foreign Contract", self.project, self.partner, self.company, foreign
         )
