@@ -165,9 +165,6 @@ async function main() {
   }
   console.log('[verify.frontend.fixture.browser] PASS');
   console.log(JSON.stringify(result, null, 2));
-  // Playwright may retain a child transport briefly after browser.close();
-  // terminate only after the report is durably written and emitted.
-  process.exit(0);
 }
 
 main().catch((error) => {
