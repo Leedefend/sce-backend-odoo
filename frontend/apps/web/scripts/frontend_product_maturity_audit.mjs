@@ -131,7 +131,7 @@ async function main() {
           }
           rows.push({ surface_id: `FE-AUD-${role}-${index + 1}`, navigation_path: link.title, title: link.title, route: safeRoute, ...await inspectPage(page, role, safeRoute, screenshot) });
         } catch (error) {
-          rows.push({ surface_id: `FE-AUD-${role}-${index + 1}`, navigation_path: link.title, title: link.title, route: safeRoute, reachable: false, load_result: 'timeout', notes: error.message });
+          rows.push({ surface_id: `FE-AUD-${role}-${index + 1}`, role, navigation_path: link.title, title: link.title, route: safeRoute, reachable: false, load_result: 'timeout', notes: error.message });
         }
       }
       await page.close();
