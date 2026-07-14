@@ -41,6 +41,7 @@ def main() -> int:
     expected_views = {
         "ActionView.vue",
         "ActionViewShell.vue",
+        "AccessDeniedView.vue",
         "BusinessConfigSurfaceView.vue",
         "HomeView.vue",
         "LoginView.vue",

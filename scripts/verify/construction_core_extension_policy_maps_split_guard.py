@@ -79,7 +79,7 @@ def main() -> int:
 
     if not errors:
         policy_maps = _load(POLICY_MAPS, "construction_core_extension_policy_maps_under_guard")
-        if policy_maps.ROLE_PRECEDENCE != ("business_config_admin", "executive", "pm", "finance"):
+        if policy_maps.ROLE_PRECEDENCE != ("business_config_admin", "executive", "owner", "pm", "finance"):
             errors.append("policy maps must preserve role precedence")
         if policy_maps.NAV_MENU_SCENE_MAP.get("smart_construction_core.menu_payment_request") != "finance.payment_requests":
             errors.append("policy maps must preserve payment menu scene mapping")

@@ -90,7 +90,7 @@ def main() -> int:
     if not errors:
         roles = _load(ACTOR_ROLES, "construction_core_extension_actor_roles_under_guard")
         resolved = roles.resolve_release_actor_role_codes(_User())
-        if resolved != ["executive", "finance", "owner", "pm"]:
+        if resolved != ["executive", "finance", "owner", "project_member"]:
             errors.append(f"actor roles must preserve explicit and capability-derived roles: {resolved}")
         if roles.resolve_release_actor_role_codes(None) != []:
             errors.append("actor roles must return empty list for missing user")

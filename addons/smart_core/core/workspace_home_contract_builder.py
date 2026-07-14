@@ -2011,7 +2011,7 @@ def _resolve_role_source_code(data: Dict[str, Any]) -> str:
 
 def _normalize_role_code(data: Dict[str, Any]) -> str:
     role_code = _resolve_role_source_code(data)
-    if role_code in {"pm", "finance", "owner"}:
+    if role_code in {"pm", "finance", "owner", "project_member"}:
         return role_code
     return "owner"
 
@@ -2024,6 +2024,11 @@ def _role_focus_config(role_code: str) -> Dict[str, Any]:
             value = fn(role_code)
             if isinstance(value, dict) and value:
                 return value
+    if role_code == "project_member":
+        return {
+            "zone_order": ["primary", "support"],
+            "focus_blocks": ["record_overview", "todo_core"],
+        }
     if role_code == "pm":
         return {
             "zone_order": ["primary", "analysis", "support"],

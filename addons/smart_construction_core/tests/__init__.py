@@ -45,3 +45,4 @@ from . import test_odoo_native_alignment_boundaries
 from . import test_user_feedback_business_views
 from . import test_workflow_contract_backend
 from . import test_runtime_user_management
+from . import test_role_surface_project_member

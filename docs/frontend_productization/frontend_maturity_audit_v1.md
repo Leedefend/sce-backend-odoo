@@ -78,3 +78,20 @@
 ## 审计边界
 
 本任务未修改产品页面、样式、后端、API、权限、fixture、数据库或 runtime；后续修复分支必须由本审计 backlog 重新编排。
+
+## FE-B02 角色可信边界事实
+
+深度旅程审计后确认，项目成员账号原先仅携带项目读取/业务发起能力，但角色解析将 `group_sc_cap_project_read` 误归为 `pm`，前端最终回退显示为 owner；同一错误还使敏感财务、税务、人事和付款菜单进入权威导航。
+
+最终权威调用链如下：
+
+1. fixture 用户 `demo_role_project_a_member` 由 `smart_construction_demo` 固定为内部用户，持有 `group_sc_cap_project_read`、`group_sc_cap_business_initiator`，并通过 `mail.followers` 只关联 FE Project A；finance/PM/owner 分别持有 `smart_construction_custom.group_sc_role_finance/pm/owner`。
+2. `smart_construction_core.smart_core_identity_profile` 将角色组与能力组交给 `smart_core.identity.IdentityResolver`；显式 finance/PM/owner 先按正式角色组解析，仅无更高显式角色的 project-read 用户解析为 `project_member`，因此 PM 不会被降级为项目成员。
+3. `IdentityResolver.build_role_surface` 产出角色标签、允许菜单根和基于 menu XML ID/action XML ID/model 的禁止标识；行业敏感模型事实保留在 `smart_construction_core`，`smart_core` 仅执行通用标识投影。
+4. release navigation 由 `IdentityResolver.filter_nav_for_role_surface` 裁剪；delivery navigation 由 `DeliveryEngine -> MenuService.build_nav` 使用同一 role surface 再裁剪，二者共同进入 `system.init` 的 `release_navigation_v1.nav` 与 `delivery_engine_v1.nav`。
+5. 前端 `session.loadAppInit` 优先消费 `release_navigation_v1.nav`，其次消费 `delivery_engine_v1.nav`，并在角色/公司初始化后替换 `menuTree`；退出登录清空 role/nav/activity/cache，公司切换重新执行 project-context 搜索与 `system.init`。
+6. `/m/:menuId`、`/a/:actionId` 及带 action/menu 上下文的 record 路由在全局 router guard 中先对权威 `menuTree` 校验；未授权目标在业务组件挂载和 action/data 请求前进入公共“无权访问”状态并提供安全返回。无 action/menu 上下文的越权记录仍由后端 ACL/record rule 返回 403，由表单错误契约归一化，前端不把空数据当作成功。
+
+本修复只收紧产品入口与直达导航权威，不修改 ACL、record rule、fixture 业务授权、金额、状态机或字段。项目成员在后端现行规则允许时仍可读取 Project A 下的部分项目/合同业务事实，但不会获得财务管理入口；Project B/C 记录继续由 record rule 拒绝。
+
+验收结果：角色/导航定向 Odoo 测试 4 个方法通过；固定浏览器报告 18 项检查通过。J02 完成 FE Company A→B→A 且记录集合和 company_id 请求上下文同步切换；J03 完成角色标签、权威导航、项目 A/B/C、动态 action/menu/record 直达、HTTP 403、无敏感 payload、logout 后 PM/owner 角色缓存隔离。证据路径为 `artifacts/playwright/frontend-productization-fixture/report.json`，截图目录同级。
