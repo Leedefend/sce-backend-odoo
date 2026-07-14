@@ -4,7 +4,7 @@ Generated from repository source files. This report is informational during the 
 
 ## Summary
 
-- Scanned files: `3948`
+- Scanned files: `3949`
 - Files requiring split plan: `42`
 - Files above warning threshold: `64`
 
@@ -14,7 +14,7 @@ Generated from repository source files. This report is informational during the 
 | ---: | --- | --- |
 | 5947 | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
 | 3684 | Vue source | `frontend/apps/web/src/views/MenuConfigView.vue` |
-| 3681 | Vue source | `frontend/apps/web/src/views/ActionView.vue` |
+| 3680 | Vue source | `frontend/apps/web/src/views/ActionView.vue` |
 | 3633 | Python source | `addons/smart_core/handlers/form_field_configuration.py` |
 | 3525 | Vue source | `frontend/apps/web/src/views/HomeView.vue` |
 | 3518 | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
@@ -70,9 +70,9 @@ Generated from repository source files. This report is informational during the 
 | 1400 | Python source | `addons/smart_core/handlers/business_config_surface.py` |
 | 1396 | XML data/view | `addons/smart_construction_core/data/view_orchestration_contract_generated_data.xml` |
 | 1383 | XML data/view | `addons/smart_construction_core/views/support/legacy_direct_acceptance_views.xml` |
+| 1383 | Python source | `addons/smart_core/delivery/menu_service.py` |
 | 1380 | XML data/view | `addons/smart_construction_core/views/support/audit_list_fields_views.xml` |
 | 1370 | Python source | `addons/smart_core/utils/contract_governance.py` |
-| 1369 | Python source | `addons/smart_core/delivery/menu_service.py` |
 | 1336 | Python source | `scripts/verify/release_v2_0_0_control_docs_guard.py` |
 | 1323 | Python source | `addons/smart_core/app_config_engine/models/app_view_config.py` |
 | 1315 | XML data/view | `addons/smart_construction_scene/data/sc_scene_layout.xml` |
@@ -130,7 +130,7 @@ Generated from repository source files. This report is informational during the 
 | ---: | --- | --- | --- |
 | 5947 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
 | 3684 | split_plan_required | Vue source | `frontend/apps/web/src/views/MenuConfigView.vue` |
-| 3681 | split_plan_required | Vue source | `frontend/apps/web/src/views/ActionView.vue` |
+| 3680 | split_plan_required | Vue source | `frontend/apps/web/src/views/ActionView.vue` |
 | 3633 | split_plan_required | Python source | `addons/smart_core/handlers/form_field_configuration.py` |
 | 3525 | split_plan_required | Vue source | `frontend/apps/web/src/views/HomeView.vue` |
 | 3518 | split_plan_required | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
@@ -179,9 +179,9 @@ Generated from repository source files. This report is informational during the 
 | 1400 | warning | Python source | `addons/smart_core/handlers/business_config_surface.py` |
 | 1396 | warning | XML data/view | `addons/smart_construction_core/data/view_orchestration_contract_generated_data.xml` |
 | 1383 | warning | XML data/view | `addons/smart_construction_core/views/support/legacy_direct_acceptance_views.xml` |
+| 1383 | warning | Python source | `addons/smart_core/delivery/menu_service.py` |
 | 1380 | warning | XML data/view | `addons/smart_construction_core/views/support/audit_list_fields_views.xml` |
 | 1370 | warning | Python source | `addons/smart_core/utils/contract_governance.py` |
-| 1369 | warning | Python source | `addons/smart_core/delivery/menu_service.py` |
 | 1336 | warning | Python source | `scripts/verify/release_v2_0_0_control_docs_guard.py` |
 | 1323 | warning | Python source | `addons/smart_core/app_config_engine/models/app_view_config.py` |
 | 1315 | warning | XML data/view | `addons/smart_construction_scene/data/sc_scene_layout.xml` |

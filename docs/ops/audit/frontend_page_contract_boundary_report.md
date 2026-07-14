@@ -1,12 +1,13 @@
 # Frontend Page Contract Boundary Report
 
 - ok: `True`
-- checked_views: `19`
+- checked_views: `20`
 - checked_layouts: `2`
 - boundary: `all-pages-contract-driven`
 - error_count: `0`
 
 ## Scanned Views
+- `frontend/apps/web/src/views/AccessDeniedView.vue`
 - `frontend/apps/web/src/views/ActionView.vue`
 - `frontend/apps/web/src/views/ActionViewShell.vue`
 - `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue`

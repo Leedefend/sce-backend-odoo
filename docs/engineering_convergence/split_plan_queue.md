@@ -15,7 +15,7 @@ Generated from `complexity_budget_report.md` split-plan-required files.
 | --- | ---: | --- | --- | --- |
 | P0 | 5947 | Frontend owner | `frontend/apps/web/src/pages/ContractFormPage.vue` | Extract composables, child panels, data adapters, and action handlers; keep the route component as orchestration shell. |
 | P1 | 3684 | Frontend owner | `frontend/apps/web/src/views/MenuConfigView.vue` | Extract composables, child panels, data adapters, and action handlers; keep the route component as orchestration shell. |
-| P1 | 3681 | Frontend owner | `frontend/apps/web/src/views/ActionView.vue` | Extract composables, child panels, data adapters, and action handlers; keep the route component as orchestration shell. |
+| P1 | 3680 | Frontend owner | `frontend/apps/web/src/views/ActionView.vue` | Extract composables, child panels, data adapters, and action handlers; keep the route component as orchestration shell. |
 | P1 | 3633 | Platform owner | `addons/smart_core/handlers/form_field_configuration.py` | Extract parsing, validation, assembly, and response mapping into owned services. |
 | P1 | 3525 | Frontend owner | `frontend/apps/web/src/views/HomeView.vue` | Extract composables, child panels, data adapters, and action handlers; keep the route component as orchestration shell. |
 | P1 | 3518 | Platform owner | `addons/smart_core/handlers/ui_contract_v2.py` | Extract parsing, validation, assembly, and response mapping into owned services. |
