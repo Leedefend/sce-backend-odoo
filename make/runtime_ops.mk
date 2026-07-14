@@ -1726,7 +1726,7 @@ mod.upgrade: guard.codex.fast.upgrade guard.prod.danger check-compose-project ch
 # ======================================================
 # ==================== Policy Ops ======================
 # ======================================================
-.PHONY: db.frontend.acceptance.ensure demo.frontend.fixture verify.frontend.fixture verify.frontend.fixture.guard verify.frontend.fixture.browser policy.apply.business_full policy.apply.role_matrix policy.ensure.role_surface_demo smoke.business_full smoke.role_matrix verify.portal.role_surface_preflight.container verify.portal.role_surface_smoke.container p2.smoke p3.smoke p3.audit codex.preflight codex.merge codex.rollback codex.pr.body codex.release.note db.policy stage.preflight stage.run ops.auth.dev.apply ops.auth.dev.rollback ops.auth.dev.verify
+.PHONY: db.frontend.acceptance.ensure demo.frontend.fixture verify.frontend.fixture verify.frontend.fixture.guard verify.frontend.fixture.browser verify.frontend.navigation.access policy.apply.business_full policy.apply.role_matrix policy.ensure.role_surface_demo smoke.business_full smoke.role_matrix verify.portal.role_surface_preflight.container verify.portal.role_surface_smoke.container p2.smoke p3.smoke p3.audit codex.preflight codex.merge codex.rollback codex.pr.body codex.release.note db.policy stage.preflight stage.run ops.auth.dev.apply ops.auth.dev.rollback ops.auth.dev.verify
 FRONTEND_ACCEPTANCE_DB := $(if $(filter command line,$(origin DB_NAME)),$(DB_NAME),sc_frontend_acceptance)
 
 db.frontend.acceptance.ensure: guard.prod.forbid check-compose-project check-compose-env
@@ -1753,6 +1753,19 @@ verify.frontend.fixture.browser: guard.prod.forbid check-compose-project check-c
 	test -n "$$action_line" -a -n "$$menu_line" -a -n "$$record_a_line" -a -n "$$record_c_line"; \
 	export "$$action_line" "$$menu_line" "$$record_a_line" "$$record_c_line"; \
 	$(MAKE) --no-print-directory backend.acceptance.up; $(MAKE) --no-print-directory frontend.acceptance.up; trap '$(MAKE) --no-print-directory frontend.acceptance.down; $(MAKE) --no-print-directory backend.acceptance.down' EXIT; $(RUN_ENV) DB_NAME=$(FRONTEND_ACCEPTANCE_DB) SC_ENVIRONMENT=acceptance SC_ALLOW_DEMO_DATA=1 FRONTEND_URL=$${FRONTEND_URL:-http://127.0.0.1:5175} FRONTEND_FIXTURE_PAYMENT_ACTION_ID=$${FRONTEND_FIXTURE_PAYMENT_ACTION_ID} FRONTEND_FIXTURE_PAYMENT_MENU_ID=$${FRONTEND_FIXTURE_PAYMENT_MENU_ID} FRONTEND_FIXTURE_PAYMENT_RECORD_A_ID=$${FRONTEND_FIXTURE_PAYMENT_RECORD_A_ID} FRONTEND_FIXTURE_PAYMENT_RECORD_C_ID=$${FRONTEND_FIXTURE_PAYMENT_RECORD_C_ID} node scripts/verify/frontend_productization_fixture_browser.mjs
+
+verify.frontend.navigation.access: guard.prod.forbid check-compose-project check-compose-env
+	@set -e; \
+	runtime_output="$$( $(RUN_ENV) DB_NAME=$(FRONTEND_ACCEPTANCE_DB) SC_ENVIRONMENT=acceptance SC_ALLOW_DEMO_DATA=1 bash scripts/ops/odoo_shell_exec.sh < scripts/verify/frontend_navigation_access_runtime_ids.py 2>&1 )"; \
+	for key in PLAN_ACTION PLAN_MENU PLAN_REPORT_ACTION PLAN_REPORT_MENU TENDER_ACTION TENDER_MENU; do \
+		line="$$(echo "$$runtime_output" | grep "^FRONTEND_NAV_ACCESS_$${key}_ID=" | tail -1)"; test -n "$$line"; export "$$line"; \
+	done; \
+	$(MAKE) --no-print-directory backend.acceptance.up; $(MAKE) --no-print-directory frontend.acceptance.up; trap '$(MAKE) --no-print-directory frontend.acceptance.down; $(MAKE) --no-print-directory backend.acceptance.down' EXIT; \
+	$(RUN_ENV) DB_NAME=$(FRONTEND_ACCEPTANCE_DB) SC_ENVIRONMENT=acceptance SC_ALLOW_DEMO_DATA=1 FRONTEND_URL=$${FRONTEND_URL:-http://127.0.0.1:5175} \
+	FRONTEND_NAV_ACCESS_PLAN_ACTION_ID=$${FRONTEND_NAV_ACCESS_PLAN_ACTION_ID} FRONTEND_NAV_ACCESS_PLAN_MENU_ID=$${FRONTEND_NAV_ACCESS_PLAN_MENU_ID} \
+	FRONTEND_NAV_ACCESS_PLAN_REPORT_ACTION_ID=$${FRONTEND_NAV_ACCESS_PLAN_REPORT_ACTION_ID} FRONTEND_NAV_ACCESS_PLAN_REPORT_MENU_ID=$${FRONTEND_NAV_ACCESS_PLAN_REPORT_MENU_ID} \
+	FRONTEND_NAV_ACCESS_TENDER_ACTION_ID=$${FRONTEND_NAV_ACCESS_TENDER_ACTION_ID} FRONTEND_NAV_ACCESS_TENDER_MENU_ID=$${FRONTEND_NAV_ACCESS_TENDER_MENU_ID} \
+	node scripts/verify/frontend_navigation_access_consistency_browser.mjs
 
 policy.apply.business_full: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) POLICY_MODULE=smart_construction_custom DB_NAME=$(DB_NAME) bash scripts/audit/apply_business_full_policy.sh

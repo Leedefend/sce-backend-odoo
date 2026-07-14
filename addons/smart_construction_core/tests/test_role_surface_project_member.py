@@ -66,3 +66,57 @@ class TestProjectMemberRoleSurface(TransactionCase):
     def test_finance_navigation_is_not_affected_by_project_member_policy(self):
         nodes = [{"meta": {"model": "payment.request", "action_id": 2}, "children": []}]
         self.assertEqual(MenuService._filter_role_surface_nodes(nodes, {"role_code": "finance"}), nodes)
+
+    def test_known_unreachable_actions_are_removed_by_stable_identifiers(self):
+        resolver = self._resolver()
+        nodes = [{
+            "xmlid": "smart_construction_core.menu_sc_project_center",
+            "children": [
+                {
+                    "xmlid": "smart_construction_core.menu_sc_plan",
+                    "meta": {"action_xmlid": "smart_construction_core.action_sc_plan", "model": "sc.plan", "action_id": 1},
+                },
+                {
+                    "xmlid": "smart_construction_core.menu_sc_plan_report",
+                    "meta": {"action_xmlid": "smart_construction_core.action_sc_plan_report", "model": "sc.plan.report", "action_id": 2},
+                },
+                {
+                    "xmlid": "smart_construction_core.menu_sc_tender_registration",
+                    "meta": {"action_xmlid": "smart_construction_core.action_sc_tender_registration", "model": "tender.bid", "action_id": 3},
+                },
+                {
+                    "xmlid": "smart_construction_core.menu_payment_request",
+                    "meta": {"action_xmlid": "smart_construction_core.action_payment_request", "model": "payment.request", "action_id": 4},
+                },
+            ],
+        }]
+        forbidden_actions = {
+            "finance": {
+                "smart_construction_core.action_sc_plan",
+                "smart_construction_core.action_sc_plan_report",
+            },
+            "project_member": {"smart_construction_core.action_sc_tender_registration"},
+            "owner": {"smart_construction_core.action_sc_tender_registration"},
+            "pm": set(),
+        }
+        role_groups = {
+            "finance": {"smart_construction_custom.group_sc_role_finance"},
+            "project_member": {"smart_construction_core.group_sc_cap_project_read"},
+            "owner": {"smart_construction_custom.group_sc_role_owner"},
+            "pm": {"smart_construction_custom.group_sc_role_pm"},
+        }
+        for role, groups in role_groups.items():
+            with self.subTest(role=role):
+                surface = resolver.build_role_surface(groups, [], {"projects.list"}, ROLE_SURFACE_OVERRIDES)
+                for nav in (
+                    resolver.filter_nav_for_role_surface(nodes, surface),
+                    MenuService._filter_role_surface_nodes(nodes, surface),
+                ):
+                    actual = {child["meta"]["action_xmlid"] for child in nav[0]["children"]}
+                    self.assertFalse(actual & forbidden_actions[role])
+                    if role == "finance":
+                        self.assertIn("smart_construction_core.action_payment_request", actual)
+                    if role == "pm":
+                        self.assertIn("smart_construction_core.action_sc_plan", actual)
+                        self.assertIn("smart_construction_core.action_sc_plan_report", actual)
+                        self.assertIn("smart_construction_core.action_sc_tender_registration", actual)
