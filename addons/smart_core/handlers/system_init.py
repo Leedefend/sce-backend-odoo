@@ -2007,6 +2007,7 @@ class SystemInitHandler(BaseIntentHandler):
         release_snapshot_service = EditionReleaseSnapshotService(env)
         release_audit_service = ReleaseAuditTrailService(env)
         data["delivery_engine_v1"] = delivery_payload
+        _delivery_authoritative_nav = list(delivery_payload.get("nav") or [])
         delivery_release_navigation = build_release_navigation_contract({"delivery_engine_v1": delivery_payload})
         edition_diagnostics = (
             delivery_payload.get("product_policy", {}).get("edition_diagnostics")
@@ -2232,12 +2233,36 @@ class SystemInitHandler(BaseIntentHandler):
             }
         if contract_mode == "hud" and isinstance(scene_diagnostics, dict):
             data["scene_diagnostics"] = scene_diagnostics
+        # Carry the already-authorized delivery projection into the startup
+        # contract at the final handler boundary.  This prevents an earlier
+        # minimal-surface/default pass from replacing a non-empty projection
+        # with an empty release payload.
+        _delivery_final = data.get("delivery_engine_v1") if isinstance(data.get("delivery_engine_v1"), dict) else {}
+        _release_final = data.get("release_navigation_v1") if isinstance(data.get("release_navigation_v1"), dict) else {}
+        if isinstance(_delivery_final.get("nav"), list) and _delivery_final.get("nav"):
+            _release_final = dict(_release_final)
+            _release_final["nav"] = _delivery_final["nav"]
+            data["release_navigation_v1"] = _release_final
+        _delivery_policy_meta = delivery_payload.get("product_policy") if isinstance(delivery_payload, dict) else {}
+        _can_restore_delivery_nav = (
+            not platform_minimum_surface_mode
+            and bool(_delivery_authoritative_nav)
+            and isinstance(_delivery_policy_meta, dict)
+            and not bool(_delivery_policy_meta.get("policy_empty"))
+            and str(delivery_payload.get("product_key") or "").strip()
+        )
+        _delivery_authoritative = _delivery_authoritative_nav if _can_restore_delivery_nav else []
         data = SystemInitPayloadBuilder.build_startup_surface(
             data,
             params=params,
             build_mode=build_mode,
             inspect_payload=startup_inspect,
         )
+        if _delivery_authoritative:
+            data["delivery_engine_v1"] = dict(data.get("delivery_engine_v1") or {})
+            data["delivery_engine_v1"]["nav"] = _delivery_authoritative
+            data["release_navigation_v1"] = dict(data.get("release_navigation_v1") or {})
+            data["release_navigation_v1"]["nav"] = _delivery_authoritative
         SystemInitPayloadBuilder.attach_layered_contract(data)
         try:
             data = apply_dictionary_startup_data(env, data)

@@ -401,6 +401,29 @@ class TestDeliveryMenuEntryTarget(unittest.TestCase):
 
         self.assertFalse(allowed)
 
+    def test_visible_parent_menu_is_authorized_but_unlisted_sibling_is_not(self):
+        service = menu_service.MenuService()
+        native = [{
+            "label": "财务中心",
+            "menu_id": 600,
+            "children": [
+                self._native_leaf(label="付款申请", menu_id=606),
+                self._native_leaf(label="未授权兄弟", menu_id=607),
+            ],
+        }]
+        index = service._native_authorized_menu_index(native)
+        self.assertIn(600, index["ids"])
+        self.assertIn(606, index["ids"])
+        self.assertNotIn(608, index["ids"])
+        policy = {"menu_groups": [{"group_key": "finance", "group_label": "财务中心", "menus": [
+            {"menu_key": "payment", "label": "付款申请", "menu_id": 606, "action_id": 1, "release_state": "released"},
+            {"menu_key": "sibling", "label": "未授权菜单", "menu_id": 608, "action_id": 2, "release_state": "released"},
+        ]}]}
+        nav = service.build_nav(policy=policy, role_surface={"role_code": "employee"}, native_nav=native)
+        labels = [leaf.get("label") for group in (nav[0].get("children") or []) for leaf in (group.get("children") or [])]
+        self.assertIn("付款申请", labels)
+        self.assertNotIn("未授权菜单", labels)
+
     def test_policy_scene_route_menu_is_allowed_when_authorized_by_route(self):
         nav = menu_service.MenuService().build_nav(
             policy={

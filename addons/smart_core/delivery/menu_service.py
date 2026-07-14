@@ -262,7 +262,21 @@ class MenuService:
 
     def _native_authorized_menu_index(self, native_nav: list[dict]) -> dict[str, set]:
         index = {"ids": set(), "xmlids": set(), "scenes": set(), "routes": set()}
-        for _ancestors, leaf in self._iter_leaf_nodes(native_nav or []):
+        def visit(nodes):
+            for node in nodes or []:
+                if not isinstance(node, dict):
+                    continue
+                yield node
+                children = node.get("children") if isinstance(node.get("children"), list) else []
+                yield from visit(children)
+
+        # Policy entries may legitimately target a visible parent action/menu,
+        # not only a leaf.  Index every user-visible native node so the policy
+        # intersection does not discard valid entries before parent-chain
+        # reconstruction.  The native tree is already built under the real
+        # request user, so this remains an authorization check rather than a
+        # sudo-derived catalog lookup.
+        for leaf in visit(native_nav or []):
             if not isinstance(leaf, dict):
                 continue
             meta = leaf.get("meta") if isinstance(leaf.get("meta"), dict) else {}

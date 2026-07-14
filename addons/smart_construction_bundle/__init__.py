@@ -7,3 +7,4 @@ from .core_extension import (  # noqa: F401
     smart_core_resolve_startup_delivery_identity,
     smart_core_extend_system_init,
 )
+from .hooks import post_init_hook

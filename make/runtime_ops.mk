@@ -1726,23 +1726,31 @@ mod.upgrade: guard.codex.fast.upgrade guard.prod.danger check-compose-project ch
 # ======================================================
 # ==================== Policy Ops ======================
 # ======================================================
-.PHONY: demo.frontend.fixture verify.frontend.fixture verify.frontend.fixture.browser policy.apply.business_full policy.apply.role_matrix policy.ensure.role_surface_demo smoke.business_full smoke.role_matrix verify.portal.role_surface_preflight.container verify.portal.role_surface_smoke.container p2.smoke p3.smoke p3.audit codex.preflight codex.merge codex.rollback codex.pr.body codex.release.note db.policy stage.preflight stage.run ops.auth.dev.apply ops.auth.dev.rollback ops.auth.dev.verify
+.PHONY: db.frontend.acceptance.ensure demo.frontend.fixture verify.frontend.fixture verify.frontend.fixture.guard verify.frontend.fixture.browser policy.apply.business_full policy.apply.role_matrix policy.ensure.role_surface_demo smoke.business_full smoke.role_matrix verify.portal.role_surface_preflight.container verify.portal.role_surface_smoke.container p2.smoke p3.smoke p3.audit codex.preflight codex.merge codex.rollback codex.pr.body codex.release.note db.policy stage.preflight stage.run ops.auth.dev.apply ops.auth.dev.rollback ops.auth.dev.verify
+FRONTEND_ACCEPTANCE_DB := $(if $(filter command line,$(origin DB_NAME)),$(DB_NAME),sc_frontend_acceptance)
+
+db.frontend.acceptance.ensure: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(FRONTEND_ACCEPTANCE_DB) SC_ENVIRONMENT=acceptance SC_ALLOW_DEMO_DATA=1 bash scripts/demo/frontend_acceptance_db_ensure.sh
+
 demo.frontend.fixture: guard.prod.forbid check-compose-project check-compose-env
-	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/demo/frontend_productization_fixture.sh
+	@$(RUN_ENV) DB_NAME=$(FRONTEND_ACCEPTANCE_DB) SC_ENVIRONMENT=acceptance SC_ALLOW_DEMO_DATA=1 bash scripts/demo/frontend_productization_fixture.sh
 
 verify.frontend.fixture: guard.prod.forbid check-compose-project check-compose-env
-	@python3 -m py_compile addons/smart_construction_demo/tools/frontend_productization_fixture.py scripts/verify/frontend_productization_fixture.py
-	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/frontend_productization_fixture.py
-	@$(MAKE) --no-print-directory verify.frontend.fixture.browser DB_NAME=$(DB_NAME)
+	@python3 -m py_compile addons/smart_construction_demo/tools/frontend_productization_fixture.py scripts/verify/frontend_productization_fixture.py scripts/verify/frontend_productization_fixture_nonfixture_regression.py scripts/verify/frontend_productization_history_fingerprint.py
+	@$(RUN_ENV) DB_NAME=$(FRONTEND_ACCEPTANCE_DB) SC_ENVIRONMENT=acceptance SC_ALLOW_DEMO_DATA=1 bash scripts/verify/frontend_productization_fixture.sh
+	@$(MAKE) --no-print-directory verify.frontend.fixture.browser DB_NAME=$(FRONTEND_ACCEPTANCE_DB)
+
+verify.frontend.fixture.guard: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) bash scripts/verify/frontend_productization_fixture_guard.sh
 
 verify.frontend.fixture.browser: guard.prod.forbid check-compose-project check-compose-env
 	@set -e; \
-	runtime_output="$$( $(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/frontend_productization_fixture_runtime_ids.py 2>&1 )"; \
+	runtime_output="$$( $(RUN_ENV) DB_NAME=$(FRONTEND_ACCEPTANCE_DB) SC_ENVIRONMENT=acceptance SC_ALLOW_DEMO_DATA=1 bash scripts/ops/odoo_shell_exec.sh < scripts/verify/frontend_productization_fixture_runtime_ids.py 2>&1 )"; \
 	action_line="$$(echo "$$runtime_output" | grep '^FRONTEND_FIXTURE_PAYMENT_ACTION_ID=' | tail -1)"; \
 	menu_line="$$(echo "$$runtime_output" | grep '^FRONTEND_FIXTURE_PAYMENT_MENU_ID=' | tail -1)"; \
 	test -n "$$action_line" -a -n "$$menu_line"; \
 	export "$$action_line" "$$menu_line"; \
-	$(RUN_ENV) DB_NAME=$(DB_NAME) FRONTEND_URL=$${FRONTEND_URL:-http://127.0.0.1:18081} FRONTEND_FIXTURE_PAYMENT_ACTION_ID=$${FRONTEND_FIXTURE_PAYMENT_ACTION_ID} FRONTEND_FIXTURE_PAYMENT_MENU_ID=$${FRONTEND_FIXTURE_PAYMENT_MENU_ID} node scripts/verify/frontend_productization_fixture_browser.mjs
+	$(MAKE) --no-print-directory backend.acceptance.up; $(MAKE) --no-print-directory frontend.acceptance.up; trap '$(MAKE) --no-print-directory frontend.acceptance.down; $(MAKE) --no-print-directory backend.acceptance.down' EXIT; $(RUN_ENV) DB_NAME=$(FRONTEND_ACCEPTANCE_DB) SC_ENVIRONMENT=acceptance SC_ALLOW_DEMO_DATA=1 FRONTEND_URL=$${FRONTEND_URL:-http://127.0.0.1:5175} FRONTEND_FIXTURE_PAYMENT_ACTION_ID=$${FRONTEND_FIXTURE_PAYMENT_ACTION_ID} FRONTEND_FIXTURE_PAYMENT_MENU_ID=$${FRONTEND_FIXTURE_PAYMENT_MENU_ID} node scripts/verify/frontend_productization_fixture_browser.mjs
 
 policy.apply.business_full: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) POLICY_MODULE=smart_construction_custom DB_NAME=$(DB_NAME) bash scripts/audit/apply_business_full_policy.sh
