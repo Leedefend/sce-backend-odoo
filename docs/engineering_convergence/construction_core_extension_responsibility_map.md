@@ -3,7 +3,7 @@
 Date: 2026-07-14
 Owner: Construction backend owner
 Target file: `addons/smart_construction_core/core_extension.py`
-Current size: 2,440 lines
+Current size: 2,243 lines
 Phase: staged responsibility split
 
 ## Purpose
@@ -47,6 +47,7 @@ construction-owned policy.
 | `construction_core_extension_hook_facts_split_guard.py` | Static hook fact extraction, business config refs, low-code menu refs, product/app shell/scene facts, acceptance nav contract, line lock, and static-facts boundary. |
 | `construction_core_extension_policy_accessors_split_guard.py` | Policy accessor extraction, file model contribution scan, API mutation/create/unlink policies, contract tax quick-create detection, line lock, and read-side policy boundary. |
 | `construction_core_extension_contract_normalizers_split_guard.py` | Contract normalizer extraction, construction diary/general contract tax/company form projection, helper delegation, workflow-injection boundary, line lock, and projection-only boundary. |
+| `construction_core_extension_intent_handlers_split_guard.py` | Intent handler contribution extraction, lazy handler import mapping, approval-policy intent preservation, facade registry boundary, line lock, and no env/registry side effects. |
 | `backend_boundary_guard.py` | Core backend ownership and extension-boundary constraints. |
 | `owner_industry_isolation_probe.py` | Industry module isolation and required extension hooks. |
 
@@ -165,6 +166,20 @@ Stage 8 is complete when:
   calls, routing, registration side effects, file IO, permission inference, or
   workflow service access;
 - `core_extension.py` is locked at `<=2440` lines for this stage.
+
+## Stage 9 Target
+
+Stage 9 is complete when:
+
+- `core_extension_intent_handlers.py` owns lazy construction intent handler
+  imports and the intent-to-handler contribution mapping;
+- `core_extension.py` keeps the public `get_intent_handler_contributions`
+  facade and `smart_core_register(registry)` because registry writes are the
+  extension-loader transaction boundary;
+- the extracted module remains contribution assembly only: no `env` access, ORM
+  calls, registry mutation, HTTP calls, file IO, or import-time registration
+  side effects;
+- `core_extension.py` is locked at `<=2243` lines for this stage.
 
 ## Next Candidate
 

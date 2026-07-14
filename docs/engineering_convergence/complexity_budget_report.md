@@ -4,7 +4,7 @@ Generated from repository source files. This report is informational during the 
 
 ## Summary
 
-- Scanned files: `3916`
+- Scanned files: `3918`
 - Files requiring split plan: `41`
 - Files above warning threshold: `65`
 
@@ -30,10 +30,10 @@ Generated from repository source files. This report is informational during the 
 | 2529 | XML data/view | `addons/smart_construction_core/views/menu_business_taxonomy.xml` |
 | 2521 | Vue source | `frontend/apps/web/src/views/MyWorkView.vue` |
 | 2443 | Python source | `addons/smart_core/core/unified_page_contract_v2_assembler.py` |
-| 2440 | Python source | `addons/smart_construction_core/core_extension.py` |
 | 2306 | Python source | `addons/smart_core/handlers/system_init.py` |
 | 2289 | Python source | `addons/smart_construction_core/models/core/project_core.py` |
 | 2267 | Vue source | `frontend/apps/web/src/layouts/AppShell.vue` |
+| 2243 | Python source | `addons/smart_construction_core/core_extension.py` |
 | 2193 | Python source | `addons/smart_core/handlers/api_data.py` |
 | 2051 | Python source | `scripts/verify/backend_business_fact_model_audit.py` |
 | 1974 | Python source | `addons/smart_construction_core/models/core/payment_request.py` |
@@ -146,10 +146,10 @@ Generated from repository source files. This report is informational during the 
 | 2529 | split_plan_required | XML data/view | `addons/smart_construction_core/views/menu_business_taxonomy.xml` |
 | 2521 | split_plan_required | Vue source | `frontend/apps/web/src/views/MyWorkView.vue` |
 | 2443 | split_plan_required | Python source | `addons/smart_core/core/unified_page_contract_v2_assembler.py` |
-| 2440 | split_plan_required | Python source | `addons/smart_construction_core/core_extension.py` |
 | 2306 | split_plan_required | Python source | `addons/smart_core/handlers/system_init.py` |
 | 2289 | split_plan_required | Python source | `addons/smart_construction_core/models/core/project_core.py` |
 | 2267 | split_plan_required | Vue source | `frontend/apps/web/src/layouts/AppShell.vue` |
+| 2243 | split_plan_required | Python source | `addons/smart_construction_core/core_extension.py` |
 | 2193 | split_plan_required | Python source | `addons/smart_core/handlers/api_data.py` |
 | 2051 | split_plan_required | Python source | `scripts/verify/backend_business_fact_model_audit.py` |
 | 2010 | warning | XML data/view | `addons/smart_construction_core/security/sc_record_rules.xml` |
