@@ -3,7 +3,7 @@
 Date: 2026-07-14
 Owner: Construction backend owner
 Target file: `addons/smart_construction_core/core_extension.py`
-Current size: 2,120 lines
+Current size: 2,065 lines
 Phase: staged responsibility split
 
 ## Purpose
@@ -48,6 +48,7 @@ construction-owned policy.
 | `construction_core_extension_policy_accessors_split_guard.py` | Policy accessor extraction, file model contribution scan, API mutation/create/unlink policies, contract tax quick-create detection, line lock, and read-side policy boundary. |
 | `construction_core_extension_contract_normalizers_split_guard.py` | Contract normalizer extraction, construction diary/general contract tax/company form projection, helper delegation, workflow-injection boundary, line lock, and projection-only boundary. |
 | `construction_core_extension_intent_handlers_split_guard.py` | Intent handler contribution extraction, lazy handler import mapping, approval-policy intent preservation, facade registry boundary, line lock, and no env/registry side effects. |
+| `construction_core_extension_service_builders_split_guard.py` | Service builder extraction, lazy service class/factory imports, facade hook preservation, line lock, and no ORM/registry side effects. |
 | `backend_boundary_guard.py` | Core backend ownership and extension-boundary constraints. |
 | `owner_industry_isolation_probe.py` | Industry module isolation and required extension hooks. |
 
@@ -193,6 +194,21 @@ Stage 10 is complete when:
 - the extracted policy remains static facts only: no `env` access, ORM calls,
   HTTP calls, routing, file IO, or registration side effects;
 - `core_extension.py` is locked at `<=2120` lines for this stage.
+
+## Stage 11 Target
+
+Stage 11 is complete when:
+
+- `core_extension_service_builders.py` owns lazy service class and service
+  factory imports for scene services, dashboard/capability builders, project
+  insight, execute button contracts, and project/cost/payment/settlement slice
+  services;
+- `core_extension.py` keeps the public `smart_core_*` hook names and delegates
+  service construction into the extracted module;
+- the extracted module remains service construction only: no direct ORM access,
+  searches, writes, registry mutation, HTTP calls, file IO, or import-time
+  registration side effects;
+- `core_extension.py` is locked at `<=2065` lines for this stage.
 
 ## Next Candidate
 

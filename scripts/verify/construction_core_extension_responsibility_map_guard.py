@@ -43,7 +43,7 @@ def main() -> int:
 
     for token in [
         "Construction Core Extension Responsibility Map",
-        "Current size: 2,120 lines",
+        "Current size: 2,065 lines",
         "staged responsibility split",
         "## Public Entry Points",
         "## Responsibility Bands",
@@ -58,6 +58,7 @@ def main() -> int:
         "## Stage 8 Target",
         "## Stage 9 Target",
         "## Stage 10 Target",
+        "## Stage 11 Target",
         "`core_extension_project_layout.py` owns pure project form layout helpers",
         "`core_extension_contract_helpers.py` owns generic contract helper utilities",
         "`core_extension_policy_maps.py` owns static construction policy/map facts",
@@ -68,7 +69,8 @@ def main() -> int:
         "`core_extension_contract_normalizers.py` owns projection-only contract",
         "`core_extension_intent_handlers.py` owns lazy construction intent handler",
         "`core_extension_hook_facts.py` also owns static menu delivery token policy",
-        "`core_extension.py` is locked at `<=2120` lines",
+        "`core_extension_service_builders.py` owns lazy service class and service",
+        "`core_extension.py` is locked at `<=2065` lines",
         "Do not move import-time registration side effects",
         "workflow projection reads `env`, registry, records",
         "`smart_core_register(registry)` because registry writes",
@@ -87,6 +89,7 @@ def main() -> int:
         "construction_core_extension_policy_accessors_split_guard.py",
         "construction_core_extension_contract_normalizers_split_guard.py",
         "construction_core_extension_intent_handlers_split_guard.py",
+        "construction_core_extension_service_builders_split_guard.py",
         "backend_boundary_guard.py",
         "owner_industry_isolation_probe.py",
     ]:
@@ -146,6 +149,12 @@ def main() -> int:
             errors.append("core_extension.py must import intent handlers module")
         if "return _intent_handlers.get_intent_handler_contributions()" not in core:
             errors.append("core_extension.py must delegate intent handler contributions")
+        if "core_extension_service_builders as _service_builders" not in core:
+            errors.append("core_extension.py must import service builders module")
+        if "return _service_builders.build_project_execution_service(env)" not in core:
+            errors.append("core_extension.py must delegate service builders")
+        if "return _service_builders.build_settlement_slice_service(env)" not in core:
+            errors.append("core_extension.py must delegate settlement service builder")
         if "def smart_core_register(registry):" not in core or "registry[intent_name] = handler" not in core:
             errors.append("core_extension.py must keep registry write boundary in facade")
         if "APPROVAL_POLICY_INTENTS" in core:
@@ -168,6 +177,7 @@ def main() -> int:
         "python3 scripts/verify/construction_core_extension_policy_accessors_split_guard.py",
         "python3 scripts/verify/construction_core_extension_contract_normalizers_split_guard.py",
         "python3 scripts/verify/construction_core_extension_intent_handlers_split_guard.py",
+        "python3 scripts/verify/construction_core_extension_service_builders_split_guard.py",
         "python3 scripts/verify/construction_core_extension_responsibility_map_guard.py",
     ]:
         if ci_token not in ci:
