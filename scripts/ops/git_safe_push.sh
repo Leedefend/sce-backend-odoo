@@ -23,15 +23,22 @@ if ! git diff --quiet || ! git diff --cached --quiet; then
   exit 2
 fi
 
-if ! git remote get-url origin >/dev/null 2>&1; then
-  echo "❌ remote 'origin' not configured" >&2
-  exit 2
-fi
+for remote in origin gitee; do
+  if ! git remote get-url "$remote" >/dev/null 2>&1; then
+    echo "❌ required remote '${remote}' not configured" >&2
+    exit 2
+  fi
+done
 
-if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
-  echo "[pr.push] pushing to origin/${branch}"
-  git push origin "$branch"
-else
-  echo "[pr.push] pushing new branch to origin/${branch}"
-  git push -u origin "$branch"
-fi
+for remote in origin gitee; do
+  if git ls-remote --exit-code --heads "$remote" "$branch" >/dev/null 2>&1; then
+    echo "[pr.push] pushing to ${remote}/${branch}"
+    git push "$remote" "$branch"
+  elif [[ "$remote" == "origin" ]]; then
+    echo "[pr.push] pushing new branch to ${remote}/${branch}"
+    git push -u "$remote" "$branch"
+  else
+    echo "[pr.push] pushing new branch to ${remote}/${branch}"
+    git push "$remote" "$branch"
+  fi
+done
