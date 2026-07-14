@@ -1726,7 +1726,24 @@ mod.upgrade: guard.codex.fast.upgrade guard.prod.danger check-compose-project ch
 # ======================================================
 # ==================== Policy Ops ======================
 # ======================================================
-.PHONY: policy.apply.business_full policy.apply.role_matrix policy.ensure.role_surface_demo smoke.business_full smoke.role_matrix verify.portal.role_surface_preflight.container verify.portal.role_surface_smoke.container p2.smoke p3.smoke p3.audit codex.preflight codex.merge codex.rollback codex.pr.body codex.release.note db.policy stage.preflight stage.run ops.auth.dev.apply ops.auth.dev.rollback ops.auth.dev.verify
+.PHONY: demo.frontend.fixture verify.frontend.fixture verify.frontend.fixture.browser policy.apply.business_full policy.apply.role_matrix policy.ensure.role_surface_demo smoke.business_full smoke.role_matrix verify.portal.role_surface_preflight.container verify.portal.role_surface_smoke.container p2.smoke p3.smoke p3.audit codex.preflight codex.merge codex.rollback codex.pr.body codex.release.note db.policy stage.preflight stage.run ops.auth.dev.apply ops.auth.dev.rollback ops.auth.dev.verify
+demo.frontend.fixture: guard.prod.forbid check-compose-project check-compose-env
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/demo/frontend_productization_fixture.sh
+
+verify.frontend.fixture: guard.prod.forbid check-compose-project check-compose-env
+	@python3 -m py_compile addons/smart_construction_demo/tools/frontend_productization_fixture.py scripts/verify/frontend_productization_fixture.py
+	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/frontend_productization_fixture.py
+	@$(MAKE) --no-print-directory verify.frontend.fixture.browser DB_NAME=$(DB_NAME)
+
+verify.frontend.fixture.browser: guard.prod.forbid check-compose-project check-compose-env
+	@set -e; \
+	runtime_output="$$( $(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/frontend_productization_fixture_runtime_ids.py 2>&1 )"; \
+	action_line="$$(echo "$$runtime_output" | grep '^FRONTEND_FIXTURE_PAYMENT_ACTION_ID=' | tail -1)"; \
+	menu_line="$$(echo "$$runtime_output" | grep '^FRONTEND_FIXTURE_PAYMENT_MENU_ID=' | tail -1)"; \
+	test -n "$$action_line" -a -n "$$menu_line"; \
+	export "$$action_line" "$$menu_line"; \
+	$(RUN_ENV) DB_NAME=$(DB_NAME) FRONTEND_URL=$${FRONTEND_URL:-http://127.0.0.1:18081} FRONTEND_FIXTURE_PAYMENT_ACTION_ID=$${FRONTEND_FIXTURE_PAYMENT_ACTION_ID} FRONTEND_FIXTURE_PAYMENT_MENU_ID=$${FRONTEND_FIXTURE_PAYMENT_MENU_ID} node scripts/verify/frontend_productization_fixture_browser.mjs
+
 policy.apply.business_full: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) POLICY_MODULE=smart_construction_custom DB_NAME=$(DB_NAME) bash scripts/audit/apply_business_full_policy.sh
 policy.apply.role_matrix: guard.prod.danger check-compose-project check-compose-env
@@ -1930,4 +1947,3 @@ gate.full: guard.codex.fast.noheavy guard.prod.forbid check-compose-project chec
 	fi
 	@$(MAKE) verify.phase_9_8.gate_summary
 	@$(MAKE) audit.pull DB_NAME=$(DB_NAME)
-

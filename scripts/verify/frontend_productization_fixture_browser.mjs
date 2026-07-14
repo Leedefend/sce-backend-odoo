@@ -1,0 +1,142 @@
+#!/usr/bin/env node
+
+import fs from 'node:fs';
+import path from 'node:path';
+import { launchChromium } from './playwright_runtime.mjs';
+
+const BASE_URL = process.env.FRONTEND_URL || process.env.BASE_URL || 'http://127.0.0.1:18081';
+const DB_NAME = process.env.DB_NAME || 'sc_demo';
+const PASSWORD = process.env.ROLE_SMOKE_PASSWORD || 'demo';
+const OUTPUT_DIR = process.env.ARTIFACTS_DIR || 'artifacts/playwright/frontend-productization-fixture';
+const PAYMENT_ACTION_ID = Number(process.env.FRONTEND_FIXTURE_PAYMENT_ACTION_ID || 0);
+const PAYMENT_MENU_ID = Number(process.env.FRONTEND_FIXTURE_PAYMENT_MENU_ID || 0);
+
+fs.mkdirSync(OUTPUT_DIR, { recursive: true });
+
+function requireCheck(condition, message) {
+  if (!condition) throw new Error(message);
+}
+
+async function login(page, loginName) {
+  await page.goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+  const inputs = page.locator('input');
+  await inputs.nth(0).fill(loginName);
+  await inputs.nth(1).fill(PASSWORD);
+  if (await inputs.nth(2).isEnabled()) {
+    await inputs.nth(2).fill(DB_NAME);
+  } else {
+    requireCheck((await inputs.nth(2).inputValue()) === DB_NAME, 'configured login database mismatch');
+  }
+  await page.getByRole('button', { name: /^登录$/ }).click();
+  await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 45000 });
+  await page.locator('.layout-shell').waitFor({ timeout: 45000 });
+}
+
+async function openAction(page, action) {
+  const target = action.menuId > 0
+    ? `/m/${action.menuId}?action_id=${action.actionId}`
+    : `/a/${action.actionId}`;
+  await page.goto(`${BASE_URL}${target}`, {
+    waitUntil: 'domcontentloaded',
+    timeout: 45000,
+  });
+  await page.locator('.layout-shell').waitFor({ timeout: 45000 });
+  await page.locator('section.page[data-product-page-mode="list"]').first().waitFor({ timeout: 45000 });
+  const loading = page.getByText('正在加载列表...', { exact: true }).last();
+  await loading.waitFor({ state: 'visible', timeout: 45000 });
+  await loading.waitFor({ state: 'hidden', timeout: 45000 });
+}
+
+async function openScene(page, sceneKey) {
+  await page.goto(`${BASE_URL}/s/${sceneKey}`, { waitUntil: 'domcontentloaded', timeout: 45000 });
+  await page.locator('.layout-shell').waitFor({ timeout: 45000 });
+  await page.waitForFunction(() => {
+    const text = document.body.innerText || '';
+    return !text.includes('正在加载页面') && !text.includes('正在加载场景');
+  }, null, { timeout: 45000 });
+}
+
+async function bodyText(page) {
+  return page.locator('body').innerText();
+}
+
+async function selectCompany(page, companyName) {
+  const selector = page.locator('label.business-scope-field select').filter({
+    has: page.locator(`option:has-text("${companyName}")`),
+  }).first();
+  await selector.waitFor({ timeout: 30000 });
+  await selector.selectOption({ label: companyName });
+  await page.waitForTimeout(500);
+  await page.waitForFunction((name) => {
+    const select = [...document.querySelectorAll('label.business-scope-field select')]
+      .find((node) => [...node.options].some((option) => option.textContent?.trim() === name));
+    return select?.selectedOptions?.[0]?.textContent?.trim() === name;
+  }, companyName, { timeout: 30000 });
+}
+
+function actionableErrors(errors) {
+  return errors.filter((line) => !line.includes('favicon') && !line.includes('ResizeObserver'));
+}
+
+async function main() {
+  const browser = await launchChromium({ headless: true });
+  const result = { pass: false, base_url: BASE_URL, db: DB_NAME, checks: [], screenshots: [] };
+  try {
+    const finance = await browser.newPage({ viewport: { width: 1440, height: 900 }, locale: 'zh-CN' });
+    const financeErrors = [];
+    finance.on('console', (msg) => { if (msg.type() === 'error') financeErrors.push(msg.text()); });
+    finance.on('pageerror', (error) => financeErrors.push(error.message));
+    await login(finance, 'demo_role_finance');
+    requireCheck(PAYMENT_ACTION_ID > 0 && PAYMENT_MENU_ID > 0, 'fixture payment action context was not provided');
+    const paymentAction = { actionId: PAYMENT_ACTION_ID, menuId: PAYMENT_MENU_ID };
+    await openAction(finance, paymentAction);
+    await selectCompany(finance, 'FE Company A');
+    await finance.waitForFunction(() => (document.body.innerText || '').includes('FE-A-PR-001'), null, { timeout: 45000 });
+    let text = await bodyText(finance);
+    requireCheck(text.includes('FE-A-PR-001') && text.includes('FE-B-PR-001'), 'finance company A payment rows missing');
+    requireCheck(!text.includes('FE-C-PR-001'), 'finance company A leaked company B row');
+    const financeA = path.join(OUTPUT_DIR, 'finance-company-a-payments.png');
+    await finance.screenshot({ path: financeA, fullPage: true });
+    result.screenshots.push(financeA);
+
+    await selectCompany(finance, 'FE Company B');
+    await finance.waitForFunction(() => (document.body.innerText || '').includes('FE-C-PR-001'), null, { timeout: 30000 });
+    text = await bodyText(finance);
+    requireCheck(text.includes('FE-C-PR-001'), 'finance company B payment row missing');
+    requireCheck(!text.includes('FE-A-PR-001') && !text.includes('FE-B-PR-001'), 'finance company switch retained company A rows');
+    const financeB = path.join(OUTPUT_DIR, 'finance-company-b-payments.png');
+    await finance.screenshot({ path: financeB, fullPage: true });
+    result.screenshots.push(financeB);
+    requireCheck(actionableErrors(financeErrors).length === 0, `finance browser errors: ${actionableErrors(financeErrors).join(' | ')}`);
+    result.checks.push('finance_login', 'finance_company_a_isolation', 'finance_company_b_switch_refresh');
+    await finance.close();
+
+    const member = await browser.newPage({ viewport: { width: 1440, height: 900 }, locale: 'zh-CN' });
+    const memberErrors = [];
+    member.on('console', (msg) => { if (msg.type() === 'error') memberErrors.push(msg.text()); });
+    member.on('pageerror', (error) => memberErrors.push(error.message));
+    await login(member, 'demo_role_project_a_member');
+    await openScene(member, 'projects.list');
+    await member.waitForFunction(() => (document.body.innerText || '').includes('FE Project A'), null, { timeout: 45000 });
+    const memberText = await bodyText(member);
+    requireCheck(memberText.includes('FE Project A'), 'project A member cannot see FE Project A');
+    requireCheck(!memberText.includes('FE Project B') && !memberText.includes('FE Project C'), 'project A member sees out-of-scope project');
+    requireCheck(actionableErrors(memberErrors).length === 0, `member browser errors: ${actionableErrors(memberErrors).join(' | ')}`);
+    const memberShot = path.join(OUTPUT_DIR, 'project-a-member-projects.png');
+    await member.screenshot({ path: memberShot, fullPage: true });
+    result.screenshots.push(memberShot);
+    result.checks.push('project_a_member_login', 'project_a_member_project_isolation');
+    await member.close();
+    result.pass = true;
+  } finally {
+    await browser.close();
+    fs.writeFileSync(path.join(OUTPUT_DIR, 'report.json'), `${JSON.stringify(result, null, 2)}\n`, 'utf8');
+  }
+  console.log('[verify.frontend.fixture.browser] PASS');
+  console.log(JSON.stringify(result, null, 2));
+}
+
+main().catch((error) => {
+  console.error(`[verify.frontend.fixture.browser] FAIL ${error.stack || error.message}`);
+  process.exitCode = 2;
+});
