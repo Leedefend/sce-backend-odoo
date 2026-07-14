@@ -126,7 +126,7 @@ async function main() {
         const data = body?.result || body?.data || body;
         const d = data?.delivery_engine_v1?.nav;
         const r = data?.release_navigation_v1?.nav;
-        process.stderr.write(`[system-init-wire] status=${response.status()} delivery=${Array.isArray(d) ? d.length : 'missing'} release=${Array.isArray(r) ? r.length : 'missing'} result=${Array.isArray(data?.nav) ? data.nav.length : 'missing'}\n`);
+        process.stderr.write(`[system-init-wire] status=${response.status()} body=${Object.keys(body||{}).join(',')} data=${Object.keys(data||{}).join(',')} delivery=${Array.isArray(d) ? d.length : 'missing'} release=${Array.isArray(r) ? r.length : 'missing'} result=${Array.isArray(data?.nav) ? data.nav.length : 'missing'}\n`);
       } catch {}
     });
     finance.on('console', (msg) => { if (msg.type() === 'error') financeErrors.push(msg.text()); });
