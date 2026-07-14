@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import _
+from odoo.exceptions import ValidationError
 from odoo.tools.float_utils import float_compare
 
 from .rules import BaseRule, register, SEVERITY_ERROR
@@ -27,11 +28,8 @@ class PaymentNotOverpayRule(BaseRule):
         issues = []
         checked = 0
 
-        paid_states = opm.get_paid_states()
         records = Payment.search(domain)
         records = records.filtered(lambda rec: rec.settlement_id or rec.outflow_line_ids.filtered("settlement_id"))
-        settlement_ids = records.mapped("settlement_id").ids + records.mapped("outflow_line_ids.settlement_id").ids
-        paid_map = opm.settlement_paid_map(env, settlement_ids, paid_states=paid_states)
 
         for pr in records:
             checked += 1
@@ -39,15 +37,22 @@ class PaymentNotOverpayRule(BaseRule):
             if not settle:
                 for line in pr.outflow_line_ids.filtered("settlement_id"):
                     settle = line.settlement_id
-                    currency = pr.company_id.currency_id
-                    precision = currency.rounding or 0.01
-                    if precision <= 0:
-                        precision = 0.01
-                    paid = paid_map.get(settle.id, 0.0)
-                    if pr.state in paid_states:
-                        paid -= line.current_pay_amount or 0.0
-                    payable = (settle.amount_total or 0.0) - paid
                     amount = line.current_pay_amount or 0.0
+                    try:
+                        metrics = opm.compute_settlement_reservable_excluding_request(pr, settle, amount)
+                    except ValidationError as exc:
+                        issues.append(
+                            {
+                                "model": "payment.request",
+                                "res_id": pr.id,
+                                "message": str(exc),
+                                "refs": {"name": pr.display_name, "line_id": line.id},
+                                "suggestions": [],
+                            }
+                        )
+                        continue
+                    payable = metrics["payable"]
+                    precision = metrics["precision"]
                     if float_compare(amount, payable, precision_rounding=precision) == 1:
                         issues.append(
                             {
@@ -69,16 +74,22 @@ class PaymentNotOverpayRule(BaseRule):
                             }
                         )
                 continue
-            currency = pr.company_id.currency_id
-            precision = currency.rounding or 0.01
-            if precision <= 0:
-                precision = 0.01
-            paid = paid_map.get(settle.id, 0.0)
-            # 排除自身（避免自统计）
-            if pr.state in paid_states:
-                paid -= pr.amount or 0.0
-            payable = (settle.amount_total or 0.0) - paid
             amount = pr.amount or 0.0
+            try:
+                metrics = opm.compute_settlement_reservable_excluding_request(pr, settle, amount)
+            except ValidationError as exc:
+                issues.append(
+                    {
+                        "model": "payment.request",
+                        "res_id": pr.id,
+                        "message": str(exc),
+                        "refs": {"name": pr.display_name},
+                        "suggestions": [],
+                    }
+                )
+                continue
+            payable = metrics["payable"]
+            precision = metrics["precision"]
 
             if float_compare(amount, payable, precision_rounding=precision) == 1:
                 issues.append(

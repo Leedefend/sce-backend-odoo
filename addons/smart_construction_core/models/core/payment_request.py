@@ -1451,7 +1451,7 @@ class PaymentRequest(models.Model):
             )
         )
 
-    @api.constrains("settlement_id", "type", "project_id", "partner_id", "contract_id")
+    @api.constrains("settlement_id", "type", "project_id", "partner_id", "contract_id", "currency_id")
     def _check_settlement_consistency(self):
         for rec in self:
             settle = rec.settlement_id
@@ -1468,6 +1468,7 @@ class PaymentRequest(models.Model):
                 raise ValidationError(_("结算单往来单位必须与付款申请一致。"))
             if settle.contract_id and rec.contract_id and settle.contract_id != rec.contract_id:
                 raise ValidationError(_("结算单合同必须与付款申请一致。"))
+            opm.ensure_payment_settlement_currency_consistency(rec, settle)
             # 已进入流程的记录在字段更改时仍要守住额度
             if rec.state in ("submit", "approve", "approved", "done"):
                 rec._check_settlement_remaining_amount()
@@ -1551,17 +1552,11 @@ class PaymentRequest(models.Model):
                 )
             if not settlement_amounts:
                 continue
-            paid_states = opm.get_paid_states()
-            paid_map = opm.settlement_paid_map(rec.env, settlement_amounts.keys(), paid_states=paid_states)
-            precision = rec.currency_id.rounding if rec.currency_id else 0.01
-            if precision <= 0:
-                precision = 0.01
             for settlement in rec.env["sc.settlement.order"].browse(settlement_amounts.keys()):
                 amount = settlement_amounts.get(settlement.id, 0.0)
-                paid = paid_map.get(settlement.id, 0.0)
-                if rec.state in paid_states:
-                    paid -= amount
-                payable = (settlement.amount_total or 0.0) - paid
+                metrics = opm.compute_settlement_reservable_excluding_request(rec, settlement, amount)
+                payable = metrics["payable"]
+                precision = metrics["precision"]
                 if float_compare(amount, payable, precision_rounding=precision) == 1:
                     raise_guard(
                         "P0_PAYMENT_OVER_BALANCE",
@@ -1641,18 +1636,12 @@ class PaymentRequest(models.Model):
                 if not settlement_amounts:
                     rec.is_overpay_risk = False
                     continue
-                paid_states = opm.get_paid_states()
-                paid_map = opm.settlement_paid_map(rec.env, settlement_amounts.keys(), paid_states=paid_states)
-                precision = rec.currency_id.rounding if rec.currency_id else 0.01
-                if precision <= 0:
-                    precision = 0.01
                 risk = False
                 for settlement in rec.env["sc.settlement.order"].browse(settlement_amounts.keys()):
                     amount = settlement_amounts.get(settlement.id, 0.0)
-                    paid = paid_map.get(settlement.id, 0.0)
-                    if rec.state in paid_states:
-                        paid -= amount
-                    payable = (settlement.amount_total or 0.0) - paid
+                    metrics = opm.compute_settlement_reservable_excluding_request(rec, settlement, amount)
+                    payable = metrics["payable"]
+                    precision = metrics["precision"]
                     if float_compare(amount, payable, precision_rounding=precision) == 1:
                         risk = True
                         break
