@@ -2008,7 +2008,6 @@ class SystemInitHandler(BaseIntentHandler):
         release_audit_service = ReleaseAuditTrailService(env)
         data["delivery_engine_v1"] = delivery_payload
         _delivery_authoritative_nav = list(delivery_payload.get("nav") or [])
-        _logger.warning("SYSTEM_INIT_DELIVERY_BUILT nav=%s", len(delivery_payload.get("nav") or []))
         delivery_release_navigation = build_release_navigation_contract({"delivery_engine_v1": delivery_payload})
         edition_diagnostics = (
             delivery_payload.get("product_policy", {}).get("edition_diagnostics")
@@ -2256,7 +2255,6 @@ class SystemInitHandler(BaseIntentHandler):
             data["delivery_engine_v1"]["nav"] = _delivery_authoritative
             data["release_navigation_v1"] = dict(data.get("release_navigation_v1") or {})
             data["release_navigation_v1"]["nav"] = _delivery_authoritative
-        _logger.warning("SYSTEM_INIT_FINAL_NAV delivery=%s release=%s result=%s", len((data.get("delivery_engine_v1") or {}).get("nav") or []), len((data.get("release_navigation_v1") or {}).get("nav") or []), len(data.get("nav") or []))
         SystemInitPayloadBuilder.attach_layered_contract(data)
         try:
             data = apply_dictionary_startup_data(env, data)
