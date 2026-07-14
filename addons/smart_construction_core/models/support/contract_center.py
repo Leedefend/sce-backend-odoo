@@ -5,6 +5,7 @@ from odoo import _, api, fields, models
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tools import config
 
+from . import operating_metrics as opm
 from .state_machine import ScStateMachine
 
 
@@ -782,11 +783,7 @@ class ConstructionContract(models.Model):
             "amount",
             included_states=("received", "legacy_confirmed"),
         )
-        payment_map = self._sum_amount_by_contract(
-            "sc.payment.execution",
-            "paid_amount",
-            excluded_states=("cancel", "cancelled"),
-        )
+        payment_map = opm.contract_actual_paid_amount_map(self.env, self.ids)
         for contract in self:
             total = contract.amount_final or 0.0
             invoice_amount = invoice_map.get(contract.id, 0.0)

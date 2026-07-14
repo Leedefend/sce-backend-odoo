@@ -266,17 +266,17 @@ class ScSettlementOrder(models.Model):
         "payment_request_line_ids.current_pay_amount",
         "payment_request_line_ids.request_id.state",
         "payment_request_line_ids.request_id.settlement_id",
+        "amount_after_adjustment",
     )
     def _compute_paid_amounts(self):
-        """Phase7-1: 结算单的已付/可付口径，统一由 operating_metrics 提供。"""
-        paid_map = opm.settlement_paid_map(self.env, self.ids)
+        """Compatibility paid fields expose reservation, not ledger actual paid."""
+        reserved_map = opm.settlement_reserved_amount_map(self.env, self.ids)
         for order in self:
-            total = order.amount_total or 0.0
-            paid = paid_map.get(order.id, 0.0)
-            remaining = total - paid
-            order.paid_amount = paid
+            reserved = reserved_map.get(order.id, 0.0)
+            remaining = opm.settlement_remaining_reservable_amount(order, reserved)
+            order.paid_amount = reserved
             order.remaining_amount = remaining
-            order.amount_paid = paid
+            order.amount_paid = reserved
             order.amount_payable = remaining
             order.unpaid_amount = remaining
 
