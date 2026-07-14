@@ -15,8 +15,8 @@ const password = process.env.ROLE_SMOKE_PASSWORD || 'demo';
 const outputDir = process.env.ARTIFACTS_DIR || 'artifacts/frontend-audit';
 const roles = (process.env.AUDIT_ROLES || 'demo_role_finance,demo_role_project_a_member,demo_role_pm,demo_role_owner').split(',').map((v) => v.trim()).filter(Boolean);
 const viewports = [{ width: 1440, height: 900 }, { width: 1280, height: 800 }, { width: 390, height: 844 }];
-const maxSurfacesPerRole = Number(process.env.AUDIT_MAX_SURFACES || 30);
-const dangerous = /新建|创建|保存|提交|审批|删除|撤销|登记|付款|确认|导入|发布|重置|编辑/i;
+const maxSurfacesPerRole = Number(process.env.AUDIT_MAX_SURFACES || 0);
+const writeAction = /新建|创建|保存|提交|审批|删除|撤销|登记|确认|导入|发布|重置|编辑/i;
 
 fs.mkdirSync(outputDir, { recursive: true });
 
@@ -30,15 +30,26 @@ function pageType(url, mode, text) {
   return 'report';
 }
 
+function navigationFromPayload(payload) {
+  const candidates = [payload, payload?.result, payload?.data, payload?.result?.data];
+  for (const value of candidates) {
+    for (const key of ['release_navigation_v1', 'delivery_engine_v1']) {
+      const projection = value?.[key];
+      if (Array.isArray(projection?.nav)) return projection.nav;
+      if (Array.isArray(projection)) return projection;
+    }
+  }
+  return null;
+}
+
 async function login(page, loginName) {
   let navigation = [];
   page.on('response', async (response) => {
     if (!response.url().includes('/api/v1/intent')) return;
     try {
       const payload = await response.json();
-      const data = payload?.result || payload?.data || payload;
-      const candidate = data?.release_navigation_v1?.nav || data?.delivery_engine_v1?.nav;
-      if (Array.isArray(candidate)) navigation = candidate;
+      const candidate = navigationFromPayload(payload);
+      if (candidate) navigation = candidate;
     } catch {}
   });
   await page.goto(`${baseUrl}/login`, { waitUntil: 'domcontentloaded', timeout: 45000 });
@@ -49,16 +60,32 @@ async function login(page, loginName) {
   await page.getByRole('button', { name: /^登录$/ }).click();
   await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 45000 });
   await page.locator('.layout-shell').waitFor({ timeout: 45000 });
+  if (!navigation.length) throw new Error(`NAVIGATION_MISSING:${loginName}`);
   return navigation;
+}
+
+function resolveNodeRoute(node) {
+  const meta = node?.meta && typeof node.meta === 'object' ? node.meta : {};
+  const route = node?.route || meta.route;
+  if (route) return String(route);
+  const scene = node?.scene_key || node?.sceneKey || meta.scene_key || meta.sceneKey;
+  if (scene) return `/s/${encodeURIComponent(String(scene))}`;
+  const actionId = Number(node?.action_id || node?.actionId || node?.action || meta.action_id || meta.actionId || 0);
+  const menuId = Number(node?.menu_id || node?.menuId || meta.menu_id || meta.menuId || 0);
+  if (actionId > 0) return `/a/${actionId}${menuId > 0 ? `?menu_id=${menuId}&action_id=${actionId}` : ''}`;
+  if (menuId > 0) return `/m/${menuId}`;
+  return '';
 }
 
 function flattenNavigation(nodes, parent = []) {
   const rows = [];
+  const journeyRows = [];
+  const responsiveRows = [];
   for (const node of Array.isArray(nodes) ? nodes : []) {
     const label = String(node?.title || node?.label || node?.name || '').trim();
     const meta = node?.meta && typeof node.meta === 'object' ? node.meta : {};
-    const target = node?.route || meta.route || node?.scene_key || meta.scene_key || '';
-    if (label) rows.push({ label, route: String(target || '').trim(), parent_path: [...parent, label].join(' / '), dangerous: dangerous.test(label) });
+    const target = resolveNodeRoute(node);
+    if (label) rows.push({ label, route: target, parent_path: [...parent, label].join(' / '), category: node?.children?.length ? 'container' : target ? 'navigable_leaf' : 'unresolved_leaf', write_capable: writeAction.test(label) && Boolean(node?.action || meta.action_id) });
     if (Array.isArray(node?.children)) rows.push(...flattenNavigation(node.children, [...parent, label].filter(Boolean)));
   }
   return rows;
@@ -96,43 +123,40 @@ async function inspectPage(page, role, route, screenshotPath) {
 async function main() {
   const browser = await launchChromium({ headless: true });
   const rows = [];
+  const journeyRows = [];
+  const responsiveRows = [];
   try {
     for (const role of roles) {
       const page = await browser.newPage({ viewport: viewports[0], locale: 'zh-CN' });
       page.setDefaultTimeout(8000);
       const navigation = await login(page, role);
-      const contractRows = flattenNavigation(navigation).filter((item) => !item.dangerous);
-      if (!contractRows.length) {
-        rows.push({ surface_id: `FE-AUD-${role}-EMPTY`, role, navigation_path: '', title: '', route: page.url(), load_result: 'empty', notes: '权威导航为空或未能从 system.init 解析' });
-      }
-      const toggles = page.locator('.sidebar .toggle');
-      const toggleCount = Math.min(await toggles.count(), 10);
-      for (let toggleIndex = 0; toggleIndex < toggleCount; toggleIndex += 1) await toggles.nth(toggleIndex).click({ timeout: 300 }).catch(() => {});
-      const links = await page.locator('a[href], [role="link"], .sidebar .label').evaluateAll((nodes) => nodes.map((node) => ({
-        href: node.getAttribute('href') || '',
-        title: (node.textContent || node.getAttribute('aria-label') || '').trim(),
-        menu_label: node.classList.contains('label'),
-      })).filter((item) => (item.href && item.href.startsWith('/') && !/login|admin\//.test(item.href)) || item.menu_label));
-      const unique = [...new Map([...links, ...contractRows.map((item) => ({ href: item.route, title: item.label, menu_label: false }))].map((item) => [item.href || item.title, item])).values()].slice(0, maxSurfacesPerRole);
-      for (const [index, link] of unique.entries()) {
-        if (dangerous.test(link.title)) continue;
-        let safeRoute = link.href ? link.href.split('#')[0] : '/';
+      const contractRows = flattenNavigation(navigation).filter((item) => item.category !== 'container');
+      const selectedRows = maxSurfacesPerRole > 0 ? contractRows.slice(0, maxSurfacesPerRole) : contractRows;
+      for (const [index, link] of selectedRows.entries()) {
+        const safeRoute = link.route;
         const screenshot = path.join(outputDir, `${role}-${String(index + 1).padStart(3, '0')}.png`);
         try {
-          if (link.menu_label) {
-            await page.goto(`${baseUrl}/`, { waitUntil: 'domcontentloaded', timeout: 45000 });
-            await page.locator('.layout-shell').waitFor({ timeout: 45000 });
-            const toggles = page.locator('.sidebar .toggle');
-            const toggleCount = Math.min(await toggles.count(), 10);
-            for (let toggleIndex = 0; toggleIndex < toggleCount; toggleIndex += 1) await toggles.nth(toggleIndex).click({ timeout: 300 }).catch(() => {});
-            await page.getByRole('button', { name: link.title, exact: true }).first().click();
-            await page.waitForTimeout(500);
-            safeRoute = new URL(page.url()).pathname + new URL(page.url()).search;
-          }
-          rows.push({ surface_id: `FE-AUD-${role}-${index + 1}`, navigation_path: link.title, title: link.title, route: safeRoute, ...await inspectPage(page, role, safeRoute, screenshot) });
+          if (!safeRoute) throw new Error('UNRESOLVED_NAVIGATION_TARGET');
+          const inspected = await inspectPage(page, role, safeRoute, screenshot);
+          rows.push({ surface_id: `FE-AUD-${role}-${index + 1}`, navigation_path: link.parent_path, title: link.label, route: safeRoute, category: link.category, write_capable: link.write_capable, ...inspected });
         } catch (error) {
-          rows.push({ surface_id: `FE-AUD-${role}-${index + 1}`, role, navigation_path: link.title, title: link.title, route: safeRoute, reachable: false, load_result: 'timeout', notes: error.message });
+          rows.push({ surface_id: `FE-AUD-${role}-${index + 1}`, role, navigation_path: link.parent_path, title: link.label, route: safeRoute, category: link.category, write_capable: link.write_capable, reachable: false, load_result: 'error', notes: error.message });
         }
+      }
+      journeyRows.push(...['J01','J02','J03','J04','J05','J06','J07','J08'].map((id) => ({ id, role, status: 'NOT_ASSESSED', evidence: 'surface巡检不执行写操作，需专门旅程脚本复核' })));
+      responsiveRows.push({ role, viewport: 1440, attempted: true, surfaces: selectedRows.length });
+      for (const viewport of viewports.slice(1)) {
+        const sample = selectedRows[0];
+        if (sample?.route) {
+          await page.setViewportSize(viewport);
+          const screenshot = path.join(outputDir, `${role}-${viewport.width}x${viewport.height}.png`);
+          try {
+            const inspected = await inspectPage(page, role, sample.route, screenshot);
+            responsiveRows.push({ role, viewport: viewport.width, attempted: true, route: sample.route, load_result: inspected.load_result, screenshot });
+          } catch (error) {
+            responsiveRows.push({ role, viewport: viewport.width, attempted: true, route: sample.route, status: 'error', error: error.message, screenshot });
+          }
+        } else responsiveRows.push({ role, viewport: viewport.width, attempted: false, status: 'N/A', reason: '无可导航样本' });
       }
       await page.close();
     }
@@ -140,10 +164,19 @@ async function main() {
     await browser.close();
   }
   const fields = ['surface_id', 'role', 'navigation_path', 'title', 'route', 'page_type', 'actual_component', 'reachable', 'load_result', 'write_capable', 'screenshot', 'load_ms', 'technical_leak', 'notes'];
-  const normalized = rows.map((row) => ({ actual_component: row.page_type === 'list' ? 'ActionViewShell/ListPage' : 'ContractFormPage or scene surface', reachable: true, write_capable: false, ...row }));
-  fs.writeFileSync(path.join(outputDir, 'full-surface-report.json'), `${JSON.stringify({ base_url: baseUrl, db: dbName, roles, viewports, rows: normalized }, null, 2)}\n`);
+  const normalized = rows.map((row) => ({ actual_component: row.route.startsWith('/r/') || row.route.startsWith('/f/') ? 'ContractFormPage.vue' : row.route.startsWith('/a/') ? 'ActionViewShell.vue → ListPage.vue' : row.route.startsWith('/s/') ? 'SceneView.vue' : row.route.startsWith('/m/') ? 'MenuView.vue' : row.route === '/' ? 'HomeView.vue' : 'UNRESOLVED', reachable: row.reachable !== false, ...row }));
+  const leafCounts = Object.fromEntries(roles.map((role) => [role, normalized.filter((row) => row.role === role).length]));
+  const failed = normalized.filter((row) => row.reachable === false);
+  const coverage = Object.fromEntries(roles.map((role) => { const all = normalized.filter((row) => row.role === role); return [role, { denominator: all.length, reachable: all.filter((row) => row.reachable).length, rate: all.length ? all.filter((row) => row.reachable).length / all.length : 0, failures: all.filter((row) => !row.reachable).map((row) => row.notes || row.title) }]; }));
+  fs.writeFileSync(path.join(outputDir, 'full-surface-report.json'), `${JSON.stringify({ base_url: baseUrl, db: dbName, roles, viewports, leaf_counts: leafCounts, coverage, rows: normalized }, null, 2)}\n`);
+  fs.writeFileSync(path.join(outputDir, 'journeys.json'), `${JSON.stringify({ journeys: journeyRows }, null, 2)}\n`);
+  fs.writeFileSync(path.join(outputDir, 'responsive-report.json'), `${JSON.stringify({ viewports, rows: responsiveRows }, null, 2)}\n`);
+  fs.writeFileSync(path.join(outputDir, 'accessibility-report.json'), `${JSON.stringify({ status: 'N/A', reason: '本轮脚本未引入新依赖，需按代表页面补充人工/工具证据' }, null, 2)}\n`);
+  fs.writeFileSync(path.join(outputDir, 'performance-report.json'), `${JSON.stringify({ status: 'observed', samples: normalized.map(({ role, route, load_ms }) => ({ role, route, load_ms })) }, null, 2)}\n`);
   fs.writeFileSync(path.join(outputDir, 'full-surface-report.csv'), `${fields.join(',')}\n${normalized.map((row) => fields.map((field) => csvCell(row[field])).join(',')).join('\n')}\n`);
-  console.log(JSON.stringify({ pass: true, surfaces: normalized.length, outputDir }, null, 2));
+  const pass = roles.every((role) => leafCounts[role] > 0) && normalized.length > 0 && failed.length === 0 && journeyRows.length === roles.length * 8;
+  console.log(JSON.stringify({ pass, surfaces: normalized.length, failed: failed.length, outputDir }, null, 2));
+  if (!pass) process.exitCode = 2;
 }
 
 main().catch((error) => { console.error(error.stack || error.message); process.exitCode = 2; });
