@@ -191,6 +191,138 @@ class TestUiContractV2Boundaries(unittest.TestCase):
         self.assertEqual(trim_kwargs["max_actions"], 3)
         self.assertEqual(trim_kwargs["max_containers"], 2)
 
+    def test_request_adapter_merges_nested_params_over_top_level_payload(self):
+        handler = self.module.UiContractV2Handler(
+            env=object(),
+            params={"model": "fallback.model"},
+        )
+
+        params = handler._params({
+            "model": "outer.model",
+            "params": {
+                "model": "inner.model",
+                "viewType": "list",
+            },
+        })
+        ui_params = handler._ui_contract_params(params)
+
+        self.assertEqual(params["model"], "inner.model")
+        self.assertEqual(ui_params["view_type"], "tree")
+        self.assertEqual(ui_params["viewType"], "tree")
+        self.assertEqual(ui_params["op"], "model")
+
+    def test_projection_applies_field_policies_to_widget_status(self):
+        handler = self.module.UiContractV2Handler(env=object())
+        contract = {
+            "statusContract": {
+                "widgetStatus": [
+                    {
+                        "widgetId": "field.name",
+                        "visible": True,
+                        "readonly": False,
+                        "required": False,
+                        "disabled": False,
+                        "auth": "edit",
+                    }
+                ]
+            }
+        }
+        source = {
+            "render_profile": "readonly",
+            "field_policies": {
+                "name": {"readonly_profiles": ["readonly"]},
+                "amount": {"visible": False},
+            },
+        }
+
+        handler._apply_field_policies_to_v2_status(contract, source)
+
+        rows = {
+            row["widgetId"]: row
+            for row in contract["statusContract"]["widgetStatus"]
+        }
+        self.assertTrue(rows["field.name"]["readonly"])
+        self.assertEqual(rows["field.name"]["auth"], "read")
+        self.assertFalse(rows["field.amount"]["visible"])
+        self.assertEqual(rows["field.amount"]["auth"], "none")
+
+    def test_projection_marks_native_visible_layout_fields_editable(self):
+        handler = self.module.UiContractV2Handler(env=object())
+        contract = {
+            "layoutContract": {
+                "containerTree": [
+                    {
+                        "type": "group",
+                        "children": [
+                            {"type": "field", "name": "name"},
+                            {"type": "field", "name": "hidden", "attributes": {"invisible": "1"}},
+                        ],
+                    }
+                ]
+            },
+            "statusContract": {
+                "widgetStatus": [
+                    {
+                        "widgetId": "field.name",
+                        "visible": False,
+                        "readonly": False,
+                        "required": False,
+                        "disabled": False,
+                        "auth": "none",
+                    },
+                    {
+                        "widgetId": "field.hidden",
+                        "visible": False,
+                        "readonly": False,
+                        "required": False,
+                        "disabled": False,
+                        "auth": "none",
+                    },
+                ]
+            },
+        }
+
+        handler._ensure_native_layout_widget_status_visible(contract)
+
+        rows = {
+            row["widgetId"]: row
+            for row in contract["statusContract"]["widgetStatus"]
+        }
+        self.assertTrue(rows["field.name"]["visible"])
+        self.assertEqual(rows["field.name"]["auth"], "edit")
+        self.assertFalse(rows["field.hidden"]["visible"])
+
+    def test_layout_governance_applies_group_columns_and_visibility(self):
+        handler = self.module.UiContractV2Handler(env=object())
+        source_contract = {
+            "business_operation_profile": {
+                "form_structure_governance": {
+                    "form_columns": 3,
+                    "group_columns": {"基础信息": 2},
+                    "group_visibility": {"隐藏区": False},
+                }
+            }
+        }
+        node = {"type": "group", "string": "基础信息"}
+
+        handler._apply_form_layout_governance_to_group(
+            node,
+            "基础信息",
+            source_contract=source_contract,
+        )
+
+        self.assertEqual(handler._form_layout_governance_columns(source_contract), 3)
+        self.assertEqual(handler._form_layout_governance_columns(source_contract, "基础信息"), 2)
+        self.assertFalse(
+            handler._form_layout_group_visible_from_governance(
+                handler._form_layout_governance(source_contract),
+                "隐藏区",
+            )
+        )
+        self.assertEqual(node["cols"], 2)
+        self.assertEqual(node["columns"], 2)
+        self.assertEqual(node["attributes"]["col"], "2")
+
     def test_form_orchestration_reorders_legacy_visible_widget_list(self):
         class _Config:
             contract_json = {
