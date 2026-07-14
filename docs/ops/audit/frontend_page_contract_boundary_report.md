@@ -1,7 +1,7 @@
 # Frontend Page Contract Boundary Report
 
 - ok: `True`
-- checked_views: `20`
+- checked_views: `21`
 - checked_layouts: `2`
 - boundary: `all-pages-contract-driven`
 - error_count: `0`
@@ -16,6 +16,7 @@
 - `frontend/apps/web/src/views/MenuConfigView.vue`
 - `frontend/apps/web/src/views/MenuView.vue`
 - `frontend/apps/web/src/views/MyWorkView.vue`
+- `frontend/apps/web/src/views/NotFoundView.vue`
 - `frontend/apps/web/src/views/PlaceholderView.vue`
 - `frontend/apps/web/src/views/ProjectManagementDashboardView.vue`
 - `frontend/apps/web/src/views/ProjectsIntakeView.vue`
