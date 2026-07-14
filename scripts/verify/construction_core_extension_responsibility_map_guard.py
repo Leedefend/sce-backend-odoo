@@ -43,7 +43,7 @@ def main() -> int:
 
     for token in [
         "Construction Core Extension Responsibility Map",
-        "Current size: 2,884 lines",
+        "Current size: 2,780 lines",
         "staged responsibility split",
         "## Public Entry Points",
         "## Responsibility Bands",
@@ -54,13 +54,15 @@ def main() -> int:
         "## Stage 4 Target",
         "## Stage 5 Target",
         "## Stage 6 Target",
+        "## Stage 7 Target",
         "`core_extension_project_layout.py` owns pure project form layout helpers",
         "`core_extension_contract_helpers.py` owns generic contract helper utilities",
         "`core_extension_policy_maps.py` owns static construction policy/map facts",
         "`core_extension_system_init_rows.py` owns read-side system-init row builders",
         "`core_extension_capability_rows.py` owns capability row normalization",
         "`core_extension_hook_facts.py` owns static hook facts",
-        "`core_extension.py` is locked at `<=2884` lines",
+        "`core_extension_policy_accessors.py` owns read-side policy accessors",
+        "`core_extension.py` is locked at `<=2780` lines",
         "Do not move import-time registration side effects",
         "projection-only",
     ]:
@@ -74,6 +76,7 @@ def main() -> int:
         "construction_core_extension_system_init_rows_split_guard.py",
         "construction_core_extension_capability_rows_split_guard.py",
         "construction_core_extension_hook_facts_split_guard.py",
+        "construction_core_extension_policy_accessors_split_guard.py",
         "backend_boundary_guard.py",
         "owner_industry_isolation_probe.py",
     ]:
@@ -113,6 +116,10 @@ def main() -> int:
             errors.append("core_extension.py must import hook facts module")
         if "return _hook_facts.scene_entry_orchestrator_specs()" not in core:
             errors.append("core_extension.py must delegate scene orchestrator specs")
+        if "core_extension_policy_accessors as _policy_accessors" not in core:
+            errors.append("core_extension.py must import policy accessors module")
+        if "return _policy_accessors.get_api_data_unlink_allowed_model_contributions(env)" not in core:
+            errors.append("core_extension.py must delegate unlink policy accessors")
 
     split_queue_token = (
         "`addons/smart_construction_core/core_extension.py` | "
@@ -128,6 +135,7 @@ def main() -> int:
         "python3 scripts/verify/construction_core_extension_system_init_rows_split_guard.py",
         "python3 scripts/verify/construction_core_extension_capability_rows_split_guard.py",
         "python3 scripts/verify/construction_core_extension_hook_facts_split_guard.py",
+        "python3 scripts/verify/construction_core_extension_policy_accessors_split_guard.py",
         "python3 scripts/verify/construction_core_extension_responsibility_map_guard.py",
     ]:
         if ci_token not in ci:

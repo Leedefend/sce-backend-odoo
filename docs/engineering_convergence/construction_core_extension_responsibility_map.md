@@ -3,7 +3,7 @@
 Date: 2026-07-14
 Owner: Construction backend owner
 Target file: `addons/smart_construction_core/core_extension.py`
-Current size: 2,884 lines
+Current size: 2,780 lines
 Phase: staged responsibility split
 
 ## Purpose
@@ -45,6 +45,7 @@ construction-owned policy.
 | `construction_core_extension_system_init_rows_split_guard.py` | System-init row builder extraction, read-side search helpers, workspace action rows, enterprise enablement facts, role/home dictionary rows, line lock, and no write/registration side effects. |
 | `construction_core_extension_capability_rows_split_guard.py` | Capability row normalization extraction, identity/ownership/UI/binding/permission/runtime envelope preservation, line lock, and pure-normalization boundary. |
 | `construction_core_extension_hook_facts_split_guard.py` | Static hook fact extraction, business config refs, low-code menu refs, product/app shell/scene facts, acceptance nav contract, line lock, and static-facts boundary. |
+| `construction_core_extension_policy_accessors_split_guard.py` | Policy accessor extraction, file model contribution scan, API mutation/create/unlink policies, contract tax quick-create detection, line lock, and read-side policy boundary. |
 | `backend_boundary_guard.py` | Core backend ownership and extension-boundary constraints. |
 | `owner_industry_isolation_probe.py` | Industry module isolation and required extension hooks. |
 
@@ -133,6 +134,21 @@ Stage 6 is complete when:
   registry imports, registration side effects, file IO, user/group inspection,
   or routing decisions beyond returning configured identifiers;
 - `core_extension.py` is locked at `<=2884` lines for this stage.
+
+## Stage 7 Target
+
+Stage 7 is complete when:
+
+- `core_extension_policy_accessors.py` owns read-side policy accessors:
+  server action maps, file upload/download model contribution scans, API write
+  allowlists, mutation policies, contract tax quick-create detection, create
+  execution policies, unlink policy maps, and model code mappings;
+- `core_extension.py` keeps public contribution hook names and delegates policy
+  access into the extracted module;
+- the extracted module remains read-side policy access only: no ORM writes,
+  creates, unlinks, commits, registration side effects, HTTP calls, file IO, or
+  handler execution;
+- `core_extension.py` is locked at `<=2780` lines for this stage.
 
 ## Next Candidate
 

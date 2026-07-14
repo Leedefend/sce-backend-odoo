@@ -4,7 +4,7 @@ Generated from repository source files. This report is informational during the 
 
 ## Summary
 
-- Scanned files: `3912`
+- Scanned files: `3914`
 - Files requiring split plan: `41`
 - Files above warning threshold: `65`
 
@@ -25,8 +25,8 @@ Generated from repository source files. This report is informational during the 
 | 3041 | Python source | `addons/smart_core/core/workspace_home_contract_builder.py` |
 | 3013 | Python source | `addons/smart_core/app_config_engine/services/assemblers/page_assembler.py` |
 | 2903 | Python source | `addons/smart_core/tests/test_menu_configuration_audit.py` |
-| 2884 | Python source | `addons/smart_construction_core/core_extension.py` |
 | 2830 | Python source | `addons/smart_construction_core/models/core/material_acceptance.py` |
+| 2780 | Python source | `addons/smart_construction_core/core_extension.py` |
 | 2585 | Python source | `addons/smart_construction_core/tests/test_user_feedback_business_views.py` |
 | 2529 | XML data/view | `addons/smart_construction_core/views/menu_business_taxonomy.xml` |
 | 2521 | Vue source | `frontend/apps/web/src/views/MyWorkView.vue` |
@@ -141,8 +141,8 @@ Generated from repository source files. This report is informational during the 
 | 3041 | split_plan_required | Python source | `addons/smart_core/core/workspace_home_contract_builder.py` |
 | 3013 | split_plan_required | Python source | `addons/smart_core/app_config_engine/services/assemblers/page_assembler.py` |
 | 2903 | split_plan_required | Python source | `addons/smart_core/tests/test_menu_configuration_audit.py` |
-| 2884 | split_plan_required | Python source | `addons/smart_construction_core/core_extension.py` |
 | 2830 | split_plan_required | Python source | `addons/smart_construction_core/models/core/material_acceptance.py` |
+| 2780 | split_plan_required | Python source | `addons/smart_construction_core/core_extension.py` |
 | 2585 | split_plan_required | Python source | `addons/smart_construction_core/tests/test_user_feedback_business_views.py` |
 | 2529 | split_plan_required | XML data/view | `addons/smart_construction_core/views/menu_business_taxonomy.xml` |
 | 2521 | split_plan_required | Vue source | `frontend/apps/web/src/views/MyWorkView.vue` |
