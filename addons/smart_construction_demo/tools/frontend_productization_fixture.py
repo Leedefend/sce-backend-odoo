@@ -8,11 +8,26 @@ is verified separately with the real fixture users and without sudo.
 
 from __future__ import annotations
 
+import os
 from typing import Any, Dict
 
 
 MODULE = "smart_construction_demo"
 PASSWORD = "demo"
+FRONTEND_ACCEPTANCE_DB = "sc_frontend_acceptance"
+
+
+def _guard_acceptance_scope(env):
+    """Fail before any fixture lookup or write unless the exact scope is active."""
+    if env.cr.dbname != FRONTEND_ACCEPTANCE_DB:
+        raise RuntimeError(
+            "frontend fixture requires database %s (got %s)"
+            % (FRONTEND_ACCEPTANCE_DB, env.cr.dbname)
+        )
+    if os.environ.get("SC_ENVIRONMENT") != "acceptance":
+        raise RuntimeError("frontend fixture requires SC_ENVIRONMENT=acceptance")
+    if os.environ.get("SC_ALLOW_DEMO_DATA") != "1":
+        raise RuntimeError("frontend fixture requires SC_ALLOW_DEMO_DATA=1")
 
 
 def _ref(env, xmlid):
@@ -41,7 +56,15 @@ def _upsert(env, model_name, xmlid_name, domain, values):
         matches = model.search(domain)
         if len(matches) > 1:
             raise RuntimeError("fixture domain is not unique: %s %s" % (model_name, domain))
-        record = matches[:1]
+        # Never adopt an unowned record that merely happens to share the
+        # fixture's natural key.  Doing so could rewrite historical/demo data
+        # outside this fixture's XML-ID namespace.  A clean acceptance
+        # database creates the record below and binds its XML-ID; if a stale
+        # same-name row exists, fail closed and require an explicit reset.
+        if matches:
+            raise RuntimeError(
+                "fixture refuses to adopt unowned %s matching %s" % (model_name, domain)
+            )
     if record:
         changed = {}
         for field_name, value in values.items():
@@ -306,6 +329,7 @@ def _execution(env, suffix, project, contract, request, partner, state, amount):
 
 
 def ensure_fixture(env) -> Dict[str, Any]:
+    _guard_acceptance_scope(env)
     """Create or reconcile the fixed dataset and return a secret-free summary."""
     module = env["ir.module.module"].sudo().search([("name", "=", MODULE)], limit=1)
     if not module or module.state != "installed":
@@ -359,23 +383,15 @@ def ensure_fixture(env) -> Dict[str, Any]:
     project_b = _project(env, "B", company_a, pm, partner_b)
     project_c = _project(env, "C", company_b, finance, partner_c)
 
-    # Keep the PM journey deterministic even when the database previously carried
-    # unrelated demo projects assigned to the same fixed login.
-    historical_pm_projects = env["project.project"].sudo().search(
-        [
-            ("id", "not in", [project_a.id, project_b.id]),
-            "|",
-            ("user_id", "=", pm.id),
-            ("manager_id", "=", pm.id),
-        ]
-    )
-    if historical_pm_projects:
-        historical_pm_projects.write({"user_id": False, "manager_id": False})
-
+    # Reconcile only follower rows attached to projects owned by this fixture.
     follower_model = env["mail.followers"].sudo()
     fixture_partners = [project_member.partner_id.id, pm.partner_id.id]
     follower_model.search(
-        [("res_model", "=", "project.project"), ("partner_id", "in", fixture_partners)]
+        [
+            ("res_model", "=", "project.project"),
+            ("res_id", "in", [project_a.id, project_b.id, project_c.id]),
+            ("partner_id", "in", fixture_partners),
+        ]
     ).unlink()
     project_a.message_subscribe(partner_ids=[project_member.partner_id.id, pm.partner_id.id])
     project_b.message_subscribe(partner_ids=[pm.partner_id.id])
@@ -398,7 +414,6 @@ def ensure_fixture(env) -> Dict[str, Any]:
     _execution(env, "B", project_b, contract_b, request_b, partner_b, "draft", 1000.0)
     _execution(env, "C", project_c, contract_c, request_c, partner_c, "confirmed", 1000.0)
 
-    env.cr.commit()
     return {
         "db": env.cr.dbname,
         "users": [finance.login, project_member.login, pm.login, owner.login],
