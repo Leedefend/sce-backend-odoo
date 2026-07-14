@@ -727,6 +727,7 @@ import {
 import {
   buildContractActionRouteTarget,
   buildContractActionButtonRequest,
+  applyActionViewV2ButtonStatus,
   resolveContractActionCounters,
   resolveContractActionExecIds,
   resolveContractActionDoneMessage,
@@ -795,6 +796,9 @@ import {
 import {
   buildActionViewClearedPresetQuery,
   buildActionViewPatchedRouteQuery,
+  buildActionActivityRouteKey,
+  buildActivityRuntimeRouteState,
+  normalizeActivityRuntimeRouteQuery,
   normalizeActionViewRouteQuery,
   resolveActionViewRouteSnapshot,
   buildActionViewSyncedRouteQuery,
@@ -803,7 +807,7 @@ import {
   buildWorkbenchRouteTarget,
 } from '../app/runtime/actionViewRouteRuntime';
 import { buildCanonicalSceneRouteTarget, buildEntryTargetRouteTarget } from '../app/routeQuery';
-import { buildBusinessEntryNavQuery, buildBusinessEntryRequestContext } from '../app/navigationContext';
+import { buildBusinessCategoryCreateNavQuery, buildBusinessEntryNavQuery, buildBusinessEntryRequestContext } from '../app/navigationContext';
 import {
   hasRoutePresetGroupPageStateChanged,
   resolveRoutePresetActiveFilterValue,
@@ -844,7 +848,6 @@ import {
   collectUnifiedPageContractV2ButtonStatus,
   resolveUnifiedPageContractV2GlobalStatus,
   resolveUnifiedPageContractV2SurfacePolicies,
-  type UnifiedPageContractV2ButtonStatus,
 } from '../app/contracts/unifiedPageContractV2';
 import {
   mapProjectionMetricItems,
@@ -879,9 +882,7 @@ function requestLoadPage(): Promise<void> {
 }
 
 function currentActionActivityRouteKey(): string {
-  const currentActionId = String(route.params.actionId || route.query.action_id || '').trim();
-  const currentMenuId = String(route.query.menu_id || '').trim() || '0';
-  return currentActionId ? `action:${currentActionId}:menu:${currentMenuId}` : '';
+  return buildActionActivityRouteKey({ actionId: route.params.actionId, queryActionId: route.query.action_id, menuId: route.query.menu_id });
 }
 
 let clearSelectionInvoker: () => void = () => {};
@@ -1096,46 +1097,6 @@ type BusinessCategoryCreateOption = {
   defaultValues: Record<string, unknown>;
 };
 
-function stableActionContractId(value: unknown, fallback: string) {
-  const raw = String(value || fallback || '').trim();
-  const normalized = raw
-    .split('')
-    .map((char) => {
-      if (/^[A-Za-z0-9_.:-]$/.test(char)) return char;
-      if (char === ' ' || char === '/') return '.';
-      return '';
-    })
-    .join('')
-    .replace(/^\.+|\.+$/g, '');
-  const safe = normalized || fallback || 'action';
-  return /^[A-Za-z]/.test(safe) ? safe : `id.${safe}`;
-}
-
-function resolveActionViewV2ButtonStatus(
-  key: string,
-  statusById: Record<string, UnifiedPageContractV2ButtonStatus>,
-): UnifiedPageContractV2ButtonStatus | null {
-  const stableKey = stableActionContractId(key, 'action');
-  const candidates = [`btn.${stableKey}`, key, stableKey].filter(Boolean);
-  for (const candidate of candidates) {
-    if (statusById[candidate]) return statusById[candidate];
-  }
-  return null;
-}
-
-function applyActionViewV2ButtonStatus<T extends ContractActionButton>(
-  action: T | null,
-  statusById: Record<string, UnifiedPageContractV2ButtonStatus>,
-): T | null {
-  if (!action) return null;
-  const status = resolveActionViewV2ButtonStatus(action.key, statusById);
-  if (status?.visible === false) return null;
-  if (status?.disabled === true) {
-    action.enabled = false;
-    action.hint = status.reasonCode || action.hint || 'disabled_by_status_contract';
-  }
-  return action;
-}
 const actionId = computed(() => {
   const fromParam = Number(route.params.actionId || 0);
   if (Number.isFinite(fromParam) && fromParam > 0) return fromParam;
@@ -1515,25 +1476,11 @@ function closeBusinessCategoryCreatePicker() {
 function createRouteQueryForBusinessCategory(categoryCode = '') {
   const code = String(categoryCode || '').trim();
   const option = code ? businessCategoryCreateOptions.value.find((row) => row.code === code) : undefined;
-  const defaults: Record<string, string> = {};
-  if (option?.categoryId) {
-    defaults.default_business_category_id = String(option.categoryId);
-  }
-  Object.entries(option?.defaultValues || {}).forEach(([key, value]) => {
-    const normalizedKey = String(key || '').trim();
-    if (!normalizedKey || value === undefined || value === null) return;
-    if (Array.isArray(value) || typeof value === 'object') return;
-    defaults[`default_${normalizedKey}`] = String(value);
-  });
-  const label = String(option?.label || actionMeta.value?.name || currentMenuTitle.value || '办理类型').trim();
-  return resolveCarryQuery(code ? {
-    current_business_category_code: code,
-    default_business_category_code: code,
-    current_business_category_label: label,
-    default_business_category_label: label,
-    ctx_source: 'business_category_create_picker',
-    ...defaults,
-  } : undefined);
+  return resolveCarryQuery(buildBusinessCategoryCreateNavQuery({
+    categoryCode: code,
+    option,
+    fallbackLabel: actionMeta.value?.name || currentMenuTitle.value || '办理类型',
+  }));
 }
 
 async function openCreateRecordWithBusinessCategory(categoryCode = '') {
@@ -2126,44 +2073,6 @@ function applyRoutePatchAndReload(patch: Record<string, unknown>): void {
   routePresetRuntime.applyRoutePatchAndReload(patch);
 }
 
-function normalizeActivityRuntimeRouteQuery(source: Record<string, unknown>): Record<string, unknown> {
-  const allowedKeys = new Set([
-    'search',
-    'q',
-    'active_filter',
-    'saved_filter',
-    'group_by',
-    'group_value',
-    'group_sample_limit',
-    'group_sort',
-    'group_collapsed',
-    'group_page',
-    'group_offset',
-    'group_fp',
-    'group_wid',
-    'group_wdg',
-    'group_wik',
-  ]);
-  const next: Record<string, unknown> = {};
-  Object.entries(source).forEach(([key, value]) => {
-    if (!allowedKeys.has(key)) return;
-    if (Array.isArray(value)) {
-      const values = value.map((item) => String(item || '').trim()).filter(Boolean);
-      if (values.length) next[key] = values;
-      return;
-    }
-    const text = String(value || '').trim();
-    if (text) next[key] = text;
-  });
-  if (next.active_filter && !['all', 'active', 'archived'].includes(String(next.active_filter))) {
-    delete next.active_filter;
-  }
-  if (next.group_sort && !['asc', 'desc'].includes(String(next.group_sort).toLowerCase())) {
-    delete next.group_sort;
-  }
-  return next;
-}
-
 function updateActivityRuntimeQueryFromRoute(): void {
   if (route.name !== 'action') return;
   session.updateActiveActivityRuntimeQuery(normalizeActivityRuntimeRouteQuery(route.query));
@@ -2172,17 +2081,16 @@ function updateActivityRuntimeQueryFromRoute(): void {
 function syncRouteListState(extra?: Record<string, unknown>): void {
   suppressNextRouteReload.value = true;
   routePresetRuntime.syncRouteListState(extra);
-  const routeState = normalizeActivityRuntimeRouteQuery({
-    ...normalizeActivityRuntimeRouteQuery(route.query),
-    search: searchTerm.value,
-    active_filter: filterValue.value !== 'all' ? filterValue.value : undefined,
-    saved_filter: activeSavedFilterKey.value,
-    group_by: activeGroupByField.value,
-    group_sample_limit: groupSampleLimit.value,
-    group_sort: groupSort.value,
-    ...extra,
-  });
-  session.updateActiveActivityRuntimeQuery(routeState);
+  session.updateActiveActivityRuntimeQuery(buildActivityRuntimeRouteState({
+    currentQuery: route.query,
+    searchTerm: searchTerm.value,
+    filterValue: filterValue.value,
+    savedFilter: activeSavedFilterKey.value,
+    groupBy: activeGroupByField.value,
+    groupSampleLimit: groupSampleLimit.value,
+    groupSort: groupSort.value,
+    extra,
+  }));
 }
 
 function syncRouteStateAndReload(extra?: Record<string, unknown>): void {
