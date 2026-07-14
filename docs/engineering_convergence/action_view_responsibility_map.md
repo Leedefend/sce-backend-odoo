@@ -3,8 +3,8 @@
 Date: 2026-07-14
 Owner: Frontend owner
 Target file: `frontend/apps/web/src/views/ActionView.vue`
-Current size: 3,735 lines
-Phase: Stage 4 activity route key builder split
+Current size: 3,695 lines
+Phase: Stage 5 button status projection helper split
 
 ## Purpose
 
@@ -42,6 +42,7 @@ or industry-owned business rules.
 | Activity runtime query normalization | `normalizeActivityRuntimeRouteQuery` whitelists route query keys and normalizes activity runtime query state. | Pure helper in `actionViewRouteRuntime.ts`; no router, API, session, or notification access. |
 | Activity runtime route state builder | `buildActivityRuntimeRouteState` merges current route query, local list state, and route-sync extras before normalization. | Pure helper in `actionViewRouteRuntime.ts`; page remains responsible for session writes. |
 | Activity route key builder | `buildActionActivityRouteKey` builds the action/menu activity runtime key from route params and query values. | Pure helper in `actionViewRouteRuntime.ts`; page remains responsible for reading route state. |
+| Button status projection | `applyActionViewV2ButtonStatus` maps v2 button status contracts onto action presentation buttons. | Pure helper in `actionViewContractActionRuntime.ts`; page remains responsible for collecting the current contract status map. |
 
 ## Current Side-Effect Boundaries
 
@@ -124,6 +125,19 @@ Stage 4 is complete:
 - `ActionView.vue` keeps `currentActionActivityRouteKey` as route-read
   orchestration only;
 - `ActionView.vue` is locked at `<=3735` lines;
+- no router, API, session, lifecycle, window, or notification side effects were
+  moved.
+
+## Stage 5 Target
+
+Stage 5 is complete:
+
+- `actionViewContractActionRuntime.ts` owns the pure
+  `stableActionContractId`, `resolveActionViewV2ButtonStatus`, and
+  `applyActionViewV2ButtonStatus` helpers;
+- `ActionView.vue` keeps only presentation runtime wiring and current contract
+  status collection;
+- `ActionView.vue` is locked at `<=3695` lines;
 - no router, API, session, lifecycle, window, or notification side effects were
   moved.
 

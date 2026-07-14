@@ -7,9 +7,10 @@ ROOT = Path(__file__).resolve().parents[2]
 DOC = ROOT / "docs/engineering_convergence/action_view_responsibility_map.md"
 VIEW = ROOT / "frontend/apps/web/src/views/ActionView.vue"
 ROUTE_RUNTIME = ROOT / "frontend/apps/web/src/app/runtime/actionViewRouteRuntime.ts"
+CONTRACT_ACTION_RUNTIME = ROOT / "frontend/apps/web/src/app/runtime/actionViewContractActionRuntime.ts"
 CI = ROOT / "make/ci.mk"
 
-LINE_BUDGET = 3735
+LINE_BUDGET = 3695
 
 
 def _read(path: Path) -> str:
@@ -25,6 +26,7 @@ def main() -> int:
     doc = _read(DOC)
     view = _read(VIEW)
     route_runtime = _read(ROUTE_RUNTIME)
+    contract_action_runtime = _read(CONTRACT_ACTION_RUNTIME)
     ci = _read(CI)
 
     if not doc:
@@ -33,11 +35,13 @@ def main() -> int:
         errors.append(f"missing view: {VIEW.relative_to(ROOT)}")
     if not route_runtime:
         errors.append(f"missing route runtime: {ROUTE_RUNTIME.relative_to(ROOT)}")
+    if not contract_action_runtime:
+        errors.append(f"missing contract action runtime: {CONTRACT_ACTION_RUNTIME.relative_to(ROOT)}")
 
     for token in [
         "Action View Responsibility Map",
-        "Current size: 3,735 lines",
-        "Phase: Stage 4 activity route key builder split",
+        "Current size: 3,695 lines",
+        "Phase: Stage 5 button status projection helper split",
         "## Purpose",
         "## Route Entry",
         "## Responsibility Bands",
@@ -47,9 +51,10 @@ def main() -> int:
         "## Stage 2 Target",
         "## Stage 3 Target",
         "## Stage 4 Target",
+        "## Stage 5 Target",
         "## Verification Gaps",
         "## Invariants",
-        "`ActionView.vue` is locked at `<=3735` lines",
+        "`ActionView.vue` is locked at `<=3695` lines",
         "`usePageContract('action')`",
         "`useActionPageModel`",
         "`useActionViewActionRuntime`",
@@ -57,6 +62,7 @@ def main() -> int:
         "`normalizeActivityRuntimeRouteQuery` helper",
         "`buildActivityRuntimeRouteState` helper",
         "`buildActionActivityRouteKey` helper",
+        "`applyActionViewV2ButtonStatus` helpers",
         "runBatchPolicyAction",
         "loadListColumnPreference",
         "handleToggleRecordFavorite",
@@ -83,6 +89,7 @@ def main() -> int:
             "normalizeActivityRuntimeRouteQuery,",
             "buildActivityRuntimeRouteState,",
             "buildActionActivityRouteKey,",
+            "applyActionViewV2ButtonStatus,",
             "useActionPageModel({",
             "useActionViewActionRuntime({",
             "async function runBatchPolicyAction",
@@ -101,6 +108,13 @@ def main() -> int:
                 errors.append(f"ActionView.vue missing boundary token: {token}")
         if "function normalizeActivityRuntimeRouteQuery(" in view:
             errors.append("ActionView.vue must not locally implement normalizeActivityRuntimeRouteQuery")
+        for token in [
+            "function stableActionContractId(",
+            "function resolveActionViewV2ButtonStatus(",
+            "function applyActionViewV2ButtonStatus(",
+        ]:
+            if token in view:
+                errors.append(f"ActionView.vue must not locally implement {token}")
 
     if route_runtime:
         for token in [
@@ -125,12 +139,35 @@ def main() -> int:
             if token in route_runtime:
                 errors.append(f"actionViewRouteRuntime.ts must remain pure; found: {token}")
 
+    if contract_action_runtime:
+        for token in [
+            "export function stableActionContractId(",
+            "export function resolveActionViewV2ButtonStatus(",
+            "export function applyActionViewV2ButtonStatus",
+            "UnifiedPageContractV2ButtonStatus",
+            "disabled_by_status_contract",
+        ]:
+            if token not in contract_action_runtime:
+                errors.append(f"actionViewContractActionRuntime.ts missing token: {token}")
+        for token in [
+            "router.push",
+            "router.replace",
+            "window.open",
+            "window.location.assign",
+            "intentRequest",
+        ]:
+            if token in contract_action_runtime:
+                errors.append(f"actionViewContractActionRuntime.ts must remain pure; found: {token}")
+
     ci_token = "python3 scripts/verify/action_view_responsibility_map_guard.py"
     if ci_token not in ci:
         errors.append("ci.local.quick must run action_view_responsibility_map_guard.py")
     smoke_token = "node scripts/verify/action_view_route_runtime_smoke.js"
     if smoke_token not in ci:
         errors.append("ci.local.quick must run action_view_route_runtime_smoke.js")
+    action_smoke_token = "node scripts/verify/action_view_contract_action_runtime_smoke.js"
+    if action_smoke_token not in ci:
+        errors.append("ci.local.quick must run action_view_contract_action_runtime_smoke.js")
 
     if errors:
         print("[action_view_responsibility_map_guard] FAIL")

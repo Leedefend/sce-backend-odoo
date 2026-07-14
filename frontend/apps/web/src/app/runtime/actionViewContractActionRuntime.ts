@@ -1,6 +1,13 @@
 import { buildEntryTargetRouteTarget } from '../routeQuery';
+import type { UnifiedPageContractV2ButtonStatus } from '../contracts/unifiedPageContractV2';
 
 export type ContractActionSelection = 'none' | 'single' | 'multi';
+
+export type ActionViewContractStatusButton = {
+  key: string;
+  enabled: boolean;
+  hint: string;
+};
 
 export type ContractActionResponseNavigation = {
   nextActionId: number | null;
@@ -61,6 +68,47 @@ export function resolveContractActionSelectionMessage(options: {
   if (options.selection === 'none') return null;
   if (options.selectedCount > 0) return null;
   return options.selection === 'single' ? 'select_single' : 'select_multi';
+}
+
+export function stableActionContractId(value: unknown, fallback: string): string {
+  const raw = String(value || fallback || '').trim();
+  const normalized = raw
+    .split('')
+    .map((char) => {
+      if (/^[A-Za-z0-9_.:-]$/.test(char)) return char;
+      if (char === ' ' || char === '/') return '.';
+      return '';
+    })
+    .join('')
+    .replace(/^\.+|\.+$/g, '');
+  const safe = normalized || fallback || 'action';
+  return /^[A-Za-z]/.test(safe) ? safe : `id.${safe}`;
+}
+
+export function resolveActionViewV2ButtonStatus(
+  key: string,
+  statusById: Record<string, UnifiedPageContractV2ButtonStatus>,
+): UnifiedPageContractV2ButtonStatus | null {
+  const stableKey = stableActionContractId(key, 'action');
+  const candidates = [`btn.${stableKey}`, key, stableKey].filter(Boolean);
+  for (const candidate of candidates) {
+    if (statusById[candidate]) return statusById[candidate];
+  }
+  return null;
+}
+
+export function applyActionViewV2ButtonStatus<T extends ActionViewContractStatusButton>(
+  action: T | null,
+  statusById: Record<string, UnifiedPageContractV2ButtonStatus>,
+): T | null {
+  if (!action) return null;
+  const status = resolveActionViewV2ButtonStatus(action.key, statusById);
+  if (status?.visible === false) return null;
+  if (status?.disabled === true) {
+    action.enabled = false;
+    action.hint = status.reasonCode || action.hint || 'disabled_by_status_contract';
+  }
+  return action;
 }
 
 export function buildContractActionButtonRequest(options: {

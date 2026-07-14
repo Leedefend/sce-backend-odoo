@@ -4,7 +4,7 @@ Generated from repository source files. This report is informational during the 
 
 ## Summary
 
-- Scanned files: `3927`
+- Scanned files: `3928`
 - Files requiring split plan: `41`
 - Files above warning threshold: `65`
 
@@ -13,7 +13,7 @@ Generated from repository source files. This report is informational during the 
 | Lines | Category | File |
 | ---: | --- | --- |
 | 5939 | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
-| 3735 | Vue source | `frontend/apps/web/src/views/ActionView.vue` |
+| 3695 | Vue source | `frontend/apps/web/src/views/ActionView.vue` |
 | 3684 | Vue source | `frontend/apps/web/src/views/MenuConfigView.vue` |
 | 3633 | Python source | `addons/smart_core/handlers/form_field_configuration.py` |
 | 3525 | Vue source | `frontend/apps/web/src/views/HomeView.vue` |
@@ -129,7 +129,7 @@ Generated from repository source files. This report is informational during the 
 | Lines | Status | Category | File |
 | ---: | --- | --- | --- |
 | 5939 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
-| 3735 | split_plan_required | Vue source | `frontend/apps/web/src/views/ActionView.vue` |
+| 3695 | split_plan_required | Vue source | `frontend/apps/web/src/views/ActionView.vue` |
 | 3684 | split_plan_required | Vue source | `frontend/apps/web/src/views/MenuConfigView.vue` |
 | 3633 | split_plan_required | Python source | `addons/smart_core/handlers/form_field_configuration.py` |
 | 3525 | split_plan_required | Vue source | `frontend/apps/web/src/views/HomeView.vue` |

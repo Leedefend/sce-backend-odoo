@@ -727,6 +727,7 @@ import {
 import {
   buildContractActionRouteTarget,
   buildContractActionButtonRequest,
+  applyActionViewV2ButtonStatus,
   resolveContractActionCounters,
   resolveContractActionExecIds,
   resolveContractActionDoneMessage,
@@ -847,7 +848,6 @@ import {
   collectUnifiedPageContractV2ButtonStatus,
   resolveUnifiedPageContractV2GlobalStatus,
   resolveUnifiedPageContractV2SurfacePolicies,
-  type UnifiedPageContractV2ButtonStatus,
 } from '../app/contracts/unifiedPageContractV2';
 import {
   mapProjectionMetricItems,
@@ -1097,46 +1097,6 @@ type BusinessCategoryCreateOption = {
   defaultValues: Record<string, unknown>;
 };
 
-function stableActionContractId(value: unknown, fallback: string) {
-  const raw = String(value || fallback || '').trim();
-  const normalized = raw
-    .split('')
-    .map((char) => {
-      if (/^[A-Za-z0-9_.:-]$/.test(char)) return char;
-      if (char === ' ' || char === '/') return '.';
-      return '';
-    })
-    .join('')
-    .replace(/^\.+|\.+$/g, '');
-  const safe = normalized || fallback || 'action';
-  return /^[A-Za-z]/.test(safe) ? safe : `id.${safe}`;
-}
-
-function resolveActionViewV2ButtonStatus(
-  key: string,
-  statusById: Record<string, UnifiedPageContractV2ButtonStatus>,
-): UnifiedPageContractV2ButtonStatus | null {
-  const stableKey = stableActionContractId(key, 'action');
-  const candidates = [`btn.${stableKey}`, key, stableKey].filter(Boolean);
-  for (const candidate of candidates) {
-    if (statusById[candidate]) return statusById[candidate];
-  }
-  return null;
-}
-
-function applyActionViewV2ButtonStatus<T extends ContractActionButton>(
-  action: T | null,
-  statusById: Record<string, UnifiedPageContractV2ButtonStatus>,
-): T | null {
-  if (!action) return null;
-  const status = resolveActionViewV2ButtonStatus(action.key, statusById);
-  if (status?.visible === false) return null;
-  if (status?.disabled === true) {
-    action.enabled = false;
-    action.hint = status.reasonCode || action.hint || 'disabled_by_status_contract';
-  }
-  return action;
-}
 const actionId = computed(() => {
   const fromParam = Number(route.params.actionId || 0);
   if (Number.isFinite(fromParam) && fromParam > 0) return fromParam;
