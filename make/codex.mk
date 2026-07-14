@@ -97,8 +97,8 @@ PR_MERGE_BODY ?= Merged by Codex through make pr.merge.
 
 pr.create: guard.prod.forbid
 	@branch="$$(git rev-parse --abbrev-ref HEAD)"; \
-	if ! echo "$$branch" | grep -qE '^(codex|feat|feature|experiment)/'; then \
-	  echo "❌ pr.create only allowed on codex/*, feat/*, feature/*, experiment/* (current=$$branch)"; exit 2; \
+	if ! echo "$$branch" | grep -qE '^(codex|feat|feature|fix|experiment)/'; then \
+	  echo "❌ pr.create only allowed on codex/*, feat/*, feature/*, fix/*, experiment/* (current=$$branch)"; exit 2; \
 	fi; \
 	if [ -z "$(PR_TITLE)" ]; then \
 	  echo "❌ PR_TITLE is required"; exit 2; \
@@ -113,7 +113,7 @@ pr.update: guard.prod.forbid
 	@bash -lc '\
 	set -euo pipefail; \
 	BR="$$(git rev-parse --abbrev-ref HEAD)"; \
-	if ! echo "$$BR" | grep -Eq "^(feat|feature|codex|experiment)/.+"; then \
+	if ! echo "$$BR" | grep -Eq "^(feat|feature|fix|codex|experiment)/.+"; then \
 	  echo "[DENY] pr.update: branch not allowed: $$BR"; exit 2; \
 	fi; \
 	ENV_NAME="$${ENV:-dev}"; \
@@ -150,7 +150,7 @@ pr.merge: guard.prod.forbid
 	@bash -lc '\
 	set -euo pipefail; \
 	BR="$$(git rev-parse --abbrev-ref HEAD)"; \
-	if ! echo "$$BR" | grep -Eq "^(feat|feature|codex|experiment)/.+"; then \
+	if ! echo "$$BR" | grep -Eq "^(feat|feature|fix|codex|experiment)/.+"; then \
 	  echo "[DENY] pr.merge: branch not allowed: $$BR"; exit 2; \
 	fi; \
 	ENV_NAME="$${ENV:-dev}"; \
