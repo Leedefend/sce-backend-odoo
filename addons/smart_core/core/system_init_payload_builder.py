@@ -389,8 +389,7 @@ class SystemInitPayloadBuilder:
                 and isinstance(delivery, dict)
                 and isinstance(delivery.get("nav"), list)
                 and delivery.get("nav")
-                and isinstance(release.get("nav"), list)
-                and not release.get("nav")
+                and (not isinstance(release.get("nav"), list) or not release.get("nav"))
             ):
                 # Delivery is the already-authorized projection.  An empty
                 # release payload here is a serialization gap, not an
