@@ -36,7 +36,7 @@ class MenuService:
         """Restrict delivery navigation without changing record rules."""
         xmlid = str(menu.get("menu_xmlid") or menu.get("xmlid") or "").strip().lower()
         label = " ".join(str(menu.get(key) or "") for key in ("label", "title", "name", "group_label")).strip().lower()
-        blocked = ("finance", "payment", "settlement", "tax", "hr", "salary", "payroll", "财务", "税务", "人事", "薪资", "结算", "付款", "收付款")
+        blocked = ("finance", "payment", "settlement", "tax", "hr", "salary", "payroll", "财务", "税务", "人事", "薪资", "结算", "付款", "支付", "收付款")
         return not any(token in xmlid or token in label for token in blocked)
 
     @classmethod

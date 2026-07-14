@@ -1,10 +1,10 @@
-from unittest import TestCase
+from odoo.tests.common import TransactionCase
 
 from odoo.addons.smart_construction_core.core_extension_actor_roles import resolve_release_actor_role_codes
 from odoo.addons.smart_core.delivery.menu_service import MenuService
 
 
-class TestProjectMemberRoleSurface(TestCase):
+class TestProjectMemberRoleSurface(TransactionCase):
     def test_project_read_capability_preserves_project_manager_actor_role(self):
         class User:
             groups_id = type("Groups", (), {"get_external_id": lambda self: {1: "base.group_user"}})()
