@@ -3,7 +3,7 @@
     <data noupdate="1">
         <function model="ir.config_parameter" name="set_param">
             <value>sc.core.extension_modules</value>
-            <value>smart_construction_core,smart_construction_portal</value>
+            <value>smart_construction_core,smart_construction_portal,smart_construction_bundle</value>
         </function>
     </data>
 </odoo>
