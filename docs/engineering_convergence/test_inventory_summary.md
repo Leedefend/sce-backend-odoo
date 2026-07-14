@@ -4,35 +4,35 @@ Generated from `test_inventory.csv`.
 
 ## Totals
 
-- Total assets: `909`
+- Total assets: `1157`
 - Review queue: `4`
 - Unknown runtime: `3`
-- Long-running assets: `309`
+- Long-running assets: `330`
 - Manual gate review: `4`
-- Aggregate-covered assets: `125`
-- PR dedupe candidates: `475`
+- Aggregate-covered assets: `230`
+- PR dedupe candidates: `597`
 
 ## By Layer
 
 | Layer | Count |
 | --- | ---: |
-| governance | 255 |
+| governance | 352 |
+| contract | 307 |
 | data_migration | 217 |
-| contract | 201 |
-| unit | 132 |
-| odoo_integration | 48 |
-| e2e | 24 |
+| unit | 149 |
+| odoo_integration | 55 |
+| e2e | 38 |
+| security | 21 |
 | frontend_acceptance | 16 |
-| security | 14 |
 | gate | 2 |
 
 ## By Decision Gate
 
 | Decision Gate | Count |
 | --- | ---: |
-| pr_candidate | 594 |
-| integration_candidate | 284 |
-| release_candidate | 22 |
+| pr_candidate | 821 |
+| integration_candidate | 291 |
+| release_candidate | 36 |
 | manual_review | 4 |
 | release_required | 2 |
 | local_iteration | 1 |
@@ -43,10 +43,10 @@ Generated from `test_inventory.csv`.
 
 | Disposition | Count |
 | --- | ---: |
-| deduplicate_before_required | 475 |
-| keep_integration_or_release_only | 283 |
-| covered_by_aggregate | 120 |
-| keep_release_only | 22 |
+| deduplicate_before_required | 597 |
+| keep_integration_or_release_only | 290 |
+| covered_by_aggregate | 225 |
+| keep_release_only | 36 |
 | canonical_entry | 5 |
 | review_or_archive | 4 |
 
@@ -54,10 +54,13 @@ Generated from `test_inventory.csv`.
 
 | Aggregate Target | Count |
 | --- | ---: |
+| verify.unified_page_contract.lite | 54 |
+| verify.scene.runtime_boundary.gate | 17 |
+| verify.unified_page_contract.v2 | 11 |
 | verify.frontend.product.ready | 7 |
+| verify.system_user_experience.full_browser | 5 |
 | verify.backend.contract.closure.mainline | 5 |
 | verify.finance_interfund.position.all | 5 |
-| verify.system_user_experience.full_browser | 4 |
 | verify.form_structure.contract | 4 |
 | verify.lowcode_config.customer_module_asset.pipeline | 4 |
 | verify.backend.architecture.full.report.guard.schema.guard | 3 |
@@ -68,6 +71,8 @@ Generated from `test_inventory.csv`.
 | verify.business_capability.productization_p1 | 3 |
 | verify.portal.payment_request_approval_all_smoke.container | 3 |
 | verify.release.v2_0_0.governance.guard | 3 |
+| verify.contract.scene_coverage.guard | 3 |
+| verify.smart_core.minimum_surface | 3 |
 | verify.business_config.config_workbench_operation_quick | 2 |
 | verify.backend.evidence.manifest.guard | 2 |
 | verify.business.capability_baseline.guard | 2 |
@@ -85,6 +90,9 @@ Generated from `test_inventory.csv`.
 | verify.project.dashboard.snapshot | 2 |
 | verify.project.management.acceptance | 2 |
 | verify.release.capability.audit.schema.guard | 2 |
+| verify.e2e.scene_admin | 2 |
+| verify.e2e.subscription_smoke | 2 |
+| verify.formal_business.release_gate | 2 |
 | make ci.local.quick | 1 |
 | make ci | 1 |
 | make test.e2e | 1 |
@@ -123,14 +131,24 @@ Generated from `test_inventory.csv`.
 | verify.page_contract.role_strategy_provider_split.guard | 1 |
 | verify.role.capability_floor.guard | 1 |
 | verify.role.capability_floor.prod_like.schema.guard | 1 |
+| migration.assets.user_acceptance_manifest_guard.evidence | 1 |
+| migration.assets.user_acceptance_online_probe | 1 |
+| migration.assets.scbsly_direct_project_menu_probe | 1 |
+| verify.scene.provider.registry.consumer.guard | 1 |
+| verify.scene.provider.registry.guard | 1 |
+| verify.scene.delivery.readiness | 1 |
+| verify.smart_core.boundary_guard | 1 |
+| verify.unified_page_contract.v2.harmony_h5_compile_acceptance.host | 1 |
+| verify.unified_page_contract.v2.regression_audit.host | 1 |
+| verify.unified_page_contract.v2.web_visual_acceptance.host | 1 |
 
 ## By Runtime
 
 | Runtime | Count |
 | --- | ---: |
-| <5m | 596 |
-| 10-30m | 285 |
-| 30-60m | 24 |
+| <5m | 823 |
+| 10-30m | 292 |
+| 30-60m | 38 |
 | unknown | 3 |
 | 10-15m | 1 |
 
@@ -138,20 +156,20 @@ Generated from `test_inventory.csv`.
 
 | Owner | Count |
 | --- | ---: |
-| architecture owner | 255 |
+| architecture owner | 352 |
+| platform owner | 307 |
 | data owner | 217 |
-| platform owner | 201 |
-| test owner | 133 |
-| backend owner | 48 |
-| qa owner | 24 |
+| test owner | 150 |
+| backend owner | 55 |
+| qa owner | 38 |
+| security owner | 21 |
 | frontend owner | 17 |
-| security owner | 14 |
 
 ## By Directory
 
 | Directory | Count |
 | --- | ---: |
-| scripts/verify | 609 |
+| scripts/verify | 857 |
 | scripts/migration | 215 |
 | scripts/ops | 37 |
 | frontend/apps/web/scripts | 20 |
@@ -249,27 +267,27 @@ Generated from `test_inventory.csv`.
 | T-ASSET-360 | governance | `scripts/verify/company_operation_summary_source_audit.py` | architecture owner |
 | T-ASSET-361 | governance | `scripts/verify/complexity_guard.py` | architecture owner |
 | T-ASSET-362 | contract | `scripts/verify/construction_contract_history_value_gap_probe.py` | platform owner |
-| T-ASSET-363 | governance | `scripts/verify/construction_core_extension_capability_rows_split_guard.py` | architecture owner |
-| T-ASSET-364 | contract | `scripts/verify/construction_core_extension_contract_helpers_split_guard.py` | platform owner |
-| T-ASSET-365 | contract | `scripts/verify/construction_core_extension_contract_normalizers_split_guard.py` | platform owner |
-| T-ASSET-366 | governance | `scripts/verify/construction_core_extension_hook_facts_split_guard.py` | architecture owner |
-| T-ASSET-367 | contract | `scripts/verify/construction_core_extension_intent_handlers_split_guard.py` | platform owner |
-| T-ASSET-368 | governance | `scripts/verify/construction_core_extension_policy_accessors_split_guard.py` | architecture owner |
-| T-ASSET-369 | governance | `scripts/verify/construction_core_extension_policy_maps_split_guard.py` | architecture owner |
-| T-ASSET-370 | governance | `scripts/verify/construction_core_extension_project_layout_split_guard.py` | architecture owner |
-| T-ASSET-371 | governance | `scripts/verify/construction_core_extension_responsibility_map_guard.py` | architecture owner |
-| T-ASSET-372 | governance | `scripts/verify/construction_core_extension_service_builders_split_guard.py` | architecture owner |
-| T-ASSET-373 | governance | `scripts/verify/construction_core_extension_system_init_rows_split_guard.py` | architecture owner |
-| T-ASSET-374 | governance | `scripts/verify/construction_diary_visible_fields_audit.py` | architecture owner |
-| T-ASSET-375 | governance | `scripts/verify/construction_product_menu_release_audit.py` | architecture owner |
-| T-ASSET-376 | contract | `scripts/verify/contract_api_mode_smoke.py` | platform owner |
-| ... | ... | 395 more | ... |
+| T-ASSET-363 | security | `scripts/verify/construction_core_extension_actor_roles_split_guard.py` | security owner |
+| T-ASSET-364 | governance | `scripts/verify/construction_core_extension_capability_rows_split_guard.py` | architecture owner |
+| T-ASSET-365 | contract | `scripts/verify/construction_core_extension_contract_helpers_split_guard.py` | platform owner |
+| T-ASSET-366 | contract | `scripts/verify/construction_core_extension_contract_normalizers_split_guard.py` | platform owner |
+| T-ASSET-367 | governance | `scripts/verify/construction_core_extension_hook_facts_split_guard.py` | architecture owner |
+| T-ASSET-368 | contract | `scripts/verify/construction_core_extension_intent_handlers_split_guard.py` | platform owner |
+| T-ASSET-369 | governance | `scripts/verify/construction_core_extension_policy_accessors_split_guard.py` | architecture owner |
+| T-ASSET-370 | governance | `scripts/verify/construction_core_extension_policy_maps_split_guard.py` | architecture owner |
+| T-ASSET-371 | governance | `scripts/verify/construction_core_extension_project_layout_split_guard.py` | architecture owner |
+| T-ASSET-372 | governance | `scripts/verify/construction_core_extension_responsibility_map_guard.py` | architecture owner |
+| T-ASSET-373 | governance | `scripts/verify/construction_core_extension_service_builders_split_guard.py` | architecture owner |
+| T-ASSET-374 | governance | `scripts/verify/construction_core_extension_system_init_rows_split_guard.py` | architecture owner |
+| T-ASSET-375 | governance | `scripts/verify/construction_diary_visible_fields_audit.py` | architecture owner |
+| T-ASSET-376 | governance | `scripts/verify/construction_product_menu_release_audit.py` | architecture owner |
+| ... | ... | 517 more | ... |
 
 ## Dedupe Hotspots
 
 | Family | Count |
 | --- | ---: |
-| `scripts/verify/construction_core_extension` | 11 |
+| `scripts/verify/construction_core_extension` | 12 |
 | `scripts/verify/contract_governance_form` | 5 |
 | `scripts/verify/business_form_policy` | 2 |
 | `scripts/verify/contract_business_category` | 2 |
@@ -304,7 +322,7 @@ Generated from `test_inventory.csv`.
 
 | Family | Count | Owner | Gate Decision | Disposition |
 | --- | ---: | --- | --- | --- |
-| `scripts/verify/construction_core_extension` | 11 | test owner | requires owner review | Requires owner review before mapping to an aggregate gate. |
+| `scripts/verify/construction_core_extension` | 12 | test owner | requires owner review | Requires owner review before mapping to an aggregate gate. |
 | `scripts/verify/contract_governance_form` | 5 | test owner | requires owner review | Requires owner review before mapping to an aggregate gate. |
 | `scripts/verify/business_form_policy` | 2 | architecture owner | owner-reviewed PR candidates | Retain as explicit PR candidates; no confirmed aggregate gate covers both policy coverage and field-hit audit. |
 | `scripts/verify/contract_business_category` | 2 | platform owner | owner-reviewed PR candidates | Retain as explicit PR candidates; action audit and binding audit are only wrapped by separate ops scripts. |
