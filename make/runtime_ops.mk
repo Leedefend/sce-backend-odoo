@@ -1750,7 +1750,7 @@ verify.frontend.fixture.browser: guard.prod.forbid check-compose-project check-c
 	menu_line="$$(echo "$$runtime_output" | grep '^FRONTEND_FIXTURE_PAYMENT_MENU_ID=' | tail -1)"; \
 	test -n "$$action_line" -a -n "$$menu_line"; \
 	export "$$action_line" "$$menu_line"; \
-	$(RUN_ENV) DB_NAME=$(FRONTEND_ACCEPTANCE_DB) SC_ENVIRONMENT=acceptance SC_ALLOW_DEMO_DATA=1 FRONTEND_URL=$${FRONTEND_URL:-http://127.0.0.1:18081} FRONTEND_FIXTURE_PAYMENT_ACTION_ID=$${FRONTEND_FIXTURE_PAYMENT_ACTION_ID} FRONTEND_FIXTURE_PAYMENT_MENU_ID=$${FRONTEND_FIXTURE_PAYMENT_MENU_ID} bash scripts/verify/frontend_productization_fixture_browser.sh
+	$(RUN_ENV) DB_NAME=$(FRONTEND_ACCEPTANCE_DB) SC_ENVIRONMENT=acceptance SC_ALLOW_DEMO_DATA=1 FRONTEND_URL=$${FRONTEND_URL:-http://127.0.0.1:18081} FRONTEND_FIXTURE_PAYMENT_ACTION_ID=$${FRONTEND_FIXTURE_PAYMENT_ACTION_ID} FRONTEND_FIXTURE_PAYMENT_MENU_ID=$${FRONTEND_FIXTURE_PAYMENT_MENU_ID} node scripts/verify/frontend_productization_fixture_browser.mjs
 
 policy.apply.business_full: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) POLICY_MODULE=smart_construction_custom DB_NAME=$(DB_NAME) bash scripts/audit/apply_business_full_policy.sh

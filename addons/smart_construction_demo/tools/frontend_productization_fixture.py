@@ -104,6 +104,22 @@ def _company(env, suffix):
 def _user(env, login, name, company, companies, group_xmlids):
     groups = [_ref(env, "base.group_user")]
     groups.extend(_ref(env, xmlid) for xmlid in group_xmlids)
+    # The role-surface bootstrap may create these four fixed demo logins before
+    # the fixture runs. They are explicitly fixture-owned accounts, so adopt
+    # only the exact login and bind our XML-ID; all other models remain
+    # fail-closed in _upsert.
+    existing = env["res.users"].sudo().search([("login", "=", login)], limit=2)
+    if len(existing) > 1:
+        raise RuntimeError("fixture user login is not unique: %s" % login)
+    if existing and not env.ref(
+        "%s.fe_user_%s" % (MODULE, login.replace("demo_role_", "")),
+        raise_if_not_found=False,
+    ):
+        _bind_xmlid(
+            env,
+            "fe_user_%s" % login.replace("demo_role_", ""),
+            existing,
+        )
     return _upsert(
         env,
         "res.users",
