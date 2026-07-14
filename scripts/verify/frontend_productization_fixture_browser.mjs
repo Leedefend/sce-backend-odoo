@@ -61,11 +61,21 @@ async function openAction(page, action) {
     waitUntil: 'domcontentloaded',
     timeout: 45000,
   });
-  await page.locator('.layout-shell').waitFor({ timeout: 45000 });
-  await page.locator('section.page[data-product-page-mode="list"]').first().waitFor({ timeout: 45000 });
-  const loading = page.getByText('正在加载列表...', { exact: true }).last();
-  await loading.waitFor({ state: 'visible', timeout: 45000 });
-  await loading.waitFor({ state: 'hidden', timeout: 45000 });
+  try {
+    await page.locator('.layout-shell').waitFor({ timeout: 45000 });
+    await page.locator('section.page[data-product-page-mode="list"]').first().waitFor({ timeout: 45000 });
+    const loading = page.getByText('正在加载列表...', { exact: true }).last();
+    if (await loading.count()) await loading.waitFor({ state: 'hidden', timeout: 45000 });
+  } catch (error) {
+    const html = await page.content();
+    const visible = (await page.locator('body').innerText()).slice(0, 2000);
+    const summary = await page.locator('section.page, table, [data-product-page-mode], [role="alert"]').evaluateAll((els) => els.slice(0, 30).map((el) => ({ tag: el.tagName, mode: el.getAttribute('data-product-page-mode'), text: (el.textContent || '').trim().slice(0, 240) })));
+    await page.screenshot({ path: path.join(OUTPUT_DIR, 'payment-action-failure.png'), fullPage: true });
+    fs.writeFileSync(path.join(OUTPUT_DIR, 'payment-action-failure.html'), html);
+    fs.writeFileSync(path.join(OUTPUT_DIR, 'payment-action-failure.json'), JSON.stringify({ url: page.url(), title: await page.title(), visible, summary, action }, null, 2));
+    console.error(`[payment-action-failure] ${JSON.stringify({ url: page.url(), title: await page.title(), visible, summary, action })}`);
+    throw error;
+  }
 }
 
 async function openScene(page, sceneKey) {
