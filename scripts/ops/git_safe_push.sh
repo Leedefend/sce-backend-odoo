@@ -18,7 +18,7 @@ if [[ "${GIT_SAFE_PUSH_FAKE_GIT:-0}" == "1" && "$(basename "$0")" == "git" ]]; t
       ;;
     status)
       if [[ "${FAKE_DIRTY:-0}" == "1" ]]; then
-        printf '%s\n' ' M tracked-file'
+        printf '%s\n' '?? generated-file'
       fi
       ;;
     remote)
@@ -133,6 +133,7 @@ if [[ "${1:-}" == "--self-test" ]]; then
 
   FAKE_DIRTY=1 run_push
   assert_nonzero 'dirty worktree'; assert_output 'dirty worktree' 'working tree dirty'; assert_push_count 'dirty worktree' 0
+  grep -q '^status --porcelain --untracked-files=all$' "$log_file" || fail 'dirty worktree: explicit untracked-file scan missing'
   FAKE_INVALID_BRANCH=1 run_push
   assert_nonzero 'invalid branch name'; assert_output 'invalid branch name' 'invalid local branch name'; assert_push_count 'invalid branch name' 0
 
@@ -161,7 +162,7 @@ if ! [[ "$branch" =~ ^(codex|feat|feature|fix|experiment)/ ]]; then
   exit 2
 fi
 
-if [[ -n "$(git status --porcelain)" ]]; then
+if [[ -n "$(git status --porcelain --untracked-files=all)" ]]; then
   echo "❌ working tree dirty; commit or stash before push" >&2
   exit 2
 fi
