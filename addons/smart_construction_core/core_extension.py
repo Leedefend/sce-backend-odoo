@@ -1709,23 +1709,12 @@ def smart_core_relation_entry_policy(env, payload):
 
 def smart_core_model_specific_form_contract_policy(env, payload):
     del env
-    payload = payload if isinstance(payload, dict) else {}
-    model = _sc_text(payload.get("model"))
-    fields_map = payload.get("fields") if isinstance(payload.get("fields"), dict) else {}
-    if model == "sc.general.contract" and "tax_id" in fields_map and "tax_rate" in fields_map:
-        return {"remove_fields": ["tax_rate"]}
-    return None
+    return _contract_normalizers.model_specific_form_contract_policy(payload)
 
 
 def smart_core_form_field_aliases(env, payload):
     del env
-    payload = payload if isinstance(payload, dict) else {}
-    model = _sc_text(payload.get("model"))
-    source = payload.get("source_contract") if isinstance(payload.get("source_contract"), dict) else {}
-    fields_map = source.get("fields") if isinstance(source.get("fields"), dict) else {}
-    if model == "sc.general.contract" and "tax_id" in fields_map:
-        return {"tax_rate": "tax_id"}
-    return None
+    return _contract_normalizers.form_field_aliases(payload)
 
 
 def smart_core_menu_delivery_token_policy(env):

@@ -364,3 +364,20 @@ def normalize_general_contract_company_form(contract: dict[str, Any], source_con
     replaced = replace_amount_label(contract)
     if isinstance(replaced, dict):
         _sc_replace_contract_content(contract, replaced)
+
+def model_specific_form_contract_policy(payload: dict[str, Any] | None) -> dict[str, list[str]] | None:
+    safe_payload = payload if isinstance(payload, dict) else {}
+    model = _sc_text(safe_payload.get("model"))
+    fields_map = safe_payload.get("fields") if isinstance(safe_payload.get("fields"), dict) else {}
+    if model == "sc.general.contract" and "tax_id" in fields_map and "tax_rate" in fields_map:
+        return {"remove_fields": ["tax_rate"]}
+    return None
+
+def form_field_aliases(payload: dict[str, Any] | None) -> dict[str, str] | None:
+    safe_payload = payload if isinstance(payload, dict) else {}
+    model = _sc_text(safe_payload.get("model"))
+    source = safe_payload.get("source_contract") if isinstance(safe_payload.get("source_contract"), dict) else {}
+    fields_map = source.get("fields") if isinstance(source.get("fields"), dict) else {}
+    if model == "sc.general.contract" and "tax_id" in fields_map:
+        return {"tax_rate": "tax_id"}
+    return None

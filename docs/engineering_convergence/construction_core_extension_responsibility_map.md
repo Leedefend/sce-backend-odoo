@@ -3,7 +3,7 @@
 Date: 2026-07-14
 Owner: Construction backend owner
 Target file: `addons/smart_construction_core/core_extension.py`
-Current size: 1,820 lines
+Current size: 1,809 lines
 Phase: staged responsibility split
 
 ## Purpose
@@ -46,7 +46,7 @@ construction-owned policy.
 | `construction_core_extension_capability_rows_split_guard.py` | Capability row normalization extraction, identity/ownership/UI/binding/permission/runtime envelope preservation, line lock, and pure-normalization boundary. |
 | `construction_core_extension_hook_facts_split_guard.py` | Static hook fact extraction, business config refs, low-code/menu delivery refs, product/app shell/scene facts, acceptance nav contract, line lock, and static-facts boundary. |
 | `construction_core_extension_policy_accessors_split_guard.py` | Policy accessor extraction, file model contribution scan, API mutation/create/unlink/search-field policies, contract tax quick-create detection, line lock, and read-side policy boundary. |
-| `construction_core_extension_contract_normalizers_split_guard.py` | Contract normalizer extraction, construction diary/general contract tax/company form projection, helper delegation, workflow-injection boundary, line lock, and projection-only boundary. |
+| `construction_core_extension_contract_normalizers_split_guard.py` | Contract normalizer extraction, construction diary/general contract tax/company form projection, general contract form policy/alias helpers, helper delegation, workflow-injection boundary, line lock, and projection-only boundary. |
 | `construction_core_extension_intent_handlers_split_guard.py` | Intent handler contribution extraction, lazy handler import mapping, approval-policy intent preservation, facade registry boundary, line lock, and no env/registry side effects. |
 | `construction_core_extension_service_builders_split_guard.py` | Service builder extraction, lazy service class/factory imports, facade hook preservation, line lock, and no ORM/registry side effects. |
 | `backend_boundary_guard.py` | Core backend ownership and extension-boundary constraints. |
@@ -239,6 +239,20 @@ Stage 13 is complete when:
   creates, unlinks, registry mutation, HTTP calls, file IO, or import-time
   registration side effects;
 - `core_extension.py` is locked at `<=1820` lines for this stage.
+
+## Stage 14 Target
+
+Stage 14 is complete when:
+
+- `core_extension_contract_normalizers.py` also owns pure form contract policy
+  and field alias helpers for general contract tax migration;
+- `core_extension.py` keeps the public `smart_core_model_specific_form_contract_policy`
+  and `smart_core_form_field_aliases` facades and delegates to contract
+  normalizers;
+- the extracted helpers remain payload-only contract policy projection: no
+  `env` access, ORM calls, writes, registry mutation, HTTP calls, file IO, or
+  import-time registration side effects;
+- `core_extension.py` is locked at `<=1809` lines for this stage.
 
 ## Next Candidate
 

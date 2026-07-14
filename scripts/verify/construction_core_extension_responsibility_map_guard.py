@@ -43,7 +43,7 @@ def main() -> int:
 
     for token in [
         "Construction Core Extension Responsibility Map",
-        "Current size: 1,820 lines",
+        "Current size: 1,809 lines",
         "staged responsibility split",
         "## Public Entry Points",
         "## Responsibility Bands",
@@ -61,6 +61,7 @@ def main() -> int:
         "## Stage 11 Target",
         "## Stage 12 Target",
         "## Stage 13 Target",
+        "## Stage 14 Target",
         "`core_extension_project_layout.py` owns pure project form layout helpers",
         "`core_extension_contract_helpers.py` owns generic contract helper utilities",
         "`core_extension_policy_maps.py` owns static construction policy/map facts",
@@ -74,7 +75,8 @@ def main() -> int:
         "`core_extension_service_builders.py` owns lazy service class and service",
         "`core_extension_system_init_rows.py` also owns system-init workspace and page",
         "`core_extension_policy_accessors.py` also owns API data search-field",
-        "`core_extension.py` is locked at `<=1820` lines",
+        "`core_extension_contract_normalizers.py` also owns pure form contract policy",
+        "`core_extension.py` is locked at `<=1809` lines",
         "Do not move import-time registration side effects",
         "workflow projection reads `env`, registry, records",
         "`smart_core_register(registry)` because registry writes",
@@ -151,6 +153,10 @@ def main() -> int:
             errors.append("core_extension.py must delegate general contract tax normalizer")
         if "_contract_normalizers.normalize_general_contract_company_form(contract, source_contract=source_contract)" not in core:
             errors.append("core_extension.py must delegate general contract company normalizer")
+        if "return _contract_normalizers.model_specific_form_contract_policy(payload)" not in core:
+            errors.append("core_extension.py must delegate form contract policy helper")
+        if "return _contract_normalizers.form_field_aliases(payload)" not in core:
+            errors.append("core_extension.py must delegate form field alias helper")
         if "def _sc_inject_workflow_contract(env, contract, source, *, model, view_type):" not in core:
             errors.append("core_extension.py must keep workflow injection boundary in facade")
         if "core_extension_intent_handlers as _intent_handlers" not in core:

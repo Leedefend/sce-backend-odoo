@@ -12,8 +12,8 @@ NORMALIZERS = ROOT / "addons/smart_construction_core/core_extension_contract_nor
 HELPERS = ROOT / "addons/smart_construction_core/core_extension_contract_helpers.py"
 CI = ROOT / "make/ci.mk"
 
-MAX_CORE_EXTENSION_LINES = 2440
-MAX_NORMALIZER_LINES = 366
+MAX_CORE_EXTENSION_LINES = 1809
+MAX_NORMALIZER_LINES = 383
 
 
 def _read(path: Path) -> str:
@@ -62,6 +62,8 @@ def main() -> int:
             "_contract_normalizers.normalize_construction_diary_form(contract, source_contract, model=model, view_type=view_type)",
             "_contract_normalizers.general_contract_tax_contract(contract, source_contract=source_contract)",
             "_contract_normalizers.normalize_general_contract_company_form(contract, source_contract=source_contract)",
+            "return _contract_normalizers.model_specific_form_contract_policy(payload)",
+            "return _contract_normalizers.form_field_aliases(payload)",
             "def _sc_inject_workflow_contract(env, contract, source, *, model, view_type):",
         ]:
             if token not in core_text:
@@ -75,6 +77,8 @@ def main() -> int:
             "def normalize_construction_diary_form(",
             "def general_contract_tax_contract(",
             "def normalize_general_contract_company_form(",
+            "def model_specific_form_contract_policy(",
+            "def form_field_aliases(",
             "_sc_collect_field_nodes = _contract_helpers.sc_collect_field_nodes",
             "_sc_set_v2_container_tree = _contract_helpers.sc_set_v2_container_tree",
             "_sc_set_v2_widget_status = _contract_helpers.sc_set_v2_widget_status",
@@ -156,6 +160,18 @@ def main() -> int:
             errors.append("general contract company normalizer must replace legacy amount label")
         if "合同金额" not in repr(company_contract):
             errors.append("general contract company normalizer must expose company amount label")
+        form_policy = normalizers.model_specific_form_contract_policy({
+            "model": "sc.general.contract",
+            "fields": {"tax_id": {}, "tax_rate": {}},
+        })
+        if form_policy != {"remove_fields": ["tax_rate"]}:
+            errors.append("contract normalizer must preserve tax_rate removal form policy")
+        aliases = normalizers.form_field_aliases({
+            "model": "sc.general.contract",
+            "source_contract": {"fields": {"tax_id": {}}},
+        })
+        if aliases != {"tax_rate": "tax_id"}:
+            errors.append("contract normalizer must preserve tax_rate field alias")
 
     if errors:
         print("[construction_core_extension_contract_normalizers_split_guard] FAIL")
