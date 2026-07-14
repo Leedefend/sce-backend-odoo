@@ -2243,7 +2243,15 @@ class SystemInitHandler(BaseIntentHandler):
             _release_final = dict(_release_final)
             _release_final["nav"] = _delivery_final["nav"]
             data["release_navigation_v1"] = _release_final
-        _delivery_authoritative = _delivery_authoritative_nav
+        _delivery_policy_meta = delivery_payload.get("product_policy") if isinstance(delivery_payload, dict) else {}
+        _can_restore_delivery_nav = (
+            not platform_minimum_surface_mode
+            and bool(_delivery_authoritative_nav)
+            and isinstance(_delivery_policy_meta, dict)
+            and not bool(_delivery_policy_meta.get("policy_empty"))
+            and str(delivery_payload.get("product_key") or "").strip()
+        )
+        _delivery_authoritative = _delivery_authoritative_nav if _can_restore_delivery_nav else []
         data = SystemInitPayloadBuilder.build_startup_surface(
             data,
             params=params,
