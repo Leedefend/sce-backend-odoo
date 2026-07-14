@@ -18,6 +18,21 @@ function requireCheck(condition, message) {
 }
 
 async function login(page, loginName) {
+  const sequence = [];
+  page.on('request', (request) => {
+    if (!request.url().includes('/api/v1/intent')) return;
+    let payload = request.postData() || '';
+    payload = payload.replace(/("password"\s*:\s*")[^"]*/g, '$1<redacted>');
+    const headers = request.headers();
+    sequence.push({ n: sequence.length + 1, phase: 'request', intent: (payload.match(/"intent"\s*:\s*"([^"]+)/) || [,'?'])[1], payload, has_authorization: Boolean(headers.authorization), has_cookie: Boolean(headers.cookie) });
+  });
+  page.on('response', async (response) => {
+    if (!response.url().includes('/api/v1/intent')) return;
+    const headers = response.headers();
+    let body = '';
+    try { body = (await response.text()).slice(0, 500).replace(/("password"\s*:\s*")[^"]*/g, '$1<redacted>'); } catch {}
+    sequence.push({ n: sequence.length + 1, phase: 'response', status: response.status(), set_cookie_names: String(headers['set-cookie'] || '').split(';').map((v) => v.split('=')[0].trim()).filter(Boolean), body });
+  });
   await page.goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded', timeout: 45000 });
   const inputs = page.locator('input');
   await inputs.nth(0).fill(loginName);
@@ -28,7 +43,13 @@ async function login(page, loginName) {
     requireCheck((await inputs.nth(2).inputValue()) === DB_NAME, 'configured login database mismatch');
   }
   await page.getByRole('button', { name: /^登录$/ }).click();
-  await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 45000 });
+  try {
+    await page.waitForURL((url) => !url.pathname.includes('/login'), { timeout: 45000 });
+  } catch (error) {
+    console.error(`[browser-auth-sequence] ${JSON.stringify(sequence)}`);
+    await page.screenshot({ path: path.join(OUTPUT_DIR, `login-failure-${loginName}.png`), fullPage: true });
+    throw error;
+  }
   await page.locator('.layout-shell').waitFor({ timeout: 45000 });
 }
 
