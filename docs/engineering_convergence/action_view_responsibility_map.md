@@ -3,8 +3,8 @@
 Date: 2026-07-14
 Owner: Frontend owner
 Target file: `frontend/apps/web/src/views/ActionView.vue`
-Current size: 3,695 lines
-Phase: Stage 5 button status projection helper split
+Current size: 3,681 lines
+Phase: Stage 6 business category create nav query split
 
 ## Purpose
 
@@ -43,6 +43,7 @@ or industry-owned business rules.
 | Activity runtime route state builder | `buildActivityRuntimeRouteState` merges current route query, local list state, and route-sync extras before normalization. | Pure helper in `actionViewRouteRuntime.ts`; page remains responsible for session writes. |
 | Activity route key builder | `buildActionActivityRouteKey` builds the action/menu activity runtime key from route params and query values. | Pure helper in `actionViewRouteRuntime.ts`; page remains responsible for reading route state. |
 | Button status projection | `applyActionViewV2ButtonStatus` maps v2 button status contracts onto action presentation buttons. | Pure helper in `actionViewContractActionRuntime.ts`; page remains responsible for collecting the current contract status map. |
+| Business category create query | `buildBusinessCategoryCreateNavQuery` maps create-picker category metadata into navigation query defaults. | Pure helper in `navigationContext.ts`; page remains responsible for `resolveCarryQuery` and router navigation. |
 
 ## Current Side-Effect Boundaries
 
@@ -138,6 +139,18 @@ Stage 5 is complete:
 - `ActionView.vue` keeps only presentation runtime wiring and current contract
   status collection;
 - `ActionView.vue` is locked at `<=3695` lines;
+- no router, API, session, lifecycle, window, or notification side effects were
+  moved.
+
+## Stage 6 Target
+
+Stage 6 is complete:
+
+- `navigationContext.ts` owns the pure
+  `buildBusinessCategoryCreateNavQuery` helper;
+- `ActionView.vue` keeps `createRouteQueryForBusinessCategory` as carry-query
+  orchestration only;
+- `ActionView.vue` is locked at `<=3681` lines;
 - no router, API, session, lifecycle, window, or notification side effects were
   moved.
 

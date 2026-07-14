@@ -112,6 +112,43 @@ export function buildBusinessEntryNavQuery(source: Record<string, unknown> | nul
   return out;
 }
 
+export type BusinessCategoryCreateNavOption = {
+  code?: unknown;
+  label?: unknown;
+  categoryId?: unknown;
+  defaultValues?: Record<string, unknown> | null;
+};
+
+export function buildBusinessCategoryCreateNavQuery(options: {
+  categoryCode?: unknown;
+  option?: BusinessCategoryCreateNavOption | null;
+  fallbackLabel?: unknown;
+}): Record<string, unknown> | undefined {
+  const code = asText(options.categoryCode);
+  if (!code) return undefined;
+  const option = options.option || null;
+  const defaults: Record<string, string> = {};
+  const categoryId = Number(option?.categoryId || 0);
+  if (Number.isFinite(categoryId) && categoryId > 0) {
+    defaults.default_business_category_id = String(categoryId);
+  }
+  Object.entries(option?.defaultValues || {}).forEach(([key, value]) => {
+    const normalizedKey = asText(key);
+    if (!normalizedKey || value === undefined || value === null) return;
+    if (Array.isArray(value) || typeof value === 'object') return;
+    defaults[`default_${normalizedKey}`] = String(value);
+  });
+  const label = asText(option?.label || options.fallbackLabel || '办理类型');
+  return {
+    current_business_category_code: code,
+    default_business_category_code: code,
+    current_business_category_label: label,
+    default_business_category_label: label,
+    ctx_source: 'business_category_create_picker',
+    ...defaults,
+  };
+}
+
 export function buildBusinessEntryRequestContext(source: Record<string, unknown>) {
   const raw = source || {};
   const categoryCode = asText(raw.current_business_category_code || raw.default_business_category_code);

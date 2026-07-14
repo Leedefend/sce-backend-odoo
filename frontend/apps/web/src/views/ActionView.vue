@@ -807,7 +807,7 @@ import {
   buildWorkbenchRouteTarget,
 } from '../app/runtime/actionViewRouteRuntime';
 import { buildCanonicalSceneRouteTarget, buildEntryTargetRouteTarget } from '../app/routeQuery';
-import { buildBusinessEntryNavQuery, buildBusinessEntryRequestContext } from '../app/navigationContext';
+import { buildBusinessCategoryCreateNavQuery, buildBusinessEntryNavQuery, buildBusinessEntryRequestContext } from '../app/navigationContext';
 import {
   hasRoutePresetGroupPageStateChanged,
   resolveRoutePresetActiveFilterValue,
@@ -1476,25 +1476,11 @@ function closeBusinessCategoryCreatePicker() {
 function createRouteQueryForBusinessCategory(categoryCode = '') {
   const code = String(categoryCode || '').trim();
   const option = code ? businessCategoryCreateOptions.value.find((row) => row.code === code) : undefined;
-  const defaults: Record<string, string> = {};
-  if (option?.categoryId) {
-    defaults.default_business_category_id = String(option.categoryId);
-  }
-  Object.entries(option?.defaultValues || {}).forEach(([key, value]) => {
-    const normalizedKey = String(key || '').trim();
-    if (!normalizedKey || value === undefined || value === null) return;
-    if (Array.isArray(value) || typeof value === 'object') return;
-    defaults[`default_${normalizedKey}`] = String(value);
-  });
-  const label = String(option?.label || actionMeta.value?.name || currentMenuTitle.value || '办理类型').trim();
-  return resolveCarryQuery(code ? {
-    current_business_category_code: code,
-    default_business_category_code: code,
-    current_business_category_label: label,
-    default_business_category_label: label,
-    ctx_source: 'business_category_create_picker',
-    ...defaults,
-  } : undefined);
+  return resolveCarryQuery(buildBusinessCategoryCreateNavQuery({
+    categoryCode: code,
+    option,
+    fallbackLabel: actionMeta.value?.name || currentMenuTitle.value || '办理类型',
+  }));
 }
 
 async function openCreateRecordWithBusinessCategory(categoryCode = '') {
