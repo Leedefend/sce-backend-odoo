@@ -12,6 +12,7 @@ class SystemInitPayloadBuilder:
     SOURCE_AUTHORITIES = (
         "system_init_runtime_payload",
         "delivery_engine_v1",
+        "release_navigation_v1",
         "scene_ready_contract_v1",
         "page_contracts",
         "sc.entitlement",
