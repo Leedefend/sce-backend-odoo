@@ -4,7 +4,7 @@ Generated from repository source files. This report is informational during the 
 
 ## Summary
 
-- Scanned files: `3910`
+- Scanned files: `3912`
 - Files requiring split plan: `41`
 - Files above warning threshold: `65`
 
@@ -21,11 +21,11 @@ Generated from repository source files. This report is informational during the 
 | 3323 | Python source | `addons/smart_construction_core/tests/test_p0_state_closure.py` |
 | 3202 | Python source | `addons/smart_core/tests/test_form_field_configuration_params.py` |
 | 3187 | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
-| 3145 | Python source | `addons/smart_construction_core/core_extension.py` |
 | 3092 | Python source | `addons/smart_construction_core/models/support/p1_daily_business_visible_alias_fields.py` |
 | 3041 | Python source | `addons/smart_core/core/workspace_home_contract_builder.py` |
 | 3013 | Python source | `addons/smart_core/app_config_engine/services/assemblers/page_assembler.py` |
 | 2903 | Python source | `addons/smart_core/tests/test_menu_configuration_audit.py` |
+| 2884 | Python source | `addons/smart_construction_core/core_extension.py` |
 | 2830 | Python source | `addons/smart_construction_core/models/core/material_acceptance.py` |
 | 2585 | Python source | `addons/smart_construction_core/tests/test_user_feedback_business_views.py` |
 | 2529 | XML data/view | `addons/smart_construction_core/views/menu_business_taxonomy.xml` |
@@ -137,11 +137,11 @@ Generated from repository source files. This report is informational during the 
 | 3323 | split_plan_required | Python source | `addons/smart_construction_core/tests/test_p0_state_closure.py` |
 | 3202 | split_plan_required | Python source | `addons/smart_core/tests/test_form_field_configuration_params.py` |
 | 3187 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
-| 3145 | split_plan_required | Python source | `addons/smart_construction_core/core_extension.py` |
 | 3092 | split_plan_required | Python source | `addons/smart_construction_core/models/support/p1_daily_business_visible_alias_fields.py` |
 | 3041 | split_plan_required | Python source | `addons/smart_core/core/workspace_home_contract_builder.py` |
 | 3013 | split_plan_required | Python source | `addons/smart_core/app_config_engine/services/assemblers/page_assembler.py` |
 | 2903 | split_plan_required | Python source | `addons/smart_core/tests/test_menu_configuration_audit.py` |
+| 2884 | split_plan_required | Python source | `addons/smart_construction_core/core_extension.py` |
 | 2830 | split_plan_required | Python source | `addons/smart_construction_core/models/core/material_acceptance.py` |
 | 2585 | split_plan_required | Python source | `addons/smart_construction_core/tests/test_user_feedback_business_views.py` |
 | 2529 | split_plan_required | XML data/view | `addons/smart_construction_core/views/menu_business_taxonomy.xml` |

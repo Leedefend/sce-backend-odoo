@@ -3,7 +3,7 @@
 Date: 2026-07-14
 Owner: Construction backend owner
 Target file: `addons/smart_construction_core/core_extension.py`
-Current size: 3,145 lines
+Current size: 2,884 lines
 Phase: staged responsibility split
 
 ## Purpose
@@ -44,6 +44,7 @@ construction-owned policy.
 | `construction_core_extension_policy_maps_split_guard.py` | Static policy/map extraction, role/nav/file/API/unlink maps, line lock, no import-time registration side effects, and pure-constant boundary. |
 | `construction_core_extension_system_init_rows_split_guard.py` | System-init row builder extraction, read-side search helpers, workspace action rows, enterprise enablement facts, role/home dictionary rows, line lock, and no write/registration side effects. |
 | `construction_core_extension_capability_rows_split_guard.py` | Capability row normalization extraction, identity/ownership/UI/binding/permission/runtime envelope preservation, line lock, and pure-normalization boundary. |
+| `construction_core_extension_hook_facts_split_guard.py` | Static hook fact extraction, business config refs, low-code menu refs, product/app shell/scene facts, acceptance nav contract, line lock, and static-facts boundary. |
 | `backend_boundary_guard.py` | Core backend ownership and extension-boundary constraints. |
 | `owner_industry_isolation_probe.py` | Industry module isolation and required extension hooks. |
 
@@ -118,6 +119,21 @@ Stage 5 is complete when:
   inference beyond copying required roles/groups into the envelope;
 - `core_extension.py` is locked at `<=3145` lines for this stage.
 
+## Stage 6 Target
+
+Stage 6 is complete when:
+
+- `core_extension_hook_facts.py` owns static hook facts: business config group
+  XMLIDs, form/approval refs, native/low-code menu refs, product catalog facts,
+  business nav order, app shell taxonomy, scene orchestrator specs, and user
+  data acceptance nav contract;
+- `core_extension.py` keeps the public `smart_core_*` hook names and delegates
+  static fact bodies into the extracted module;
+- the extracted module remains static facts only: no ORM access, HTTP calls,
+  registry imports, registration side effects, file IO, user/group inspection,
+  or routing decisions beyond returning configured identifiers;
+- `core_extension.py` is locked at `<=2884` lines for this stage.
+
 ## Next Candidate
 
 Next candidates should be read-only first:
@@ -125,7 +141,7 @@ Next candidates should be read-only first:
 - contract normalizer helpers around construction diary/general contract form;
 - import-time registration facts after module load order and consumers are
   locked by tests;
-- role/home block builders after dictionary dependency behavior is mapped.
+- relation entry policy after tax quick-create side effects are mapped.
 
 Do not move import-time registration side effects until their module load order
 and external hook consumers are explicitly locked by tests.
