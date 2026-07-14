@@ -211,9 +211,9 @@ import { pickContractNavQuery } from '../app/navigationContext';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
 import { buildEntryTargetRouteTarget } from '../app/routeQuery';
 import { findActionMetaByMenu } from '../app/menu';
-import { resolveProductPageIdentity, type PageIdentityInput } from '../app/pageIdentity';
-import { publishPageIdentity } from '../app/pageIdentityRuntime';
+import { buildRecordPageIdentity } from '../app/pageIdentityAdapters';
 import { resolveRoutePageIdentity } from '../app/pageIdentityRoute';
+import { usePublishedPageIdentity } from '../app/usePublishedPageIdentity';
 
 const route = useRoute();
 const router = useRouter();
@@ -353,34 +353,22 @@ const requestedSourceMode = computed(() => (
   requestedSurface.value === 'native' ? 'native_parser' : 'governance_pipeline'
 ));
 const session = useSessionStore();
-const recordPageIdentityInput = computed<PageIdentityInput>(() => {
+const recordPageIdentityInput = computed(() => {
   const menuId = toPositiveInt(route.query.menu_id);
   const actionMeta = menuId ? findActionMetaByMenu(session.menuTree, menuId, actionId.value || undefined) : null;
   const routeIdentity = resolveRoutePageIdentity(route, session.menuTree);
-  const state = status.value === 'loading' || status.value === 'idle'
-    ? 'loading'
-    : status.value === 'empty'
-      ? 'not-found'
-      : status.value === 'error'
-        ? 'error'
-        : '';
-  return {
-    kind: status.value === 'editing' || status.value === 'saving' ? 'edit' : 'detail',
-    actionName: actionMeta?.name,
+  return buildRecordPageIdentity({
+    action: actionMeta,
+    breadcrumbs: routeIdentity.breadcrumbs,
     menuName: routeIdentity.menuName,
     modelName: model.value,
-    modelLabel: actionMeta?.model_label,
     record: recordData.value,
     recordDisplayName: recordTitle.value,
-    subtitle: status.value === 'editing' ? '正在编辑' : actionMeta?.name,
-    breadcrumbs: routeIdentity.breadcrumbs,
-    state,
-  };
+    status: status.value,
+  });
 });
-const title = computed(() => resolveProductPageIdentity(recordPageIdentityInput.value).title);
-watch(recordPageIdentityInput, (identityInput) => {
-  publishPageIdentity(route.fullPath, identityInput);
-}, { immediate: true, deep: true });
+const recordPageIdentity = usePublishedPageIdentity(recordPageIdentityInput, { routeKey: () => route.fullPath, immediate: true });
+const title = computed(() => recordPageIdentity.value.title);
 const PROJECT_CONTEXT_CHANGED_EVENT = 'sc:project-context-changed';
 const pageContract = usePageContract('record');
 const pageText = pageContract.text;

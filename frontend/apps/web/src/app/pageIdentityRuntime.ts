@@ -1,24 +1,26 @@
 import { computed, readonly, ref } from 'vue';
 import { resolveProductPageIdentity, type PageIdentityInput, type ProductPageIdentity } from './pageIdentity';
+import { createPageIdentityCoordinator } from './pageIdentityCoordinator';
 
 const routeKey = ref('');
 const identity = ref<ProductPageIdentity>(resolveProductPageIdentity({ fallbackTitle: '工作台' }));
+const coordinator = createPageIdentityCoordinator();
 
 export function beginPageIdentity(key: string, input: PageIdentityInput): void {
-  routeKey.value = String(key || '').trim();
-  identity.value = resolveProductPageIdentity(input);
+  identity.value = coordinator.begin(key, input);
+  routeKey.value = coordinator.currentKey();
 }
 
 export function publishPageIdentity(key: string, input: PageIdentityInput): boolean {
-  const normalizedKey = String(key || '').trim();
-  if (!normalizedKey || normalizedKey !== routeKey.value) return false;
-  identity.value = resolveProductPageIdentity(input);
+  const published = coordinator.publish(key, input);
+  if (!published) return false;
+  identity.value = published;
   return true;
 }
 
 export function clearPageIdentity(): void {
-  routeKey.value = '';
-  identity.value = resolveProductPageIdentity({ fallbackTitle: '工作台' });
+  identity.value = coordinator.clear();
+  routeKey.value = coordinator.currentKey();
 }
 
 export function usePageIdentityRuntime() {

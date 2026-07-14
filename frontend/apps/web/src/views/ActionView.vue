@@ -641,9 +641,8 @@ import { useActionViewTextRuntime } from '../app/action_runtime/useActionViewTex
 import { useActionViewTemplateUiStateRuntime } from '../app/action_runtime/useActionViewTemplateUiStateRuntime';
 import { useActionViewFilterUiStateRuntime } from '../app/action_runtime/useActionViewFilterUiStateRuntime';
 import { useActionViewPageDisplayStateRuntime } from '../app/action_runtime/useActionViewPageDisplayStateRuntime';
-import { resolveProductPageIdentity, type PageIdentityInput } from '../app/pageIdentity';
-import { publishPageIdentity } from '../app/pageIdentityRuntime';
-import { resolveRoutePageIdentity } from '../app/pageIdentityRoute';
+import { buildActionPageIdentity, resolveRoutePageIdentity } from '../app/pageIdentityAdapters';
+import { usePublishedPageIdentity } from '../app/usePublishedPageIdentity';
 import { useActionViewHudEntriesRuntime } from '../app/action_runtime/useActionViewHudEntriesRuntime';
 import { useActionViewHudEntriesInputRuntime } from '../app/action_runtime/useActionViewHudEntriesInputRuntime';
 import { useActionViewSurfaceIntentRuntime } from '../app/action_runtime/useActionViewSurfaceIntentRuntime';
@@ -1651,34 +1650,16 @@ const {
   route,
   isHudEnabled,
 });
-const actionIdentityInput = computed<PageIdentityInput>(() => {
-  const state = status.value === 'ok' ? '' : status.value === 'empty' ? 'empty' : status.value === 'error' ? 'error' : 'loading';
-  const routeIdentity = resolveRoutePageIdentity(route, session.menuTree);
-  return {
-    kind: 'list',
-    actionName: actionContract.value?.head?.title || actionMetaName.value || legacyPageTitle.value,
-    menuName: currentMenuTitle.value,
-    modelName: resolvedModelRef.value || model.value,
-    modelLabel: actionMeta.value?.model_label,
-    subtitle: subtitle.value,
-    breadcrumbs: routeIdentity.breadcrumbs,
-    state,
-  };
-});
-const pageIdentity = computed(() => resolveProductPageIdentity(actionIdentityInput.value));
+const actionIdentityInput = computed(() => buildActionPageIdentity({
+    action: actionMeta.value, breadcrumbs: resolveRoutePageIdentity(route, session.menuTree).breadcrumbs,
+    actionContractTitle: actionContract.value?.head?.title || actionMetaName.value,
+    legacyTitle: legacyPageTitle.value, menuName: currentMenuTitle.value,
+    modelName: resolvedModelRef.value || model.value, status: status.value, subtitle: subtitle.value,
+}));
+const pageIdentity = usePublishedPageIdentity(actionIdentityInput, { routeKey: () => route.fullPath,
+  active: () => isComponentActive.value, onTitle: (title) => session.updateActiveActivityTitle(title), immediate: true });
 const pageTitle = computed(() => pageIdentity.value.title);
 const showSceneBlocksDebug = computed(() => isSceneBlocksDebugEnabled(route));
-
-watch(
-  actionIdentityInput,
-  (identityInput) => {
-    if (!isComponentActive.value) return;
-    publishPageIdentity(route.fullPath, identityInput);
-    session.updateActiveActivityTitle(resolveProductPageIdentity(identityInput).title);
-  },
-  { immediate: true, deep: true },
-);
-
 function resolveContractActionCountForHud() {
   const contract = actionContract.value;
   if (!contract) return 0;

@@ -133,7 +133,7 @@ export function resolveProductPageIdentity(input: PageIdentityInput): ProductPag
   const kind = input.kind || 'page';
   const state = input.state || '';
   const object = objectLabel(input);
-  const record = recordIdentity(input);
+  const record = state === 'denied' || state === 'not-found' ? '' : recordIdentity(input);
   let title = '';
   let source: PageIdentitySource = object.source;
 
@@ -142,7 +142,8 @@ export function resolveProductPageIdentity(input: PageIdentityInput): ProductPag
       title = kind === 'edit' ? `编辑 ${record}` : record;
       source = 'record';
     } else if (object.label) {
-      title = kind === 'edit' ? `编辑${stripOperation(object.label)}` : object.label;
+      const objectName = stripOperation(object.label);
+      title = kind === 'edit' ? `编辑${objectName}` : state ? objectName : `${objectName}详情`;
     } else {
       title = productIdentityText(input.modelLabel) ? `${productIdentityText(input.modelLabel)}详情` : '记录详情';
       source = productIdentityText(input.modelLabel) ? 'model' : 'product-fallback';
@@ -159,7 +160,10 @@ export function resolveProductPageIdentity(input: PageIdentityInput): ProductPag
 
   const suffix = stateLabel(state);
   if (suffix) {
-    if (state === 'not-found' && !object.label && !record) title = suffix;
+    if (state === 'not-found') {
+      title = suffix;
+      source = 'product-fallback';
+    }
     else if (state === 'denied' && !object.label) title = suffix;
     else title = `${title} · ${suffix}`;
   }

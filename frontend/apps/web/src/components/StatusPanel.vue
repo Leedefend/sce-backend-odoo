@@ -1,6 +1,6 @@
 <template>
   <section class="panel" :class="variant">
-    <h2>{{ title }}</h2>
+    <h2 v-if="!hideTitle">{{ title }}</h2>
     <p v-if="message">{{ message }}</p>
     <p v-if="variant === 'error' && userHint" class="error-help">{{ userHint }}</p>
     <p v-if="variant === 'error' && !showHudMeta && compactContext" class="error-context">
@@ -52,6 +52,7 @@ const props = defineProps<{
   variant?: 'error' | 'info' | 'forbidden_capability';
   onRetry?: () => void;
   onSuggestedAction?: (action: string) => boolean | void;
+  hideTitle?: boolean;
 }>();
 const emit = defineEmits<{
   (event: 'action-executed', payload: { action: string; success: boolean }): void;

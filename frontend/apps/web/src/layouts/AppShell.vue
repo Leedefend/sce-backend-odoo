@@ -295,7 +295,7 @@ import { resolveMenuAction } from '../app/resolvers/menuResolver';
 import { isDeliveryModeEnabled, isHudEnabled } from '../config/debug';
 import { buildCanonicalSceneRouteTarget, buildEntryTargetRouteTarget, parseSceneKeyFromQuery } from '../app/routeQuery';
 import { buildRuntimeNavigationRegistry } from '../app/navigationRegistry';
-import { usePageIdentityRuntime } from '../app/pageIdentityRuntime';
+import { clearPageIdentity, usePageIdentityRuntime } from '../app/pageIdentityRuntime';
 import { applyTheme, nextTheme, persistTheme, type ScTheme } from '../styles/theme';
 import { config } from '../config';
 import { openAction } from '../services/action_service';
@@ -550,7 +550,15 @@ const useMinimalTopbar = computed(() =>
   || isConfigurationRoute.value
   || businessRouteUsesCompactTopbar.value,
 );
-const showTopbarHeadline = computed(() => !sceneHeaderMinimal.value && (!useMinimalTopbar.value || route.name === 'record'));
+const compactRouteKeepsHeadline = computed(() => [
+  'action',
+  'menu',
+  'record',
+  'model-form',
+  'access-denied',
+  'not-found',
+].includes(String(route.name || '')));
+const showTopbarHeadline = computed(() => !sceneHeaderMinimal.value && (!useMinimalTopbar.value || compactRouteKeepsHeadline.value));
 const sidebarClass = computed(() =>
   activeLayout.value.sidebar === 'scroll' ? 'sidebar--scroll' : 'sidebar--fixed'
 );
@@ -1392,6 +1400,7 @@ async function refreshInit() {
 
 async function logout() {
   await session.logout();
+  clearPageIdentity();
   router.push('/login');
 }
 </script>
