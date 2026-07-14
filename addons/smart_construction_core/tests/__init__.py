@@ -7,6 +7,7 @@ from . import test_smoke_3waymatch_flow
 from . import test_smoke_validator
 from . import test_budget
 from . import test_contract_center
+from . import test_core_amount_calculation
 from . import test_cost_compare
 from . import test_profit_compare
 from . import test_stock_cost

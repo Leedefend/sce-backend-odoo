@@ -70,6 +70,7 @@ def main():
     parser.add_argument("--md-out", required=True, help="Markdown output path")
     parser.add_argument("--fail-on-reverse-deps", action="store_true", help="Fail on reverse deps")
     parser.add_argument("--allowlist", default="", help="Allowlist file for reverse deps")
+    parser.add_argument("--generated-at", default="", help="Generated-at label or timestamp")
     args = parser.parse_args()
 
     repo_root = os.path.abspath(args.root)
@@ -102,7 +103,7 @@ def main():
 
     payload = {
         "scan_root": args.scan_dir,
-        "generated_at": datetime.utcnow().isoformat() + "Z",
+        "generated_at": args.generated_at or datetime.utcnow().isoformat() + "Z",
         "total_files": total_files,
         "keyword_hits": kw_results,
         "reverse_dependency_hits": rev_results,

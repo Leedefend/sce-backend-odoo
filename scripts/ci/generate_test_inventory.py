@@ -90,6 +90,22 @@ MANUAL_ENTRIES = [
         "notes": "Requires Docker/Odoo runtime.",
     },
     {
+        "id": "T-ODOO-002",
+        "layer": "odoo_integration",
+        "entrypoint": "addons/smart_construction_core/tests/test_core_amount_calculation.py",
+        "purpose": (
+            "Focused Odoo post-test evidence for core contract amount, tax rounding, "
+            "settlement payable balance, payment uppercase, and overpay risk calculations."
+        ),
+        "estimated_runtime": "10-30m",
+        "owner": "backend owner",
+        "status": "active",
+        "decision_gate": "integration_required",
+        "disposition": "canonical_entry",
+        "aggregate_target": "TEST_TAGS=core_amount",
+        "notes": "Run through scripts/ci/run_ci.sh with TEST_TAGS=core_amount on a clean Odoo test database.",
+    },
+    {
         "id": "T-E2E-ODOO-001",
         "layer": "e2e",
         "entrypoint": "make test.e2e.fixed_data.odoo",
