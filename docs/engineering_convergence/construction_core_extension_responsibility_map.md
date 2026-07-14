@@ -3,7 +3,7 @@
 Date: 2026-07-14
 Owner: Construction backend owner
 Target file: `addons/smart_construction_core/core_extension.py`
-Current size: 2,780 lines
+Current size: 2,440 lines
 Phase: staged responsibility split
 
 ## Purpose
@@ -46,6 +46,7 @@ construction-owned policy.
 | `construction_core_extension_capability_rows_split_guard.py` | Capability row normalization extraction, identity/ownership/UI/binding/permission/runtime envelope preservation, line lock, and pure-normalization boundary. |
 | `construction_core_extension_hook_facts_split_guard.py` | Static hook fact extraction, business config refs, low-code menu refs, product/app shell/scene facts, acceptance nav contract, line lock, and static-facts boundary. |
 | `construction_core_extension_policy_accessors_split_guard.py` | Policy accessor extraction, file model contribution scan, API mutation/create/unlink policies, contract tax quick-create detection, line lock, and read-side policy boundary. |
+| `construction_core_extension_contract_normalizers_split_guard.py` | Contract normalizer extraction, construction diary/general contract tax/company form projection, helper delegation, workflow-injection boundary, line lock, and projection-only boundary. |
 | `backend_boundary_guard.py` | Core backend ownership and extension-boundary constraints. |
 | `owner_industry_isolation_probe.py` | Industry module isolation and required extension hooks. |
 
@@ -150,14 +151,30 @@ Stage 7 is complete when:
   handler execution;
 - `core_extension.py` is locked at `<=2780` lines for this stage.
 
+## Stage 8 Target
+
+Stage 8 is complete when:
+
+- `core_extension_contract_normalizers.py` owns projection-only contract
+  normalizers for construction diary form, general contract tax field
+  migration, and general contract company form layout;
+- `core_extension.py` keeps public normalizer wrappers and the workflow
+  injection helper because workflow projection reads `env`, registry, records,
+  and workflow services;
+- the extracted module remains pure contract projection: no ORM access, HTTP
+  calls, routing, registration side effects, file IO, permission inference, or
+  workflow service access;
+- `core_extension.py` is locked at `<=2440` lines for this stage.
+
 ## Next Candidate
 
 Next candidates should be read-only first:
 
-- contract normalizer helpers around construction diary/general contract form;
 - import-time registration facts after module load order and consumers are
   locked by tests;
 - relation entry policy after tax quick-create side effects are mapped.
+- workflow contract projection after env/service transaction boundaries are
+  documented and covered by behavior tests.
 
 Do not move import-time registration side effects until their module load order
 and external hook consumers are explicitly locked by tests.

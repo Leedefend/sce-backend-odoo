@@ -43,7 +43,7 @@ def main() -> int:
 
     for token in [
         "Construction Core Extension Responsibility Map",
-        "Current size: 2,780 lines",
+        "Current size: 2,440 lines",
         "staged responsibility split",
         "## Public Entry Points",
         "## Responsibility Bands",
@@ -55,6 +55,7 @@ def main() -> int:
         "## Stage 5 Target",
         "## Stage 6 Target",
         "## Stage 7 Target",
+        "## Stage 8 Target",
         "`core_extension_project_layout.py` owns pure project form layout helpers",
         "`core_extension_contract_helpers.py` owns generic contract helper utilities",
         "`core_extension_policy_maps.py` owns static construction policy/map facts",
@@ -62,8 +63,10 @@ def main() -> int:
         "`core_extension_capability_rows.py` owns capability row normalization",
         "`core_extension_hook_facts.py` owns static hook facts",
         "`core_extension_policy_accessors.py` owns read-side policy accessors",
-        "`core_extension.py` is locked at `<=2780` lines",
+        "`core_extension_contract_normalizers.py` owns projection-only contract",
+        "`core_extension.py` is locked at `<=2440` lines",
         "Do not move import-time registration side effects",
+        "workflow projection reads `env`, registry, records",
         "projection-only",
     ]:
         if token not in doc:
@@ -77,6 +80,7 @@ def main() -> int:
         "construction_core_extension_capability_rows_split_guard.py",
         "construction_core_extension_hook_facts_split_guard.py",
         "construction_core_extension_policy_accessors_split_guard.py",
+        "construction_core_extension_contract_normalizers_split_guard.py",
         "backend_boundary_guard.py",
         "owner_industry_isolation_probe.py",
     ]:
@@ -120,6 +124,16 @@ def main() -> int:
             errors.append("core_extension.py must import policy accessors module")
         if "return _policy_accessors.get_api_data_unlink_allowed_model_contributions(env)" not in core:
             errors.append("core_extension.py must delegate unlink policy accessors")
+        if "core_extension_contract_normalizers as _contract_normalizers" not in core:
+            errors.append("core_extension.py must import contract normalizers module")
+        if "_contract_normalizers.normalize_construction_diary_form(contract, source_contract, model=model, view_type=view_type)" not in core:
+            errors.append("core_extension.py must delegate construction diary normalizer")
+        if "_contract_normalizers.general_contract_tax_contract(contract, source_contract=source_contract)" not in core:
+            errors.append("core_extension.py must delegate general contract tax normalizer")
+        if "_contract_normalizers.normalize_general_contract_company_form(contract, source_contract=source_contract)" not in core:
+            errors.append("core_extension.py must delegate general contract company normalizer")
+        if "def _sc_inject_workflow_contract(env, contract, source, *, model, view_type):" not in core:
+            errors.append("core_extension.py must keep workflow injection boundary in facade")
 
     split_queue_token = (
         "`addons/smart_construction_core/core_extension.py` | "
@@ -136,6 +150,7 @@ def main() -> int:
         "python3 scripts/verify/construction_core_extension_capability_rows_split_guard.py",
         "python3 scripts/verify/construction_core_extension_hook_facts_split_guard.py",
         "python3 scripts/verify/construction_core_extension_policy_accessors_split_guard.py",
+        "python3 scripts/verify/construction_core_extension_contract_normalizers_split_guard.py",
         "python3 scripts/verify/construction_core_extension_responsibility_map_guard.py",
     ]:
         if ci_token not in ci:
