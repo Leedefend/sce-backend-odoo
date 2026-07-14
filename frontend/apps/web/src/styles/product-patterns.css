@@ -378,6 +378,16 @@
   border-color: var(--sc-app-border);
 }
 
+/* FE-P03: project details are an intentionally read-only overview surface. */
+.sc-project-detail-page .sc-product-main-surface {
+  border-color: var(--sc-app-border);
+  box-shadow: none;
+}
+
+.sc-project-detail-page .record-l1 {
+  border-bottom: 1px solid var(--sc-app-border);
+}
+
 @media (max-width: 900px) {
   .sc-project-list-page .list-header-toolbar {
     width: 100%;
