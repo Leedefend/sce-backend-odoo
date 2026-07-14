@@ -4,6 +4,10 @@
         <field name="key">smart_construction_bundle.product_key</field>
         <field name="value">construction.standard</field>
     </record>
+    <record id="param_construction_release_operator_product_base_keys" model="ir.config_parameter">
+        <field name="key">smart_core.release_operator.product_base_keys</field>
+        <field name="value">construction,platform</field>
+    </record>
     <record id="param_construction_bundle_tiers" model="ir.config_parameter">
         <field name="key">smart_construction_bundle.tiers</field>
         <field name="value">standard,pro,enterprise</field>
