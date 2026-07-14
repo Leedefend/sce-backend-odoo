@@ -3,7 +3,7 @@
 Date: 2026-07-14
 Owner: Platform owner
 Target file: `addons/smart_core/handlers/ui_contract_v2.py`
-Current size: 3,515 lines
+Current size: 3,518 lines
 Phase: Stage 3 form layout governance helper split
 
 ## Purpose
@@ -122,7 +122,7 @@ Stage 3 is complete:
   `_apply_form_layout_governance_to_group`;
 - `ui_contract_v2.py` keeps compatibility methods and delegates to the
   projection module;
-- `ui_contract_v2.py` is locked at `<=3515` lines for this stage.
+- `ui_contract_v2.py` is locked at `<=3518` lines for this stage.
 
 ## Stage 4 Candidate
 
