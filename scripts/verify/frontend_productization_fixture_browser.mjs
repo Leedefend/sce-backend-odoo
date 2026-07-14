@@ -248,8 +248,13 @@ async function main() {
     await waitForDenied(member);
     requireCheck(!memberWire.some((row) => /FE-A-PR-001|1000\.0/.test(row.body)), 'sensitive record route leaked project A payment payload');
     memberWire.length = 0;
+    const outOfScopeDenied = member.waitForResponse(
+      (response) => response.url().includes('/api/v1/intent') && response.status() === 403,
+      { timeout: 30000 },
+    );
     await member.goto(`${BASE_URL}/r/payment.request/${PAYMENT_RECORD_C_ID}`, { waitUntil: 'domcontentloaded', timeout: 30000 });
-    await member.waitForFunction(() => /无权限|权限不足|页面加载失败/.test(document.body.innerText || ''), null, { timeout: 30000 });
+    await outOfScopeDenied;
+    await member.waitForFunction(() => /无权访问|无权限|权限不足|页面加载失败/.test(document.body.innerText || ''), null, { timeout: 30000 });
     shellText = await bodyText(member);
     requireCheck(!shellText.includes('FE-C-PR-001'), 'out-of-scope record title leaked on direct record route');
     requireCheck(memberWire.some((row) => row.status === 403), 'out-of-scope record route did not return HTTP 403');

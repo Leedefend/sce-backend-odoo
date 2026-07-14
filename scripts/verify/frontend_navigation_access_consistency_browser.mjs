@@ -132,6 +132,7 @@ async function inspectLeaf(page, role, leaf, capture, index) {
     thrown = error;
   }
   const body = await page.locator('body').innerText().catch(() => '');
+  const visibleSurface = await page.locator('section.page:visible').last().innerText().catch(() => body);
   const expectedPath = new URL(`${BASE_URL}${leaf.route}`).pathname;
   const actualPath = new URL(page.url()).pathname;
   const httpErrors = capture.responses.filter((row) => row.status >= 400);
@@ -144,8 +145,8 @@ async function inspectLeaf(page, role, leaf, capture, index) {
   if (payloadErrors.length) failures.push('HTTP 200 permission/error payload');
   if (capture.pageErrors.length) failures.push(`pageerror: ${capture.pageErrors.join(' | ')}`);
   if (consoleErrors.length) failures.push(`console: ${consoleErrors.join(' | ')}`);
-  if (FAILURE_TEXT.test(body)) failures.push('permission/initialization error surface');
-  if (!body.trim()) failures.push('empty page body');
+  if (FAILURE_TEXT.test(visibleSurface)) failures.push('permission/initialization error surface');
+  if (!visibleSurface.trim()) failures.push('empty page body');
   const result = {
     role,
     ...leaf,

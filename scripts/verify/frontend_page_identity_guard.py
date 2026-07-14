@@ -11,10 +11,12 @@ def fail(message: str) -> None:
 
 required = {
     "layouts/AppShell.vue": "usePageIdentityRuntime",
-    "views/ActionView.vue": "publishPageIdentity",
-    "pages/ContractFormPage.vue": "publishPageIdentity",
-    "views/RecordView.vue": "publishPageIdentity",
+    "views/ActionView.vue": "usePublishedPageIdentity",
+    "pages/ContractFormPage.vue": "usePublishedPageIdentity",
+    "views/RecordView.vue": "usePublishedPageIdentity",
     "App.vue": "document.title",
+    "views/AccessDeniedView.vue": "usePageIdentityRuntime",
+    "views/NotFoundView.vue": "usePageIdentityRuntime",
 }
 for relative, marker in required.items():
     source = (FRONTEND / relative).read_text(encoding="utf-8")
@@ -32,10 +34,16 @@ for path in FRONTEND.rglob("*"):
 if writers != ["App.vue"]:
     fail(f"document.title must have one page writer, got {writers}")
 
-resolver = (FRONTEND / "app/pageIdentity.ts").read_text(encoding="utf-8")
+identity_sources = "\n".join(
+    path.read_text(encoding="utf-8")
+    for path in sorted((FRONTEND / "app").glob("pageIdentity*.ts"))
+)
 for forbidden in ("project.project", "construction.contract", "payment.request", "settlement"):
-    if forbidden in resolver:
+    if forbidden in identity_sources:
         fail(f"model-specific identity rule forbidden: {forbidden}")
+for forbidden in ("model ===", "model !==", "includes(model)", "switch (model)", "switch(model)"):
+    if forbidden in identity_sources:
+        fail(f"model-specific identity branch forbidden: {forbidden}")
 
 router = (FRONTEND / "router/index.ts").read_text(encoding="utf-8")
 if "`${model || '记录'} #${id || ''}`" in router:
@@ -47,4 +55,4 @@ form_labels = (FRONTEND / "pages/contractForm/uiLabels.ts").read_text(encoding="
 if "`记录 #${params.recordId}`" in form_labels:
     fail("form subtitle still exposes record id")
 
-print("[frontend_page_identity_guard] PASS writers=1 integrations=5")
+print("[frontend_page_identity_guard] PASS writers=1 integrations=7")

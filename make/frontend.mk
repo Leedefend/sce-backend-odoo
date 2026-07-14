@@ -39,6 +39,7 @@ verify.frontend.lint.src: guard.prod.forbid
 .PHONY: verify.frontend.page_identity
 verify.frontend.page_identity: guard.prod.forbid
 	@node scripts/verify/frontend_page_identity_smoke.js
+	@node scripts/verify/frontend_page_identity_lifecycle_smoke.js
 	@python3 scripts/verify/frontend_page_identity_guard.py
 
 .PHONY: verify.frontend.style_system.guard

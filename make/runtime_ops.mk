@@ -1726,7 +1726,7 @@ mod.upgrade: guard.codex.fast.upgrade guard.prod.danger check-compose-project ch
 # ======================================================
 # ==================== Policy Ops ======================
 # ======================================================
-.PHONY: db.frontend.acceptance.ensure demo.frontend.fixture verify.frontend.fixture verify.frontend.fixture.guard verify.frontend.fixture.browser verify.frontend.navigation.access verify.frontend.page_identity.browser policy.apply.business_full policy.apply.role_matrix policy.ensure.role_surface_demo smoke.business_full smoke.role_matrix verify.portal.role_surface_preflight.container verify.portal.role_surface_smoke.container p2.smoke p3.smoke p3.audit codex.preflight codex.merge codex.rollback codex.pr.body codex.release.note db.policy stage.preflight stage.run ops.auth.dev.apply ops.auth.dev.rollback ops.auth.dev.verify
+.PHONY: db.frontend.acceptance.ensure demo.frontend.fixture verify.frontend.fixture verify.frontend.fixture.guard verify.frontend.fixture.browser verify.frontend.navigation.access verify.frontend.page_identity.browser verify.frontend.page_identity.deep.browser policy.apply.business_full policy.apply.role_matrix policy.ensure.role_surface_demo smoke.business_full smoke.role_matrix verify.portal.role_surface_preflight.container verify.portal.role_surface_smoke.container p2.smoke p3.smoke p3.audit codex.preflight codex.merge codex.rollback codex.pr.body codex.release.note db.policy stage.preflight stage.run ops.auth.dev.apply ops.auth.dev.rollback ops.auth.dev.verify
 FRONTEND_ACCEPTANCE_DB := $(if $(filter command line,$(origin DB_NAME)),$(DB_NAME),sc_frontend_acceptance)
 
 db.frontend.acceptance.ensure: guard.prod.forbid check-compose-project check-compose-env
@@ -1769,10 +1769,23 @@ verify.frontend.navigation.access: guard.prod.forbid check-compose-project check
 
 verify.frontend.page_identity.browser: guard.prod.forbid check-compose-project check-compose-env
 	@set -e; \
+	runtime_output="$$( $(RUN_ENV) DB_NAME=$(FRONTEND_ACCEPTANCE_DB) SC_ENVIRONMENT=acceptance SC_ALLOW_DEMO_DATA=1 bash scripts/ops/odoo_shell_exec.sh < scripts/verify/frontend_page_identity_runtime_metadata.py 2>&1 )"; \
+	action_xmlids_line="$$(echo "$$runtime_output" | grep '^FRONTEND_PAGE_IDENTITY_ACTION_XMLIDS_JSON=' | tail -1)"; \
+	test -n "$$action_xmlids_line"; export "$$action_xmlids_line"; \
 	$(MAKE) --no-print-directory backend.acceptance.up; \
 	$(MAKE) --no-print-directory frontend.acceptance.up; \
 	trap '$(MAKE) --no-print-directory frontend.acceptance.down; $(MAKE) --no-print-directory backend.acceptance.down' EXIT; \
-	$(RUN_ENV) DB_NAME=$(FRONTEND_ACCEPTANCE_DB) SC_ENVIRONMENT=acceptance SC_ALLOW_DEMO_DATA=1 FRONTEND_URL=$${FRONTEND_URL:-http://127.0.0.1:5175} ARTIFACTS_DIR=artifacts/frontend-page-identity node frontend/apps/web/scripts/frontend_product_maturity_audit.mjs
+	$(RUN_ENV) DB_NAME=$(FRONTEND_ACCEPTANCE_DB) SC_ENVIRONMENT=acceptance SC_ALLOW_DEMO_DATA=1 FRONTEND_URL=$${FRONTEND_URL:-http://127.0.0.1:5175} ARTIFACTS_DIR=artifacts/frontend-page-identity FRONTEND_PAGE_IDENTITY_INVENTORY_PATH=docs/frontend_productization/frontend_surface_inventory_v1.csv FRONTEND_PAGE_IDENTITY_ACTION_XMLIDS_JSON="$${FRONTEND_PAGE_IDENTITY_ACTION_XMLIDS_JSON}" node frontend/apps/web/scripts/frontend_product_maturity_audit.mjs
+
+verify.frontend.page_identity.deep.browser: guard.prod.forbid check-compose-project check-compose-env
+	@set -e; \
+	runtime_output="$$( $(RUN_ENV) DB_NAME=$(FRONTEND_ACCEPTANCE_DB) SC_ENVIRONMENT=acceptance SC_ALLOW_DEMO_DATA=1 bash scripts/ops/odoo_shell_exec.sh < scripts/verify/frontend_page_identity_deep_runtime.py 2>&1 )"; \
+	targets_line="$$(echo "$$runtime_output" | grep '^FRONTEND_PAGE_IDENTITY_DEEP_TARGETS_JSON=' | tail -1)"; \
+	test -n "$$targets_line"; export "$$targets_line"; \
+	$(MAKE) --no-print-directory backend.acceptance.up; \
+	$(MAKE) --no-print-directory frontend.acceptance.up; \
+	trap '$(MAKE) --no-print-directory frontend.acceptance.down; $(MAKE) --no-print-directory backend.acceptance.down' EXIT; \
+	$(RUN_ENV) DB_NAME=$(FRONTEND_ACCEPTANCE_DB) SC_ENVIRONMENT=acceptance SC_ALLOW_DEMO_DATA=1 FRONTEND_URL=$${FRONTEND_URL:-http://127.0.0.1:5175} ARTIFACTS_DIR=artifacts/frontend-page-identity-deep FRONTEND_PAGE_IDENTITY_DEEP_TARGETS_JSON="$${FRONTEND_PAGE_IDENTITY_DEEP_TARGETS_JSON}" node scripts/verify/frontend_page_identity_deep_browser.mjs
 
 policy.apply.business_full: guard.prod.danger check-compose-project check-compose-env
 	@$(RUN_ENV) POLICY_MODULE=smart_construction_custom DB_NAME=$(DB_NAME) bash scripts/audit/apply_business_full_policy.sh
