@@ -1,0 +1,7 @@
+issue_id,severity,category,role,surface,route,component,finding,user_impact,evidence,reproducible,root_layer,recommendation,size,dependency,suggested_branch,blocking_delivery
+FE-AUD-0001,P1,UX,all,record title,/r/:model/:id,router/index.ts,record fallback exposes technical model/id title,普通用户看到内部实现信息,源码 router/index.ts resolveActivityTitle,true,frontend,用契约标题或安全业务回退,S,contract title availability,FE-AUD-F01,true
+FE-AUD-0002,P1,架构,all,权威导航,/,AppShell/MenuTree,部分菜单节点只有按钮无可巡检 route target,无法稳定覆盖全部产品表面,full-surface-report.json,true,contract,补充只读审计解析而非产品绕过,M,navigation target contract,FE-AUD-F02,true
+FE-AUD-0003,P1,测试,all,全表面巡检,all,frontend_product_maturity_audit.mjs,当前巡检窗口只能稳定覆盖少量动态入口,无法证明全量可交付,artifacts/frontend-audit/full-surface-report.json,true,frontend,建立分页/递归/超时可观测巡检,S,acceptance runtime,FE-AUD-F03,true
+FE-AUD-0004,P2,UX,finance,公司切换,company context,AppShell,需逐页验证旧列表/详情缓存失效,可能造成上下文误判,既有 fixture company isolation report,unknown,frontend,纳入核心旅程回归,M,浏览器证据,FE-AUD-F04,false
+FE-AUD-0005,P2,可访问性,all,全表面,all,shared components,需补齐标题层级、键盘焦点、表格语义与模态焦点证据,键盘用户可能无法高效操作,待专项 axe/键盘巡检,unknown,frontend,建立无写入可访问性巡检,M,测试工具,FE-AUD-F05,false
+FE-AUD-0006,P2,性能,all,初始化/列表,all,session/action runtime,需记录 system.init、列表可交互和切换耗时,高数据量下体验风险,待同环境性能采样,unknown,frontend/runtime,建立基线并按旅程比较,M,稳定 runtime,FE-AUD-F06,false
