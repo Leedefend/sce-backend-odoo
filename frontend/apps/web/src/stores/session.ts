@@ -1756,13 +1756,16 @@ export const useSessionStore = defineStore('session', {
           length: Array.isArray(c) ? c.length : 'N/A'
         })));
       }
-      // An installed product may expose an intentionally empty delivery
-      // projection while the authoritative Odoo menu projection is populated.
-      // Prefer the first non-empty contract, preserving an explicitly empty
-      // nav only when every source is empty.
-      const nav = (candidates.find((entry) => Array.isArray(entry) && entry.length > 0)
-        ?? candidates.find((entry) => Array.isArray(entry))
-        ?? null) as NavNode[] | null;
+      // Preserve an explicitly empty authoritative projection: [] can mean
+      // policy-minimum or permission-censored navigation. Fallback is only
+      // allowed when the higher-priority field is genuinely absent/null.
+      const nav = (Array.isArray(releaseNavigation?.nav)
+        ? releaseNavigation.nav
+        : Array.isArray(deliveryEngine?.nav)
+          ? deliveryEngine.nav
+          : Array.isArray(result.nav)
+            ? result.nav
+            : null) as NavNode[] | null;
       if (!nav) {
         this.initError = 'system.init missing required nav contract';
         this.initStatus = 'error';
