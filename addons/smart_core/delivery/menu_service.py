@@ -1009,6 +1009,14 @@ class MenuService:
         return out
 
     def build_nav(self, *, policy: dict, role_surface: dict | None = None, native_nav: list[dict] | None = None) -> list[dict]:
+        import logging
+        logging.getLogger(__name__).warning(
+            "NAV_IDENTITY uid=%s company=%s allowed=%s policy_key=%s",
+            getattr(getattr(self.env, "user", None), "id", None),
+            getattr(getattr(self.env, "company", None), "id", None),
+            getattr(getattr(self.env, "context", {}), "get", lambda *_: None)("allowed_company_ids"),
+            policy.get("product_key") if isinstance(policy, dict) else None,
+        )
         role_code = str((role_surface or {}).get("role_code") or "").strip().lower()
         is_admin = bool((role_surface or {}).get("is_platform_admin"))
         is_business_config_admin = bool((role_surface or {}).get("is_business_config_admin")) or self._is_business_config_role(role_code)
