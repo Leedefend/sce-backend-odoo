@@ -378,6 +378,20 @@
   border-color: var(--sc-app-border);
 }
 
+/* FE-B01: contracts use the same dense list language and context boundary. */
+.sc-contract-list-page .list-toolbar,
+.sc-contract-detail-page .sc-product-main-surface {
+  border-color: var(--sc-app-border);
+}
+
+.sc-contract-list-page .table {
+  border-radius: var(--sc-component-table-radius);
+}
+
+.sc-contract-detail-page .sc-product-main-surface {
+  box-shadow: none;
+}
+
 /* FE-P03: project details are an intentionally read-only overview surface. */
 .sc-project-detail-page .sc-product-main-surface {
   border-color: var(--sc-app-border);
