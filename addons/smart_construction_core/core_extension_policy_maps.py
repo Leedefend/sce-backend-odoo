@@ -16,6 +16,10 @@ ROLE_SURFACE_OVERRIDES = {
             "smart_construction_core.menu_payment_request",
             "smart_construction_core.menu_sc_tax_center",
             "smart_construction_core.menu_sc_hr_center",
+            "smart_construction_core.menu_sc_tender_registration",
+        ],
+        "action_blocklist_xmlids": [
+            "smart_construction_core.action_sc_tender_registration",
         ],
         "model_blocklist": [
             "payment.request",
@@ -51,6 +55,12 @@ ROLE_SURFACE_OVERRIDES = {
             "smart_construction_core.menu_sc_project_center",
             "smart_construction_core.menu_sc_contract_center",
         ],
+        "menu_blocklist_xmlids": [
+            "smart_construction_core.menu_sc_tender_registration",
+        ],
+        "action_blocklist_xmlids": [
+            "smart_construction_core.action_sc_tender_registration",
+        ],
     },
     "pm": {
         "landing_scene_candidates": ["portal.dashboard", "projects.ledger", "projects.list", "projects.intake"],
@@ -67,6 +77,14 @@ ROLE_SURFACE_OVERRIDES = {
             "smart_construction_core.menu_sc_finance_center",
             "smart_construction_core.menu_sc_settlement_center",
             "smart_construction_core.menu_payment_request",
+        ],
+        "menu_blocklist_xmlids": [
+            "smart_construction_core.menu_sc_plan",
+            "smart_construction_core.menu_sc_plan_report",
+        ],
+        "action_blocklist_xmlids": [
+            "smart_construction_core.action_sc_plan",
+            "smart_construction_core.action_sc_plan_report",
         ],
     },
     "executive": {
