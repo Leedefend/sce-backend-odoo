@@ -16,6 +16,16 @@ Each entry must include:
 
 ## Entries
 
+### 2026-07-14T16:36:26+08:00
+- blocker_key: `pr_push_dual_remote_ci_mirror`
+- layer_target: `P4 Ops delivery / Git remote orchestration`
+- module: `scripts/ops/git_safe_push.sh + docs/ops/codex_execution_allowlist.md`
+- reason: `GitHub PR quality_gate 从 Gitee CI 镜像检出分支，而既有 make pr.push 只推送 GitHub origin，导致 PR 分支提交无法被 CI 获取；仓库所有者明确授权双远端仓库流程。`
+- completed_step: `将 make pr.push 的安全实现调整为在既有分支/工作区/环境保护后依次推送 origin 与 gitee，并要求两个 remote 均已配置；allowlist 同步固化双远端语义，仍禁止绕过 Makefile 直接推送。`
+- verification: `bash -n scripts/ops/git_safe_push.sh PASS；git diff --check PASS；make ci.local.quick PASS；shellcheck unavailable；pending: make pr.push 双远端实测与 GitHub quality_gate。`
+- active_commit: `91fbf5c23`
+- next_step: `验证并提交双远端规则，使用 make pr.push 同步同一提交后重跑 PR quality_gate。`
+
 ### 2026-07-14T16:21:16+08:00
 - blocker_key: `t1_a_core_amount_formula_conflict`
 - layer_target: `P1 Domain Layer documentation`
