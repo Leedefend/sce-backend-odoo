@@ -1,7 +1,7 @@
 # ======================================================
 # ==================== Dev =============================
 # ======================================================
-.PHONY: up down restart logs ps odoo-shell prod.restart.safe prod.restart.full deploy.prod.sim.oneclick prod.sim.fresh.replay prod.sim.data.replay prod.sim.business.usable.init prod.sim.replay.then.usable.init prod.sim.replay.then.project frontend.dev frontend.stop frontend.restart frontend.logs frontend.acceptance.up frontend.acceptance.down frontend.acceptance.health verify.dev.acceptance.release release.dev.acceptance.publish release.daily_dev.acceptance.publish
+.PHONY: up down restart logs ps odoo-shell prod.restart.safe prod.restart.full deploy.prod.sim.oneclick prod.sim.fresh.replay prod.sim.data.replay prod.sim.business.usable.init prod.sim.replay.then.usable.init prod.sim.replay.then.project frontend.dev frontend.stop frontend.restart frontend.logs frontend.acceptance.up frontend.acceptance.down frontend.acceptance.health backend.acceptance.up backend.acceptance.down backend.acceptance.health verify.dev.acceptance.release release.dev.acceptance.publish release.daily_dev.acceptance.publish
 up: check-compose-project check-compose-env
 	@$(RUN_ENV) bash scripts/dev/up.sh
 down: check-compose-project check-compose-env
@@ -66,6 +66,14 @@ frontend.acceptance.down: guard.prod.forbid
 frontend.acceptance.health:
 	@curl -fsS http://127.0.0.1:5175/login >/dev/null
 	@echo "[frontend.acceptance.health] PASS url=http://127.0.0.1:5175 db=sc_frontend_acceptance"
+
+backend.acceptance.up: guard.prod.forbid check-compose-project check-compose-env
+	@bash scripts/dev/backend_acceptance_up.sh
+backend.acceptance.down:
+	@bash scripts/dev/backend_acceptance_down.sh
+backend.acceptance.health:
+	@curl -fsS http://127.0.0.1:18082/web/login >/dev/null
+	@echo "[backend.acceptance.health] PASS db=sc_frontend_acceptance"
 
 ACCEPTANCE_BASE_URL ?= http://127.0.0.1:$(NGINX_PORT)
 ACCEPTANCE_PROBE_OUTPUT ?= artifacts/backend/dev_acceptance_release_probe.json
