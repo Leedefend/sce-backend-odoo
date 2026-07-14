@@ -5,8 +5,8 @@ Generated from repository source files. This report is informational during the 
 ## Summary
 
 - Scanned files: `3947`
-- Files requiring split plan: `41`
-- Files above warning threshold: `65`
+- Files requiring split plan: `42`
+- Files above warning threshold: `64`
 
 ## Split Plan Required
 
@@ -20,7 +20,7 @@ Generated from repository source files. This report is informational during the 
 | 3518 | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 3323 | Python source | `addons/smart_construction_core/tests/test_p0_state_closure.py` |
 | 3202 | Python source | `addons/smart_core/tests/test_form_field_configuration_params.py` |
-| 3191 | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
+| 3194 | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
 | 3092 | Python source | `addons/smart_construction_core/models/support/p1_daily_business_visible_alias_fields.py` |
 | 3041 | Python source | `addons/smart_core/core/workspace_home_contract_builder.py` |
 | 3013 | Python source | `addons/smart_core/app_config_engine/services/assemblers/page_assembler.py` |
@@ -51,6 +51,7 @@ Generated from repository source files. This report is informational during the 
 | 1552 | Python source | `addons/smart_core/tests/test_odoo_native_alignment_boundaries.py` |
 | 1546 | Python source | `addons/smart_core/app_config_engine/services/view_Parser/parsers Tree Form.py` |
 | 1523 | Python source | `addons/smart_construction_core/wizard/project_boq_import_wizard.py` |
+| 1506 | Vue source | `frontend/apps/web/src/views/RecordView.vue` |
 | 599 | Shell script | `scripts/audit/smoke_role_matrix.sh` |
 | 551 | Shell script | `scripts/ops/audit_project_actions.sh` |
 
@@ -60,7 +61,6 @@ Generated from repository source files. This report is informational during the 
 | ---: | --- | --- |
 | 2054 | XML data/view | `addons/smart_construction_core/security/sc_record_rules.xml` |
 | 1807 | XML data/view | `addons/smart_construction_core/data/business_category_seed.xml` |
-| 1499 | Vue source | `frontend/apps/web/src/views/RecordView.vue` |
 | 1490 | Python source | `addons/smart_construction_core/models/support/workflow_contract_service.py` |
 | 1488 | JavaScript source | `addons/smart_construction_core/static/src/js/sc_sidebar.js` |
 | 1486 | Vue source | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` |
@@ -136,7 +136,7 @@ Generated from repository source files. This report is informational during the 
 | 3518 | split_plan_required | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 3323 | split_plan_required | Python source | `addons/smart_construction_core/tests/test_p0_state_closure.py` |
 | 3202 | split_plan_required | Python source | `addons/smart_core/tests/test_form_field_configuration_params.py` |
-| 3191 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
+| 3194 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
 | 3092 | split_plan_required | Python source | `addons/smart_construction_core/models/support/p1_daily_business_visible_alias_fields.py` |
 | 3041 | split_plan_required | Python source | `addons/smart_core/core/workspace_home_contract_builder.py` |
 | 3013 | split_plan_required | Python source | `addons/smart_core/app_config_engine/services/assemblers/page_assembler.py` |
@@ -169,7 +169,7 @@ Generated from repository source files. This report is informational during the 
 | 1552 | split_plan_required | Python source | `addons/smart_core/tests/test_odoo_native_alignment_boundaries.py` |
 | 1546 | split_plan_required | Python source | `addons/smart_core/app_config_engine/services/view_Parser/parsers Tree Form.py` |
 | 1523 | split_plan_required | Python source | `addons/smart_construction_core/wizard/project_boq_import_wizard.py` |
-| 1499 | warning | Vue source | `frontend/apps/web/src/views/RecordView.vue` |
+| 1506 | split_plan_required | Vue source | `frontend/apps/web/src/views/RecordView.vue` |
 | 1490 | warning | Python source | `addons/smart_construction_core/models/support/workflow_contract_service.py` |
 | 1488 | warning | JavaScript source | `addons/smart_construction_core/static/src/js/sc_sidebar.js` |
 | 1486 | warning | Vue source | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` |
