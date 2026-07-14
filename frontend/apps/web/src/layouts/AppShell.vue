@@ -183,6 +183,13 @@
           <p v-if="!useMinimalTopbar && !sceneHeaderMinimal && topbarSubtitle" class="headline-subtitle">{{ topbarSubtitle }}</p>
         </div>
         <div class="topbar-actions">
+          <div class="topbar-context" aria-label="当前工作上下文">
+            <span class="topbar-context-company">{{ enterpriseLabel }}</span>
+            <span class="topbar-context-separator">·</span>
+            <span>{{ currentProjectLabel }}</span>
+            <span class="topbar-context-separator">·</span>
+            <span>{{ roleLabel }}</span>
+          </div>
           <GlobalMessagePanel />
           <button
             class="sidebar-toggle sc-btn sc-btn-sm"

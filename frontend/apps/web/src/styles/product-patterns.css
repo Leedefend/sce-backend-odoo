@@ -28,6 +28,30 @@
   color: var(--sc-app-text-primary);
 }
 
+.topbar-context {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: var(--sc-product-radius-control);
+  color: var(--sc-app-text-secondary);
+  font-size: var(--sc-product-text-sm);
+  white-space: nowrap;
+}
+
+.topbar-context-company { color: var(--sc-app-text-primary); font-weight: 600; }
+.topbar-context-separator { color: var(--sc-app-border-strong); }
+
+@media (max-width: 900px) {
+  .topbar-context { max-width: 42vw; overflow: hidden; text-overflow: ellipsis; }
+}
+
+@media (max-width: 640px) {
+  .topbar-context { display: none; }
+}
+
 .sc-product-workspace-stack > :is(.template-page-header, .page-header, .sc-product-page-header) {
   margin-bottom: var(--sc-product-space-2);
 }
