@@ -211,6 +211,9 @@ import { pickContractNavQuery } from '../app/navigationContext';
 import { executePageContractAction } from '../app/pageContractActionRuntime';
 import { buildEntryTargetRouteTarget } from '../app/routeQuery';
 import { findActionMetaByMenu } from '../app/menu';
+import { resolveProductPageIdentity, type PageIdentityInput } from '../app/pageIdentity';
+import { publishPageIdentity } from '../app/pageIdentityRuntime';
+import { resolveRoutePageIdentity } from '../app/pageIdentityRoute';
 
 const route = useRoute();
 const router = useRouter();
@@ -252,7 +255,6 @@ const editTxState = computed(() => editTx.state.value);
 const model = computed(() => String(route.params.model || ''));
 const recordId = computed(() => Number(route.params.id));
 const recordTitle = ref<string | null>(null);
-const title = computed(() => recordTitle.value || `Record ${recordId.value}`);
 const subtitle = computed(() => (
   status.value === 'editing'
     ? pageText('subtitle_editing', 'Editing contract fields')
@@ -351,6 +353,34 @@ const requestedSourceMode = computed(() => (
   requestedSurface.value === 'native' ? 'native_parser' : 'governance_pipeline'
 ));
 const session = useSessionStore();
+const recordPageIdentityInput = computed<PageIdentityInput>(() => {
+  const menuId = toPositiveInt(route.query.menu_id);
+  const actionMeta = menuId ? findActionMetaByMenu(session.menuTree, menuId, actionId.value || undefined) : null;
+  const routeIdentity = resolveRoutePageIdentity(route, session.menuTree);
+  const state = status.value === 'loading' || status.value === 'idle'
+    ? 'loading'
+    : status.value === 'empty'
+      ? 'not-found'
+      : status.value === 'error'
+        ? 'error'
+        : '';
+  return {
+    kind: status.value === 'editing' || status.value === 'saving' ? 'edit' : 'detail',
+    actionName: actionMeta?.name,
+    menuName: routeIdentity.menuName,
+    modelName: model.value,
+    modelLabel: actionMeta?.model_label,
+    record: recordData.value,
+    recordDisplayName: recordTitle.value,
+    subtitle: status.value === 'editing' ? '正在编辑' : actionMeta?.name,
+    breadcrumbs: routeIdentity.breadcrumbs,
+    state,
+  };
+});
+const title = computed(() => resolveProductPageIdentity(recordPageIdentityInput.value).title);
+watch(recordPageIdentityInput, (identityInput) => {
+  publishPageIdentity(route.fullPath, identityInput);
+}, { immediate: true, deep: true });
 const PROJECT_CONTEXT_CHANGED_EVENT = 'sc:project-context-changed';
 const pageContract = usePageContract('record');
 const pageText = pageContract.text;
@@ -594,6 +624,7 @@ async function load() {
 
     const fieldNames = contractFieldNames.length ? contractFieldNames : Object.keys(view?.fields || {}).filter(Boolean);
     const readFields = fieldNames.length ? [...fieldNames] : ['*'];
+    if (readFields[0] !== '*' && !readFields.includes('display_name')) readFields.push('display_name');
     if (readFields.length && readFields[0] !== '*' && !readFields.includes('write_date')) {
       readFields.push('write_date');
     }
@@ -625,7 +656,7 @@ async function load() {
     }, {});
     status.value = deriveRecordStatus({ error: '', fieldsLength: fields.value.length });
     draftName.value = String(record?.name ?? '');
-    recordTitle.value = String(record?.name ?? '') || null;
+    recordTitle.value = String(record?.display_name ?? record?.name ?? '') || null;
     if (read.meta?.trace_id) {
       traceId.value = String(read.meta.trace_id);
       lastTraceId.value = String(read.meta.trace_id);

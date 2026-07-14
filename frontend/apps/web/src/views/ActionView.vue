@@ -641,6 +641,9 @@ import { useActionViewTextRuntime } from '../app/action_runtime/useActionViewTex
 import { useActionViewTemplateUiStateRuntime } from '../app/action_runtime/useActionViewTemplateUiStateRuntime';
 import { useActionViewFilterUiStateRuntime } from '../app/action_runtime/useActionViewFilterUiStateRuntime';
 import { useActionViewPageDisplayStateRuntime } from '../app/action_runtime/useActionViewPageDisplayStateRuntime';
+import { resolveProductPageIdentity, type PageIdentityInput } from '../app/pageIdentity';
+import { publishPageIdentity } from '../app/pageIdentityRuntime';
+import { resolveRoutePageIdentity } from '../app/pageIdentityRoute';
 import { useActionViewHudEntriesRuntime } from '../app/action_runtime/useActionViewHudEntriesRuntime';
 import { useActionViewHudEntriesInputRuntime } from '../app/action_runtime/useActionViewHudEntriesInputRuntime';
 import { useActionViewSurfaceIntentRuntime } from '../app/action_runtime/useActionViewSurfaceIntentRuntime';
@@ -1631,7 +1634,7 @@ const {
 const actionMetaName = computed(() => String(actionMeta.value?.name || '').trim());
 const baseErrorMessage = computed(() => (error.value?.code ? `code=${error.value.code} · ${error.value.message}` : error.value?.message || ''));
 const {
-  pageTitle,
+  pageTitle: legacyPageTitle,
   emptyReasonText,
   showHud,
   errorMessage,
@@ -1648,15 +1651,32 @@ const {
   route,
   isHudEnabled,
 });
+const actionIdentityInput = computed<PageIdentityInput>(() => {
+  const state = status.value === 'ok' ? '' : status.value === 'empty' ? 'empty' : status.value === 'error' ? 'error' : 'loading';
+  const routeIdentity = resolveRoutePageIdentity(route, session.menuTree);
+  return {
+    kind: 'list',
+    actionName: actionContract.value?.head?.title || actionMetaName.value || legacyPageTitle.value,
+    menuName: currentMenuTitle.value,
+    modelName: resolvedModelRef.value || model.value,
+    modelLabel: actionMeta.value?.model_label,
+    subtitle: subtitle.value,
+    breadcrumbs: routeIdentity.breadcrumbs,
+    state,
+  };
+});
+const pageIdentity = computed(() => resolveProductPageIdentity(actionIdentityInput.value));
+const pageTitle = computed(() => pageIdentity.value.title);
 const showSceneBlocksDebug = computed(() => isSceneBlocksDebugEnabled(route));
 
 watch(
-  pageTitle,
-  (title) => {
+  actionIdentityInput,
+  (identityInput) => {
     if (!isComponentActive.value) return;
-    session.updateActiveActivityTitle(title);
+    publishPageIdentity(route.fullPath, identityInput);
+    session.updateActiveActivityTitle(resolveProductPageIdentity(identityInput).title);
   },
-  { immediate: true },
+  { immediate: true, deep: true },
 );
 
 function resolveContractActionCountForHud() {

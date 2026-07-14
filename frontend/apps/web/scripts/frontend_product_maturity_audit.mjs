@@ -85,7 +85,18 @@ function flattenNavigation(nodes, parent = []) {
     const label = String(node?.title || node?.label || node?.name || '').trim();
     const meta = node?.meta && typeof node.meta === 'object' ? node.meta : {};
     const target = resolveNodeRoute(node);
-    if (label) rows.push({ label, route: target, parent_path: [...parent, label].join(' / '), category: node?.children?.length ? 'container' : target ? 'navigable_leaf' : 'unresolved_leaf', write_capable: writeAction.test(label) && Boolean(node?.action || meta.action_id) });
+    if (label) rows.push({
+      label,
+      route: target,
+      parent_path: [...parent, label].join(' / '),
+      category: node?.children?.length ? 'container' : target ? 'navigable_leaf' : 'unresolved_leaf',
+      write_capable: writeAction.test(label) && Boolean(node?.action || meta.action_id),
+      menu_id: Number(node?.menu_id || node?.menuId || meta.menu_id || 0) || null,
+      action_id: Number(node?.action_id || node?.actionId || meta.action_id || 0) || null,
+      menu_xmlid: String(node?.xml_id || node?.xmlid || meta.menu_xmlid || ''),
+      action_xmlid: String(meta.action_xmlid || ''),
+      model: String(meta.model || ''),
+    });
     if (Array.isArray(node?.children)) rows.push(...flattenNavigation(node.children, [...parent, label].filter(Boolean)));
   }
   return rows;
@@ -95,29 +106,56 @@ async function inspectPage(page, role, route, screenshotPath) {
   const consoleErrors = [];
   const pageErrors = [];
   const httpErrors = [];
-  page.on('console', (msg) => { if (msg.type() === 'error') consoleErrors.push(msg.text()); });
-  page.on('pageerror', (error) => pageErrors.push(error.message));
-  page.on('response', (response) => { if (response.status() >= 400) httpErrors.push({ url: response.url(), status: response.status() }); });
+  const onConsole = (msg) => { if (msg.type() === 'error') consoleErrors.push(msg.text()); };
+  const onPageError = (error) => pageErrors.push(error.message);
+  const onResponse = (response) => { if (response.status() >= 400) httpErrors.push({ url: response.url(), status: response.status() }); };
+  page.on('console', onConsole);
+  page.on('pageerror', onPageError);
+  page.on('response', onResponse);
   const started = Date.now();
-  await page.goto(`${baseUrl}${route}`, { waitUntil: 'domcontentloaded', timeout: 10000 });
-  await page.locator('.layout-shell').waitFor({ timeout: 10000 });
-  const body = await page.locator('body').innerText();
-  const mode = await page.locator('[data-product-page-mode]').first().getAttribute('data-product-page-mode').catch(() => '');
-  await page.screenshot({ path: screenshotPath, fullPage: true });
-  return {
-    role,
-    route,
-    final_url: page.url(),
-    title: await page.title(),
-    page_type: pageType(page.url(), mode, body),
-    load_ms: Date.now() - started,
-    load_result: httpErrors.some((item) => item.status === 403) ? 'permission' : httpErrors.length ? 'error' : body.includes('暂无') ? 'empty' : 'ok',
-    console_errors: consoleErrors,
-    page_errors: pageErrors,
-    http_errors: httpErrors,
-    technical_leak: /model\s*=|action\s*=|trace|contract|schema|\s#\d+/.test(body),
-    screenshot: screenshotPath,
-  };
+  try {
+    await page.goto(`${baseUrl}${route}`, { waitUntil: 'domcontentloaded', timeout: 15000 });
+    const shell = page.locator('.layout-shell');
+    await shell.waitFor({ timeout: 15000 });
+    await page.waitForFunction(() => {
+      const root = document.querySelector('.layout-shell');
+      const title = root?.getAttribute('data-page-identity-title') || '';
+      return Boolean(title && !title.includes('加载中'));
+    }, undefined, { timeout: 15000 }).catch(() => {});
+    const body = await page.locator('body').innerText();
+    const mode = await page.locator('[data-product-page-mode]').first().getAttribute('data-product-page-mode').catch(() => '');
+    const mainTitle = String(await shell.getAttribute('data-page-identity-title') || '').trim();
+    const identitySource = String(await shell.getAttribute('data-page-identity-source') || '').trim();
+    const documentTitle = await page.title();
+    const breadcrumbs = await page.locator('.breadcrumb .crumb').allTextContents();
+    const technicalPattern = /(?:[a-z_][a-z0-9_]*\.)+[a-z_][a-z0-9_]*|\s#\d+|undefined|null|\b(?:action|menu|record)_?id\b/i;
+    const genericTitle = mainTitle === '业务动作' || documentTitle === `业务动作 - 智能施工企业管理平台`;
+    const technicalFallback = technicalPattern.test(mainTitle) || technicalPattern.test(documentTitle) || breadcrumbs.some((item) => technicalPattern.test(item));
+    await page.screenshot({ path: screenshotPath, fullPage: true });
+    return {
+      role,
+      route,
+      final_url: page.url(),
+      title: mainTitle,
+      document_title: documentTitle,
+      breadcrumbs,
+      identity_source: identitySource,
+      page_type: pageType(page.url(), mode, body),
+      load_ms: Date.now() - started,
+      load_result: httpErrors.some((item) => item.status === 403) ? 'permission' : httpErrors.length ? 'error' : body.includes('暂无') ? 'empty' : 'ok',
+      console_errors: consoleErrors,
+      page_errors: pageErrors,
+      http_errors: httpErrors,
+      technical_leak: technicalFallback,
+      generic_title: genericTitle,
+      identity_result: mainTitle && documentTitle === `${mainTitle} - 智能施工企业管理平台` && identitySource && !genericTitle && !technicalFallback && !consoleErrors.length && !pageErrors.length && !httpErrors.length ? 'PASS' : 'FAIL',
+      screenshot: screenshotPath,
+    };
+  } finally {
+    page.off('console', onConsole);
+    page.off('pageerror', onPageError);
+    page.off('response', onResponse);
+  }
 }
 
 async function main() {
@@ -138,9 +176,9 @@ async function main() {
         try {
           if (!safeRoute) throw new Error('UNRESOLVED_NAVIGATION_TARGET');
           const inspected = await inspectPage(page, role, safeRoute, screenshot);
-          rows.push({ surface_id: `FE-AUD-${role}-${index + 1}`, navigation_path: link.parent_path, title: link.label, route: safeRoute, category: link.category, write_capable: link.write_capable, ...inspected });
+          rows.push({ surface_id: `FE-AUD-${role}-${index + 1}`, navigation_path: link.parent_path, navigation_label: link.label, route: safeRoute, category: link.category, write_capable: link.write_capable, menu_id: link.menu_id, action_id: link.action_id, menu_xmlid: link.menu_xmlid, action_xmlid: link.action_xmlid, model: link.model, ...inspected });
         } catch (error) {
-          rows.push({ surface_id: `FE-AUD-${role}-${index + 1}`, role, navigation_path: link.parent_path, title: link.label, route: safeRoute, category: link.category, write_capable: link.write_capable, reachable: false, load_result: 'error', notes: error.message });
+          rows.push({ surface_id: `FE-AUD-${role}-${index + 1}`, role, navigation_path: link.parent_path, navigation_label: link.label, route: safeRoute, category: link.category, write_capable: link.write_capable, menu_id: link.menu_id, action_id: link.action_id, menu_xmlid: link.menu_xmlid, action_xmlid: link.action_xmlid, model: link.model, reachable: false, identity_result: 'FAIL', load_result: 'error', notes: error.message });
         }
       }
       journeyRows.push(...['J01','J02','J03','J04','J05','J06','J07','J08'].map((id) => ({ id, role, status: 'NOT_ASSESSED', evidence: 'surface巡检不执行写操作，需专门旅程脚本复核' })));
@@ -163,10 +201,10 @@ async function main() {
   } finally {
     await browser.close();
   }
-  const fields = ['surface_id', 'role', 'navigation_path', 'title', 'route', 'page_type', 'actual_component', 'reachable', 'load_result', 'write_capable', 'screenshot', 'load_ms', 'technical_leak', 'notes'];
+  const fields = ['surface_id', 'role', 'navigation_path', 'navigation_label', 'route', 'menu_id', 'action_id', 'menu_xmlid', 'action_xmlid', 'model', 'page_type', 'actual_component', 'title', 'document_title', 'breadcrumbs', 'identity_source', 'identity_result', 'reachable', 'load_result', 'write_capable', 'screenshot', 'load_ms', 'technical_leak', 'generic_title', 'notes'];
   const normalized = rows.map((row) => ({ actual_component: row.route.startsWith('/r/') || row.route.startsWith('/f/') ? 'ContractFormPage.vue' : row.route.startsWith('/a/') ? 'ActionViewShell.vue → ListPage.vue' : row.route.startsWith('/s/') ? 'SceneView.vue' : row.route.startsWith('/m/') ? 'MenuView.vue' : row.route === '/' ? 'HomeView.vue' : 'UNRESOLVED', reachable: row.reachable !== false, ...row }));
   const leafCounts = Object.fromEntries(roles.map((role) => [role, normalized.filter((row) => row.role === role).length]));
-  const failed = normalized.filter((row) => row.reachable === false);
+  const failed = normalized.filter((row) => row.reachable === false || row.identity_result !== 'PASS');
   const coverage = Object.fromEntries(roles.map((role) => { const all = normalized.filter((row) => row.role === role); return [role, { denominator: all.length, reachable: all.filter((row) => row.reachable).length, rate: all.length ? all.filter((row) => row.reachable).length / all.length : 0, failures: all.filter((row) => !row.reachable).map((row) => row.notes || row.title) }]; }));
   fs.writeFileSync(path.join(outputDir, 'full-surface-report.json'), `${JSON.stringify({ base_url: baseUrl, db: dbName, roles, viewports, leaf_counts: leafCounts, coverage, rows: normalized }, null, 2)}\n`);
   fs.writeFileSync(path.join(outputDir, 'journeys.json'), `${JSON.stringify({ journeys: journeyRows }, null, 2)}\n`);
@@ -174,7 +212,8 @@ async function main() {
   fs.writeFileSync(path.join(outputDir, 'accessibility-report.json'), `${JSON.stringify({ status: 'N/A', reason: '本轮脚本未引入新依赖，需按代表页面补充人工/工具证据' }, null, 2)}\n`);
   fs.writeFileSync(path.join(outputDir, 'performance-report.json'), `${JSON.stringify({ status: 'observed', samples: normalized.map(({ role, route, load_ms }) => ({ role, route, load_ms })) }, null, 2)}\n`);
   fs.writeFileSync(path.join(outputDir, 'full-surface-report.csv'), `${fields.join(',')}\n${normalized.map((row) => fields.map((field) => csvCell(row[field])).join(',')).join('\n')}\n`);
-  const pass = roles.every((role) => leafCounts[role] > 0) && normalized.length > 0 && failed.length === 0 && journeyRows.length === roles.length * 8;
+  const expectedLeafCounts = { demo_role_finance: 44, demo_role_project_a_member: 51, demo_role_pm: 14, demo_role_owner: 6 };
+  const pass = roles.every((role) => leafCounts[role] === expectedLeafCounts[role]) && normalized.length === 115 && failed.length === 0 && journeyRows.length === roles.length * 8;
   console.log(JSON.stringify({ pass, surfaces: normalized.length, failed: failed.length, outputDir }, null, 2));
   if (!pass) process.exitCode = 2;
 }

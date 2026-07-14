@@ -117,6 +117,7 @@
     <StatusPanel v-if="renderErrorMessage" title="页面打开失败" :message="renderErrorMessage" variant="error" :on-retry="reload" />
     <StatusPanel v-else-if="status === 'loading'" title="正在加载页面..." variant="info" />
     <StatusPanel v-else-if="status === 'error'" title="页面加载失败" :message="errorMessage" variant="error" :on-retry="reload" />
+    <StatusPanel v-else-if="recordMissing" title="记录不存在" message="该记录不存在，可能已被删除或当前链接已经失效。" variant="error" :on-retry="() => router.back()" />
 
     <section v-else :class="['card', 'sc-panel', 'sc-product-main-surface', { 'card--flow': isProjectIntakeCreateMode }]">
       <ContractFormActionBlocks
@@ -609,12 +610,12 @@ import {
 import {
   formUiLabelFromLabels,
   formUiLabelsFromFormView,
-  resolvePageDisplaySubtitle,
-  resolvePageDisplayTitle,
-  resolvePageTitle,
   resolveSubmitButtonLabel,
   layoutContainsType,
 } from './contractForm/uiLabels';
+import { resolveProductPageIdentity, type PageIdentityInput } from '../app/pageIdentity';
+import { publishPageIdentity } from '../app/pageIdentityRuntime';
+import { resolveRoutePageIdentity } from '../app/pageIdentityRoute';
 import {
   activeChatterPlaceholder as activeChatterPlaceholderFromMode,
   activeChatterPostingLabel as activeChatterPostingLabelFromMode,
@@ -745,6 +746,7 @@ const isComponentActive = ref(true);
 const instanceRouteIdentity = ref('');
 const retainedRouteIdentity = ref('');
 const renderErrorMessage = ref('');
+const recordMissing = ref(false);
 const errorMessage = ref('');
 const validationErrors = ref<string[]>([]);
 const submissionFeedback = ref<SubmissionFeedback>(null);
@@ -1275,11 +1277,16 @@ const intakeMissingSummary = computed(() => {
 
 const one2manyValidation = computed(() => collectOne2manyDraftValidation());
 
-const pageTitle = computed(() => resolvePageTitle({
-  menuTitle: currentMenuTitle.value,
-  contractTitle: String(contract.value?.head?.title || ''),
-  recordTitle: String(formData.display_name || formData.name || ''),
-}));
+const currentActionMeta = computed(() => findActionMetaByMenu(session.menuTree, menuId.value, actionId.value || undefined));
+const pagePrimaryFieldNames = computed(() => {
+  const formView = contract.value?.views?.form as Record<string, unknown> | undefined;
+  const profile = formView?.profile && typeof formView.profile === 'object'
+    ? formView.profile as Record<string, unknown>
+    : {};
+  const titleField = String(profile.title_field || '').trim();
+  const primaryFields = Array.isArray(profile.primary_fields) ? profile.primary_fields : [];
+  return [titleField, ...primaryFields].filter(Boolean);
+});
 
 const currentBusinessCategoryContext = computed(() => resolveBusinessCategoryContext({
   contractRecord: contract.value,
@@ -1289,35 +1296,55 @@ const currentBusinessCategoryContext = computed(() => resolveBusinessCategoryCon
 const currentBusinessCategoryLabel = computed(() => currentBusinessCategoryContext.value.label);
 const currentBusinessCategoryCode = computed(() => currentBusinessCategoryContext.value.code);
 
-const pageDisplayTitle = computed(() => resolvePageDisplayTitle({
-  isProjectIntakeCreateMode: isProjectIntakeCreateMode.value,
-  currentBusinessCategoryLabel: currentBusinessCategoryLabel.value,
-  pageTitle: pageTitle.value,
-  recordId: recordId.value,
-}));
-
-const pageDisplaySubtitle = computed(() => resolvePageDisplaySubtitle({
-  isProjectIntakeCreateMode: isProjectIntakeCreateMode.value,
-  currentBusinessCategoryLabel: currentBusinessCategoryLabel.value,
-  pageTitle: pageTitle.value,
-  recordTitle: String(formData.display_name || formData.name || ''),
-  pageDisplayTitle: pageDisplayTitle.value,
-  recordId: recordId.value,
-}));
-
-const activityPageTitle = computed(() => {
-  const recordTitle = String(formData.display_name || formData.name || '').trim();
-  if (recordId.value && recordTitle) return recordTitle;
-  return pageDisplayTitle.value;
+const pageIdentityInput = computed<PageIdentityInput>(() => {
+  const routeIdentity = resolveRoutePageIdentity(route, session.menuTree);
+  const head = contract.value?.head as Record<string, unknown> | undefined;
+  const actionName = currentBusinessCategoryLabel.value
+    || head?.title
+    || currentActionMeta.value?.name;
+  const kind = !recordId.value
+    ? 'create'
+    : (route.name === 'model-form' || hasChanges.value ? 'edit' : 'detail');
+  const state = recordMissing.value
+    ? 'not-found'
+    : status.value === 'loading'
+      ? 'loading'
+      : status.value === 'error' || Boolean(renderErrorMessage.value)
+        ? 'error'
+        : '';
+  const recordName = String(formData.display_name || '').trim();
+  const contextSubtitle = isProjectIntakeCreateMode.value
+    ? '填写核心信息即可完成项目立项'
+    : recordName
+      ? String(actionName || currentMenuTitle.value || '').trim()
+      : '';
+  return {
+    kind,
+    actionName,
+    menuName: currentMenuTitle.value,
+    modelName: model.value,
+    modelLabel: head?.model_label || currentActionMeta.value?.model_label,
+    record: formData,
+    recordDisplayName: recordName,
+    primaryFieldNames: pagePrimaryFieldNames.value,
+    subtitle: contextSubtitle,
+    breadcrumbs: routeIdentity.breadcrumbs,
+    state,
+  };
 });
+const pageIdentity = computed(() => resolveProductPageIdentity(pageIdentityInput.value));
+const pageTitle = computed(() => pageIdentity.value.title);
+const pageDisplayTitle = computed(() => pageIdentity.value.title);
+const pageDisplaySubtitle = computed(() => pageIdentity.value.subtitle || '');
 
 watch(
-  activityPageTitle,
-  (title) => {
+  pageIdentityInput,
+  (identityInput) => {
     if (!isComponentActive.value) return;
-    session.updateActiveActivityTitle(title);
+    publishPageIdentity(route.fullPath, identityInput);
+    session.updateActiveActivityTitle(resolveProductPageIdentity(identityInput).title);
   },
-  { immediate: true },
+  { immediate: true, deep: true },
 );
 
 const suppressPageHeaderTitle = computed(() => useNativeFormTree.value && !isProjectIntakeCreateMode.value);
@@ -5349,6 +5376,7 @@ async function loadContract() {
 async function loadRecord() {
   const versionPolicy = recordVersionPolicy();
   const fieldNames = formDataFieldNames();
+  if (!fieldNames.includes('display_name')) fieldNames.push('display_name');
   if (versionPolicy?.tokenField && !fieldNames.includes(versionPolicy.tokenField)) {
     fieldNames.push(versionPolicy.tokenField);
   }
@@ -5404,7 +5432,12 @@ async function loadRecord() {
     ids: [recordId.value],
     fields: fieldNames.length ? fieldNames : '*',
   });
-  const row = read.records?.[0] || {};
+  const row = read.records?.[0];
+  if (!row) {
+    recordMissing.value = true;
+    return;
+  }
+  recordMissing.value = false;
   const storeMainData = resolveContractV2MainData(v2ContractStore.value);
   const contractMainData = Object.keys(storeMainData).length ? storeMainData : resolveUnifiedPageContractV2MainData(contract.value);
   if (versionPolicy?.tokenField) {
@@ -5461,6 +5494,7 @@ async function reload() {
     const reloadToken = activeReloadToken + 1;
     activeReloadToken = reloadToken;
     renderErrorMessage.value = '';
+    recordMissing.value = false;
     applyPageStatusEvent({ kind: 'status', transaction: 'formReload', status: 'loading' });
     validationErrors.value = [];
     showOne2manyErrors.value = false;
@@ -5474,6 +5508,13 @@ async function reload() {
       void preloadFormAuxiliaryData(reloadToken);
     } catch (err) {
       if (reloadToken !== activeReloadToken) return;
+      if (err instanceof ApiError && err.status === 403) {
+        await router.replace({
+          name: 'access-denied',
+          query: { from: route.fullPath, reason: err.reasonCode || 'PERMISSION_DENIED' },
+        });
+        return;
+      }
       if (err instanceof ContractAccessPolicyError) {
         await router.push({
           name: 'workbench',
