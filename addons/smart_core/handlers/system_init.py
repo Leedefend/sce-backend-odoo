@@ -2007,6 +2007,7 @@ class SystemInitHandler(BaseIntentHandler):
         release_snapshot_service = EditionReleaseSnapshotService(env)
         release_audit_service = ReleaseAuditTrailService(env)
         data["delivery_engine_v1"] = delivery_payload
+        _delivery_authoritative_nav = list(delivery_payload.get("nav") or [])
         _logger.warning("SYSTEM_INIT_DELIVERY_BUILT nav=%s", len(delivery_payload.get("nav") or []))
         delivery_release_navigation = build_release_navigation_contract({"delivery_engine_v1": delivery_payload})
         edition_diagnostics = (
@@ -2243,7 +2244,7 @@ class SystemInitHandler(BaseIntentHandler):
             _release_final = dict(_release_final)
             _release_final["nav"] = _delivery_final["nav"]
             data["release_navigation_v1"] = _release_final
-        _delivery_authoritative = _delivery_final.get("nav") if isinstance(_delivery_final.get("nav"), list) else []
+        _delivery_authoritative = _delivery_authoritative_nav
         data = SystemInitPayloadBuilder.build_startup_surface(
             data,
             params=params,
