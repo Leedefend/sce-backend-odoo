@@ -792,5 +792,11 @@ architecture.split_plan_queue:
 github.remote_execution_plan:
 	@python3 scripts/ci/generate_github_remote_execution_plan.py
 
-security.secrets.scan:
+security.online_capture.unit:
+	@python3 scripts/verify/test_online_capture_security.py
+	@python3 scripts/ci/test_secret_scan.py
+	@node scripts/verify/test_online_capture_security.js
+	@node --check scripts/verify/online_capture_security.js
+
+security.secrets.scan: security.online_capture.unit
 	@python3 scripts/ci/secret_scan.py

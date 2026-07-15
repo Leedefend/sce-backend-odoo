@@ -15,10 +15,13 @@ import re
 import shlex
 import shutil
 import subprocess
+import sys
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+from online_capture_security import CapturePreflightError, require_online_capture
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -142,25 +145,19 @@ def preflight(env: dict[str, str], mode: str, include_scbsly: bool, include_odoo
         missing.append("OLD_SCBS_PASSWORD")
 
     scbsly_has_dedicated = clean(env.get("SCBSLY_USERNAME")) and clean(env.get("SCBSLY_PASSWORD"))
-    scbsly_has_fallback = clean(env.get("OLD_SCBS_USERNAME")) and clean(env.get("OLD_SCBS_PASSWORD"))
-    if include_scbsly and not scbsly_has_dedicated and not scbsly_has_fallback:
-        missing.extend(["SCBSLY_USERNAME or OLD_SCBS_USERNAME", "SCBSLY_PASSWORD or OLD_SCBS_PASSWORD"])
+    if include_scbsly and not scbsly_has_dedicated:
+        missing.extend(["SCBSLY_USERNAME", "SCBSLY_PASSWORD"])
 
     if include_odoo and not clean(env.get("LIVE_STRICT_ODOO_SHELL_CMD")):
         missing.append("LIVE_STRICT_ODOO_SHELL_CMD")
 
-    if scbsly_has_dedicated:
-        scbsly_credentials_source = "SCBSLY_*"
-    elif scbsly_has_fallback:
-        scbsly_credentials_source = "OLD_SCBS_* fallback"
-    else:
-        scbsly_credentials_source = "unavailable"
+    scbsly_credentials_source = "SCBSLY_*" if scbsly_has_dedicated else "unavailable"
 
     return {
         "status": "PASS" if not missing else "FAIL",
         "missing_env": missing,
-        "scbs_base_url": env.get("OLD_SCBS_BASE_URL") or "https://www.builderp.cn/SCBS",
-        "scbsly_base_url": env.get("SCBSLY_BASE_URL") or "https://www.builderp.cn/SCBSLY_V2",
+        "scbs_base_url": env.get("OLD_SCBS_BASE_URL") or "",
+        "scbsly_base_url": env.get("SCBSLY_BASE_URL") or "",
         "scbsly_credentials_source": scbsly_credentials_source,
         "cached_evidence_allowed_for_closure": False,
         "cached_evidence_allowed_for_incremental_reuse": mode == MODE_INCREMENTAL,
@@ -183,10 +180,10 @@ def build_steps(run_dir: Path, seqs: list[int], env: dict[str, str], mode: str) 
         "MIGRATION_SCBSLY_OLD_ROWS_DIR": str(scbsly_dump_dir),
         "SCBSLY_OLD_ROW_DUMP_OVERWRITE": "1",
         "ARTIFACTS_DIR": str(ROOT / "artifacts"),
-        "DB_NAME": env.get("DB_NAME") or env.get("E2E_DB") or "sc_demo",
-        "FRONTEND_URL": env.get("FRONTEND_URL") or env.get("BASE_URL") or "http://1.95.85.92:18081",
-        "E2E_LOGIN": env.get("E2E_LOGIN") or "wutao",
-        "E2E_PASSWORD": env.get("E2E_PASSWORD") or "123456",
+        "DB_NAME": env.get("DB_NAME") or env.get("E2E_DB") or "",
+        "FRONTEND_URL": env.get("FRONTEND_URL") or env.get("BASE_URL") or "",
+        "E2E_LOGIN": env.get("E2E_LOGIN") or "",
+        "E2E_PASSWORD": env.get("E2E_PASSWORD") or "",
     }
     odoo_shell = clean(env.get("LIVE_STRICT_ODOO_SHELL_CMD"))
     odoo_env_prefix = (
@@ -268,14 +265,14 @@ def build_steps(run_dir: Path, seqs: list[int], env: dict[str, str], mode: str) 
                 name="scbsly_online_menu_probe",
                 scope="SCBSLY live historical source",
                 command=["python3", "scripts/verify/scbsly_direct_project_acceptance_menu_probe.py"],
-                required_env=("OLD_SCBS_USERNAME", "OLD_SCBS_PASSWORD"),
+                required_env=("SCBSLY_USERNAME", "SCBSLY_PASSWORD"),
                 env=common_env,
             ),
             Step(
                 name="scbsly_online_old_row_dump",
                 scope="SCBSLY live historical source",
                 command=["python3", "scripts/verify/scbsly_direct_project_old_row_dump.py"],
-                required_env=("OLD_SCBS_USERNAME", "OLD_SCBS_PASSWORD"),
+                required_env=("SCBSLY_USERNAME", "SCBSLY_PASSWORD"),
                 env=common_env,
             ),
             Step(
@@ -294,7 +291,7 @@ def build_steps(run_dir: Path, seqs: list[int], env: dict[str, str], mode: str) 
                 name="scbsly_strict_visible_acceptance",
                 scope="SCBSLY strict old/new visible acceptance",
                 command=["python3", "scripts/verify/scbsly_direct_project_strict_visible_acceptance.py"],
-                required_env=("OLD_SCBS_USERNAME", "OLD_SCBS_PASSWORD"),
+                required_env=("SCBSLY_USERNAME", "SCBSLY_PASSWORD"),
                 env=common_env,
             ),
             Step(
@@ -403,6 +400,26 @@ def main() -> int:
     mode = clean(env.get("ONLINE_VISIBLE_SURFACE_MODE")) or MODE_INCREMENTAL
     if mode not in {MODE_INCREMENTAL, MODE_FULL}:
         raise RuntimeError("ONLINE_VISIBLE_SURFACE_MODE must be incremental or full")
+    include_scbsly = mode == MODE_FULL
+    include_odoo = mode == MODE_FULL
+    systems = ("scbs", "scbsly") if include_scbsly else ("scbs",)
+    try:
+        require_online_capture(systems, env)
+    except CapturePreflightError as exc:
+        print(
+            json.dumps(
+                {
+                    "status": "FAIL",
+                    "blocking_reason": "online_capture_preflight_failed",
+                    "reasons": list(exc.reasons),
+                    "network_requests": 0,
+                    "database_access": 0,
+                },
+                sort_keys=True,
+            ),
+            file=sys.stderr,
+        )
+        return 78
     requested_seqs = parse_seq_filter(env)
     if mode == MODE_INCREMENTAL and not requested_seqs:
         raise RuntimeError(
@@ -413,8 +430,6 @@ def main() -> int:
     seqs = discover_scbs55_list_seqs(requested_seqs if requested_seqs else None)
     scbs55_seed = seed_scbs55_dump_dir(run_dir)
     steps = build_steps(run_dir, seqs, env, mode)
-    include_scbsly = mode == MODE_FULL
-    include_odoo = mode == MODE_FULL
     preflight_result = preflight(env, mode, include_scbsly, include_odoo)
     step_results: list[dict[str, Any]] = []
 

@@ -213,17 +213,20 @@ python3 scripts/verify/scbs55_user_acceptance_asset_manifest_guard.py
 
 重新在线核对旧系统 count：
 
+以下命令还必须按 `docs/security/online_capture_configuration_contract_v1.md`
+注入 online 模式、目标 allowlist、采集窗口和输出目录；缺失时会在网络请求前失败。
+
 ```bash
-OLD_SCBS_USERNAME=13518193984 \
-OLD_SCBS_PASSWORD=****** \
+OLD_SCBS_USERNAME=<provided-via-secret-environment> \
+OLD_SCBS_PASSWORD=<provided-via-secret-environment> \
 python3 scripts/verify/scbs55_user_acceptance_online_probe.py
 ```
 
 或：
 
 ```bash
-OLD_SCBS_USERNAME=13518193984 \
-OLD_SCBS_PASSWORD=****** \
+OLD_SCBS_USERNAME=<provided-via-secret-environment> \
+OLD_SCBS_PASSWORD=<provided-via-secret-environment> \
 make migration.assets.user_acceptance_online_probe
 ```
 

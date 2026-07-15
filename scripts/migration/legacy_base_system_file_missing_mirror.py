@@ -9,10 +9,14 @@ from __future__ import annotations
 
 import json
 import os
+import sys
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.request import Request, urlopen
+
+sys.path.insert(0, str(Path.cwd()))
+from scripts.verify.online_capture_security import require_online_capture  # noqa: E402
 
 from odoo.addons.smart_core.handlers.file_download import (
     _legacy_file_roots,
@@ -21,7 +25,7 @@ from odoo.addons.smart_core.handlers.file_download import (
 
 
 LIMIT = int(os.getenv("LEGACY_BASE_SYSTEM_FILE_MIRROR_LIMIT", "0") or "0")
-APPLY = os.getenv("LEGACY_BASE_SYSTEM_FILE_MIRROR_APPLY", "1").strip().lower() in {"1", "true", "yes", "on"}
+APPLY = os.getenv("LEGACY_BASE_SYSTEM_FILE_MIRROR_APPLY", "0").strip().lower() in {"1", "true", "yes", "on"}
 DOWNLOAD_TIMEOUT = int(os.getenv("LEGACY_BASE_SYSTEM_FILE_MIRROR_DOWNLOAD_TIMEOUT", "120") or "120")
 EXAMPLE_LIMIT = int(os.getenv("LEGACY_BASE_SYSTEM_FILE_MIRROR_EXAMPLE_LIMIT", "30") or "30")
 OUTPUT_JSON = Path(
@@ -32,7 +36,10 @@ OUTPUT_JSON = Path(
 )
 BASE_URLS = [
     item.strip().rstrip("/")
-    for item in os.getenv("LEGACY_BASE_SYSTEM_FILE_MIRROR_BASE_URLS", "https://www.builderp.cn/SCBS,https://www.builderp.cn/SCBSLY_V2").split(",")
+    for item in os.getenv(
+        "LEGACY_BASE_SYSTEM_FILE_MIRROR_BASE_URLS",
+        f"{os.getenv('OLD_SCBS_BASE_URL', '')},{os.getenv('SCBSLY_BASE_URL', '')}",
+    ).split(",")
     if item.strip()
 ]
 PREFERRED_ROOT = Path(os.getenv("LEGACY_BASE_SYSTEM_FILE_MIRROR_ROOT", "/mnt/legacy-files"))
@@ -108,6 +115,7 @@ def add_example(examples, payload):
 
 
 def main():
+    require_online_capture(("scbs", "scbsly"))
     FileIndex = env["sc.legacy.file.index"].sudo().with_context(active_test=False)  # noqa: F821
     records = FileIndex.search(
         [

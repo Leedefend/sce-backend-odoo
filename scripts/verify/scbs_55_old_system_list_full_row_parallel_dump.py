@@ -13,7 +13,7 @@ from typing import Any
 
 import requests
 
-from scbs_55_old_system_list_count_probe import INPUT_CSV, api_get, api_post, list_payload, login
+from scbs_55_old_system_list_count_probe import BASE_URL, INPUT_CSV, api_get, api_post, list_payload, login
 
 
 SEQ = int(os.getenv("SCBS55_OLD_FULL_DUMP_SEQ", "0"))
@@ -61,7 +61,7 @@ def fetch_page(username: str, password: str, path: str, payload: dict[str, Any],
     for _ in range(3):
         try:
             response = session.post(
-                f"{os.getenv('OLD_SCBS_BASE_URL', 'https://www.builderp.cn/SCBS').rstrip('/')}/api/{path}",
+                f"{BASE_URL}/api/{path}",
                 json=request_payload,
                 headers={"Token": token},
                 timeout=REQUEST_TIMEOUT,

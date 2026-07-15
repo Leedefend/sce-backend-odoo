@@ -10,14 +10,19 @@ import hashlib
 import json
 import os
 import re
+import sys
 from copy import deepcopy
 from datetime import datetime
+from pathlib import Path
 from urllib.parse import urljoin
 
 import requests
 
+sys.path.insert(0, str(Path.cwd()))
+from scripts.verify.online_capture_security import require_online_capture  # noqa: E402
 
-BASE_URL = os.getenv("OLD_SCBS_BASE_URL", "https://www.builderp.cn/SCBS").rstrip("/")
+
+BASE_URL = os.getenv("OLD_SCBS_BASE_URL", "").rstrip("/")
 PAGE_SIZE = int(os.getenv("SCBS_SELF_FUNDING_VISIBLE_PAGE_SIZE", "500"))
 SPECS = {
     "income_visible": {
@@ -69,6 +74,7 @@ def state_label(value: object, fallback: object = "") -> str:
 
 
 def login() -> tuple[requests.Session, str]:
+    require_online_capture(("scbs",))
     username = os.getenv("OLD_SCBS_USERNAME")
     password = os.getenv("OLD_SCBS_PASSWORD")
     if not username or not password:

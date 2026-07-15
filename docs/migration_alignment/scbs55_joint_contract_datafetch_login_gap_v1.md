@@ -92,26 +92,19 @@ Generated At: 2026-06-02T17:41:51Z
 
 ## 恢复执行方式
 
-如果联营账号密码登录恢复：
+如果联营账号密码登录恢复，运行环境还必须按
+`docs/security/online_capture_configuration_contract_v1.md` 注入 online 模式、目标 allowlist、采集窗口和输出目录：
 
 ```bash
-OLD_SCBS_USERNAME=13518193984 \
-OLD_SCBS_PASSWORD=890785 \
+OLD_SCBS_USERNAME=<provided-via-secret-environment> \
+OLD_SCBS_PASSWORD=<provided-via-secret-environment> \
 SCBS55_OLD_FULL_DUMP_SEQS=3 \
 SCBS55_OLD_FULL_DUMP_REUSE_EXISTING=0 \
 SCBS55_OLD_FULL_DUMP_DIR=/tmp/scbs55_seq003_datafetch \
 python3 scripts/verify/scbs_55_old_system_list_full_row_dump.py
 ```
 
-如果可以从浏览器获得有效 SCBS Token：
-
-```bash
-OLD_SCBS_TOKEN=<token> \
-SCBS55_OLD_FULL_DUMP_SEQS=3 \
-SCBS55_OLD_FULL_DUMP_REUSE_EXISTING=0 \
-SCBS55_OLD_FULL_DUMP_DIR=/tmp/scbs55_seq003_datafetch \
-python3 scripts/verify/scbs_55_old_system_list_full_row_dump.py
-```
+浏览器 Token 旁路已禁用；采集必须经过统一 username/password、显式 online 确认和目标 allowlist 门禁。
 
 回填开发库：
 

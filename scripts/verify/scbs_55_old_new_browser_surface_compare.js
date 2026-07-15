@@ -11,14 +11,17 @@ const requireBase = fs.existsSync(path.join(process.cwd(), 'frontend/apps/web/pa
   : path.join(process.cwd(), 'package.json');
 const requireFromRoot = createRequire(requireBase);
 const { chromium } = requireFromRoot('playwright');
+const { requireOnlineCapture } = require('./online_capture_security');
+
+const OLD_CAPTURE = requireOnlineCapture('scbs');
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://127.0.0.1:5174';
 const DB_NAME = process.env.DB_NAME || 'sc_odoo';
-const NEW_LOGIN = process.env.E2E_LOGIN || 'wutao';
-const NEW_PASSWORD = process.env.E2E_PASSWORD || '123456';
-const OLD_BASE_URL = (process.env.OLD_SCBS_BASE_URL || 'https://www.builderp.cn/SCBS').replace(/\/$/, '');
-const OLD_LOGIN = process.env.OLD_SCBS_USERNAME || '';
-const OLD_PASSWORD = process.env.OLD_SCBS_PASSWORD || '';
+const NEW_LOGIN = process.env.E2E_LOGIN || '';
+const NEW_PASSWORD = process.env.E2E_PASSWORD || '';
+const OLD_BASE_URL = OLD_CAPTURE.baseUrl;
+const OLD_LOGIN = OLD_CAPTURE.username;
+const OLD_PASSWORD = OLD_CAPTURE.password;
 const ARTIFACTS_DIR = process.env.ARTIFACTS_DIR || 'artifacts';
 const OUT_DIR = path.join(
   ARTIFACTS_DIR,

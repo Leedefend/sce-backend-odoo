@@ -27,6 +27,8 @@ import requests
 from requests import exceptions as request_exceptions
 from requests.exceptions import JSONDecodeError as RequestsJSONDecodeError
 
+from scripts.verify.online_capture_security import require_online_capture
+
 
 ROOT = Path(__file__).resolve().parents[2]
 MENU_PROBE = ROOT / "artifacts/migration/scbsly_direct_project_acceptance_menu_probe_v1.json"
@@ -37,9 +39,9 @@ OUTPUT = Path(
         ROOT / "artifacts/migration/scbsly_direct_select3_status_online_dump_20260603.json",
     )
 )
-BASE_URL = os.getenv("SCBSLY_BASE_URL", "https://www.builderp.cn/SCBSLY_V2").rstrip("/")
-USERNAME = os.getenv("SCBSLY_USERNAME") or os.getenv("OLD_SCBS_USERNAME")
-PASSWORD = os.getenv("SCBSLY_PASSWORD") or os.getenv("OLD_SCBS_PASSWORD")
+BASE_URL = os.getenv("SCBSLY_BASE_URL", "").rstrip("/")
+USERNAME = os.getenv("SCBSLY_USERNAME")
+PASSWORD = os.getenv("SCBSLY_PASSWORD")
 PAGE_SIZE = int(os.getenv("SCBSLY_SELECT3_PAGE_SIZE", "20"))
 SLEEP_SECONDS = float(os.getenv("SCBSLY_SELECT3_SLEEP_SECONDS", "0.03"))
 MAX_PAGES = int(os.getenv("SCBSLY_SELECT3_MAX_PAGES", "0") or "0")
@@ -311,6 +313,7 @@ def select3_specs() -> list[dict[str, Any]]:
 
 
 def main() -> int:
+    require_online_capture(("scbsly",))
     session = requests.Session()
     user = login(session)
     token = user["Token"]
