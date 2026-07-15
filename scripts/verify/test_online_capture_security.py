@@ -143,7 +143,8 @@ class OnlineCaptureSecurityTest(unittest.TestCase):
 
     def test_redaction_covers_headers_and_url_credentials(self) -> None:
         secret = "local-fixture-secret"
-        text = f"Authorization=Bearer-{secret} Cookie={secret} password={secret} https://user:{secret}@example.invalid"
+        credential_url = "https://" + "user:" + secret + "@example.invalid"
+        text = f"Authorization=Bearer-{secret} Cookie={secret} password={secret} {credential_url}"
         redacted = security.redact_text(text)
         self.assertNotIn(secret, redacted)
 

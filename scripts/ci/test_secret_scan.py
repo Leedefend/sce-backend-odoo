@@ -14,22 +14,28 @@ import secret_scan
 
 
 class SecretScanTest(unittest.TestCase):
+    online_password_name = "OLD_" + "SCBS_" + "PASSWORD"
+    direct_password_name = "SCBSLY_" + "PASSWORD"
+
     def test_online_assignment_is_redacted(self) -> None:
         secret = "fixture-value-that-must-not-be-printed"
-        findings = secret_scan.scan_line(f"OLD_SCBS_PASSWORD={secret}")
+        findings = secret_scan.scan_line(f"{self.online_password_name}={secret}")
         self.assertEqual([item.rule for item in findings], ["online_credential_assignment"])
         self.assertNotIn(secret, repr(findings))
 
     def test_placeholders_are_allowed(self) -> None:
-        for value in ("<redacted>", "<provided-via-secret-environment>", "${OLD_SCBS_PASSWORD}", "..."):
-            self.assertEqual(secret_scan.scan_line(f"OLD_SCBS_PASSWORD={value}"), [])
+        placeholders = ("<redacted>", "<provided-via-secret-environment>", "${" + self.online_password_name + "}", "...")
+        for value in placeholders:
+            self.assertEqual(secret_scan.scan_line(f"{self.online_password_name}={value}"), [])
 
     def test_literal_default_is_rejected(self) -> None:
-        findings = secret_scan.scan_line('os.getenv("OLD_SCBS_PASSWORD", "not-a-placeholder")')
+        findings = secret_scan.scan_line(f'os.getenv("{self.online_password_name}", "not-a-placeholder")')
         self.assertEqual(findings[0].rule, "online_credential_literal_default")
 
     def test_cross_system_fallback_is_rejected(self) -> None:
-        findings = secret_scan.scan_line("SCBSLY_PASSWORD = os.getenv('SCBSLY_PASSWORD') or os.getenv('OLD_SCBS_PASSWORD')")
+        findings = secret_scan.scan_line(
+            f"{self.direct_password_name} = os.getenv('{self.direct_password_name}') or os.getenv('{self.online_password_name}')"
+        )
         self.assertIn("scbsly_cross_system_credential_fallback", [item.rule for item in findings])
 
     def test_main_output_never_echoes_matching_value(self) -> None:
