@@ -1,11 +1,8 @@
 <template>
-  <section class="panel" :class="variant">
-    <h2 v-if="!hideTitle">{{ title }}</h2>
-    <p v-if="message">{{ message }}</p>
-    <p v-if="variant === 'error' && userHint" class="error-help">{{ userHint }}</p>
-    <p v-if="variant === 'error' && !showHudMeta && compactContext" class="error-context">
-      Context: {{ compactContext }}
-    </p>
+  <section class="panel sc-state-panel" :class="[variant, `state-${productState.kind}`]" :role="variant === 'error' ? 'alert' : 'status'" :aria-live="variant === 'error' ? 'assertive' : 'polite'" :aria-busy="busy || undefined">
+    <h2 v-if="!hideTitle">{{ displayTitle }}</h2>
+    <p v-if="displayMessage">{{ displayMessage }}</p>
+    <div v-if="busy" class="state-skeleton" aria-hidden="true"><span /><span /><span /></div>
     <div v-if="variant === 'error' && showHudMeta" class="error-meta">
       <p class="trace">Error code: {{ errorCode ?? 'N/A' }}</p>
       <p class="trace">Trace: {{ traceId || 'N/A' }}</p>
@@ -15,7 +12,7 @@
       <p v-if="errorOp" class="trace">Operation: {{ errorOp }}</p>
       <p v-if="retryable !== undefined" class="trace">Retryable: {{ retryable ? 'yes' : 'no' }}</p>
       <p v-if="hint" class="trace">Hint: {{ hint }}</p>
-      <button v-if="traceId" class="trace-copy" @click="copyTrace">Copy trace</button>
+      <button v-if="traceId" class="trace-copy sc-btn sc-btn-ghost sc-btn-sm" @click="copyTrace">复制诊断编号</button>
       <button v-if="canRunSuggestedAction && suggestedActionLabel" class="trace-copy" @click="runSuggestedAction">
         {{ suggestedActionLabel }}
       </button>
@@ -23,12 +20,14 @@
     </div>
     <button
       v-else-if="variant === 'error' && canRunSuggestedAction && suggestedActionLabel"
-      class="trace-copy"
+      class="trace-copy sc-btn sc-btn-ghost"
       @click="runSuggestedAction"
     >
       {{ suggestedActionLabel }}
     </button>
-    <button v-if="onRetry" @click="onRetry">Retry</button>
+    <button v-if="onRetry" class="sc-btn sc-btn-primary" type="button" :disabled="retrying" @click="retry">
+      {{ retrying ? '正在重试…' : (retryLabel || productState.actionLabel) }}
+    </button>
   </section>
 </template>
 
@@ -37,6 +36,7 @@ import { computed, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import { useSuggestedAction } from '../composables/useSuggestedAction';
 import { isHudEnabled } from '../config/debug';
+import { resolveProductErrorState } from '../app/productErrorState';
 
 const props = defineProps<{
   title: string;
@@ -53,11 +53,14 @@ const props = defineProps<{
   onRetry?: () => void;
   onSuggestedAction?: (action: string) => boolean | void;
   hideTitle?: boolean;
+  retryLabel?: string;
+  busy?: boolean;
 }>();
 const emit = defineEmits<{
   (event: 'action-executed', payload: { action: string; success: boolean }): void;
 }>();
 const actionRunFeedback = ref('');
+const retrying = ref(false);
 const route = useRoute();
 
 watch(
@@ -83,18 +86,9 @@ const suggestedActionLabel = computed(() => suggestedActionRuntime.label.value);
 const showHudMeta = computed(() => isHudEnabled(route));
 const errorModel = computed(() => String(props.errorDetails?.model || '').trim());
 const errorOp = computed(() => String(props.errorDetails?.op || '').trim().toLowerCase());
-const compactContext = computed(() => {
-  const scope = [errorModel.value, errorOp.value].filter(Boolean).join('/');
-  const reason = String(props.reasonCode || '').trim().toUpperCase();
-  if (scope && reason) return `${scope} [${reason}]`;
-  if (scope) return scope;
-  if (reason) return `[${reason}]`;
-  return '';
-});
-const userHint = computed(() => {
-  if (showHudMeta.value) return '';
-  return props.hint || '';
-});
+const productState = computed(() => resolveProductErrorState({ status: props.errorCode, message: props.message, reasonCode: props.reasonCode }));
+const displayTitle = computed(() => (props.variant === 'error' ? productState.value.title : props.title));
+const displayMessage = computed(() => (props.variant === 'error' ? productState.value.message : props.message));
 
 function runSuggestedAction() {
   const ran = suggestedActionRuntime.run({
@@ -104,13 +98,19 @@ function runSuggestedAction() {
     reasonCode: props.reasonCode,
     message: props.message,
     onExecuted: (result) => {
-      actionRunFeedback.value = result.success ? 'Suggested action executed.' : 'Suggested action could not run.';
+      actionRunFeedback.value = result.success ? '恢复操作已执行。' : '当前无法执行恢复操作。';
       emit('action-executed', { action: result.raw || result.kind, success: result.success });
     },
   });
   if (!ran && !actionRunFeedback.value) {
-    actionRunFeedback.value = 'Suggested action is not executable in current context.';
+    actionRunFeedback.value = '当前状态无法执行此恢复操作。';
   }
+}
+
+async function retry() {
+  if (!props.onRetry || retrying.value) return;
+  retrying.value = true;
+  try { await props.onRetry(); } finally { retrying.value = false; }
 }
 
 function copyTrace() {
@@ -126,7 +126,7 @@ function copyTrace() {
 <style scoped>
 .panel {
   padding: 24px;
-  border-radius: 12px;
+  border-radius: var(--sc-product-radius-panel);
   background: var(--sc-app-muted-bg);
   border: 1px solid var(--sc-app-border);
   color: var(--sc-app-text-primary);
@@ -149,26 +149,12 @@ function copyTrace() {
   gap: 4px;
 }
 
-.error-context {
-  margin: 0;
-  font-size: 12px;
-  color: var(--sc-app-text-secondary);
-}
-
 .trace {
   font-size: 12px;
   color: var(--sc-app-text-secondary);
 }
 
-button {
-  justify-self: start;
-  padding: 8px 12px;
-  border: none;
-  border-radius: 8px;
-  background: var(--sc-semantic-surface-interactive);
-  color: var(--sc-semantic-text-on-interactive);
-  cursor: pointer;
-}
+.panel > button { justify-self: start; }
 
 .trace-copy {
   justify-self: start;
@@ -183,4 +169,11 @@ button {
 .action-feedback {
   color: var(--sc-app-text-primary);
 }
+
+.state-skeleton { display: grid; gap: var(--sc-product-space-1); width: min(520px, 100%); }
+.state-skeleton span { display: block; height: 12px; border-radius: var(--sc-product-radius-control); background: var(--sc-app-border); animation: state-pulse 1.2s ease-in-out infinite alternate; }
+.state-skeleton span:nth-child(2) { width: 82%; }
+.state-skeleton span:nth-child(3) { width: 64%; }
+@keyframes state-pulse { to { opacity: .45; } }
+@media (prefers-reduced-motion: reduce) { .state-skeleton span { animation: none; } }
 </style>

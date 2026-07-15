@@ -878,7 +878,7 @@
   position: sticky;
   bottom: 0;
   z-index: 5;
-  box-shadow: 0 -8px 18px rgb(15 23 42 / 8%);
+  box-shadow: var(--sc-app-shadow-popover);
 }
 
 .contract-field-governance-dirty {

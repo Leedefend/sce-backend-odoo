@@ -389,7 +389,7 @@ onUnmounted(() => {
   position: fixed;
   inset: 0;
   z-index: 90;
-  background: rgb(15 23 42 / 18%);
+  background: var(--sc-app-overlay);
 }
 
 .global-message__panel {

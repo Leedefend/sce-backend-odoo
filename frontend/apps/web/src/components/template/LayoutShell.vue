@@ -1,7 +1,7 @@
 <template>
-  <main :class="['template-layout-shell', { 'template-layout-shell--flow': flow }]" data-component="LayoutShell">
+  <div :class="['template-layout-shell', { 'template-layout-shell--flow': flow }]" data-component="LayoutShell">
     <slot />
-  </main>
+  </div>
 </template>
 
 <script setup lang="ts">

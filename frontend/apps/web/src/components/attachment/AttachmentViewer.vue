@@ -155,7 +155,7 @@ defineExpose({ open, close });
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: rgba(15, 23, 42, 0.42);
+  background: var(--sc-app-overlay);
 }
 
 .attachment-viewer {
@@ -164,10 +164,10 @@ defineExpose({ open, close });
   width: min(1040px, 100%);
   height: min(760px, calc(100vh - 48px));
   min-height: 420px;
-  border: 1px solid var(--sc-app-border, #d7dee8);
+  border: 1px solid var(--sc-app-border);
   border-radius: 8px;
-  background: var(--sc-app-panel, #fff);
-  box-shadow: 0 18px 48px rgba(15, 23, 42, 0.22);
+  background: var(--sc-app-panel);
+  box-shadow: var(--sc-app-shadow-modal);
   overflow: hidden;
 }
 
@@ -177,7 +177,7 @@ defineExpose({ open, close });
   justify-content: space-between;
   gap: 16px;
   padding: 12px 14px;
-  border-bottom: 1px solid var(--sc-app-border, #d7dee8);
+  border-bottom: 1px solid var(--sc-app-border);
 }
 
 .attachment-viewer-title {
@@ -186,7 +186,7 @@ defineExpose({ open, close });
 
 .attachment-viewer-title h3 {
   margin: 0;
-  color: var(--sc-app-text-primary, #172033);
+  color: var(--sc-app-text-primary);
   font-size: 14px;
   font-weight: 650;
   overflow: hidden;
@@ -196,7 +196,7 @@ defineExpose({ open, close });
 
 .attachment-viewer-title p {
   margin: 4px 0 0;
-  color: var(--sc-app-text-secondary, #64748b);
+  color: var(--sc-app-text-secondary);
   font-size: 12px;
 }
 
@@ -209,14 +209,14 @@ defineExpose({ open, close });
 
 .attachment-viewer-body {
   min-height: 0;
-  background: var(--sc-app-muted-bg, #f8fafc);
+  background: var(--sc-app-muted-bg);
 }
 
 .attachment-viewer-frame {
   width: 100%;
   height: 100%;
   border: 0;
-  background: #fff;
+  background: var(--sc-app-panel);
 }
 
 .attachment-viewer-state {
@@ -227,13 +227,13 @@ defineExpose({ open, close });
   height: 100%;
   min-height: 260px;
   padding: 24px;
-  color: var(--sc-app-text-secondary, #64748b);
+  color: var(--sc-app-text-secondary);
   text-align: center;
 }
 
 .attachment-viewer-state strong {
   max-width: 100%;
-  color: var(--sc-app-text-primary, #172033);
+  color: var(--sc-app-text-primary);
   overflow-wrap: anywhere;
 }
 
@@ -243,7 +243,7 @@ defineExpose({ open, close });
 }
 
 .attachment-viewer-state--error {
-  color: var(--sc-app-danger-text, #b42318);
+  color: var(--sc-app-danger-text);
 }
 
 @media (max-width: 720px) {

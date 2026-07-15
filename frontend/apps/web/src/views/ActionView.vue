@@ -3576,7 +3576,7 @@ function refreshForProjectContextChange(): void {
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: rgba(15, 23, 42, 0.38);
+  background: var(--sc-app-overlay);
 }
 
 .business-category-picker {

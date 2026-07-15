@@ -9,7 +9,8 @@
     :data-page-identity-source="pageIdentity.identity.value.source"
     :data-page-identity-title="pageTitle"
   >
-    <aside v-if="!sidebarHidden" class="sidebar sidebar-nav" :class="sidebarClass" data-component="SidebarNav">
+    <a class="skip-link" href="#main-content">跳至主要内容</a>
+    <aside v-if="!sidebarHidden" id="primary-sidebar" class="sidebar sidebar-nav" :class="sidebarClass" data-component="SidebarNav" aria-label="主导航">
       <div class="brand">
         <div class="logo">{{ shellLogoText }}</div>
         <div>
@@ -26,6 +27,8 @@
             class="project-trigger"
             type="button"
             :disabled="!projectContextEnabled"
+            :aria-expanded="projectMenuOpen"
+            aria-controls="project-context-menu"
             @click.stop="toggleProjectMenu"
           >
             <span>{{ recordContextLabel }}：</span>
@@ -45,7 +48,7 @@
         <div v-if="companyOptions.length || operationOptions.length" class="business-scope-controls">
           <label v-if="companyOptions.length" class="business-scope-field">
             <span>公司</span>
-            <select :value="selectedCompanyId || ''" :disabled="companyOptions.length <= 1" @change="changeCompanyScope">
+            <select aria-label="当前公司" :value="selectedCompanyId || ''" :disabled="companyOptions.length <= 1" @change="changeCompanyScope">
               <option
                 v-for="company in companyOptions"
                 :key="`company-${company.company_id}`"
@@ -69,11 +72,12 @@
             </button>
           </div>
         </div>
-        <div v-if="projectMenuOpen && projectContextEnabled" class="project-dropdown" @click.stop>
+        <div v-if="projectMenuOpen && projectContextEnabled" id="project-context-menu" class="project-dropdown" @click.stop>
           <input
             v-model="projectSearch"
             class="project-search sc-search"
             type="search"
+            :aria-label="projectSearchPlaceholder"
             :placeholder="projectSearchPlaceholder"
             @input="queueProjectSearch"
             @keydown.enter.prevent="submitProjectSearch"
@@ -136,7 +140,7 @@
 
       <div class="nav-shell">
         <div class="search">
-          <input v-model="query" type="search" placeholder="搜索菜单..." />
+          <input v-model="query" type="search" aria-label="搜索业务菜单" placeholder="搜索菜单..." />
         </div>
 
         <div class="menu">
@@ -196,6 +200,8 @@
           <button
             class="sidebar-toggle sc-btn sc-btn-sm"
             type="button"
+            aria-controls="primary-sidebar"
+            :aria-expanded="!sidebarHidden"
             @click="toggleSidebar"
           >
             {{ sidebarHidden ? '显示侧边栏' : '隐藏侧边栏' }}
@@ -266,9 +272,9 @@
         :on-retry="refreshInit"
       />
 
-      <div v-else class="router-host">
+      <main v-else id="main-content" class="router-host" tabindex="-1">
         <slot />
-      </div>
+      </main>
 
       <DevContextPanel
         :visible="showHud"
@@ -854,11 +860,11 @@ async function changeCompanyScope(event: Event) {
   if (!(target instanceof HTMLSelectElement)) return;
   const companyId = Number(target.value || 0) || null;
   const previousProjectId = Number(selectedProject.value?.id || 0) || 0;
-  await session.selectBusinessScope({
+  const applied = await session.selectBusinessScope({
     company_id: companyId,
     operation_strategy: selectedOperationStrategy.value,
   });
-  await loadProjectOptions();
+  if (applied === false) return;
   emitProjectContextChanged(previousProjectId, true);
 }
 
@@ -866,11 +872,11 @@ async function changeOperationScope(operationStrategy: string) {
   const normalized = String(operationStrategy || '').trim();
   if (normalized === selectedOperationStrategy.value) return;
   const previousProjectId = Number(selectedProject.value?.id || 0) || 0;
-  await session.selectBusinessScope({
+  const applied = await session.selectBusinessScope({
     company_id: selectedCompanyId.value || null,
     operation_strategy: normalized,
   });
-  await loadProjectOptions();
+  if (applied === false) return;
   emitProjectContextChanged(previousProjectId, true);
 }
 
@@ -1489,7 +1495,7 @@ async function logout() {
 .subtitle {
   margin: 0;
   font-size: 11px;
-  color: var(--sc-semantic-text-muted);
+  color: var(--sc-app-text-secondary);
 }
 
 .nav-shell {
@@ -2126,7 +2132,7 @@ async function logout() {
 
 .activity-tab-close:hover {
   opacity: 1;
-  background: color-mix(in srgb, var(--sc-app-danger-bg, #fee2e2) 70%, transparent);
+  background: color-mix(in srgb, var(--sc-app-danger-bg) 70%, transparent);
 }
 
 .theme-switch {
