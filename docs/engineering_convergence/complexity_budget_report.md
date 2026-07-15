@@ -4,7 +4,7 @@ Generated from repository source files. This report is informational during the 
 
 ## Summary
 
-- Scanned files: `3983`
+- Scanned files: `3990`
 - Files requiring split plan: `42`
 - Files above warning threshold: `64`
 
@@ -27,15 +27,15 @@ Generated from repository source files. This report is informational during the 
 | 2903 | Python source | `addons/smart_core/tests/test_menu_configuration_audit.py` |
 | 2830 | Python source | `addons/smart_construction_core/models/core/material_acceptance.py` |
 | 2585 | Python source | `addons/smart_construction_core/tests/test_user_feedback_business_views.py` |
-| 2531 | Vue source | `frontend/apps/web/src/views/MyWorkView.vue` |
+| 2543 | Vue source | `frontend/apps/web/src/views/MyWorkView.vue` |
 | 2529 | XML data/view | `addons/smart_construction_core/views/menu_business_taxonomy.xml` |
 | 2443 | Python source | `addons/smart_core/core/unified_page_contract_v2_assembler.py` |
 | 2331 | Python source | `addons/smart_core/handlers/system_init.py` |
 | 2289 | Python source | `addons/smart_construction_core/models/core/project_core.py` |
 | 2193 | Python source | `addons/smart_core/handlers/api_data.py` |
-| 2161 | Vue source | `frontend/apps/web/src/layouts/AppShell.vue` |
+| 2167 | Vue source | `frontend/apps/web/src/layouts/AppShell.vue` |
 | 2051 | Python source | `scripts/verify/backend_business_fact_model_audit.py` |
-| 1989 | TypeScript source | `frontend/apps/web/src/stores/session.ts` |
+| 2004 | TypeScript source | `frontend/apps/web/src/stores/session.ts` |
 | 1977 | Python source | `addons/smart_construction_core/models/core/payment_request.py` |
 | 1877 | Python source | `addons/smart_core/tests/test_ui_contract_v2_boundaries.py` |
 | 1850 | Python source | `addons/smart_core/handlers/menu_configuration.py` |
@@ -50,8 +50,8 @@ Generated from repository source files. This report is informational during the 
 | 1555 | Python source | `addons/smart_construction_core/models/support/contract_center.py` |
 | 1552 | Python source | `addons/smart_core/tests/test_odoo_native_alignment_boundaries.py` |
 | 1546 | Python source | `addons/smart_core/app_config_engine/services/view_Parser/parsers Tree Form.py` |
+| 1525 | Vue source | `frontend/apps/web/src/views/RecordView.vue` |
 | 1523 | Python source | `addons/smart_construction_core/wizard/project_boq_import_wizard.py` |
-| 1521 | Vue source | `frontend/apps/web/src/views/RecordView.vue` |
 | 599 | Shell script | `scripts/audit/smoke_role_matrix.sh` |
 | 551 | Shell script | `scripts/ops/audit_project_actions.sh` |
 
@@ -143,16 +143,16 @@ Generated from repository source files. This report is informational during the 
 | 2903 | split_plan_required | Python source | `addons/smart_core/tests/test_menu_configuration_audit.py` |
 | 2830 | split_plan_required | Python source | `addons/smart_construction_core/models/core/material_acceptance.py` |
 | 2585 | split_plan_required | Python source | `addons/smart_construction_core/tests/test_user_feedback_business_views.py` |
-| 2531 | split_plan_required | Vue source | `frontend/apps/web/src/views/MyWorkView.vue` |
+| 2543 | split_plan_required | Vue source | `frontend/apps/web/src/views/MyWorkView.vue` |
 | 2529 | split_plan_required | XML data/view | `addons/smart_construction_core/views/menu_business_taxonomy.xml` |
 | 2443 | split_plan_required | Python source | `addons/smart_core/core/unified_page_contract_v2_assembler.py` |
 | 2331 | split_plan_required | Python source | `addons/smart_core/handlers/system_init.py` |
 | 2289 | split_plan_required | Python source | `addons/smart_construction_core/models/core/project_core.py` |
 | 2193 | split_plan_required | Python source | `addons/smart_core/handlers/api_data.py` |
-| 2161 | split_plan_required | Vue source | `frontend/apps/web/src/layouts/AppShell.vue` |
+| 2167 | split_plan_required | Vue source | `frontend/apps/web/src/layouts/AppShell.vue` |
 | 2054 | warning | XML data/view | `addons/smart_construction_core/security/sc_record_rules.xml` |
 | 2051 | split_plan_required | Python source | `scripts/verify/backend_business_fact_model_audit.py` |
-| 1989 | split_plan_required | TypeScript source | `frontend/apps/web/src/stores/session.ts` |
+| 2004 | split_plan_required | TypeScript source | `frontend/apps/web/src/stores/session.ts` |
 | 1977 | split_plan_required | Python source | `addons/smart_construction_core/models/core/payment_request.py` |
 | 1877 | split_plan_required | Python source | `addons/smart_core/tests/test_ui_contract_v2_boundaries.py` |
 | 1850 | split_plan_required | Python source | `addons/smart_core/handlers/menu_configuration.py` |
@@ -168,8 +168,8 @@ Generated from repository source files. This report is informational during the 
 | 1555 | split_plan_required | Python source | `addons/smart_construction_core/models/support/contract_center.py` |
 | 1552 | split_plan_required | Python source | `addons/smart_core/tests/test_odoo_native_alignment_boundaries.py` |
 | 1546 | split_plan_required | Python source | `addons/smart_core/app_config_engine/services/view_Parser/parsers Tree Form.py` |
+| 1525 | split_plan_required | Vue source | `frontend/apps/web/src/views/RecordView.vue` |
 | 1523 | split_plan_required | Python source | `addons/smart_construction_core/wizard/project_boq_import_wizard.py` |
-| 1521 | split_plan_required | Vue source | `frontend/apps/web/src/views/RecordView.vue` |
 | 1490 | warning | Python source | `addons/smart_construction_core/models/support/workflow_contract_service.py` |
 | 1488 | warning | JavaScript source | `addons/smart_construction_core/static/src/js/sc_sidebar.js` |
 | 1486 | warning | Vue source | `frontend/apps/web/src/views/BusinessConfigSurfaceView.vue` |

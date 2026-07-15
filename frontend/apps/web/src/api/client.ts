@@ -1,6 +1,7 @@
 import { config } from '../config';
 import { useSessionStore } from '../stores/session';
 import { resolveConfiguredDb, resolveLoginRoutingDb } from '../services/dbContext';
+import { currentContextEpoch, currentContextSignal } from '../app/contextEpoch';
 
 type UnknownObject = Record<string, unknown>;
 
@@ -100,7 +101,7 @@ function resolveApiPath(path: string, dbHeader: string) {
   return `${raw}${raw.includes('?') ? '&' : '?'}db=${encodeURIComponent(dbHeader)}`;
 }
 
-export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) {
+async function apiRequestRawUncoalesced<T>(path: string, options: RequestInit = {}) {
   const session = useSessionStore();
   const headers = new Headers(options.headers ?? {});
   const existingTrace = headers.get('x-trace-id');
@@ -135,7 +136,6 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
   }
 
   const debugIntent =
-    import.meta.env.DEV ||
     localStorage.getItem('DEBUG_INTENT') === '1' ||
     new URLSearchParams(window.location.search).get('debug') === '1';
 
@@ -176,6 +176,7 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
     response = await fetch(`${config.apiBaseUrl}${resolvedPath}`, {
       ...options,
       headers,
+      signal: options.signal || currentContextSignal(),
       // Portal shell authentication is token-based; do not send Odoo session cookies
       // to avoid cross-origin session/auth side effects.
       credentials: 'omit',
@@ -233,9 +234,8 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
 
   if (response.status === 401) {
     session.clearSession();
-    const redirect = encodeURIComponent(`${window.location.pathname}${window.location.search}`);
     if (!window.location.pathname.startsWith('/login')) {
-      window.location.href = `/login?redirect=${redirect}`;
+      window.location.href = '/login?reason=session_expired';
     }
     throw new ApiError('unauthorized', 401, traceId, {
       reasonCode: 'AUTH_401',
@@ -319,6 +319,68 @@ export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) 
   const body = (await response.json()) as T;
   const resolvedTrace = resolveTraceId(response, body, traceId);
   return { body, traceId: resolvedTrace };
+}
+
+const idempotentRequests = new Map<string, Promise<{ body: unknown; traceId?: string }>>();
+
+function idempotentIntentKey(path: string, options: RequestInit): string {
+  if (!String(path || '').startsWith('/api/v1/intent') || options.method !== 'POST' || typeof options.body !== 'string') return '';
+  try {
+    const payload = JSON.parse(options.body) as { intent?: string; params?: Record<string, unknown> };
+    const intent = String(payload.intent || '').trim();
+    const op = String(payload.params?.op || '').trim();
+    const idempotent = intent === 'ui.contract.v2'
+      || intent === 'chatter.timeline'
+      || (intent === 'api.data' && ['read', 'list', 'search'].includes(op));
+    if (!idempotent) return '';
+    const session = useSessionStore();
+    const params = payload.params || {};
+    const context = (params.context && typeof params.context === 'object' && !Array.isArray(params.context))
+      ? params.context as Record<string, unknown>
+      : {};
+    const semanticRequest = {
+      intent,
+      op,
+      model: params.model,
+      ids: params.ids,
+      fields: params.fields,
+      domain: params.domain,
+      action_id: params.action_id,
+      menu_id: params.menu_id,
+      record_id: params.record_id,
+      render_profile: params.render_profile,
+      surface: params.surface,
+      res_id: params.res_id,
+      limit: params.limit,
+      company_id: params.company_id || context.company_id,
+      current_project_id: params.current_project_id || context.current_project_id,
+      operation_strategy: params.operation_strategy || context.operation_strategy,
+      project_scope_policy: context.project_scope_policy,
+    };
+    return `${session.sessionDb}|${session.token || ''}|${currentContextEpoch()}|${JSON.stringify(semanticRequest)}`;
+  } catch {
+    return '';
+  }
+}
+
+export async function apiRequestRaw<T>(path: string, options: RequestInit = {}) {
+  const key = idempotentIntentKey(path, options);
+  if (!key) return apiRequestRawUncoalesced<T>(path, options);
+  const existing = idempotentRequests.get(key);
+  if (existing) return existing as Promise<{ body: T; traceId?: string }>;
+  const request = apiRequestRawUncoalesced<T>(path, options);
+  idempotentRequests.set(key, request as Promise<{ body: unknown; traceId?: string }>);
+  try {
+    return await request;
+  } catch (error) {
+    if (idempotentRequests.get(key) === request) idempotentRequests.delete(key);
+    throw error;
+  } finally {
+    // Coalesce only truly concurrent reads. A resolved response must never act
+    // as a business-data TTL cache because mutations require an immediate
+    // authoritative reread of state and monetary facts.
+    if (idempotentRequests.get(key) === request) idempotentRequests.delete(key);
+  }
 }
 
 export async function apiRequest<T>(path: string, options: RequestInit = {}) {

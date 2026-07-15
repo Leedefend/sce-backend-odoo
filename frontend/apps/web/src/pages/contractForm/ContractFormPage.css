@@ -299,11 +299,11 @@
   justify-content: space-between;
   gap: 8px;
   padding: 6px 8px;
-  border: 1px solid var(--border-subtle, #d9e2ec);
+  border: 1px solid var(--border-subtle, var(--sc-app-border));
   border-radius: 6px;
-  color: var(--text-secondary, #475569);
+  color: var(--text-secondary, var(--sc-app-text-secondary));
   font-size: 12px;
-  background: var(--surface-muted, #f8fafc);
+  background: var(--surface-muted, var(--sc-app-muted-bg));
 }
 
 .native-pending-attachments span {
@@ -491,7 +491,7 @@
 
 .contract-form-native-shell :deep(.template-page-header-actions .sc-btn-primary) {
   min-width: 76px;
-  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.16);
+  box-shadow: var(--sc-app-shadow-popover);
 }
 
 .contract-form-native-shell :deep(.template-page-header-actions .contract-header-config-action) {
@@ -659,7 +659,7 @@
   border: 1px solid var(--sc-app-border);
   border-radius: 8px;
   background: var(--sc-app-bg);
-  box-shadow: inset 0 0 0 1px rgb(148 163 184 / 6%);
+  box-shadow: inset 0 0 0 1px var(--sc-semantic-border-subtle);
 }
 
 .form-grid--designer-workspace .contract-form-designer-canvas {

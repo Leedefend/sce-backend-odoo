@@ -18,6 +18,7 @@
     "vue-router": "^4.4.5"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.10.2",
     "@types/node": "^22.10.2",
     "@typescript-eslint/eslint-plugin": "^8.17.0",
     "@typescript-eslint/parser": "^8.17.0",

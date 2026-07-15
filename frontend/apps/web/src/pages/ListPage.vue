@@ -3043,7 +3043,7 @@ tr:hover {
 }
 
 .attachment-links a {
-  color: var(--sc-app-accent, #2563eb);
+  color: var(--sc-app-accent);
   overflow-wrap: anywhere;
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -3052,7 +3052,7 @@ tr:hover {
 .attachment-count-link {
   border: 0;
   background: transparent;
-  color: var(--sc-app-accent, #2563eb);
+  color: var(--sc-app-accent);
   cursor: pointer;
   font: inherit;
   padding: 0;

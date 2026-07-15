@@ -6,6 +6,7 @@
       :message="pageText('message', '当前角色无权访问此业务入口。请返回已授权的工作区。')"
       variant="error"
       :on-retry="returnSafely"
+      retry-label="返回安全页面"
     />
   </section>
 </template>
@@ -22,7 +23,6 @@ const pageContract = usePageContract('access-denied');
 const pageText = pageContract.text;
 
 function returnSafely(): void {
-  if (window.history.length > 1) router.back();
-  else void router.push('/');
+  void router.push('/');
 }
 </script>

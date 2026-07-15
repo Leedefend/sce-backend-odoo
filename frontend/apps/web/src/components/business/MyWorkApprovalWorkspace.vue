@@ -2,10 +2,10 @@
   <section class="product-work" aria-labelledby="my-work-title">
     <header class="product-work__header">
       <div>
-        <h1 id="my-work-title">我的工作</h1>
+        <h2 id="my-work-title">我的工作</h2>
         <p>只展示当前账号、公司和项目范围内真正可处理的业务事项。</p>
       </div>
-      <button type="button" class="secondary" :disabled="busy" @click="$emit('refresh')">刷新</button>
+      <button type="button" class="secondary sc-btn sc-btn-ghost" :disabled="busy" @click="$emit('refresh')">刷新</button>
     </header>
 
     <div class="product-work__counts" aria-label="工作项汇总">
@@ -45,11 +45,12 @@
           </dl>
         </div>
         <div class="work-card__actions">
-          <button type="button" class="secondary" @click="openItem(item)">打开详情</button>
+          <button type="button" class="secondary sc-btn sc-btn-ghost" @click="openItem(item)">打开详情</button>
           <button
             v-for="action in item.actions"
             :key="action.key"
             type="button"
+            class="sc-btn sc-btn-primary"
             :disabled="busy"
             @click="beginAction(item, action)"
           >
@@ -72,8 +73,8 @@
         </label>
         <p v-if="dialogError" class="feedback error" role="alert">{{ dialogError }}</p>
         <div class="dialog-actions">
-          <button type="button" class="secondary" :disabled="busy" @click="closeDialog">取消</button>
-          <button type="button" :disabled="busy" @click="confirmAction">
+          <button type="button" class="secondary sc-btn sc-btn-ghost" :disabled="busy" @click="closeDialog">取消</button>
+          <button type="button" class="sc-btn sc-btn-primary" :disabled="busy" @click="confirmAction">
             {{ busy ? '提交中…' : `确认${pendingAction?.label || ''}` }}
           </button>
         </div>
@@ -183,30 +184,30 @@ async function confirmAction() {
 .product-work { display: grid; gap: 20px; }
 .product-work__header { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
 .product-work__header h1 { margin: 0; font-size: 28px; }
-.product-work__header p { margin: 8px 0 0; color: var(--text-secondary, #64748b); }
+.product-work__header p { margin: 8px 0 0; color: var(--sc-app-text-secondary); }
 .product-work__counts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
-.count-card { display: flex; justify-content: space-between; align-items: center; min-height: 72px; padding: 16px; background: var(--surface, #fff); color: inherit; border: 1px solid var(--border, #dbe2ea); border-radius: 12px; }
+.count-card { display: flex; justify-content: space-between; align-items: center; min-height: 72px; padding: var(--sc-product-space-2); background: var(--sc-app-panel); color: inherit; border: 1px solid var(--sc-app-border); border-radius: var(--sc-product-radius-panel); }
 .count-card strong { font-size: 24px; }
-.count-card.active { border-color: var(--primary, #2563eb); box-shadow: 0 0 0 2px rgb(37 99 235 / 12%); }
+.count-card.active { border-color: var(--sc-semantic-surface-interactive); box-shadow: 0 0 0 3px var(--sc-app-focus-ring); }
 .work-section { display: grid; gap: 12px; }
 .work-section h2 { margin: 0; font-size: 20px; }
-.work-section h2 span { color: var(--text-secondary, #64748b); font-weight: 500; }
-.work-card { display: flex; justify-content: space-between; gap: 20px; padding: 18px; background: var(--surface, #fff); border: 1px solid var(--border, #dbe2ea); border-radius: 12px; }
+.work-section h2 span { color: var(--sc-app-text-secondary); font-weight: 500; }
+.work-card { display: flex; justify-content: space-between; gap: 20px; padding: var(--sc-product-space-2); background: var(--sc-app-panel); border: 1px solid var(--sc-app-border); border-radius: var(--sc-product-radius-panel); }
 .work-card__main { min-width: 0; flex: 1; }
 .work-card__identity { display: flex; gap: 8px; align-items: center; }
-.business-type, .status-badge { display: inline-flex; padding: 3px 8px; border-radius: 999px; background: #eef4ff; color: #1d4ed8; font-size: 12px; }
-.status-badge { background: #f1f5f9; color: #334155; }
+.business-type, .status-badge { display: inline-flex; padding: 3px 8px; border-radius: var(--sc-component-tag-radius); background: var(--sc-app-info-bg); color: var(--sc-app-info-text); font-size: var(--sc-product-text-sm); }
+.status-badge { background: var(--sc-app-subtle-bg); color: var(--sc-app-text-primary); }
 .work-card h3 { margin: 10px 0 14px; overflow-wrap: anywhere; }
 .work-card dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 20px; margin: 0; }
 .work-card dl div { min-width: 0; }
-.work-card dt { color: var(--text-secondary, #64748b); font-size: 12px; }
+.work-card dt { color: var(--sc-app-text-secondary); font-size: var(--sc-product-text-sm); }
 .work-card dd { margin: 3px 0 0; overflow-wrap: anywhere; }
 .work-card__actions { display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start; }
-.empty { padding: 24px; border: 1px dashed var(--border, #dbe2ea); border-radius: 12px; color: var(--text-secondary, #64748b); }
-.feedback { margin: 0; padding: 10px 12px; border-radius: 8px; background: #ecfdf5; color: #166534; }
-.feedback.error { background: #fef2f2; color: #b91c1c; }
-.intent-dialog { width: min(480px, calc(100vw - 32px)); border: 0; border-radius: 14px; padding: 22px; box-shadow: 0 24px 70px rgb(15 23 42 / 28%); }
-.intent-dialog::backdrop { background: rgb(15 23 42 / 45%); }
+.empty { padding: var(--sc-product-space-3); border: 1px dashed var(--sc-app-border); border-radius: var(--sc-product-radius-panel); color: var(--sc-app-text-secondary); }
+.feedback { margin: 0; padding: 10px 12px; border-radius: var(--sc-product-radius-control); background: var(--sc-app-success-bg); color: var(--sc-app-success-text); }
+.feedback.error { background: var(--sc-app-danger-bg); color: var(--sc-app-danger-text); }
+.intent-dialog { width: min(480px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow: auto; border: 1px solid var(--sc-app-border); border-radius: var(--sc-product-radius-panel); padding: var(--sc-product-space-3); box-shadow: var(--sc-product-shadow-overlay); background: var(--sc-app-panel); color: var(--sc-app-text-primary); }
+.intent-dialog::backdrop { background: color-mix(in srgb, var(--sc-app-text-primary) 45%, transparent); }
 .intent-dialog h2 { margin-top: 0; }
 .intent-dialog label { display: grid; gap: 6px; }
 .intent-dialog textarea { width: 100%; box-sizing: border-box; }

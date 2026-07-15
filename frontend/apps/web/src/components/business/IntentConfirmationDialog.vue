@@ -1,6 +1,13 @@
 <template>
-  <div v-if="open" class="intent-confirmation__backdrop" role="presentation" @click.self="settle(false)" @keydown.esc.prevent="settle(false)">
-    <form class="intent-confirmation" role="dialog" aria-modal="true" aria-labelledby="intent-confirmation-title" aria-describedby="intent-confirmation-message" @submit.prevent="settle(true)">
+  <dialog
+    v-if="open"
+    ref="dialogElement"
+    class="intent-confirmation"
+    aria-labelledby="intent-confirmation-title"
+    aria-describedby="intent-confirmation-message"
+    @cancel.prevent="settle(false)"
+  >
+    <form @submit.prevent="settle(true)">
       <header>
         <p>业务状态将发生变化</p>
         <h2 id="intent-confirmation-title">确认{{ actionLabel }}</h2>
@@ -11,7 +18,7 @@
         <button ref="confirmButton" type="submit" class="sc-btn sc-btn-primary">确认{{ actionLabel }}</button>
       </footer>
     </form>
-  </div>
+  </dialog>
 </template>
 
 <script setup lang="ts">
@@ -20,6 +27,7 @@ import { nextTick, ref, watch } from 'vue';
 const open = ref(false);
 const actionLabel = ref('操作');
 const message = ref('');
+const dialogElement = ref<HTMLDialogElement | null>(null);
 const confirmButton = ref<HTMLButtonElement | null>(null);
 let pendingResolve: ((confirmed: boolean) => void) | null = null;
 let trigger: HTMLElement | null = null;
@@ -27,6 +35,7 @@ let trigger: HTMLElement | null = null;
 watch(open, async (visible) => {
   if (!visible) return;
   await nextTick();
+  dialogElement.value?.showModal();
   confirmButton.value?.focus();
 });
 
@@ -53,8 +62,9 @@ defineExpose({ confirm });
 </script>
 
 <style scoped>
-.intent-confirmation__backdrop { position: fixed; z-index: 1200; inset: 0; display: grid; place-items: center; padding: var(--sc-product-space-2); background: rgb(15 23 42 / 52%); }
-.intent-confirmation { width: min(100%, 460px); padding: var(--sc-product-space-3); border: 1px solid var(--sc-app-border); border-radius: var(--sc-component-dialog-radius); background: var(--sc-app-panel); box-shadow: var(--sc-app-shadow); }
+.intent-confirmation { width: min(calc(100% - 2 * var(--sc-product-space-2)), 460px); max-height: calc(100dvh - 2 * var(--sc-product-space-2)); padding: var(--sc-product-space-3); border: 1px solid var(--sc-app-border); border-radius: var(--sc-component-dialog-radius); background: var(--sc-app-panel); color: var(--sc-app-text-primary); box-shadow: var(--sc-app-shadow); overflow: auto; }
+.intent-confirmation::backdrop { background: color-mix(in srgb, var(--sc-app-text-primary) 52%, transparent); }
+.intent-confirmation form { display: grid; gap: var(--sc-product-space-2); }
 .intent-confirmation header p { margin: 0 0 var(--sc-product-space-1); color: var(--sc-app-text-secondary); font-size: var(--sc-product-text-sm); }
 .intent-confirmation h2 { margin: 0; font-size: 20px; }
 .intent-confirmation > p { margin: var(--sc-product-space-2) 0; line-height: 1.6; }

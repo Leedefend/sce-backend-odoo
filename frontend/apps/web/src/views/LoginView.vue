@@ -51,17 +51,21 @@
             <label class="sc-form-label">
               {{ pageText('username_label', '账号') }}
               <input
+                id="login-username"
                 v-model="username"
                 class="sc-input"
                 autocomplete="username"
                 :placeholder="pageText('username_placeholder', '请输入账号')"
                 :disabled="loading"
                 required
+                :aria-invalid="Boolean(error)"
+                :aria-describedby="error ? 'login-error' : undefined"
               />
             </label>
             <label class="sc-form-label">
               {{ pageText('password_label', '密码') }}
               <input
+                id="login-password"
                 v-model="password"
                 class="sc-input"
                 type="password"
@@ -69,6 +73,8 @@
                 :placeholder="pageText('password_placeholder', '请输入密码')"
                 :disabled="loading"
                 required
+                :aria-invalid="Boolean(error)"
+                :aria-describedby="error ? 'login-error' : undefined"
               />
             </label>
             <label class="sc-form-label">
@@ -83,7 +89,9 @@
             </label>
             <p
               v-if="pageSectionEnabled('error', true) && pageSectionTagIs('error', 'section') && error"
+              id="login-error"
               class="error sc-alert sc-alert-danger"
+              role="alert"
               :style="pageSectionStyle('error')"
             >
               {{ error }}

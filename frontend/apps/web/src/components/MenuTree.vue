@@ -289,7 +289,7 @@ onMounted(() => {
 
 .node.disabled .label {
   cursor: not-allowed;
-  color: var(--sc-semantic-text-muted);
+  color: var(--sc-app-text-secondary);
 }
 
 .node.disabled .label:hover {
@@ -371,7 +371,7 @@ onMounted(() => {
 .label-count {
   min-width: 18px;
   text-align: center;
-  color: var(--sc-semantic-text-muted);
+  color: var(--sc-app-text-secondary);
   background: var(--sc-app-panel);
 }
 

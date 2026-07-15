@@ -6,6 +6,7 @@
       :message="pageText('message', '该页面或记录不存在，可能已被删除或链接已经失效。')"
       variant="error"
       :on-retry="returnSafely"
+      retry-label="返回安全页面"
     />
   </section>
 </template>
@@ -21,7 +22,6 @@ const pageIdentity = usePageIdentityRuntime();
 const pageText = usePageContract('not-found').text;
 
 function returnSafely(): void {
-  if (window.history.length > 1) router.back();
-  else void router.push('/');
+  void router.push('/');
 }
 </script>

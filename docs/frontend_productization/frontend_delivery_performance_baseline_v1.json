@@ -1,0 +1,38 @@
+{
+  "schema_version": "frontend_delivery_performance_baseline_v1",
+  "git_sha": "d4bef3f30e1aafe70d6a48541f347ef323dbea27",
+  "source": "origin/main before FE-B06, same local acceptance runtime and hardware",
+  "runs_per_scenario": 5,
+  "scenarios": {
+    "login_to_interactive": {
+      "samples_ms": [2167, 1916, 1914, 1760, 1701],
+      "median_ms": 1914,
+      "slowest_ms": 2167
+    },
+    "my_work": {
+      "samples_ms": [1004, 958, 944, 946, 941],
+      "median_ms": 946,
+      "slowest_ms": 1004
+    },
+    "payment_detail": {
+      "samples_ms": [4057, 2982, 3485, 2977, 2984],
+      "median_ms": 2984,
+      "slowest_ms": 4057
+    },
+    "settlement_detail": {
+      "samples_ms": [5538, 5066, 5049, 5529, 5057],
+      "median_ms": 5066,
+      "slowest_ms": 5538
+    },
+    "execution_detail": {
+      "samples_ms": [4099, 3023, 2502, 2572, 2507],
+      "median_ms": 2572,
+      "slowest_ms": 4099
+    },
+    "form_open": {
+      "samples_ms": [1475, 1439, 1423, 1445, 1432],
+      "median_ms": 1439,
+      "slowest_ms": 1475
+    }
+  }
+}

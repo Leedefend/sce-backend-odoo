@@ -18,7 +18,7 @@
   --sc-product-toolbar-height: 52px;
   --sc-product-radius-control: 6px;
   --sc-product-radius-panel: 8px;
-  --sc-product-shadow-overlay: 0 12px 32px rgb(15 23 42 / 16%);
+  --sc-product-shadow-overlay: var(--sc-semantic-shadow-popover);
   --sc-app-bg: var(--sc-semantic-surface-page);
   --sc-app-panel: var(--sc-semantic-surface-panel);
   --sc-app-text-primary: var(--sc-semantic-text-primary);
@@ -30,6 +30,10 @@
   --sc-app-input-bg: var(--sc-semantic-surface-input);
   --sc-app-hover-bg: var(--sc-semantic-surface-hover);
   --sc-app-shadow: var(--sc-semantic-shadow-panel);
+  --sc-app-shadow-popover: var(--sc-semantic-shadow-popover);
+  --sc-app-shadow-modal: var(--sc-semantic-shadow-modal);
+  --sc-app-overlay: var(--sc-semantic-surface-overlay);
+  --sc-app-accent: var(--sc-semantic-surface-interactive);
   --sc-app-focus-ring: var(--sc-semantic-focus-ring);
   --sc-app-danger-bg: var(--sc-semantic-state-danger-bg);
   --sc-app-danger-border: var(--sc-semantic-state-danger-border);

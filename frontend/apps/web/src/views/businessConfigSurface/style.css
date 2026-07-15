@@ -1000,7 +1000,7 @@ h1 {
   border-radius: 8px;
   padding: 14px;
   background: var(--sc-app-surface);
-  box-shadow: inset 0 0 0 1px rgb(148 163 184 / 6%);
+  box-shadow: inset 0 0 0 1px var(--sc-semantic-border-subtle);
 }
 
 .approval-steps--disabled {
@@ -1395,7 +1395,7 @@ h1 {
 .config-editor-panel .field-chip-editor {
   min-height: 360px;
   padding: 14px;
-  box-shadow: inset 0 0 0 1px rgb(148 163 184 / 6%);
+  box-shadow: inset 0 0 0 1px var(--sc-semantic-border-subtle);
 }
 
 .field-chip-editor header {

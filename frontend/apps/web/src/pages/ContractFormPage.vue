@@ -115,9 +115,9 @@
     </PageHeaderTemplate>
 
     <StatusPanel v-if="renderErrorMessage" :title="pageDisplayTitle" :message="renderErrorMessage" variant="error" :on-retry="reload" />
-    <StatusPanel v-else-if="status === 'loading'" :title="pageDisplayTitle" variant="info" />
-    <StatusPanel v-else-if="status === 'error'" :title="pageDisplayTitle" :message="errorMessage" variant="error" :on-retry="reload" />
-    <StatusPanel v-else-if="recordMissing" :title="pageDisplayTitle" message="该记录不存在，可能已被删除或当前链接已经失效。" variant="error" :on-retry="() => router.back()" />
+    <StatusPanel v-else-if="status === 'loading'" :title="pageDisplayTitle" variant="info" busy />
+    <StatusPanel v-else-if="status === 'error'" :title="pageDisplayTitle" :message="errorMessage" :error-code="loadError.status" :reason-code="loadError.reason" :trace-id="loadError.trace" variant="error" :on-retry="reload" />
+    <StatusPanel v-else-if="recordMissing" :title="pageDisplayTitle" message="该记录不存在，可能已被删除或当前链接已经失效。" :error-code="404" variant="error" retry-label="返回安全页面" :on-retry="() => router.push('/')" />
 
     <section v-else :class="['card', 'sc-panel', 'sc-product-main-surface', { 'card--flow': isProjectIntakeCreateMode }]">
       <p v-if="financialWorkspace && submissionFeedback" class="submission-feedback" :class="`submission-feedback--${submissionFeedback.kind}`" role="status">
@@ -724,7 +724,6 @@ import {
   validateSurfaceMarkers,
   type FormContractReadiness,
 } from './contractForm/contractRuntimeVm';
-
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
@@ -736,7 +735,6 @@ const {
   router,
   currentQuery: () => route.query,
 });
-
 function resolveWorkspaceContextQuery() { return readWorkspaceContext(route.query as Record<string, unknown>); }
 const status = ref<UiStatus>('loading');
 const isComponentActive = ref(true);
@@ -745,6 +743,7 @@ const retainedRouteIdentity = ref('');
 const renderErrorMessage = ref('');
 const recordMissing = ref(false);
 const errorMessage = ref('');
+const loadError = reactive<{ status: number | null; reason: string; trace: string }>({ status: null, reason: '', trace: '' });
 const validationErrors = ref<string[]>([]);
 const submissionFeedback = ref<SubmissionFeedback>(null);
 const intentConfirmationRef = ref<InstanceType<typeof IntentConfirmationDialog> | null>(null);
@@ -755,13 +754,10 @@ const formSettingsActiveTab = ref<'structure' | 'fields' | 'details' | 'actions'
 const contractModeFeedback = ref('');
 const contract = ref<ActionContract | null>(null);
 const contractMeta = ref<Record<string, unknown> | null>(null);
-
 type PageStatusEvent = Extract<FormRuntimeStateEvent, { kind: 'status' }>;
-
 function applyPageStatusEvent(event: PageStatusEvent) {
   applyFormRuntimeStatusEvent({ status, errorMessage }, event);
 }
-
 const {
   copyContractJson,
   exportContractJson,
@@ -787,7 +783,6 @@ const v2ShadowStoreReady = computed(() => Boolean(v2ContractStore.value));
 const v2ShadowWidgetCount = computed(() => v2ContractStore.value?.widgetsById.size || 0);
 const v2ShadowActionCount = computed(() => v2ContractStore.value?.actionsById.size || 0);
 const v2ShadowButtonStatusCount = computed(() => v2ContractStore.value?.buttonStatusById.size || 0);
-
 function formRouteIdentity() {
   const query = route.query as Record<string, unknown>;
   return [
@@ -795,9 +790,9 @@ function formRouteIdentity() {
     String(route.params.id || ''),
     String(query.action_id || ''),
     String(query.menu_id || ''),
-    String(query.view_id || query.viewId || ''),
-    String(query.current_business_category_code || query.default_business_category_code || ''),
-    String(query.allowed_business_category_codes || ''),
+    String(recordId.value ? '' : (query.view_id || query.viewId || '')),
+    String(recordId.value ? '' : (query.current_business_category_code || query.default_business_category_code || '')),
+    String(recordId.value ? '' : (query.allowed_business_category_codes || '')),
   ].join('|');
 }
 const v2ShadowFieldCodes = computed(() => Array.from(v2ContractStore.value?.widgetsByFieldCode.keys() || []));
@@ -5249,8 +5244,8 @@ const hudEntries = computed(() => [
   { label: '联动提醒数', value: onchangeWarnings.value.length },
   { label: '明细联动补丁数', value: onchangeLinePatches.value.length },
 ]);
-
 async function loadContract() {
+  contract.value = null;
   v2ContractStore.value = null;
   v2ContractDecodeError.value = '';
   const profile = recordId.value ? 'edit' : 'create';
@@ -5407,10 +5402,12 @@ async function loadRecord() {
   originalValues.value = snapshotOriginalFormValues(fieldNames, formData);
   nativeLayoutVisibilityRevision.value += 1;
   if (recordId.value && (nativeChatterActions.value.length || nativeAttachments.value)) {
-    await loadNativeChatterTimeline(recordId.value, model.value);
+    if (nativeChatterAutoLoadKey.value !== `${model.value}:${recordId.value}` && !chatterLoading.value) {
+      nativeChatterAutoLoadKey.value = `${model.value}:${recordId.value}`;
+      await loadNativeChatterTimeline(recordId.value, model.value);
+    }
   }
 }
-
 function handleSceneBlockAction(payload: { action?: { target?: Record<string, unknown> } }) {
   const target = payload?.action?.target && typeof payload.action.target === 'object'
     ? payload.action.target
@@ -5433,7 +5430,6 @@ function handleSceneBlockAction(payload: { action?: { target?: Record<string, un
     void router.push({ name: 'scene', params: { sceneKey } });
   }
 }
-
 async function reload() {
   const reloadIdentity = formRouteIdentity();
   if (activeReloadPromise && reloadIdentity && reloadIdentity === activeReloadIdentity) {
@@ -5443,6 +5439,7 @@ async function reload() {
     const reloadToken = activeReloadToken + 1;
     activeReloadToken = reloadToken;
     renderErrorMessage.value = '';
+    Object.assign(loadError, { status: null, reason: '', trace: '' });
     recordMissing.value = false;
     applyPageStatusEvent({ kind: 'status', transaction: 'formReload', status: 'loading' });
     validationErrors.value = [];
@@ -5459,6 +5456,9 @@ async function reload() {
       }
     } catch (err) {
       if (reloadToken !== activeReloadToken) return;
+      if (err instanceof ApiError) {
+        Object.assign(loadError, { status: err.status, reason: String(err.reasonCode || ''), trace: String(err.traceId || '') });
+      }
       if (err instanceof ApiError && err.status === 403) {
         await router.replace({
           name: 'access-denied',

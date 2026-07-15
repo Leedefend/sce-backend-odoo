@@ -187,11 +187,11 @@
   justify-content: space-between;
   gap: 8px;
   padding: 6px 8px;
-  border: 1px solid var(--border-subtle, #d9e2ec);
+  border: 1px solid var(--border-subtle, var(--sc-app-border));
   border-radius: 6px;
-  color: var(--text-secondary, #475569);
+  color: var(--text-secondary, var(--sc-app-text-secondary));
   font-size: 12px;
-  background: var(--surface-muted, #f8fafc);
+  background: var(--surface-muted, var(--sc-app-muted-bg));
 }
 
 .native-pending-attachments span {

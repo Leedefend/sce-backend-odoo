@@ -42,8 +42,8 @@
       </div>
     </header>
 
-    <StatusPanel v-if="status === 'loading'" :title="pageText('loading_title', 'Loading record...')" variant="info" />
-    <StatusPanel v-else-if="status === 'saving'" :title="pageText('saving_title', 'Saving record...')" variant="info" />
+    <StatusPanel v-if="status === 'loading'" :title="pageText('loading_title', 'Loading record...')" variant="info" busy />
+    <StatusPanel v-else-if="status === 'saving'" :title="pageText('saving_title', 'Saving record...')" variant="info" busy />
     <StatusPanel
       v-else-if="status === 'error'"
       :title="errorCopy.title"
@@ -214,7 +214,7 @@ import { findActionMetaByMenu } from '../app/menu';
 import { buildRecordPageIdentity } from '../app/pageIdentityAdapters';
 import { resolveRoutePageIdentity } from '../app/pageIdentityRoute';
 import { usePublishedPageIdentity } from '../app/usePublishedPageIdentity';
-
+import { createRecordViewLoadRuntime } from '../app/recordViewLoadRuntime';
 const route = useRoute();
 const router = useRouter();
 const traceId = ref('');
@@ -251,7 +251,6 @@ type LayoutNotebookLike = {
 };
 const editTx = useEditTx();
 const editTxState = computed(() => editTx.state.value);
-
 const model = computed(() => String(route.params.model || ''));
 const recordId = computed(() => Number(route.params.id));
 const recordTitle = ref<string | null>(null);
@@ -544,7 +543,7 @@ function validateSurfaceMarkers(
   return { ok: issues.length === 0, issues };
 }
 
-async function load() {
+async function performLoad() {
   clearError();
   traceId.value = '';
   fields.value = [];
@@ -665,7 +664,12 @@ async function load() {
     lastLatencyMs.value = Date.now() - startedAt;
   }
 }
-
+const recordLoadRuntime = createRecordViewLoadRuntime(
+  () => `${model.value}|${recordId.value}|${String(route.query.action_id || '')}`,
+  () => [model.value, recordId.value, actionId.value, canEdit.value ? 'edit' : 'read', requestedSurface.value].join('|'),
+  () => status.value === 'ok' || status.value === 'empty',
+);
+function load(): Promise<void> { return recordLoadRuntime.load(performLoad); }
 async function loadChatter() {
   chatterError.value = '';
   try {
@@ -1111,7 +1115,6 @@ async function executeHeaderAction(actionKey: string) {
 }
 
 onMounted(() => {
-  void load();
   if (typeof window !== 'undefined') {
     window.addEventListener(PROJECT_CONTEXT_CHANGED_EVENT, handleProjectContextChanged);
   }
@@ -1120,8 +1123,9 @@ onMounted(() => {
 watch(
   () => `${String(route.params.model || '')}|${String(route.params.id || '')}|${String(route.query.action_id || '')}|${String(route.query.view_id || '')}|${String(route.query.viewId || '')}`,
   () => {
-    void load();
+    if (recordLoadRuntime.acceptsRoute()) void load();
   },
+  { immediate: true },
 );
 
 onBeforeUnmount(() => {

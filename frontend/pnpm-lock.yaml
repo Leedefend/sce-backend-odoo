@@ -58,6 +58,9 @@ importers:
         specifier: ^4.4.5
         version: 4.6.4(vue@3.5.27(typescript@5.9.3))
     devDependencies:
+      '@axe-core/playwright':
+        specifier: 4.10.2
+        version: 4.10.2(playwright-core@1.59.1)
       '@types/node':
         specifier: ^22.10.2
         version: 22.19.7
@@ -92,6 +95,8 @@ importers:
         specifier: ^2.1.6
         version: 2.2.12(typescript@5.9.3)
 
+  packages/design-tokens: {}
+
   packages/schema: {}
 
   packages/sdk: {}
@@ -105,6 +110,11 @@ packages:
   '@ampproject/remapping@2.3.0':
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
     engines: {node: '>=6.0.0'}
+
+  '@axe-core/playwright@4.10.2':
+    resolution: {integrity: sha512-6/b5BJjG6hDaRNtgzLIfKr5DfwyiLHO4+ByTLB0cJgWSM8Ll7KqtdblIS6bEkwSF642/Ex91vNqIl3GLXGlceg==}
+    peerDependencies:
+      playwright-core: '>= 1.0.0'
 
   '@babel/code-frame@7.24.7':
     resolution: {integrity: sha512-BcYH1CVJBO9tvyIZ2jVeXgSIMvGZ2FDRvDdOIVQyuklNKSsx+eppDEBq/g47Ayw+RqNFE+URvOShmf+f/qwAlA==}
@@ -1451,6 +1461,7 @@ packages:
 
   '@ungap/structured-clone@1.3.0':
     resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
+    deprecated: Potential CWE-502 - Update to 1.3.1 or higher
 
   '@vitejs/plugin-basic-ssl@1.2.0':
     resolution: {integrity: sha512-mkQnxTkcldAzIsomk1UuLfAu9n+kpQ3JbHcpCp7d2Oo6ITtji8pHS3QToOWjhPFvNQSnhlkAjmGbhv2QvwO/7Q==}
@@ -1627,6 +1638,10 @@ packages:
     hasBin: true
     peerDependencies:
       postcss: ^8.1.0
+
+  axe-core@4.10.3:
+    resolution: {integrity: sha512-Xm7bpRXnDSX2YE2YFfBk2FnF0ep6tmG7xPh8iHee8MIcrgq762Nkce856dYtJYLkuIoYZvGfTs/PbZhideTcEg==}
+    engines: {node: '>=4'}
 
   babel-plugin-polyfill-corejs2@0.4.17:
     resolution: {integrity: sha512-aTyf30K/rqAsNwN76zYrdtx8obu0E4KoUME29B1xj+B3WxgvWkp943vYQ+z8Mv3lw9xHXMHpvSPOBxzAkIa94w==}
@@ -3214,6 +3229,11 @@ snapshots:
     dependencies:
       '@jridgewell/gen-mapping': 0.3.13
       '@jridgewell/trace-mapping': 0.3.31
+
+  '@axe-core/playwright@4.10.2(playwright-core@1.59.1)':
+    dependencies:
+      axe-core: 4.10.3
+      playwright-core: 1.59.1
 
   '@babel/code-frame@7.24.7':
     dependencies:
@@ -5219,6 +5239,8 @@ snapshots:
       picocolors: 1.1.1
       postcss: 8.5.6
       postcss-value-parser: 4.2.0
+
+  axe-core@4.10.3: {}
 
   babel-plugin-polyfill-corejs2@0.4.17(@babel/core@7.25.2):
     dependencies:

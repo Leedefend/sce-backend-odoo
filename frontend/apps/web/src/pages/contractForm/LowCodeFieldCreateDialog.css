@@ -6,7 +6,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: rgb(15 23 42 / 32%);
+  background: var(--sc-app-overlay);
 }
 
 .contract-field-create-dialog {
@@ -18,7 +18,7 @@
   border-radius: 8px;
   background: var(--sc-app-panel);
   color: var(--sc-app-text-primary);
-  box-shadow: 0 18px 44px rgb(15 23 42 / 18%);
+  box-shadow: var(--sc-app-shadow-modal);
 }
 
 .contract-field-create-head,

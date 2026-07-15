@@ -49,7 +49,7 @@ async function previewAttachmentLink(link: { name: string; url: string }) {
 }
 
 .attachment-links a {
-  color: var(--sc-primary, #2563eb);
+  color: var(--sc-primary, var(--sc-app-accent));
   text-decoration: underline;
   text-underline-offset: 2px;
 }
