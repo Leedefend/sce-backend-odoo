@@ -32,6 +32,14 @@ export function useFormAuxiliaryWatchersRuntime(params: {
     (state) => {
       if (!params.isActive()) return;
       if (!state.label) return;
+      const activeRoute = params.router.currentRoute.value;
+      const activeModel = String(activeRoute.params.model || '').trim();
+      const activeRecordId = Number(activeRoute.params.id || 0) || null;
+      // Contract/category resolution is asynchronous. Never let a late watcher
+      // from a deactivating kept-alive form append its private query context to
+      // My Work or another business route.
+      if (!['record', 'model-form'].includes(String(activeRoute.name || ''))) return;
+      if (activeModel !== params.modelName() || activeRecordId !== params.recordId()) return;
       const query = params.currentQuery();
       const hasRouteLabel = String(query.current_business_category_label || query.default_business_category_label || '').trim();
       if (hasRouteLabel) return;

@@ -8,6 +8,7 @@ import type { Scene } from '../app/resolvers/sceneRegistry';
 import { normalizeLegacyWorkbenchPath } from '../app/routeQuery';
 import { applySceneValidationRecoveryStrategyRuntime, setSceneValidationRecoveryStrategy } from '../app/sceneValidationRecoveryStrategy';
 import { isConfiguredDbPinned, resolveActiveDb, resolveConfiguredDb, resolveLoginRoutingDb, setActiveDb } from '../services/dbContext';
+import { beginContextTransition, currentContextEpoch, invalidateContextRequests, isCurrentContextEpoch } from '../app/contextEpoch';
 
 let appInitInFlight: Promise<void> | null = null;
 
@@ -1114,6 +1115,7 @@ export const useSessionStore = defineStore('session', {
       sessionStorage.removeItem(TOKEN_STORAGE_KEY_LEGACY);
     },
     clearSession() {
+      invalidateContextRequests();
       this.token = null;
       this.sessionDb = '';
       this.user = null;
@@ -1146,6 +1148,9 @@ export const useSessionStore = defineStore('session', {
       this.defaultRoute = null;
       this.bootstrapNextIntent = 'system.init';
       this.isReady = false;
+      this.initStatus = 'idle';
+      this.initError = null;
+      this.initTraceId = null;
       localStorage.removeItem(sessionStorageKey());
       sessionStorage.removeItem(scopedTokenStorageKey());
       sessionStorage.removeItem(TOKEN_STORAGE_KEY_LEGACY);
@@ -1383,7 +1388,7 @@ export const useSessionStore = defineStore('session', {
         operation_strategy_label: asText(snapshot.operation_strategy_label || snapshot.selected?.operation_strategy_label),
       };
       this.persist();
-      await this.loadAppInit();
+      // Record projection must not serialize a full navigation bootstrap into every detail load.
     },
     recordIntentTrace(params: { traceId?: string; intent: string; latencyMs?: number | null; writeMode?: string }) {
       if (params.traceId) {
@@ -1395,6 +1400,7 @@ export const useSessionStore = defineStore('session', {
       this.persist();
     },
     async login(username: string, password: string, dbOverride?: string) {
+      this.clearSession();
       const loginRoutingDb = resolveLoginRoutingDb();
       const configuredDb = resolveConfiguredDb(String(config.odooDb || '').trim());
       const db = String(loginRoutingDb ? '' : isConfiguredDbPinned() ? configuredDb : dbOverride || configuredDb).trim();
@@ -1423,6 +1429,8 @@ export const useSessionStore = defineStore('session', {
       this.setToken(token);
     },
     async logout() {
+      // Cancel page/data work before the server invalidates the token.
+      beginContextTransition();
       try {
         await intentRequest<{ message?: string }>({ intent: 'auth.logout' });
       } catch {
@@ -1430,7 +1438,9 @@ export const useSessionStore = defineStore('session', {
       }
       this.clearSession();
     },
-    async loadAppInit(options: { force?: boolean } = {}) {
+    async loadAppInit(options: { force?: boolean; contextEpoch?: number } = {}) {
+      const requestEpoch = options.contextEpoch ?? currentContextEpoch();
+      if (!isCurrentContextEpoch(requestEpoch)) return;
       if (appInitInFlight && !options.force) {
         return appInitInFlight;
       }
@@ -1460,7 +1470,6 @@ export const useSessionStore = defineStore('session', {
         || '',
       ).trim();
       const debugIntent =
-        import.meta.env.DEV ||
         localStorage.getItem('DEBUG_INTENT') === '1' ||
         new URLSearchParams(window.location.search).get('debug') === '1';
 
@@ -1469,9 +1478,6 @@ export const useSessionStore = defineStore('session', {
         console.group('[A1] system.init 请求诊断');
         console.log('1. API Base URL:', import.meta.env.VITE_API_BASE_URL);
         console.log('2. Authorization 存在:', !!this.token);
-        if (this.token) {
-          console.log('   Token 前10位:', this.token.substring(0, 10) + '...');
-        }
         console.log('3. X-Odoo-DB 环境变量:', import.meta.env.VITE_ODOO_DB);
       }
 
@@ -1498,6 +1504,7 @@ export const useSessionStore = defineStore('session', {
       try {
         result = await intentRequest<AppInitResponse>(requestParams);
       } catch (err) {
+        if (!isCurrentContextEpoch(requestEpoch)) return;
         if (err instanceof ApiError) {
           this.initError = err.message;
           this.initTraceId = err.traceId ?? null;
@@ -1507,6 +1514,7 @@ export const useSessionStore = defineStore('session', {
         this.initStatus = 'error';
         throw err;
       }
+      if (!isCurrentContextEpoch(requestEpoch)) return;
       // A1: 打印响应诊断信息
       if (debugIntent) {
         console.group('[A1] system.init 响应诊断');
@@ -1797,6 +1805,7 @@ export const useSessionStore = defineStore('session', {
       }
     },
     async loadWorkspaceHomeOnDemand(force = false) {
+      const requestEpoch = currentContextEpoch();
       if (!force && this.workspaceHome && Object.keys(this.workspaceHome).length > 0) {
         return this.workspaceHome;
       }
@@ -1816,6 +1825,7 @@ export const useSessionStore = defineStore('session', {
           ...(this.projectContext?.selected?.id ? { current_project_id: this.projectContext.selected.id } : {}),
         },
       });
+      if (!isCurrentContextEpoch(requestEpoch)) return this.workspaceHome;
       const row = result as AppInitResponse & {
         workspace_home?: WorkspaceHomeContract;
         workspace_home_ref?: { intent?: string; scene_key?: string; loaded?: boolean };
@@ -1829,7 +1839,7 @@ export const useSessionStore = defineStore('session', {
       this.persist();
       return this.workspaceHome;
     },
-    async searchProjectContext(search = '') {
+    async searchProjectContext(search = '', requestEpoch = currentContextEpoch()) {
       const selector = this.projectContext?.selector || {};
       const intent = String(selector.intent || 'project.context.search').trim();
       const result = await intentRequest<ProjectContextContract>({
@@ -1842,6 +1852,7 @@ export const useSessionStore = defineStore('session', {
           limit: selector.limit || 20,
         },
       });
+      if (!isCurrentContextEpoch(requestEpoch)) return this.projectContext;
       const normalized = normalizeProjectContext(result);
       if (normalized) {
         this.projectContext = {
@@ -1853,6 +1864,7 @@ export const useSessionStore = defineStore('session', {
       return this.projectContext;
     },
     async selectProjectContext(option: ProjectContextOption | null) {
+      const requestEpoch = beginContextTransition();
       const current = this.projectContext || {};
       this.projectContext = {
         ...current,
@@ -1863,9 +1875,10 @@ export const useSessionStore = defineStore('session', {
         operation_strategy_label: option?.operation_strategy_label || current.operation_strategy_label || '',
       };
       this.persist();
-      await this.loadAppInit();
+      await this.loadAppInit({ force: true, contextEpoch: requestEpoch });
     },
     async selectBusinessScope(scope: { company_id?: number | null; operation_strategy?: string }) {
+      const requestEpoch = beginContextTransition();
       const current = this.projectContext || {};
       const currentCompanyId = Number(current.company_id || 0) || null;
       const currentOperation = asText(current.operation_strategy);
@@ -1895,8 +1908,10 @@ export const useSessionStore = defineStore('session', {
         this.activityPageCacheEpochs = nextEpochs;
       }
       this.persist();
-      await this.searchProjectContext('');
-      await this.loadAppInit();
+      // system.init is authoritative and already returns project_context.
+      await this.loadAppInit({ force: true, contextEpoch: requestEpoch });
+      if (!isCurrentContextEpoch(requestEpoch)) return false;
+      return true;
     },
     async ensureReady() {
       if (this.isReady) {

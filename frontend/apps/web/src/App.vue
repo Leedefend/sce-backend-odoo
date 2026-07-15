@@ -89,7 +89,11 @@ function activityRouteKey(route: RouteLocationNormalizedLoaded): string {
       const activityInstanceId = routeText(route.query.activity_page_id);
       return `new:${model}:action:${actionId || 0}:menu:${menuId || 0}:view:${viewId || 0}:${activityProjectPart(projectScopePolicy || 'current_project')}:${activityInstanceId || 'route'}`;
     }
-    return `record:${model}:${recordId}:action:${actionId || 0}:menu:${menuId || 0}:view:${viewId || 0}:${activityProjectPart(projectScopePolicy)}`;
+    // A persisted record id already identifies the activity page. Including the
+    // live selected-project projection makes the KeepAlive key change during
+    // route registration, remounting RecordView and duplicating all first-load
+    // business requests. Company/scope transitions invalidate cache epochs.
+    return `record:${model}:${recordId}:action:${actionId || 0}:menu:${menuId || 0}`;
   }
   if (route.name === 'scene' || route.name === 'projects-intake' || String(route.name || '').startsWith('scene-')) {
     const sceneKey = routeText(route.params.sceneKey || route.meta?.sceneKey || route.query.scene_key || route.query.scene);

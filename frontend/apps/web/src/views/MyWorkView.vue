@@ -493,6 +493,7 @@ import PageRenderer from '../components/page/PageRenderer.vue';
 import type { PageBlockActionEvent, PageOrchestrationContract } from '../app/pageOrchestration';
 import { useSessionStore } from '../stores/session';
 import MyWorkApprovalWorkspace from '../components/business/MyWorkApprovalWorkspace.vue';
+import { currentContextEpoch, isCurrentContextEpoch } from '../app/contextEpoch';
 
 const router = useRouter();
 const route = useRoute();
@@ -927,6 +928,15 @@ async function applyRecommendedView() {
 }
 
 async function load() {
+  const requestEpoch = currentContextEpoch();
+  if (!session.token) {
+    sections.value = [];
+    summary.value = [];
+    items.value = [];
+    productWorkspace.value = null;
+    loading.value = false;
+    return;
+  }
   loading.value = true;
   errorText.value = '';
   statusError.value = null;
@@ -943,6 +953,7 @@ async function load() {
       reasonCode: reasonFilter.value === 'ALL' ? 'all' : reasonFilter.value,
       search: searchText.value.trim(),
     });
+    if (!session.token || !isCurrentContextEpoch(requestEpoch)) return;
     sections.value = Array.isArray(data.sections) ? data.sections : [];
     summary.value = Array.isArray(data.summary) ? data.summary : [];
     items.value = Array.isArray(data.items) ? data.items : [];
@@ -979,6 +990,7 @@ async function load() {
       activeSection.value = sections.value[0].key;
     }
   } catch (err) {
+    if (!session.token || !isCurrentContextEpoch(requestEpoch)) return;
     errorText.value = err instanceof Error ? err.message : pageText('error_request_failed', '请求失败');
     statusError.value = buildStatusError(err, errorText.value);
     summaryVisibility.value = null;
