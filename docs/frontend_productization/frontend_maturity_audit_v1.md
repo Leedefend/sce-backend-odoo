@@ -211,3 +211,17 @@ J07 PASS：finance 公司 A 打开 My Work 时待处理 4、我发起的 5，数
 浏览器报告 `artifacts/frontend-my-work-approval/report.json` 记录 J07/J08、1440×900、1280×800、390×844、project member 隔离全部 PASS；console error、pageerror 和非预期 HTTP 错误为 0。390 宽度下卡片和表单为单列且页面无横向滚动；原生 dialog 打开后焦点进入，关闭后返回触发按钮，提交期间按钮禁用。FE-B02/B03/B04 回归分别保持 70/70 权威叶节点可达、action 876/menu 606 明确拒绝、页面身份守卫通过、J02–J06 PASS，四个已移除入口没有回升。
 
 当前明确边界：产品 My Work 只投影具有完整权限和动作事实的付款申请；合同、结算、付款执行等对象尚无可证明的统一工作项载体，因此未以状态字符串推断加入。最近完成在审计参与证据不可读时隐藏，不以扩大审计模型权限换取展示。
+
+## FE-B06 首批交付体验与质量收口事实
+
+实施前机器清单扫描 `frontend/apps/web/src` 的 397 个 Vue/TypeScript/CSS 文件；最终识别到布局 24、页面身份 211、按钮 566、表格 19、表单字段 160、金额引用 154、状态 11、关系 7、dialog 8、loading 460、empty 473、错误/拒绝/404 表面以及 42 处响应式断点。设计 token 引用 2658，页面级 inline style 和直接色值均为 0；非首批交付的低代码/配置与历史承载表面仍有固定尺寸债务，保留到后续而不做逐页视觉重写。完整机器清单为 `artifacts/frontend-delivery-hardening/ui-inventory.json`。
+
+首批交付公共层收口为：AppShell 提供唯一 main region、主导航语义、跳转主要内容链接和稳定 Page Identity；共享 token 统一页面背景、主/辅助内容面、按钮、焦点环、边框、状态和窄屏溢出策略；My Work、通用状态面与确认框只消费公共模式。破坏性/状态转换确认改为原生 modal dialog，焦点进入确认动作、Tab 保持在 dialog、Escape 取消且关闭后回到触发按钮。没有修改页面身份优先级、业务按钮权限、70 个导航投影或任何后端业务契约。
+
+错误矩阵统一归一化：401 为“登录已失效”并安全返回 `/login?reason=session_expired`，不携带旧敏感路由；403 为“无权访问”；404 为“记录不存在”；409 为“数据已发生变化”；422 保留经技术文本清洗的业务/字段原因；5xx 为“服务暂时不可用”；网络失败为“网络连接异常”。普通用户不显示 traceback、Python/SQL、Odoo 技术模型、token、内部地址或原始 HTML；Retry 会重新执行当前权威 loader，409 获取最新版本，拒绝和 404 只返回安全首页。首次加载使用稳定 busy/skeleton 状态，局部刷新继续以权威请求完成后更新，不将失败伪装为空列表。
+
+session、公司、项目、角色和 logout 共用单调递增 context epoch。每次上下文切换先生成 request identity，`system.init`、项目搜索和首页加载只在 epoch 仍为当前值时写入 store；logout 立即失效所有在途请求并清空导航、页面身份、activity、My Work 和详情上下文。J11 人工延迟三次 `system.init`，执行 B→A→B 后最终只显示公司 B；随后 logout 并以 project member 登录，finance 的标题、导航、工作项和金额均未出现。
+
+浏览器证据位于 `artifacts/frontend-delivery-hardening/`。J09 对付款申请权威 `api.data read` 注入断网、409 和 401，分别验证错误文案、真实 Retry、权威刷新与安全重新登录；J10 在 390×844 仅以键盘完成登录、My Work、详情和确认框开关，并验证焦点约束及返回；J11 验证乱序公司响应和跨角色缓存隔离。18 个代表表面在 1440×900、1280×800、768×1024、390×844 共 72 个组合页面级横向溢出为 0；固定 `@axe-core/playwright@4.10.2` 对 18 个桌面表面执行 WCAG 2.1 A/AA 扫描，critical/serious 阻断为 0。J09 注入期以及无权限表面的预期浏览器资源错误单独记录并从非预期错误统计隔离，最终 console、pageerror、unhandled rejection 和非预期 HTTP 均为 0。
+
+性能使用固定验收 runtime 对登录、My Work、付款申请/结算/付款执行详情、付款申请表单打开和公司切换各运行 5 次，保留所有原始样本、中位数与最慢值。最终中位数/最慢值分别为：登录 1382/1612ms、My Work 942/947ms、付款详情 1970/2051ms、结算详情 1965/1989ms、付款执行 1463/1466ms、表单 1411/1418ms、公司切换 849/1516ms。绝对指标已满足的维度直接通过；未满足绝对中位数的详情/表单逐指标与同硬件 `origin/main` 基线比较，均有改善。测量采用已初始化 SPA 路由响应，不隐藏业务数据、不减少权限检查、不跳过 mutation 后权威刷新；完整原始样本写入 `performance.json`，不能外推为生产 SLA。
