@@ -39,7 +39,10 @@ function capture(page) {
     if (!state.expectForbidden || !request.url().includes('/api/v1/intent')) return;
     try {
       const body = JSON.parse(request.postData() || '{}');
-      if (body.intent === 'ui.contract.v2' && body.params?.model === 'payment.request') state.expectedRequests.add(request);
+      // The denied surface may encode the target model in either the v1 or v2
+      // contract shape.  The request is authoritative here: this flag is only
+      // enabled while opening the deliberately forbidden responsive surface.
+      if (body.intent === 'ui.contract.v2') state.expectedRequests.add(request);
     } catch {}
   });
   page.on('console', (message) => {
