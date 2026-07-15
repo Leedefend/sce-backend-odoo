@@ -16,7 +16,7 @@ export type WorkspaceFact = {
 
 export type WorkspaceRouteTarget = {
   name: string;
-  params: { model: string; id: number };
+  params: { model: string; id: number | string };
   query?: Record<string, string | number>;
 };
 
@@ -64,6 +64,12 @@ export type FinancialWorkspaceContract = {
   facts: WorkspaceFact[];
   relationships: WorkspaceRelationship[];
   details: WorkspaceDetailSection[];
+  entry_actions?: Array<{
+    key: string;
+    label: string;
+    route: WorkspaceRouteTarget;
+    source_authority?: string;
+  }>;
   audit: WorkspaceFact[];
   currency_risk?: { mismatch: boolean; message: string };
   source?: { kind: string; authorities?: string[]; projection_only?: boolean };

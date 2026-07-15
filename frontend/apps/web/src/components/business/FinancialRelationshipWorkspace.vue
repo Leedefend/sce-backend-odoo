@@ -1,5 +1,10 @@
 <template>
   <article class="financial-workspace" :data-workspace-kind="contract.kind" :data-identity-source="contract.source?.kind || ''">
+    <nav v-if="contract.entry_actions?.length" class="financial-workspace__entry-actions" aria-label="可发起业务">
+      <button v-for="action in contract.entry_actions" :key="action.key" type="button" @click="openEntryAction(action.route)">
+        {{ action.label }}
+      </button>
+    </nav>
     <section class="financial-workspace__section" aria-labelledby="workspace-facts-title">
       <div class="financial-workspace__section-heading">
         <div>
@@ -142,10 +147,19 @@ async function openRelated(item: WorkspaceRelatedRecord) {
     query: pickContractNavQuery(route.query as Record<string, unknown>, item.route.query || {}),
   });
 }
+
+async function openEntryAction(target: import('../../app/financialWorkspaceContract').WorkspaceRouteTarget) {
+  await router.push({
+    name: target.name,
+    params: target.params,
+    query: pickContractNavQuery(route.query as Record<string, unknown>, target.query || {}),
+  });
+}
 </script>
 
 <style scoped>
 .financial-workspace { display: grid; min-width: 0; max-width: 100%; gap: var(--sc-product-space-3); margin-bottom: var(--sc-product-space-3); }
+.financial-workspace__entry-actions { display: flex; justify-content: flex-end; gap: var(--sc-product-space-2); }
 .financial-workspace__section { min-width: 0; max-width: 100%; box-sizing: border-box; padding: var(--sc-product-space-3); border: 1px solid var(--sc-app-border); border-radius: var(--sc-component-panel-radius); background: var(--sc-app-panel); }
 .financial-workspace__section-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: var(--sc-product-space-2); margin-bottom: var(--sc-product-space-2); }
 .financial-workspace__section h2, .financial-workspace__section h3, .financial-workspace__section p { margin: 0; }

@@ -87,6 +87,45 @@ export type MyWorkSummaryResponse = {
       reason: string;
     }>;
   };
+  product_workspace?: ProductMyWorkWorkspace;
+};
+
+export type ProductMyWorkAction = {
+  key: string;
+  label: string;
+  intent: string;
+  params: { id?: number; action?: string };
+  requires_reason?: boolean;
+  next_state?: string;
+};
+
+export type ProductMyWorkItem = {
+  key: string;
+  section: 'todo' | 'initiated' | 'completed' | string;
+  business_type: string;
+  record: { label: string };
+  state: { key: string; label: string };
+  project?: { id: number; label: string } | null;
+  company?: { id: number; label: string } | null;
+  partner?: { id: number; label: string } | null;
+  amount: { value: number | null; currency: string; currency_symbol?: string; digits?: number };
+  initiator?: { id: number; label: string } | null;
+  initiated_at?: string;
+  updated_at?: string;
+  actions: ProductMyWorkAction[];
+  completed_event?: { code?: string; label?: string; at?: string };
+  target: { route: string; model: string; record_id: number; action_xmlid?: string; menu_xmlid?: string };
+  source_authority: string;
+};
+
+export type ProductMyWorkWorkspace = {
+  version: string;
+  query_scope: { user_id: number; company_ids: number[]; project_id?: number };
+  sections: Array<{ key: string; label: string; count: number; items: ProductMyWorkItem[] }>;
+  counts: Record<string, number>;
+  total: number;
+  completed_unavailable_reason?: string;
+  source_authority: string;
 };
 
 export async function fetchMyWorkSummary(
@@ -104,6 +143,7 @@ export async function fetchMyWorkSummary(
   },
 ) {
   const params = {
+    product_workspace: true,
     limit,
     limit_each: limitEach,
     page: options?.page ?? 1,

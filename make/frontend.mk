@@ -42,6 +42,10 @@ verify.frontend.page_identity: guard.prod.forbid
 	@node scripts/verify/frontend_page_identity_lifecycle_smoke.js
 	@python3 scripts/verify/frontend_page_identity_guard.py
 
+.PHONY: verify.frontend.my_work_approval.guard
+verify.frontend.my_work_approval.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_my_work_approval_guard.py
+
 .PHONY: verify.frontend.style_system.guard
 verify.frontend.style_system.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_style_system_guard.py

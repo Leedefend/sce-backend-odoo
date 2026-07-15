@@ -142,7 +142,7 @@
         @run-action="runAction"
       />
 
-      <section v-if="!financialWorkspace" class="form-grid" :class="{ 'form-grid--designer-workspace': showCurrentFormFieldConfigScope }">
+      <section v-if="!financialWorkspace || renderProfile === 'edit'" class="form-grid" :class="{ 'form-grid--designer-workspace': showCurrentFormFieldConfigScope }">
         <StatusPanel
           v-if="sceneValidationPanel"
           title="表单校验失败"
@@ -704,6 +704,8 @@ import {
 } from './contractForm/saveRecordHelpers';
 import { useCreatedRecordNavigationRuntime } from './contractForm/useCreatedRecordNavigationRuntime';
 import { useFormNavigationActionsRuntime } from './contractForm/useFormNavigationActionsRuntime';
+import { applyRouteRelationLabel, isProjectScopeExempt, scopedCreateContext, scopedOnchangeContext } from './contractForm/financialFormScope';
+import { collectActionParams as collectActionParamsFromPlan } from './contractForm/actionExecutionPlan';
 import {
   formCreateContext as formCreateContextFromState,
   resolveCreateDefaults as resolveCreateDefaultsFromState,
@@ -723,17 +725,6 @@ import {
   type FormContractReadiness,
 } from './contractForm/contractRuntimeVm';
 
-async function collectActionParams(action: ContractAction): Promise<Record<string, unknown> | null> {
-  const requiredParams = new Set((action.requiredParams || []).map((item) => item.toLowerCase()));
-  if (!action.requiresReason && !requiredParams.has('reason')) return {};
-  const reason = window.prompt(`${action.label || '操作'}原因`)?.trim() || '';
-  if (!reason) {
-    applyPageStatusEvent({ kind: 'status', transaction: 'runAction', status: 'error', errorMessage: '请填写操作原因' });
-    return null;
-  }
-  return { reason };
-}
-
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
@@ -746,10 +737,7 @@ const {
   currentQuery: () => route.query,
 });
 
-function resolveWorkspaceContextQuery() {
-  return readWorkspaceContext(route.query as Record<string, unknown>);
-}
-
+function resolveWorkspaceContextQuery() { return readWorkspaceContext(route.query as Record<string, unknown>); }
 const status = ref<UiStatus>('loading');
 const isComponentActive = ref(true);
 const instanceRouteIdentity = ref('');
@@ -1045,7 +1033,7 @@ const {
   applyClientMode: (mode, toggle) => applyClientMode(mode, toggle),
   applyProjectionRefreshPolicy: (policy) => applyProjectionRefreshPolicy(policy),
   busyKind,
-  collectActionParams: (action) => collectActionParams(action),
+  collectActionParams: (action) => collectActionParamsFromPlan(action, () => applyPageStatusEvent({ kind: 'status', transaction: 'runAction', status: 'error', errorMessage: '请填写操作原因' })),
   confirmActionSafety: (action) => confirmActionSafety(action),
   currentQuery: () => route.query,
   ensureSavedBeforeRecordAction: () => ensureSavedBeforeRecordAction(),
@@ -1329,7 +1317,7 @@ const submitButtonLabel = computed(() => resolveSubmitButtonLabel({
   saveLabel: formUiLabel('save'),
   savingLabel: formUiLabel('saving'),
 }));
-const showPrimaryBusinessFormAction = computed(() => !financialWorkspace.value && !showCurrentFormFieldConfigScope.value && !isProjectIntakeCreateMode.value);
+const showPrimaryBusinessFormAction = computed(() => (!financialWorkspace.value || renderProfile.value === 'edit') && !showCurrentFormFieldConfigScope.value && !isProjectIntakeCreateMode.value);
 const showDraftSaveAction = computed(() => showPrimaryBusinessFormAction.value && !recordId.value && canSave.value && !primaryCreateFooterAction.value);
 const draftSaveButtonLabel = computed(() => (busy.value && busyKind.value === 'save' ? formUiLabel('saving') : '保存草稿'));
 const showDiscardAction = computed(() => !isProjectIntakeCreateMode.value && Boolean(recordId.value) && hasChanges.value);
@@ -2947,6 +2935,7 @@ async function queryRelationOptions(name: string, keyword: string): Promise<Rela
         order: relationOrder(descriptor),
         domain,
         search_term: search || undefined,
+        context: pickContractNavQuery(route.query as Record<string, unknown>),
         silentErrors: true,
       });
       return relationOptionsFromRecords(listed?.records, descriptor);
@@ -2972,6 +2961,7 @@ async function fetchRelationOptions(name: string, keyword: string, limit = 80): 
         order: relationOrder(descriptor),
         domain,
         search_term: search || undefined,
+        context: pickContractNavQuery(route.query as Record<string, unknown>),
         silentErrors: true,
       });
       return relationOptionsFromRecords(listed?.records, descriptor);
@@ -5057,6 +5047,10 @@ function buildOnchangeValues() {
 async function runOnchangeRoundtrip() {
   if (!model.value) return;
   if (!changedFieldSet.size) return;
+  if (isProjectScopeExempt(route.query)) {
+    changedFieldSet.clear();
+    return;
+  }
   const changed = Array.from(changedFieldSet);
   changedFieldSet.clear();
   try {
@@ -5065,7 +5059,7 @@ async function runOnchangeRoundtrip() {
       res_id: recordId.value,
       values: buildOnchangeValues(),
       changed_fields: changed,
-      context: pickContractNavQuery(route.query as Record<string, unknown>),
+      context: scopedOnchangeContext(route.query, formData.project_id),
     });
     const { patch, modifiersPatch, linePatches, warnings } = normalizeOnchangeResponse(response);
     onchangeWarnings.value = warnings;
@@ -5078,6 +5072,7 @@ async function runOnchangeRoundtrip() {
       const patchedFields = Object.keys(modifiersPatch);
       await Promise.all(
         patchedFields.map(async (name) => {
+          if (financialWorkspace.value) return;
           const descriptor = contract.value?.fields?.[name];
           const ttype = fieldType(descriptor);
           if (!['many2one', 'many2many', 'one2many'].includes(ttype)) return;
@@ -5367,12 +5362,14 @@ async function loadRecord() {
   if (!recordId.value) {
     const defaults = resolveCreateDefaultsFromState({ contract: contract.value, routeQuery: route.query as Record<string, unknown>, selectedProject: session.projectContext?.selected || null, v2ContractStore: v2ContractStore.value });
     fieldNames.forEach((name) => {
+      const descriptor = contract.value?.fields?.[name];
       applyIncomingFormFieldValue({
         fieldName: name,
-        descriptor: contract.value?.fields?.[name],
+        descriptor,
         incoming: name in defaults ? defaults[name] : '',
         target: hydrationTarget,
       });
+      if (fieldType(descriptor) === 'many2one') applyRouteRelationLabel(route.query, name, Number(formData[name] || 0), (label) => { upsertRelationOption(name, { id: Number(formData[name]), label }); relationKeywords[name] = label; });
     });
     originalValues.value = snapshotOriginalFormValues(fieldNames, formData);
     nativeLayoutVisibilityRevision.value += 1;
@@ -5457,7 +5454,9 @@ async function reload() {
       if (reloadToken !== activeReloadToken) return;
       applyPageStatusEvent({ kind: 'status', transaction: 'formReload', status: 'ok' });
       retainedRouteIdentity.value = formRouteIdentity();
-      if (!financialWorkspace.value) void preloadFormAuxiliaryData(reloadToken);
+      if (!financialWorkspace.value && !isProjectScopeExempt(route.query)) {
+        void preloadFormAuxiliaryData(reloadToken);
+      }
     } catch (err) {
       if (reloadToken !== activeReloadToken) return;
       if (err instanceof ApiError && err.status === 403) {
@@ -5863,7 +5862,8 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']): Prom
       await applyProjectionRefreshPolicy(refreshPolicy || { on_success: ['scene_projection'] });
       return true;
     }
-    const created = await createContractFormRecord({ model: model.value, vals: values, context: formCreateContextFromState({ contract: contract.value, v2ContractStore: v2ContractStore.value }) });
+    const context = scopedCreateContext(route.query, formCreateContextFromState({ contract: contract.value, v2ContractStore: v2ContractStore.value }), formData.project_id);
+    const created = await createContractFormRecord({ model: model.value, vals: values, context });
     if (created?.id) {
       const attachmentsUploaded = await uploadPendingNativeAttachments(Number(created.id));
       if (!attachmentsUploaded) {

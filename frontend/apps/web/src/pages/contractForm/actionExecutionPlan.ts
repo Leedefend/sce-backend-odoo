@@ -28,6 +28,18 @@ export type FormActionExecutionPlan =
   }
   | { kind: 'unsupported' };
 
+export async function collectActionParams(
+  action: ContractAction,
+  onMissingReason: () => void,
+): Promise<Record<string, unknown> | null> {
+  const required = new Set((action.requiredParams || []).map((item) => item.toLowerCase()));
+  if (!action.requiresReason && !required.has('reason')) return {};
+  const reason = window.prompt(`${action.label || '操作'}原因`)?.trim() || '';
+  if (reason) return { reason };
+  onMissingReason();
+  return null;
+}
+
 export function buildFormActionExecutionPlan(params: {
   action: ContractAction;
   modelName: string;

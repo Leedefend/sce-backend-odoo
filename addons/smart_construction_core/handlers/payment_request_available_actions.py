@@ -4,6 +4,7 @@ from __future__ import annotations
 import re
 from uuid import uuid4
 
+from odoo.exceptions import AccessError
 from odoo.addons.smart_core.core.base_handler import BaseIntentHandler
 from odoo.addons.smart_core.core.project_context import (
     project_scope_denied_response,
@@ -20,6 +21,7 @@ from odoo.addons.smart_core.handlers.reason_codes import (
     REASON_MISSING_PARAMS,
     REASON_NOT_FOUND,
     REASON_OK,
+    REASON_PERMISSION_DENIED,
     failure_meta_for_reason,
 )
 
@@ -114,7 +116,7 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
     }
 
     def _current_user_group_xmlids(self) -> set[str]:
-        groups = self.env.user.sudo().groups_id
+        groups = self.env.user.groups_id
         ext = groups.get_external_id() or {}
         return {str(xmlid).strip() for xmlid in ext.values() if str(xmlid or "").strip()}
 
@@ -290,7 +292,15 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
                 code=400,
             )
 
-        record = self.env["payment.request"].sudo().browse(payment_request_id).exists()
+        PaymentRequest = self.env["payment.request"]
+        if not PaymentRequest.check_access_rights("read", raise_exception=False):
+            return self._error(
+                reason_code=REASON_PERMISSION_DENIED,
+                message="permission denied",
+                trace_id=trace_id,
+                code=403,
+            )
+        record = PaymentRequest.browse(payment_request_id).exists()
         if not record:
             return self._error(
                 reason_code=REASON_NOT_FOUND,
@@ -298,8 +308,17 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
                 trace_id=trace_id,
                 code=404,
             )
+        try:
+            record.check_access_rule("read")
+        except AccessError:
+            return self._error(
+                reason_code=REASON_PERMISSION_DENIED,
+                message="permission denied",
+                trace_id=trace_id,
+                code=403,
+            )
         in_scope, scope_meta = record_in_business_scope(
-            self.env["payment.request"].sudo(),
+            PaymentRequest,
             payment_request_id,
             params,
             self.context if isinstance(self.context, dict) else {},

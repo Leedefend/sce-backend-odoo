@@ -32,7 +32,7 @@ function findMenuPath(nodes: NavNode[], menuId: number, parents: NavNode[] = [])
 function menuBreadcrumbs(nodes: NavNode[], menuId: number): PageBreadcrumb[] {
   return findMenuPath(nodes, menuId).map((node) => {
     const id = Number(node.menu_id || node.id || 0);
-    const hasTarget = Boolean(node.meta?.action_id || node.meta?.scene_key || node.route);
+    const hasTarget = Boolean(node.meta?.action_id || node.meta?.scene_key);
     return { label: menuLabel(node), ...(id > 0 && hasTarget ? { to: `/m/${id}` } : {}) };
   });
 }

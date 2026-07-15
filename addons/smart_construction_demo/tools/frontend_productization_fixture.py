@@ -344,8 +344,8 @@ def _execution(env, suffix, project, contract, request, partner, state, amount):
     )
 
 
-def _payment_journey(env, project, contract, partner):
-    """Reconcile the isolated FE-B04 mutation journey to its deterministic start."""
+def _payment_journey(env, project, contract, partner, finance):
+    """Reconcile the isolated FE-B04/B05 mutation journeys to deterministic starts."""
     settlement = _upsert(
         env,
         "sc.settlement.order",
@@ -377,6 +377,71 @@ def _payment_journey(env, project, contract, partner):
             "price_unit": 100.0,
         },
     )
+    # FE-B05 approval probes use an isolated settlement so their reserved
+    # amounts cannot change the FE-B04 journey's fixed 100.00 balance.
+    work_settlement = _upsert(
+        env,
+        "sc.settlement.order",
+        "fe_b05_work_settlement_a",
+        [("name", "=", "FE-B05-WORK-SETTLEMENT-001"), ("project_id", "=", project.id)],
+        {
+            "name": "FE-B05-WORK-SETTLEMENT-001",
+            "title": "FE B05 Work Settlement",
+            "project_id": project.id,
+            "contract_id": contract.id,
+            "partner_id": partner.id,
+            "settlement_unit_id": partner.id,
+            "settlement_type": "out",
+            "company_id": project.company_id.id,
+            "currency_id": project.company_id.currency_id.id,
+            "state": "approve",
+        },
+    )
+    _upsert(
+        env,
+        "sc.settlement.order.line",
+        "fe_b05_work_settlement_line_a",
+        [("settlement_id", "=", work_settlement.id), ("name", "=", "FE B05 work payable line")],
+        {
+            "settlement_id": work_settlement.id,
+            "contract_id": contract.id,
+            "name": "FE B05 work payable line",
+            "qty": 1.0,
+            "price_unit": 200.0,
+        },
+    )
+    # Browser-created FE-B05 requests are real intent mutations and therefore
+    # receive sequence numbers rather than stable XML IDs.  Acceptance reset
+    # removes only rows created from this isolated settlement by the finance
+    # fixture actor, keeping repeat runs and work-item counts deterministic.
+    transient_requests = env["payment.request"].sudo().search([
+        ("settlement_id", "=", work_settlement.id),
+        ("create_uid", "=", finance.id),
+        ("name", "not in", [
+            "FE-JOURNEY-APPROVAL-001",
+            "FE-JOURNEY-REJECT-001",
+            "FE-JOURNEY-COMPLETED-001",
+        ]),
+    ])
+    if transient_requests:
+        env["payment.ledger"].sudo().search([
+            ("payment_request_id", "in", transient_requests.ids),
+        ]).with_context(allow_payment_reversal=True).unlink()
+        transient_requests.sudo().review_ids.unlink()
+        env["mail.activity"].sudo().search([
+            ("res_model", "=", "payment.request"),
+            ("res_id", "in", transient_requests.ids),
+        ]).unlink()
+        env["ir.attachment"].sudo().search([
+            ("res_model", "=", "payment.request"),
+            ("res_id", "in", transient_requests.ids),
+        ]).unlink()
+        env.cr.execute(
+            "UPDATE payment_request SET state='draft', validation_status='no' WHERE id = ANY(%s)",
+            (transient_requests.ids,),
+        )
+        transient_requests.invalidate_recordset(["state", "validation_status"])
+        transient_requests.sudo().unlink()
     category = _ref(env, "smart_construction_core.business_category_finance_payment_apply_pay")
     existing_request = env.ref(
         "smart_construction_demo.fe_journey_payment_request_a",
@@ -419,12 +484,79 @@ def _payment_journey(env, project, contract, partner):
             "note": "FE-B04 isolated permitted action journey",
         },
     )
+    env.cr.execute(
+        "UPDATE payment_request SET create_uid=%s WHERE id=%s",
+        (finance.id, request.id),
+    )
+    request.invalidate_recordset(["create_uid"])
+    attachment = _upsert(
+        env,
+        "ir.attachment",
+        "fe_journey_payment_request_attachment_a",
+        [("name", "=", "FE-JOURNEY-PAYMENT-001.txt"), ("res_model", "=", "payment.request"), ("res_id", "=", request.id)],
+        {
+            "name": "FE-JOURNEY-PAYMENT-001.txt",
+            "type": "binary",
+            "datas": "RkUtQjA1IGF1dGhvcml0YXRpdmUgam91cm5leSBhdHRhY2htZW50",
+            "res_model": "payment.request",
+            "res_id": request.id,
+            "mimetype": "text/plain",
+        },
+    )
+    request.sudo().write({"attachment_ids": [(6, 0, [attachment.id])]})
+
+    def _approval_request(xmlid_name, name, state):
+        row = _upsert(
+            env,
+            "payment.request",
+            xmlid_name,
+            [("name", "=", name), ("project_id", "=", project.id)],
+            {
+                "name": name,
+                "type": "pay",
+                "business_category_id": category.id,
+                "project_id": project.id,
+                "contract_id": contract.id,
+                "settlement_id": work_settlement.id,
+                "partner_id": partner.id,
+                "currency_id": project.company_id.currency_id.id,
+                "amount": 20.0,
+                "note": "FE-B05 isolated approval journey",
+            },
+        )
+        row.sudo().review_ids.unlink()
+        env["mail.activity"].sudo().search([
+            ("res_model", "=", "payment.request"),
+            ("res_id", "=", row.id),
+        ]).unlink()
+        env.cr.execute(
+            "UPDATE payment_request SET state=%s, validation_status=%s, create_uid=%s WHERE id=%s",
+            (state, "no", finance.id, row.id),
+        )
+        row.invalidate_recordset(["state", "validation_status", "create_uid"])
+        return row
+
+    approval_request = _approval_request(
+        "fe_journey_payment_request_approval_a",
+        "FE-JOURNEY-APPROVAL-001",
+        "submit",
+    )
+    reject_request = _approval_request(
+        "fe_journey_payment_request_reject_a",
+        "FE-JOURNEY-REJECT-001",
+        "submit",
+    )
+    completed_request = _approval_request(
+        "fe_journey_payment_request_completed_a",
+        "FE-JOURNEY-COMPLETED-001",
+        "approved",
+    )
     env["payment.ledger"].sudo().search([
         ("payment_request_id", "=", request.id),
     ]).with_context(allow_payment_reversal=True).unlink()
     request.invalidate_recordset()
     settlement.invalidate_recordset()
-    return settlement, request
+    return settlement, request, approval_request, reject_request, completed_request
 
 
 def ensure_fixture(env) -> Dict[str, Any]:
@@ -472,6 +604,14 @@ def ensure_fixture(env) -> Dict[str, Any]:
         [company_a],
         ["smart_construction_custom.group_sc_role_owner"],
     )
+    executive = _user(
+        env,
+        "demo_role_executive",
+        "Demo Role Executive",
+        company_a,
+        [company_a],
+        ["smart_construction_custom.group_sc_role_executive"],
+    )
 
     partner_a = _partner(env, "A", company_a)
     partner_b = _partner(env, "B", company_a)
@@ -509,19 +649,25 @@ def ensure_fixture(env) -> Dict[str, Any]:
     _request(env, "A", 2, project_a, contract_a, settlement_a, partner_a, "draft", 250.0)
     request_b = _request(env, "B", 1, project_b, contract_b, settlement_b, partner_b, "draft", 1000.0)
     request_c = _request(env, "C", 1, project_c, contract_c, settlement_c, partner_c, "approved", 1000.0)
+    env.cr.execute(
+        "UPDATE payment_request SET validation_status=%s, create_uid=%s WHERE id=%s",
+        ("validated", finance.id, request_c.id),
+    )
+    request_c.invalidate_recordset(["validation_status", "create_uid"])
     _execution(env, "A", project_a, contract_a, request_a, partner_a, "paid", 1000.0)
     _execution(env, "B", project_b, contract_b, request_b, partner_b, "draft", 1000.0)
     _execution(env, "C", project_c, contract_c, request_c, partner_c, "confirmed", 1000.0)
-    journey_settlement, journey_request = _payment_journey(
+    journey_settlement, journey_request, approval_request, reject_request, completed_request = _payment_journey(
         env,
         project_a,
         contract_a,
         partner_a,
+        finance,
     )
 
     return {
         "db": env.cr.dbname,
-        "users": [finance.login, project_member.login, pm.login, owner.login],
+        "users": [finance.login, project_member.login, pm.login, owner.login, executive.login],
         "companies": [company_a.name, company_b.name],
         "projects": [project_a.name, project_b.name, project_c.name],
         "records": {
@@ -535,5 +681,8 @@ def ensure_fixture(env) -> Dict[str, Any]:
             "payment_request": journey_request.name,
             "state": journey_request.state,
             "ledger_count": len(journey_request.ledger_line_ids),
+            "approval_request": approval_request.name,
+            "reject_request": reject_request.name,
+            "completed_request": completed_request.name,
         },
     }
