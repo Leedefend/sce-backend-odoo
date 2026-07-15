@@ -1867,8 +1867,11 @@ export const useSessionStore = defineStore('session', {
     },
     async selectBusinessScope(scope: { company_id?: number | null; operation_strategy?: string }) {
       const current = this.projectContext || {};
+      const currentCompanyId = Number(current.company_id || 0) || null;
+      const currentOperation = asText(current.operation_strategy);
       const nextCompanyId = Number(scope.company_id ?? current.company_id ?? 0) || null;
       const nextOperation = asText(scope.operation_strategy ?? current.operation_strategy);
+      const scopeChanged = currentCompanyId !== nextCompanyId || currentOperation !== nextOperation;
       const selected = current.selected;
       const keepSelected = selected
         && (!nextCompanyId || !selected.company_id || selected.company_id === nextCompanyId)
@@ -1880,6 +1883,17 @@ export const useSessionStore = defineStore('session', {
         operation_strategy_label: current.operation_options?.find((option) => option.operation_strategy === nextOperation)?.operation_strategy_label || '',
         selected: keepSelected ? selected : null,
       };
+      if (scopeChanged) {
+        const nextEpochs = { ...this.activityPageCacheEpochs };
+        this.activityPages.forEach((page) => {
+          nextEpochs[page.key] = Number(nextEpochs[page.key] || 0) + 1;
+          const routeKey = activityPageCacheRouteKey(page.key);
+          if (routeKey) nextEpochs[routeKey] = Number(nextEpochs[routeKey] || 0) + 1;
+        });
+        this.activityPages = [];
+        this.activeActivityPageKey = '';
+        this.activityPageCacheEpochs = nextEpochs;
+      }
       this.persist();
       await this.searchProjectContext('');
       await this.loadAppInit();

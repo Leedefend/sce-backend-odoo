@@ -4,7 +4,7 @@ import re
 from decimal import Decimal, ROUND_HALF_UP
 
 from odoo import _, api, fields, models
-from odoo.exceptions import ValidationError, UserError
+from odoo.exceptions import AccessError, ValidationError, UserError
 from odoo.tools.float_utils import float_compare
 
 from ..support import operating_metrics as opm
@@ -1227,6 +1227,12 @@ class PaymentRequest(models.Model):
         }
 
     def _payment_advisory_from_exception(self, exc, fallback_code="BUSINESS_RULE_FAILED"):
+        if isinstance(exc, AccessError):
+            return self._payment_advisory(
+                "RELATED_INFORMATION_RESTRICTED",
+                _("部分关联信息当前无权读取，不影响本次操作结果。"),
+                hints=[_("如需核对完整关联信息，请联系相应业务负责人。")],
+            )
         text = str(exc or "").strip()
         match = re.search(r"\[SC_GUARD:([A-Z0-9_]+)\]", text)
         code = str(match.group(1) if match else fallback_code).strip().upper()

@@ -61,6 +61,10 @@ from odoo.addons.smart_construction_core import core_extension_contract_normaliz
 from odoo.addons.smart_construction_core import core_extension_intent_handlers as _intent_handlers
 from odoo.addons.smart_construction_core import core_extension_service_builders as _service_builders
 from odoo.addons.smart_construction_core import core_extension_actor_roles as _actor_roles
+from odoo.addons.smart_construction_core.services.financial_workspace_contract import (
+    build_financial_form_business_actions,
+    inject_financial_workspace_runtime,
+)
 
 _logger = logging.getLogger(__name__)
 
@@ -461,6 +465,9 @@ def smart_core_finalize_unified_page_contract_v2(env, contract, context):
     render_profile = _sc_text(source.get("render_profile") or head.get("render_profile") or (((context or {}).get("meta") or {}).get("params") or {}).get("render_profile")).lower()
     out = deepcopy(contract)
     _sc_inject_workflow_contract(env, out, source, model=model, view_type=view_type)
+    inject_financial_workspace_runtime(
+        env, out, source, head, context, model, view_type, smart_core_form_business_actions,
+    )
     _sc_normalize_construction_diary_form(out, source, model=model, view_type=view_type)
     if model != "project.project" or view_type != "form":
         return out if out != contract else None
@@ -1071,111 +1078,10 @@ def smart_core_create_field_fallbacks(env, model_name):
 def smart_core_form_business_actions(env, model_name, record_id, contract):
     """Return model-level business action semantics for form contracts."""
     del contract
-    model = str(model_name or "").strip()
-    if model != "payment.request":
-        return None
     try:
-        record = env[model].browse(int(record_id or 0)).exists()
-    except Exception:
-        record = None
-    if not record:
-        return None
-    try:
-        from odoo.addons.smart_construction_core.handlers.payment_request_available_actions import (
-            PaymentRequestAvailableActionsHandler,
-        )
-
-        result = PaymentRequestAvailableActionsHandler(env, payload={"id": int(record.id)}).run(
-            payload={"id": int(record.id)}
-        )
+        return build_financial_form_business_actions(env, model_name, record_id)
     except Exception:
         return None
-
-    data = result.get("data") if isinstance(result, dict) else {}
-    rows = data.get("actions") if isinstance(data, dict) and isinstance(data.get("actions"), list) else []
-    primary_key = str(data.get("primary_action_key") or "") if isinstance(data, dict) else ""
-    method_aliases = {
-        "submit": ["action_submit"],
-        "approve": ["action_approve", "action_set_approved", "validate_tier"],
-        "reject": ["reject_tier", "action_on_tier_rejected"],
-        "done": ["action_done"],
-    }
-    actions = []
-    for row in rows:
-        if not isinstance(row, dict):
-            continue
-        action_key = str(row.get("key") or "").strip()
-        if not action_key:
-            continue
-        methods = method_aliases.get(action_key, [str(row.get("method") or "").strip()])
-        if action_key == "approve" and str(row.get("method") or "").strip() == "action_approval_decision":
-            methods = ["action_approval_decision", *methods]
-        for method in methods:
-            if not method:
-                continue
-            actions.append(
-                {
-                    "key": f"payment_{action_key}",
-                    "action_key": action_key,
-                    "label": str(row.get("label") or action_key),
-                    "kind": "mutation",
-                    "level": "header",
-                    "selection": "none",
-                    "visible_profiles": ["edit", "readonly"],
-                    "method": method,
-                    "intent": str(row.get("execute_intent") or row.get("intent") or "payment.request.execute"),
-                    "allowed": bool(row.get("allowed")),
-                    "reason_code": str(row.get("reason_code") or ""),
-                    "blocked_message": str(row.get("blocked_message") or ""),
-                    "warning_message": str(row.get("warning_message") or ""),
-                    "advisory_warnings": list(row.get("advisory_warnings") or []),
-                    "advisory_reason_codes": list(row.get("advisory_reason_codes") or []),
-                    "force_block_available": bool(row.get("force_block_available")),
-                    "suggested_action": str(row.get("suggested_action") or ""),
-                    "required_role_key": str(row.get("required_role_key") or ""),
-                    "required_role_label": str(row.get("required_role_label") or ""),
-                    "handoff_required": bool(row.get("handoff_required")),
-                    "handoff_hint": str(row.get("handoff_hint") or ""),
-                    "requires_reason": bool(row.get("requires_reason")),
-                    "required_params": list(row.get("required_params") or []),
-                    "primary": action_key == primary_key,
-                    "mutation": {
-                        "type": "record_action",
-                        "model": "payment.request",
-                        "operation": action_key,
-                        "payload_schema": {
-                            "id": "record_id",
-                            "reason": "string" if bool(row.get("requires_reason")) else "",
-                        },
-                    },
-                    "refresh_policy": {
-                        "on_success": ["scene_projection"],
-                        "mode": "reload_record",
-                        "scope": "record",
-                    },
-                }
-            )
-    attachments = {
-        "enabled": True,
-        "label": "附件",
-        "upload": {
-            "intent": "file.upload",
-            "max_bytes": 5 * 1024 * 1024,
-            "accepted_types": [],
-        },
-        "download": {
-            "intent": "file.download",
-        },
-        "ui_labels": {
-            "upload": "上传附件",
-            "uploading": "上传中...",
-            "download": "下载",
-            "upload_failed": "附件上传失败",
-            "download_failed": "附件下载失败",
-            "size_exceeded": "文件过大",
-        },
-    }
-    return {"actions": actions, "attachments": attachments}
 
 
 def get_system_init_fact_contributions(env, user, context=None):

@@ -120,6 +120,10 @@
     <StatusPanel v-else-if="recordMissing" :title="pageDisplayTitle" message="该记录不存在，可能已被删除或当前链接已经失效。" variant="error" :on-retry="() => router.back()" />
 
     <section v-else :class="['card', 'sc-panel', 'sc-product-main-surface', { 'card--flow': isProjectIntakeCreateMode }]">
+      <p v-if="financialWorkspace && submissionFeedback" class="submission-feedback" :class="`submission-feedback--${submissionFeedback.kind}`" role="status">
+        {{ submissionFeedback.message }}
+      </p>
+      <FinancialRelationshipWorkspace v-if="financialWorkspace" :contract="financialWorkspace" />
       <ContractFormActionBlocks
         :active-filter-key="activeFilterKey"
         :body-actions="bodyActions"
@@ -138,7 +142,7 @@
         @run-action="runAction"
       />
 
-      <section class="form-grid" :class="{ 'form-grid--designer-workspace': showCurrentFormFieldConfigScope }">
+      <section v-if="!financialWorkspace" class="form-grid" :class="{ 'form-grid--designer-workspace': showCurrentFormFieldConfigScope }">
         <StatusPanel
           v-if="sceneValidationPanel"
           title="表单校验失败"
@@ -312,15 +316,18 @@
       @search="runRelationSearch"
       @select-row="selectRelationSearchRow"
     />
+    <IntentConfirmationDialog ref="intentConfirmationRef" />
     <AttachmentViewer ref="attachmentViewerRef" />
   </LayoutShell>
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, onErrorCaptured, reactive, ref, watch } from 'vue';
+import { computed, onErrorCaptured, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import StatusPanel from '../components/StatusPanel.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
+import FinancialRelationshipWorkspace from '../components/business/FinancialRelationshipWorkspace.vue';
+import IntentConfirmationDialog from '../components/business/IntentConfirmationDialog.vue';
 import AttachmentViewer from '../components/attachment/AttachmentViewer.vue';
 import LayoutShell from '../components/template/LayoutShell.vue';
 import PageHeaderTemplate from '../components/template/PageHeader.vue';
@@ -369,6 +376,7 @@ import { resolveActionIdFromContext } from '../app/actionContext';
 import { findActionMeta, findActionMetaByMenu, findMenuNode } from '../app/menu';
 import { pickContractNavQuery } from '../app/navigationContext';
 import { readWorkspaceContext } from '../app/workspaceContext';
+import { resolveFinancialWorkspaceContract } from '../app/financialWorkspaceContract';
 import { collectPolicyValidationErrors, evaluateActionPolicy, evaluateFieldPolicy } from '../app/contractPolicies';
 import { buildRuntimeFieldStates } from '../app/modifierEngine';
 import { resolveSceneValidationSuggestedAction } from '../app/sceneValidationRecoveryStrategy';
@@ -687,6 +695,7 @@ import { useFormConfigSaveRuntime } from './contractForm/useFormConfigSaveRuntim
 import { applyFormRuntimeStatusEvent } from './contractForm/runtimeStateApplier';
 import { useContractDebugExportRuntime } from './contractForm/useContractDebugExportRuntime';
 import { useProjectContextChangeRuntime } from './contractForm/useProjectContextChangeRuntime';
+import { selectAuthoritativeBusinessActionRows } from './contractForm/authoritativeBusinessActionRows';
 import { useFormPageLifecycleRuntime } from './contractForm/useFormPageLifecycleRuntime';
 import { useFormAuxiliaryWatchersRuntime } from './contractForm/useFormAuxiliaryWatchersRuntime';
 import {
@@ -750,6 +759,7 @@ const recordMissing = ref(false);
 const errorMessage = ref('');
 const validationErrors = ref<string[]>([]);
 const submissionFeedback = ref<SubmissionFeedback>(null);
+const intentConfirmationRef = ref<InstanceType<typeof IntentConfirmationDialog> | null>(null);
 const showOne2manyErrors = ref(false);
 const busyKind = ref<BusyKind>(null);
 const activeContractMode = ref('');
@@ -1298,8 +1308,9 @@ const pageIdentity = usePublishedPageIdentity(pageIdentityInput, { routeKey: () 
   active: () => isComponentActive.value, onTitle: (title) => session.updateActiveActivityTitle(title) });
 const pageDisplayTitle = computed(() => pageIdentity.value.title);
 const pageDisplaySubtitle = computed(() => pageIdentity.value.subtitle || '');
+const financialWorkspace = computed(() => resolveFinancialWorkspaceContract(contract.value));
 
-const suppressPageHeaderTitle = computed(() => useNativeFormTree.value && !isProjectIntakeCreateMode.value);
+const suppressPageHeaderTitle = computed(() => useNativeFormTree.value && !isProjectIntakeCreateMode.value && !financialWorkspace.value);
 
 const intakeCreateButtonLabel = computed(() => {
   if (!isProjectIntakeCreateMode.value) return '创建项目';
@@ -1318,14 +1329,14 @@ const submitButtonLabel = computed(() => resolveSubmitButtonLabel({
   saveLabel: formUiLabel('save'),
   savingLabel: formUiLabel('saving'),
 }));
-const showPrimaryBusinessFormAction = computed(() => !showCurrentFormFieldConfigScope.value && !isProjectIntakeCreateMode.value);
+const showPrimaryBusinessFormAction = computed(() => !financialWorkspace.value && !showCurrentFormFieldConfigScope.value && !isProjectIntakeCreateMode.value);
 const showDraftSaveAction = computed(() => showPrimaryBusinessFormAction.value && !recordId.value && canSave.value && !primaryCreateFooterAction.value);
 const draftSaveButtonLabel = computed(() => (busy.value && busyKind.value === 'save' ? formUiLabel('saving') : '保存草稿'));
 const showDiscardAction = computed(() => !isProjectIntakeCreateMode.value && Boolean(recordId.value) && hasChanges.value);
 
 const headerActionsVisible = computed(() => {
   if (isProjectIntakeCreateMode.value) return [];
-  const filterPrimarySubmit = (actions: ContractAction[]) => actions.filter((action) => !isUnifiedSubmitAction(action));
+  const filterPrimarySubmit = (actions: ContractAction[]) => actions.filter((action) => Boolean(action.mutation) || !isUnifiedSubmitAction(action));
   if (useNativeFormTree.value) {
     return filterPrimarySubmit(headerActions.value.filter((action) => action.sourceWidgetId === 'page.header'));
   }
@@ -3479,26 +3490,15 @@ const contractActions = computed<ContractAction[]>(() => {
     ? storeButtonStatus
     : collectUnifiedPageContractV2ButtonStatus(contract.value);
   const merged: Array<Record<string, unknown>> = [];
-  const workflowRows = workflowContractActionRows();
+  const nativeFormContract = contract.value?.views?.form as Record<string, unknown> | undefined;
+  const { workflowRows, nativeRows } = selectAuthoritativeBusinessActionRows(nativeFormContract, workflowContractActionRows());
   const workflowMethods = new Set<string>();
   workflowRows.forEach((row) => {
     const method = String(parseMaybeJsonRecord(row.payload).method || '').trim();
     if (method) workflowMethods.add(method);
     workflowActionMethodAliases(String(row.key || '').trim()).forEach((alias) => workflowMethods.add(alias));
   });
-  if (workflowRows.length) {
-    merged.push(...workflowRows);
-  }
-  const nativeFormContract = contract.value?.views?.form as Record<string, unknown> | undefined;
-  if (Array.isArray(nativeFormContract?.header_buttons)) {
-    merged.push(...(nativeFormContract.header_buttons as Array<Record<string, unknown>>));
-  }
-  if (Array.isArray(nativeFormContract?.button_box)) {
-    merged.push(...(nativeFormContract.button_box as Array<Record<string, unknown>>));
-  }
-  if (Array.isArray(nativeFormContract?.business_actions)) {
-    merged.push(...(nativeFormContract.business_actions as Array<Record<string, unknown>>));
-  }
+  merged.push(...workflowRows, ...nativeRows);
   if (Array.isArray(contract.value?.buttons)) merged.push(...(contract.value?.buttons as Array<Record<string, unknown>>));
   if (Array.isArray(contract.value?.toolbar?.header)) merged.push(...(contract.value?.toolbar?.header as Array<Record<string, unknown>>));
   if (Array.isArray(contract.value?.toolbar?.sidebar)) merged.push(...(contract.value?.toolbar?.sidebar as Array<Record<string, unknown>>));
@@ -3601,7 +3601,7 @@ const contractActions = computed<ContractAction[]>(() => {
     const effectiveKind = protocol?.mutation ? 'mutation' : kind;
     const level = String(row.level || 'body').trim().toLowerCase();
     const actionId = toActionId(payload.action_id) ?? toActionId(payload.ref) ?? toActionId(row.actionId) ?? toActionId(row.action_id);
-    const methodName = detectMethodName(key, String(payload.method || '').trim());
+    const methodName = detectMethodName(key, String(payload.method || row.method || '').trim());
     const isWorkflowContractAction = row.workflow_contract_action === true;
     if (!isWorkflowContractAction && methodName && workflowMethods.has(methodName)) continue;
     if (isTierValidationActionHidden(methodName)) continue;
@@ -5457,7 +5457,7 @@ async function reload() {
       if (reloadToken !== activeReloadToken) return;
       applyPageStatusEvent({ kind: 'status', transaction: 'formReload', status: 'ok' });
       retainedRouteIdentity.value = formRouteIdentity();
-      void preloadFormAuxiliaryData(reloadToken);
+      if (!financialWorkspace.value) void preloadFormAuxiliaryData(reloadToken);
     } catch (err) {
       if (reloadToken !== activeReloadToken) return;
       if (err instanceof ApiError && err.status === 403) {
@@ -5534,8 +5534,8 @@ onErrorCaptured((err) => {
 async function confirmActionSafety(action: ContractAction) {
   const safety = action.actionSafety;
   if (!safety || safety.classification !== 'danger' || !safety.requiresConfirm) return true;
-  const message = safety.confirmMessage || action.hint || action.label;
-  return window.confirm(String(message || '该操作执行后将立即生效，请确认是否继续。'));
+  return intentConfirmationRef.value?.confirm({ actionLabel: String(action.label || '操作'),
+    message: String(safety.confirmMessage || action.hint || '该操作执行后将立即生效，请确认是否继续。') }) ?? false;
 }
 
 async function ensureSavedBeforeRecordAction() {

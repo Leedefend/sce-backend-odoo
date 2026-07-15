@@ -25,11 +25,15 @@ export function useProjectContextChangeRuntime(params: {
 
   function handleProjectContextChanged(event: Event): void {
     if (!params.isActive()) return;
+    const detail = event instanceof CustomEvent && event.detail && typeof event.detail === 'object'
+      ? event.detail as Record<string, unknown>
+      : {};
+    const scopeChanged = detail.scope_changed === true;
     const selectedProjectId = projectContextChangedProjectId(event);
     const previousProjectId = projectContextChangedPreviousProjectId(event);
-    if (selectedProjectId > 0 && previousProjectId === selectedProjectId) return;
-    if (params.modelName() === 'project.project' && params.recordId() === selectedProjectId) return;
-    if (params.modelName() === 'project.project' && selectedProjectId > 0) {
+    if (!scopeChanged && selectedProjectId > 0 && previousProjectId === selectedProjectId) return;
+    if (!scopeChanged && params.modelName() === 'project.project' && params.recordId() === selectedProjectId) return;
+    if (!scopeChanged && params.modelName() === 'project.project' && selectedProjectId > 0) {
       void params.router.replace({
         name: 'record',
         params: { model: 'project.project', id: String(selectedProjectId) },
@@ -37,10 +41,12 @@ export function useProjectContextChangeRuntime(params: {
       });
       return;
     }
+    const workspaceQuery = params.resolveWorkspaceContextQuery();
+    if (scopeChanged) delete workspaceQuery.project_id;
     void params.router.replace(buildCanonicalSceneRouteTarget('projects.list', {
       query: {
-        ...params.resolveWorkspaceContextQuery(),
-        ...(selectedProjectId > 0 ? { project_id: String(selectedProjectId) } : {}),
+        ...workspaceQuery,
+        ...(!scopeChanged && selectedProjectId > 0 ? { project_id: String(selectedProjectId) } : {}),
       },
     }));
   }
