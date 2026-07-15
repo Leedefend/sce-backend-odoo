@@ -28,6 +28,9 @@ from odoo.exceptions import AccessError
 from odoo.addons.smart_construction_core.services.project_execution_item_projection_service import (
     ProjectExecutionItemProjectionService,
 )
+from odoo.addons.smart_construction_core.services.payment_request_work_item_service import (
+    PaymentRequestWorkItemService,
+)
 from odoo.addons.smart_construction_scene.services.my_work_scene_targets import (
     build_my_work_section_rows,
     build_my_work_summary_rows,
@@ -706,7 +709,45 @@ class MyWorkSummaryHandler(BaseIntentHandler):
             context.update(raw_payload.get("context") or {})
         if isinstance(params, dict) and isinstance(params.get("context"), dict):
             context.update(params.get("context") or {})
+        params = params if isinstance(params, dict) else {}
         self._current_project_scope_id = selected_project_id_from_context(params, context)
+        if bool(params.get("product_workspace")):
+            product_workspace = PaymentRequestWorkItemService(
+                self.env,
+                params=params,
+                context=context,
+            ).build()
+            data = {
+                "generated_at": fields.Datetime.now(),
+                "sections": [],
+                "summary": [],
+                "items": [],
+                "facets": {},
+                "filters": {
+                    "section": "all",
+                    "source": "all",
+                    "reason_code": "all",
+                    "search": "",
+                    "filtered_count": 0,
+                    "total_before_filter": 0,
+                    "page": 1,
+                    "page_size": 0,
+                    "total_pages": 1,
+                },
+                "status": {"state": "READY", "reason_code": REASON_OK, "message": "", "hint": ""},
+                "visibility": {"partial_data_hidden": False, "restricted_sources": [], "message": ""},
+                "product_workspace": product_workspace,
+                "source_authority": product_workspace.get("source_authority"),
+            }
+            return {
+                "ok": True,
+                "data": data,
+                "meta": {
+                    "intent": self.INTENT_TYPE,
+                    "source_authority": product_workspace.get("source_authority"),
+                    "product_workspace": True,
+                },
+            }
         user = self.env.user
         partner = user.partner_id
         limit = self._normalize_limit(params.get("limit"), default=20, max_value=100)
@@ -856,6 +897,11 @@ class MyWorkSummaryHandler(BaseIntentHandler):
             ),
             "visibility": visibility,
             "source_authority": self._source_authority_contract(),
+            "product_workspace": PaymentRequestWorkItemService(
+                self.env,
+                params=params,
+                context=self.context if isinstance(self.context, dict) else {},
+            ).build(),
         }
         meta = {
             "intent": self.INTENT_TYPE,

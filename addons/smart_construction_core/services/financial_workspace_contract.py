@@ -405,6 +405,53 @@ def build_financial_workspace_contract(env, model_name, record_id):
         and _text(row["currency"].get("name"))
     })
     currency_mismatch = bool(primary_currency_id and related_currency_names)
+    entry_actions = []
+    if record._name == "sc.settlement.order" and _text(record.state) == "approve":
+        PaymentRequest = env["payment.request"]
+        can_create = bool(PaymentRequest.check_access_rights("create", raise_exception=False))
+        has_finance_capability = bool(
+            env.user.has_group("smart_construction_core.group_sc_cap_finance_user")
+            or env.user.has_group("smart_construction_custom.group_sc_role_finance")
+        )
+        menu = env.ref("smart_construction_core.menu_sc_user_payment_apply_acceptance", raise_if_not_found=False)
+        action = menu.action if menu else None
+        category = env.ref(
+            "smart_construction_core.business_category_finance_payment_apply_pay",
+            raise_if_not_found=False,
+        )
+        if can_create and has_finance_capability and action:
+            entry_actions.append({
+                "key": "create_payment_request",
+                "label": "新建付款申请",
+                "route": {
+                    "name": "model-form",
+                    "params": {"model": "payment.request", "id": "new"},
+                    "query": {
+                        "action_id": int(action.id),
+                        "menu_id": int(menu.id) if menu else 0,
+                        "project_scope_policy": "exempt",
+                        "default_type": "pay",
+                        "current_business_category_code": "finance.payment.apply.pay",
+                        "default_business_category_code": "finance.payment.apply.pay",
+                        "current_business_category_label": "付款申请",
+                        "default_business_category_label": "付款申请",
+                        "default_business_category_id": int(category.id) if category else 0,
+                        "default_business_category_id_label": _text(category.display_name) if category else "付款申请",
+                        "default_project_id": int(record.project_id.id) if record.project_id else 0,
+                        "default_project_id_label": _text(record.project_id.display_name) if record.project_id else "",
+                        "default_contract_id": int(record.contract_id.id) if record.contract_id else 0,
+                        "default_contract_id_label": _identity(record.contract_id, ("name", "subject")) if record.contract_id else "",
+                        "default_settlement_id": int(record.id),
+                        "default_settlement_id_label": _identity(record, ("name", "title")),
+                        "default_partner_id": int(record.partner_id.id) if record.partner_id else 0,
+                        "default_partner_id_label": _text(record.partner_id.display_name) if record.partner_id else "",
+                        "default_currency_id": int(record.currency_id.id) if record.currency_id else 0,
+                        "default_currency_id_label": _text(record.currency_id.display_name) if record.currency_id else "",
+                        "default_note": "FE-B05 form approval journey",
+                    },
+                },
+                "source_authority": "payment.request create ACL + finance capability + approved settlement",
+            })
     return {
         "version": "1.0",
         "kind": declaration["kind"],
@@ -416,6 +463,7 @@ def build_financial_workspace_contract(env, model_name, record_id):
         "facts": facts,
         "relationships": relationships,
         "details": [_detail_section(record, item) for item in declaration["details"]],
+        "entry_actions": entry_actions,
         "audit": [
             _fact(record, field_name, label, kind)
             for field_name, label, kind in (
