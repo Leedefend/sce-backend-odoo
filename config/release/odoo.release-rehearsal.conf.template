@@ -1,0 +1,19 @@
+[options]
+db_host = db
+db_port = 5432
+db_user = ${DB_USER}
+db_password = ${DB_PASSWORD}
+db_name = ${ODOO_DB}
+admin_passwd = ${ADMIN_PASSWD}
+addons_path = /usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,/mnt/addons_external/oca_server_ux
+server_wide_modules = web,smart_core
+logfile =
+dbfilter = ${ODOO_DBFILTER}
+list_db = False
+data_dir = /var/lib/odoo
+proxy_mode = True
+without_demo = True
+workers = 0
+max_cron_threads = 0
+limit_time_real = 1800
+limit_time_cpu = 1200

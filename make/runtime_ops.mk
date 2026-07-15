@@ -2036,3 +2036,5 @@ gate.full: guard.codex.fast.noheavy guard.prod.forbid check-compose-project chec
 	fi
 	@$(MAKE) verify.phase_9_8.gate_summary
 	@$(MAKE) audit.pull DB_NAME=$(DB_NAME)
+
+include make/release.mk
