@@ -4,19 +4,19 @@ Generated from `test_inventory.csv`.
 
 ## Totals
 
-- Total assets: `1176`
+- Total assets: `1177`
 - Review queue: `4`
 - Unknown runtime: `3`
 - Long-running assets: `332`
 - Manual gate review: `4`
 - Aggregate-covered assets: `230`
-- PR dedupe candidates: `614`
+- PR dedupe candidates: `615`
 
 ## By Layer
 
 | Layer | Count |
 | --- | ---: |
-| governance | 359 |
+| governance | 360 |
 | contract | 310 |
 | data_migration | 217 |
 | unit | 153 |
@@ -30,7 +30,7 @@ Generated from `test_inventory.csv`.
 
 | Decision Gate | Count |
 | --- | ---: |
-| pr_candidate | 838 |
+| pr_candidate | 839 |
 | integration_candidate | 293 |
 | release_candidate | 36 |
 | manual_review | 4 |
@@ -43,7 +43,7 @@ Generated from `test_inventory.csv`.
 
 | Disposition | Count |
 | --- | ---: |
-| deduplicate_before_required | 614 |
+| deduplicate_before_required | 615 |
 | keep_integration_or_release_only | 292 |
 | covered_by_aggregate | 225 |
 | keep_release_only | 36 |
@@ -146,7 +146,7 @@ Generated from `test_inventory.csv`.
 
 | Runtime | Count |
 | --- | ---: |
-| <5m | 840 |
+| <5m | 841 |
 | 10-30m | 294 |
 | 30-60m | 38 |
 | unknown | 3 |
@@ -156,7 +156,7 @@ Generated from `test_inventory.csv`.
 
 | Owner | Count |
 | --- | ---: |
-| architecture owner | 359 |
+| architecture owner | 360 |
 | platform owner | 310 |
 | data owner | 217 |
 | test owner | 154 |
@@ -169,7 +169,7 @@ Generated from `test_inventory.csv`.
 
 | Directory | Count |
 | --- | ---: |
-| scripts/verify | 872 |
+| scripts/verify | 873 |
 | scripts/migration | 215 |
 | scripts/ops | 37 |
 | frontend/apps/web/scripts | 24 |
@@ -281,7 +281,7 @@ Generated from `test_inventory.csv`.
 | T-ASSET-375 | contract | `scripts/verify/construction_core_extension_intent_handlers_split_guard.py` | platform owner |
 | T-ASSET-376 | governance | `scripts/verify/construction_core_extension_policy_accessors_split_guard.py` | architecture owner |
 | T-ASSET-377 | governance | `scripts/verify/construction_core_extension_policy_maps_split_guard.py` | architecture owner |
-| ... | ... | 534 more | ... |
+| ... | ... | 535 more | ... |
 
 ## Dedupe Hotspots
 
