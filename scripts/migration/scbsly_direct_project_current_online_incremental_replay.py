@@ -26,6 +26,8 @@ if not (ROOT / "artifacts/migration/scbsly_direct_project_old_identity_lock_v1.j
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from scripts.verify.online_capture_security import require_online_capture  # noqa: E402
+
 IDENTITY_LOCK = Path(
     os.getenv("MIGRATION_SCBSLY_IDENTITY_LOCK")
     or ROOT / "artifacts/migration/scbsly_direct_project_old_identity_lock_v1.json"
@@ -33,9 +35,9 @@ IDENTITY_LOCK = Path(
 ARTIFACT_ROOT = Path(os.getenv("MIGRATION_ARTIFACT_ROOT", str(ROOT / "artifacts/migration")))
 OUTPUT_JSON = ARTIFACT_ROOT / "scbsly_direct_project_current_online_incremental_replay_result_v1.json"
 SOURCE_SYSTEM = "online_old_scbsly"
-BASE_URL = os.getenv("SCBSLY_BASE_URL", "https://www.builderp.cn/SCBSLY_V2").rstrip("/")
-USERNAME = os.getenv("SCBSLY_USERNAME") or os.getenv("OLD_SCBS_USERNAME")
-PASSWORD = os.getenv("SCBSLY_PASSWORD") or os.getenv("OLD_SCBS_PASSWORD")
+BASE_URL = os.getenv("SCBSLY_BASE_URL", "").rstrip("/")
+USERNAME = os.getenv("SCBSLY_USERNAME")
+PASSWORD = os.getenv("SCBSLY_PASSWORD")
 ROWINDEX_HEAD_REPLACEMENT_LABELS = {"入库", "零星用工", "机械台班记录", "进项上报"}
 REQUEST_TIMEOUT = (8, 30)
 
@@ -76,7 +78,7 @@ def ensure_allowed_db():
 
 def login(session):
     if not USERNAME or not PASSWORD:
-        raise RuntimeError("SCBSLY_USERNAME/SCBSLY_PASSWORD or OLD_SCBS_USERNAME/OLD_SCBS_PASSWORD are required")
+        raise RuntimeError("SCBSLY_USERNAME and SCBSLY_PASSWORD are required")
     response = session.post(
         f"{BASE_URL}/api/System/UserApi/Login",
         json={
@@ -255,6 +257,7 @@ def active_ids_by_label(model, label):
 
 
 def main():
+    require_online_capture(("scbsly",))
     ensure_allowed_db()
     replay_source = ROOT / "scripts/migration/scbsly_direct_project_direct_acceptance_replay.py"
     namespace = globals()

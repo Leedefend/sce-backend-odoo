@@ -7,6 +7,7 @@ import gzip
 import json
 import os
 import re
+import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Any
@@ -19,7 +20,10 @@ APPLY = os.environ.get("APPLY") == "1"
 ONLINE_CHECK = os.environ.get("ONLINE_CHECK") == "1"
 ONLINE_WORKERS = int(os.environ.get("ONLINE_WORKERS") or "16")
 ONLINE_LIMIT = int(os.environ.get("ONLINE_LIMIT") or "0")
-BASE_URL = os.environ.get("SC_ONLINE_LEGACY_BASE_URL") or "https://www.builderp.cn/SCBSLY_V2"
+sys.path.insert(0, str(Path.cwd()))
+from scripts.verify.online_capture_security import require_online_capture  # noqa: E402
+
+BASE_URL = os.environ.get("SC_ONLINE_LEGACY_BASE_URL") or os.environ.get("SCBSLY_BASE_URL", "")
 EXISTING_FILE_PATHS = Path(os.environ["EXISTING_FILE_PATHS"]) if os.environ.get("EXISTING_FILE_PATHS") else None
 MODEL = "sc.legacy.invoice.tax.fact"
 ATTACHMENT_LABEL_RE = re.compile(r"^附件\([1-9]\d*\)$")
@@ -87,6 +91,7 @@ def has_online_file(ref: str) -> bool:
 def online_hits(refs: set[str]) -> set[str]:
     if not ONLINE_CHECK or not refs:
         return set()
+    require_online_capture(("scbsly",))
     candidates = sorted(refs)
     if ONLINE_LIMIT > 0:
         candidates = candidates[:ONLINE_LIMIT]

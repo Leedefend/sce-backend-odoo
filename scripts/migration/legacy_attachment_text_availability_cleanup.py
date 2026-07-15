@@ -9,8 +9,14 @@ from __future__ import annotations
 import json
 import os
 import re
+import sys
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.request import Request, urlopen
+
+from pathlib import Path
+
+sys.path.insert(0, str(Path.cwd()))
+from scripts.verify.online_capture_security import require_online_capture  # noqa: E402
 
 
 APPLY = os.environ.get("APPLY") == "1"
@@ -18,7 +24,7 @@ CHECK_ONLINE = os.environ.get("CHECK_ONLINE") == "1"
 ONLINE_WORKERS = int(os.environ.get("ONLINE_WORKERS") or "32")
 ONLINE_TIMEOUT = float(os.environ.get("ONLINE_TIMEOUT") or "5")
 ONLINE_LIMIT = int(os.environ.get("ONLINE_LIMIT") or "0")
-ONLINE_BASE = os.environ.get("SC_ONLINE_LEGACY_BASE_URL") or "https://www.builderp.cn/SCBSLY_V2"
+ONLINE_BASE = os.environ.get("SC_ONLINE_LEGACY_BASE_URL") or os.environ.get("SCBSLY_BASE_URL", "")
 ATTACHMENT_LABEL_RE = re.compile(r"^附件\([1-9]\d*\)$")
 
 SPECS = {
@@ -61,6 +67,7 @@ def online_has_file(ref: str) -> bool:
 
 
 def online_hits(refs: set[str]) -> set[str]:
+    require_online_capture(("scbsly",))
     hits: set[str] = set()
     checked = 0
     failed = 0

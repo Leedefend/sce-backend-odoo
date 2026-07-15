@@ -16,14 +16,16 @@ from urllib.parse import parse_qs, urlparse
 
 import requests
 
+from online_capture_security import require_online_capture
+
 
 ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / "docs/migration_alignment/scbs55_user_acceptance_asset_freeze_v1.json"
 OUTPUT = ROOT / "artifacts/migration/scbsly_direct_project_acceptance_menu_probe_v1.json"
 OUTPUT_MD = ROOT / "artifacts/migration/scbsly_direct_project_acceptance_menu_probe_v1.md"
-BASE_URL = os.getenv("SCBSLY_BASE_URL", "https://www.builderp.cn/SCBSLY_V2").rstrip("/")
-USERNAME = os.getenv("SCBSLY_USERNAME") or os.getenv("OLD_SCBS_USERNAME")
-PASSWORD = os.getenv("SCBSLY_PASSWORD") or os.getenv("OLD_SCBS_PASSWORD")
+BASE_URL = os.getenv("SCBSLY_BASE_URL", "").rstrip("/")
+USERNAME = os.getenv("SCBSLY_USERNAME")
+PASSWORD = os.getenv("SCBSLY_PASSWORD")
 MENU_ALIASES = {
     "成本统计表（数据）": ["成本统计表（综合）"],
 }
@@ -59,8 +61,9 @@ def route_kind(link: str) -> str:
 
 
 def login(session: requests.Session) -> dict[str, Any]:
+    require_online_capture(("scbsly",))
     if not USERNAME or not PASSWORD:
-        raise RuntimeError("SCBSLY_USERNAME/SCBSLY_PASSWORD or OLD_SCBS_USERNAME/OLD_SCBS_PASSWORD are required")
+        raise RuntimeError("SCBSLY_USERNAME and SCBSLY_PASSWORD are required")
     payload = {
         "Type": "Common",
         "Param": {
@@ -266,6 +269,7 @@ def markdown(payload: dict[str, Any]) -> str:
 
 
 def main() -> int:
+    require_online_capture(("scbsly",))
     session = requests.Session()
     user = login(session)
     token = user["Token"]

@@ -17,7 +17,7 @@ from typing import Any
 
 import requests
 
-from scbs_55_old_system_list_count_probe import api_get, api_post, list_payload, login
+from scbsly_direct_project_acceptance_menu_probe import api_get, api_post, list_payload, login
 
 
 INPUT_JSON = Path(
@@ -85,15 +85,7 @@ def main() -> int:
         }
         try:
             config = api_get(session, token, f"LowCode/FormApi/GetConfigById?Id={item['config_id']}&LoadInitData=true")["Data"]
-            detail = json.loads(config.get("DETAIL_CONFIG") or "{}")
-            other = detail.get("OtherConfig") or {}
-            path = "LowCode/FormApi/ListByTableName"
-            payload = list_payload(config)
-            if other.get("ListApi"):
-                path = str(other["ListApi"]).removeprefix("/api/")
-            elif other.get("ListProcedure"):
-                payload["Procedure"] = other["ListProcedure"]
-                path = "LowCode/FormApi/ListByProcedure"
+            path, payload, _policy = list_payload(config)
 
             full_rows: list[dict[str, Any]] = []
             page_index = 1

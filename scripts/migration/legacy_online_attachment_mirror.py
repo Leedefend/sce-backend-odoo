@@ -13,10 +13,14 @@ import json
 import mimetypes
 import os
 import re
+import sys
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.request import Request, urlopen
+
+sys.path.insert(0, str(Path.cwd()))
+from scripts.verify.online_capture_security import require_online_capture  # noqa: E402
 
 from odoo.addons.smart_core.handlers.file_download import (
     _fetch_online_legacy_file_by_bill_id,
@@ -39,7 +43,7 @@ COMMIT_EVERY_FILES = int(os.getenv("LEGACY_ONLINE_MIRROR_COMMIT_EVERY_FILES", "2
 SKIP_LOCAL_OK = os.getenv("LEGACY_ONLINE_MIRROR_SKIP_LOCAL_OK", "0").strip().lower() in {"1", "true", "yes", "on"}
 REQUIRE_VISIBLE_LABEL = os.getenv("LEGACY_ONLINE_MIRROR_REQUIRE_VISIBLE_LABEL", "1").strip().lower() in {"1", "true", "yes", "on"}
 DOWNLOAD_TIMEOUT = int(os.getenv("LEGACY_ONLINE_MIRROR_DOWNLOAD_TIMEOUT", "120") or "120")
-APPLY = os.getenv("LEGACY_ONLINE_MIRROR_APPLY", "1").strip().lower() in {"1", "true", "yes", "on"}
+APPLY = os.getenv("LEGACY_ONLINE_MIRROR_APPLY", "0").strip().lower() in {"1", "true", "yes", "on"}
 MIRROR_ROOT = Path(os.getenv("LEGACY_ONLINE_MIRROR_ROOT", "/mnt/artifacts/legacy-online-mirror"))
 OUTPUT_JSON = Path(os.getenv("LEGACY_ONLINE_MIRROR_OUTPUT", "/tmp/legacy_online_attachment_mirror_result_v1.json"))
 ATTACHMENT_ID_RE = re.compile(r"^[0-9a-fA-F]{32}$")
@@ -91,8 +95,8 @@ def attachment_ref(record):
 def online_base_url(record):
     source_label = online_source_label(record)
     if source_label == "online_old_scbsly":
-        return "https://www.builderp.cn/SCBSLY_V2"
-    return "https://www.builderp.cn/SCBS"
+        return os.getenv("SCBSLY_BASE_URL", "").rstrip("/")
+    return os.getenv("OLD_SCBS_BASE_URL", "").rstrip("/")
 
 
 def online_source_label(record):
@@ -227,6 +231,7 @@ def upsert_file_index(row, relative_path, source_system, record):
 
 
 def main():
+    require_online_capture(("scbs", "scbsly"))
     if MODEL not in env:  # noqa: F821
         raise RuntimeError(f"model not found: {MODEL}")
     Model = env[MODEL].sudo().with_context(active_test=False)  # noqa: F821

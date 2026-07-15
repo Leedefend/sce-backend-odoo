@@ -13,8 +13,10 @@ from urllib.parse import parse_qs, urlparse
 
 import requests
 
+from online_capture_security import require_online_capture
 
-BASE_URL = os.getenv("OLD_SCBS_BASE_URL", "https://www.builderp.cn/SCBSLY_V2").rstrip("/")
+
+BASE_URL = os.getenv("SCBSLY_BASE_URL", "").rstrip("/")
 ARTIFACT_ROOT = Path(os.getenv("MIGRATION_ARTIFACT_ROOT", "artifacts/migration"))
 OUTPUT_JSON = ARTIFACT_ROOT / "scbsly_current_user_menu_dump_v1.json"
 OUTPUT_REPORT = ARTIFACT_ROOT / "scbsly_current_user_menu_dump_v1.md"
@@ -35,10 +37,11 @@ def config_id_from_link(link: str) -> str:
 
 
 def login(session: requests.Session) -> dict[str, Any]:
-    username = os.getenv("OLD_SCBS_USERNAME")
-    password = os.getenv("OLD_SCBS_PASSWORD")
+    require_online_capture(("scbsly",))
+    username = os.getenv("SCBSLY_USERNAME")
+    password = os.getenv("SCBSLY_PASSWORD")
     if not username or not password:
-        raise RuntimeError("OLD_SCBS_USERNAME and OLD_SCBS_PASSWORD are required")
+        raise RuntimeError("SCBSLY_USERNAME and SCBSLY_PASSWORD are required")
     payload = {
         "Type": "Common",
         "Param": {

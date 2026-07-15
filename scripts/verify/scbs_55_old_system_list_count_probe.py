@@ -16,11 +16,13 @@ from typing import Any
 
 import requests
 
+from online_capture_security import require_online_capture
+
 
 ROOT = Path(__file__).resolve().parents[2]
 INPUT_CSV = ROOT / "docs/migration_alignment/scbs_55_user_visible_surface_live_alignment_v1.csv"
 OUTPUT = ROOT / "artifacts/migration/scbs_55_old_system_list_count_probe_result_v1.json"
-BASE_URL = os.getenv("OLD_SCBS_BASE_URL", "https://www.builderp.cn/SCBS").rstrip("/")
+BASE_URL = os.getenv("OLD_SCBS_BASE_URL", "").rstrip("/")
 GET_TIMEOUT = int(os.getenv("OLD_SCBS_GET_TIMEOUT", "90"))
 POST_TIMEOUT = int(os.getenv("OLD_SCBS_POST_TIMEOUT", "180"))
 LOGIN_TIMEOUT = int(os.getenv("OLD_SCBS_LOGIN_TIMEOUT", "90"))
@@ -102,16 +104,7 @@ def api_post(session: requests.Session, token: str, path: str, payload: dict[str
 
 
 def login(session: requests.Session) -> dict[str, Any]:
-    token = os.getenv("OLD_SCBS_TOKEN")
-    if token:
-        return {
-            "Token": token,
-            "UserId": os.getenv("OLD_SCBS_TOKEN_USER_ID", ""),
-            "UserName": os.getenv("OLD_SCBS_TOKEN_USER_NAME", ""),
-            "PersonName": os.getenv("OLD_SCBS_TOKEN_PERSON_NAME", ""),
-            "ProjectId": os.getenv("OLD_SCBS_TOKEN_PROJECT_ID", ""),
-            "ProjectName": os.getenv("OLD_SCBS_TOKEN_PROJECT_NAME", ""),
-        }
+    require_online_capture(("scbs",))
     username = os.getenv("OLD_SCBS_USERNAME")
     password = os.getenv("OLD_SCBS_PASSWORD")
     if not username or not password:
@@ -232,6 +225,7 @@ def list_payload(config: dict[str, Any]) -> dict[str, Any]:
 
 
 def main() -> int:
+    require_online_capture(("scbs",))
     session = requests.Session()
     user = login(session)
     token = user["Token"]

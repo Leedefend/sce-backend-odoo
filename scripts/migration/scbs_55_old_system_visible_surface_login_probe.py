@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 """Verify SCBS55 old-system visible lists through a real user login.
 
-Credentials are intentionally read from environment variables:
-  OLD_SCBS_LOGIN_URL
-  OLD_SCBS_USERNAME
-  OLD_SCBS_PASSWORD
+The destination and credentials are validated by the shared online-capture
+preflight before any request is created.
 """
 
 from __future__ import annotations
@@ -13,6 +11,7 @@ import csv
 import hashlib
 import json
 import os
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -22,6 +21,9 @@ import requests
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO_ROOT))
+from scripts.verify.online_capture_security import require_online_capture  # noqa: E402
+
 INPUT_CSV = REPO_ROOT / "docs/migration_alignment/scbs_55_user_visible_surface_live_alignment_v1.csv"
 ARTIFACT_ROOT = Path(os.getenv("MIGRATION_ARTIFACT_ROOT", str(REPO_ROOT / "artifacts/migration")))
 OUTPUT_JSON = ARTIFACT_ROOT / "scbs_55_old_system_visible_surface_login_probe_result_v1.json"
@@ -160,7 +162,8 @@ def report_markdown(payload: dict[str, Any]) -> str:
 
 
 def main() -> int:
-    login_url = os.getenv("OLD_SCBS_LOGIN_URL", "https://www.builderp.cn/SCBS/System/User/Login")
+    config = require_online_capture(("scbs",))["scbs"]
+    login_url = f"{config.base_url.rstrip('/')}/System/User/Login"
     username = os.getenv("OLD_SCBS_USERNAME")
     password = os.getenv("OLD_SCBS_PASSWORD")
     if not username or not password:

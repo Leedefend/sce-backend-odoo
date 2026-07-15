@@ -10,14 +10,17 @@ const requireBase = fs.existsSync(path.join(process.cwd(), 'frontend/apps/web/pa
   : path.join(process.cwd(), 'package.json');
 const requireFromRoot = createRequire(requireBase);
 const { chromium } = requireFromRoot('playwright');
+const { requireOnlineCapture } = require('./online_capture_security');
+
+const OLD_CAPTURE = requireOnlineCapture('scbsly');
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://1.95.85.92:18081';
 const DB_NAME = process.env.DB_NAME || process.env.E2E_DB || 'sc_demo';
-const LOGIN = process.env.E2E_LOGIN || 'wutao';
-const PASSWORD = process.env.E2E_PASSWORD || '123456';
-const OLD_BASE_URL = (process.env.SCBSLY_BASE_URL || 'https://www.builderp.cn/SCBSLY_V2').replace(/\/$/, '');
-const OLD_LOGIN = process.env.SCBSLY_USERNAME || process.env.OLD_SCBS_USERNAME || '';
-const OLD_PASSWORD = process.env.SCBSLY_PASSWORD || process.env.OLD_SCBS_PASSWORD || '';
+const LOGIN = process.env.E2E_LOGIN || '';
+const PASSWORD = process.env.E2E_PASSWORD || '';
+const OLD_BASE_URL = OLD_CAPTURE.baseUrl;
+const OLD_LOGIN = OLD_CAPTURE.username;
+const OLD_PASSWORD = OLD_CAPTURE.password;
 const OLD_MENU_EVIDENCE = process.env.SCBSLY_MENU_EVIDENCE
   || 'artifacts/migration/scbsly_direct_project_acceptance_menu_probe_v1.json';
 const HEADLESS = String(process.env.HEADLESS || '1').trim() !== '0';

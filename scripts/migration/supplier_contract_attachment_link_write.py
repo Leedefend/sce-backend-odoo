@@ -7,13 +7,17 @@ import json
 import mimetypes
 import os
 import re
+import sys
 from pathlib import Path
 from urllib.request import Request, urlopen
+
+sys.path.insert(0, str(Path.cwd()))
+from scripts.verify.online_capture_security import require_online_capture  # noqa: E402
 
 
 SOURCE_MODEL = "sc.legacy.supplier.contract.pricing.fact"
 WRAPPER_MODEL = "construction.contract.expense"
-ONLINE_BASE_URL = os.getenv("SUPPLIER_CONTRACT_ONLINE_ATTACHMENT_BASE_URL", "https://www.builderp.cn/SCBS").rstrip("/")
+ONLINE_BASE_URL = os.getenv("SUPPLIER_CONTRACT_ONLINE_ATTACHMENT_BASE_URL") or os.getenv("OLD_SCBS_BASE_URL", "")
 SOURCE_MARKER = "[migration:supplier_contract_attachment_link]"
 WRAPPER_MARKER = "[migration:direct_supplier_contract_pricing_to_expense_execution]"
 OUTPUT_JSON_NAME = "supplier_contract_attachment_link_write_result_v1.json"
@@ -84,6 +88,7 @@ def lock_rows_by_legacy_id() -> dict[str, dict[str, object]]:
 
 
 def fetch_online_files(bill_id: str) -> list[dict[str, object]]:
+    require_online_capture(("scbs",))
     url = f"{ONLINE_BASE_URL}/api/System/FileApi/GetFileByBillId?BillId={bill_id}"
     with urlopen(Request(url, headers={"User-Agent": "Mozilla/5.0"}), timeout=30) as response:
         payload = json.loads(response.read().decode("utf-8"))

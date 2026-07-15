@@ -12,9 +12,13 @@ from __future__ import annotations
 import json
 import os
 import re
+import sys
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
+
+sys.path.insert(0, str(Path.cwd()))
+from scripts.verify.online_capture_security import require_online_capture  # noqa: E402
 
 from odoo.addons.smart_core.handlers.file_download import (
     _fetch_online_legacy_file_by_bill_id,
@@ -133,9 +137,12 @@ def online_status(ref, record):
     if ref in ONLINE_STATUS_CACHE:
         return ONLINE_STATUS_CACHE[ref]
     source_system = clean(getattr(record, "source_system", ""))
-    base_url = "https://www.builderp.cn/SCBS"
+    system = "scbs"
+    base_url = os.getenv("OLD_SCBS_BASE_URL", "").rstrip("/")
     if source_system.startswith("online_old_scbsly"):
-        base_url = "https://www.builderp.cn/SCBSLY_V2"
+        system = "scbsly"
+        base_url = os.getenv("SCBSLY_BASE_URL", "").rstrip("/")
+    require_online_capture((system,))
     info = _fetch_online_legacy_file_by_bill_id(ref, base_url)
     if not info:
         ONLINE_STATUS_CACHE[ref] = {"status": "missing"}
