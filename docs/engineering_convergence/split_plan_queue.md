@@ -48,7 +48,7 @@ Generated from `complexity_budget_report.md` split-plan-required files.
 | P2 | 1844 | DevOps owner | `scripts/migration/scbs_55_legacy_visible_field_full_reconcile_probe.py` | Define owner-specific decomposition plan before adding unrelated behavior. |
 | P2 | 1741 | Frontend owner | `frontend/apps/web/src/views/SceneView.vue` | Extract composables, child panels, data adapters, and action handlers; keep the route component as orchestration shell. |
 | P2 | 1693 | Construction backend owner | `addons/smart_construction_core/core_extension.py` | Define owner-specific decomposition plan before adding unrelated behavior. |
-| P2 | 1689 | DevOps owner | `scripts/verify/industry_module_product_boundary_guard.py` | Define owner-specific decomposition plan before adding unrelated behavior. |
+| P2 | 1648 | DevOps owner | `scripts/verify/industry_module_product_boundary_guard.py` | Define owner-specific decomposition plan before adding unrelated behavior. |
 | P2 | 1597 | Construction backend owner | `addons/smart_construction_core/models/support/direct_acceptance_formal_visible_fields.py` | Extract service methods for cross-model workflow, amount, and policy logic. |
 | P2 | 1555 | Construction backend owner | `addons/smart_construction_core/models/support/contract_center.py` | Extract service methods for cross-model workflow, amount, and policy logic. |
 | P2 | 1525 | Frontend owner | `frontend/apps/web/src/views/RecordView.vue` | Extract composables, child panels, data adapters, and action handlers; keep the route component as orchestration shell. |
