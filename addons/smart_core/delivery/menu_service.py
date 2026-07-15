@@ -55,6 +55,8 @@ class MenuService:
 
     @classmethod
     def _filter_role_surface_nodes(cls, nodes: list[dict], role_surface: dict | None) -> list[dict]:
+        if isinstance(role_surface, dict) and role_surface.get("deny_all_navigation"):
+            return []
         filtered = []
         for node in nodes or []:
             if not isinstance(node, dict):

@@ -2,6 +2,12 @@
 from __future__ import annotations
 
 ROLE_SURFACE_OVERRIDES = {
+    "restricted": {
+        "label": "受限用户",
+        "landing_scene_candidates": ["workspace.home"],
+        "menu_xmlids": [],
+        "deny_all_navigation": True,
+    },
     "project_member": {
         "label": "项目成员",
         "landing_scene_candidates": ["projects.list", "projects.ledger"],

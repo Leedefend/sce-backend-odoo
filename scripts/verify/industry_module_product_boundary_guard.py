@@ -1567,59 +1567,18 @@ def verify_custom_security_policy_role_login_boundary() -> list[str]:
     if not path.is_file():
         return []
     text = path.read_text(encoding="utf-8", errors="ignore")
-    required_formal_logins = (
-        "sc_role_project_read",
-        "sc_role_project_user",
-        "sc_role_project_manager",
-        "sc_role_owner",
-        "sc_role_pm",
-        "sc_role_finance",
-        "sc_role_executive",
-    )
-    legacy_logins = tuple(login.replace("sc_", "demo_", 1) for login in required_formal_logins)
     errors: list[str] = []
-    if "ROLE_LOGIN_GROUPS" not in text or "LEGACY_ROLE_LOGIN_ALIASES" not in text:
-        errors.append(
-            "smart_construction_custom: security policy must separate formal role logins "
-            "from historical demo-login aliases"
-        )
-        return errors
-    for login in required_formal_logins:
-        if f'"{login}"' not in text:
+    forbidden_tokens = (
+        "ROLE_LOGIN_GROUPS",
+        "LEGACY_ROLE_LOGIN_ALIASES",
+        '("login", "=", login)',
+    )
+    for token in forbidden_tokens:
+        if token in text:
             errors.append(
-                "smart_construction_custom: security policy missing formal role login "
-                f"{login!r}"
+                "smart_construction_custom: security policy must derive roles from "
+                f"authoritative groups, not login aliases: {token!r}"
             )
-    alias_start = text.find("LEGACY_ROLE_LOGIN_ALIASES")
-    for login in legacy_logins:
-        quoted = f'"{login}"'
-        if text.count(quoted) != 1 or text.find(quoted) < alias_start:
-            errors.append(
-                "smart_construction_custom: historical demo role login must appear only as "
-                f"historical alias: {login!r}"
-            )
-    try:
-        module_ast = ast.parse(text, filename=str(path))
-        alias_node = next(
-            node.value
-            for node in module_ast.body
-            if isinstance(node, ast.Assign)
-            for target in node.targets
-            if isinstance(target, ast.Name) and target.id == "LEGACY_ROLE_LOGIN_ALIASES"
-        )
-        alias_map = ast.literal_eval(alias_node)
-    except Exception as exc:
-        errors.append(f"smart_construction_custom: unable to parse historical role login aliases: {exc}")
-        return errors
-    expected_alias_map = {
-        login: (login.replace("sc_", "demo_", 1),)
-        for login in required_formal_logins
-    }
-    if alias_map != expected_alias_map:
-        errors.append(
-            "smart_construction_custom: historical role login aliases must exactly match "
-            "the formal role login alias map"
-        )
     return errors
 
 

@@ -1,3 +1,4 @@
+from odoo.tests import tagged
 from odoo.tests.common import TransactionCase
 
 from odoo.addons.smart_construction_core.core_extension_actor_roles import resolve_release_actor_role_codes
@@ -11,6 +12,7 @@ from odoo.addons.smart_core.delivery.menu_service import MenuService
 from odoo.addons.smart_core.identity.identity_resolver import IdentityResolver
 
 
+@tagged("post_install", "-at_install", "user_data_boundary")
 class TestProjectMemberRoleSurface(TransactionCase):
     def _resolver(self):
         resolver = IdentityResolver()
@@ -66,6 +68,16 @@ class TestProjectMemberRoleSurface(TransactionCase):
     def test_finance_navigation_is_not_affected_by_project_member_policy(self):
         nodes = [{"meta": {"model": "payment.request", "action_id": 2}, "children": []}]
         self.assertEqual(MenuService._filter_role_surface_nodes(nodes, {"role_code": "finance"}), nodes)
+
+    def test_restricted_role_has_no_release_or_delivery_navigation(self):
+        resolver = self._resolver()
+        surface = resolver.build_role_surface(set(), [], {"workspace.home"}, ROLE_SURFACE_OVERRIDES)
+        nodes = [{"xmlid": "x.sensitive", "meta": {"model": "payment.request"}, "children": []}]
+
+        self.assertEqual(surface["role_code"], "restricted")
+        self.assertTrue(surface["deny_all_navigation"])
+        self.assertEqual(resolver.filter_nav_for_role_surface(nodes, surface), [])
+        self.assertEqual(MenuService._filter_role_surface_nodes(nodes, surface), [])
 
     def test_known_unreachable_actions_are_removed_by_stable_identifiers(self):
         resolver = self._resolver()

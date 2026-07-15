@@ -40,6 +40,9 @@ class TestIdentityResolverEntryTarget(unittest.TestCase):
         role_surface = resolver.build_role_surface(set(), [], {"workspace.home"})
 
         self.assertEqual(role_surface.get("landing_scene_key"), "workspace.home")
+        self.assertEqual(role_surface.get("role_code"), "restricted")
+        self.assertEqual((role_surface.get("role_evidence") or {}).get("source"), "no_authoritative_role")
+        self.assertTrue(role_surface.get("deny_all_navigation"))
         self.assertEqual(((role_surface.get("landing_entry_target") or {}).get("type")), "scene")
         self.assertEqual(((role_surface.get("landing_entry_target") or {}).get("scene_key")), "workspace.home")
         self.assertEqual(((role_surface.get("landing_entry_target") or {}).get("route")), "/s/workspace.home")
@@ -73,7 +76,7 @@ class TestIdentityResolverEntryTarget(unittest.TestCase):
         self.assertEqual(role_surface.get("landing_scene_key"), "workspace.home")
         self.assertEqual(
             role_surface.get("scene_candidates"),
-            ["portal.dashboard", "workspace.home", "projects.ledger", "cost.project_budget"],
+            ["workspace.home", "projects.ledger", "cost.project_budget"],
         )
 
     def test_build_role_surface_appends_available_scene_keys_when_nav_lacks_scene_identity(self):
@@ -94,7 +97,19 @@ class TestIdentityResolverEntryTarget(unittest.TestCase):
 
         self.assertEqual(
             role_surface.get("scene_candidates"),
-            ["portal.dashboard", "workspace.home", "cost.project_budget", "projects.ledger"],
+            ["workspace.home", "cost.project_budget", "projects.ledger"],
+        )
+
+    def test_unassigned_user_navigation_fails_closed(self):
+        resolver = target.IdentityResolver()
+        surface = resolver.build_role_surface(set(), [], {"workspace.home"})
+
+        self.assertEqual(
+            resolver.filter_nav_for_role_surface(
+                [{"xmlid": "x.sensitive", "meta": {"model": "payment.request"}, "children": []}],
+                surface,
+            ),
+            [],
         )
 
     def test_infer_default_route_from_nav_prefers_scene_entry_target(self):
