@@ -188,6 +188,20 @@ expected_counts = {
 if counts != expected_counts:
     fail("fixed object counts mismatch: %s" % counts)
 
+journey_settlement = env.ref("smart_construction_demo.fe_journey_settlement_a", raise_if_not_found=False)
+journey_request = env.ref("smart_construction_demo.fe_journey_payment_request_a", raise_if_not_found=False)
+if not journey_settlement or not journey_request:
+    fail("FE-B04 journey records are missing")
+if not (
+    journey_request.settlement_id == journey_settlement
+    and journey_request.project_id == project_a
+    and journey_request.state == "draft"
+    and journey_request.validation_status in (False, "no")
+    and journey_request.amount == 100.0
+    and not journey_request.ledger_line_ids
+):
+    fail("FE-B04 journey baseline is not deterministic")
+
 print("[verify.frontend.fixture] PASS")
 print(json.dumps({
     "db": env.cr.dbname,
@@ -202,4 +216,10 @@ print(json.dumps({
     "relations": "consistent",
     "request_distribution": request_distribution,
     "empty_filter": "payment.request state=cancel",
+    "financial_workspace_journey": {
+        "settlement": journey_settlement.name,
+        "payment_request": journey_request.name,
+        "state": journey_request.state,
+        "ledger_count": len(journey_request.ledger_line_ids),
+    },
 }, ensure_ascii=False, indent=2))

@@ -859,7 +859,7 @@ async function changeCompanyScope(event: Event) {
     operation_strategy: selectedOperationStrategy.value,
   });
   await loadProjectOptions();
-  emitProjectContextChanged(previousProjectId);
+  emitProjectContextChanged(previousProjectId, true);
 }
 
 async function changeOperationScope(operationStrategy: string) {
@@ -871,7 +871,7 @@ async function changeOperationScope(operationStrategy: string) {
     operation_strategy: normalized,
   });
   await loadProjectOptions();
-  emitProjectContextChanged(previousProjectId);
+  emitProjectContextChanged(previousProjectId, true);
 }
 
 async function clearProjectSelection() {
@@ -1122,12 +1122,13 @@ function closeProjectMenu() {
   projectMenuOpen.value = false;
 }
 
-function emitProjectContextChanged(previousProjectId = 0) {
+function emitProjectContextChanged(previousProjectId = 0, scopeChanged = false) {
   if (typeof window === 'undefined') return;
   window.dispatchEvent(new CustomEvent(PROJECT_CONTEXT_CHANGED_EVENT, {
     detail: {
       previous_project_id: previousProjectId || null,
       selected_project_id: selectedProject.value?.id || null,
+      scope_changed: scopeChanged,
     },
   }));
 }

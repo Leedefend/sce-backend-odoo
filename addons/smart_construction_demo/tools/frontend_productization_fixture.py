@@ -344,6 +344,89 @@ def _execution(env, suffix, project, contract, request, partner, state, amount):
     )
 
 
+def _payment_journey(env, project, contract, partner):
+    """Reconcile the isolated FE-B04 mutation journey to its deterministic start."""
+    settlement = _upsert(
+        env,
+        "sc.settlement.order",
+        "fe_journey_settlement_a",
+        [("name", "=", "FE-JOURNEY-SETTLEMENT-001"), ("project_id", "=", project.id)],
+        {
+            "name": "FE-JOURNEY-SETTLEMENT-001",
+            "title": "FE Journey Settlement",
+            "project_id": project.id,
+            "contract_id": contract.id,
+            "partner_id": partner.id,
+            "settlement_unit_id": partner.id,
+            "settlement_type": "out",
+            "company_id": project.company_id.id,
+            "currency_id": project.company_id.currency_id.id,
+            "state": "approve",
+        },
+    )
+    _upsert(
+        env,
+        "sc.settlement.order.line",
+        "fe_journey_settlement_line_a",
+        [("settlement_id", "=", settlement.id), ("name", "=", "FE Journey payable line")],
+        {
+            "settlement_id": settlement.id,
+            "contract_id": contract.id,
+            "name": "FE Journey payable line",
+            "qty": 1.0,
+            "price_unit": 100.0,
+        },
+    )
+    category = _ref(env, "smart_construction_core.business_category_finance_payment_apply_pay")
+    existing_request = env.ref(
+        "smart_construction_demo.fe_journey_payment_request_a",
+        raise_if_not_found=False,
+    )
+    if existing_request:
+        existing_request.sudo().message_ids.unlink()
+        env["payment.ledger"].sudo().search([
+            ("payment_request_id", "=", existing_request.id),
+        ]).with_context(allow_payment_reversal=True).unlink()
+        existing_request.sudo().review_ids.unlink()
+        env["mail.activity"].sudo().search([
+            ("res_model", "=", "payment.request"),
+            ("res_id", "=", existing_request.id),
+        ]).unlink()
+        # Acceptance reset is deliberately out-of-band: the journey itself must
+        # exercise the guarded intent, while setup must be able to restore the
+        # same pre-transition row after a previous successful browser run.
+        env.cr.execute(
+            "UPDATE payment_request SET state=%s, validation_status=%s WHERE id=%s",
+            ("draft", "no", existing_request.id),
+        )
+        existing_request.invalidate_recordset(["state", "validation_status"])
+    request = _upsert(
+        env,
+        "payment.request",
+        "fe_journey_payment_request_a",
+        [("name", "=", "FE-JOURNEY-PAYMENT-001"), ("project_id", "=", project.id)],
+        {
+            "name": "FE-JOURNEY-PAYMENT-001",
+            "type": "pay",
+            "business_category_id": category.id,
+            "project_id": project.id,
+            "contract_id": contract.id,
+            "settlement_id": settlement.id,
+            "partner_id": partner.id,
+            "currency_id": project.company_id.currency_id.id,
+            "amount": 100.0,
+            "state": "draft",
+            "note": "FE-B04 isolated permitted action journey",
+        },
+    )
+    env["payment.ledger"].sudo().search([
+        ("payment_request_id", "=", request.id),
+    ]).with_context(allow_payment_reversal=True).unlink()
+    request.invalidate_recordset()
+    settlement.invalidate_recordset()
+    return settlement, request
+
+
 def ensure_fixture(env) -> Dict[str, Any]:
     _guard_acceptance_scope(env)
     """Create or reconcile the fixed dataset and return a secret-free summary."""
@@ -429,6 +512,12 @@ def ensure_fixture(env) -> Dict[str, Any]:
     _execution(env, "A", project_a, contract_a, request_a, partner_a, "paid", 1000.0)
     _execution(env, "B", project_b, contract_b, request_b, partner_b, "draft", 1000.0)
     _execution(env, "C", project_c, contract_c, request_c, partner_c, "confirmed", 1000.0)
+    journey_settlement, journey_request = _payment_journey(
+        env,
+        project_a,
+        contract_a,
+        partner_a,
+    )
 
     return {
         "db": env.cr.dbname,
@@ -440,5 +529,11 @@ def ensure_fixture(env) -> Dict[str, Any]:
             "settlements": 3,
             "payment_requests": 4,
             "payment_executions": 3,
+        },
+        "journey": {
+            "settlement": journey_settlement.name,
+            "payment_request": journey_request.name,
+            "state": journey_request.state,
+            "ledger_count": len(journey_request.ledger_line_ids),
         },
     }

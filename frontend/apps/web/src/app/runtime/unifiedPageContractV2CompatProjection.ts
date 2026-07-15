@@ -349,6 +349,9 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
   const v2SourceContext = resolveUnifiedPageContractV2SourceContext(v2Contract);
   const v2SearchContract = resolveV2SearchContract(v2Contract);
   const v2Collaboration = resolveV2CollaborationContract(v2Contract);
+  const v2Runtime = asDict(v2Contract.runtimeContract);
+  const businessWorkspace = asDict(v2Runtime.businessWorkspace);
+  const businessActions = asList(v2Runtime.businessActions).filter((item) => Object.keys(asDict(item)).length);
   const v2ListProfile = resolveUnifiedPageContractV2ListProfile(v2Contract);
   const sourceListProfile = v2ListProfile;
   const formalFieldGroups = resolveUnifiedPageContractV2FieldGroups(v2Contract);
@@ -486,6 +489,8 @@ function buildRuntimeProjectionFromV2(v2Contract: Dict, requestParams: Dict = {}
           save: '保存',
           cancel: '取消',
         },
+        ...(Object.keys(businessWorkspace).length ? { business_workspace: businessWorkspace } : {}),
+        ...(businessActions.length ? { business_actions: businessActions } : {}),
         ...(chatterEnabled ? {
           chatter: Object.keys(v2Chatter).length
             ? { ...v2Chatter, enabled: true }

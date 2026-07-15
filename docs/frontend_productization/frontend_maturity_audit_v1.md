@@ -143,3 +143,38 @@ role_leaf_counts = finance:42, project_member:9, pm:14, owner:5
 最终机器巡检结果：finance 42、project member 9、PM 14、owner 5，共 `authoritative_leaf_count=70`、`scanned=70`、`reachable=70`、`identity_pass=70`；menu/action XML ID 缺失为 0，通用“业务动作”标题、技术模型标题、裸 ID、undefined/null、403、unresolved 均为 0，70 个导航表面的 identity source 均为 action。证据为 `artifacts/frontend-page-identity/full-surface-report.json` 和同步生成的 `docs/frontend_productization/frontend_surface_inventory_v1.csv`。
 
 16 个深度场景全部 PASS：项目列表/Project A 详情、合同列表/详情由具备正式访问职责的 PM 验证；finance 验证结算、付款申请、付款执行的列表/详情以及合法新建、编辑、404 和公司 A→B→A；project member 验证 logout 后不残留 finance identity 以及敏感 action 的安全拒绝。每个常规页面均检查 heading、`document.title`、breadcrumb、identity source、刷新稳定性、console/pageerror 和 HTTP；权限拒绝报告同时确认响应不包含目标记录名称。项目成员详情附属请求仍受既有权限边界约束，本分支没有为深度场景修改 ACL、record rule、role policy、fixture 或导航。
+
+## FE-B04 合同—结算—付款工作区实施前契约事实
+
+验收库 `sc_frontend_acceptance` 的只读运行时探针确认，资金链权威事实来自既有 Odoo 模型字段、`sc.workflow.contract.service` 和付款申请专用 intent；页面不得从显示值反算金额或只凭状态字符串推断操作。固定公司 A 链的事实矩阵如下：
+
+| 对象 | 模型 / fixture | 当前状态与主标识 | 权威金额事实（CNY） | 上下游关系 | 合法操作与角色证据 |
+| --- | --- | --- | --- | --- | --- |
+| 项目 | `project.project` / `fe_project_a` | `FE Project A` | 无资金金额字段 | 下游合同 1 条 | finance 对项目主表受现有“负责人或关注者”记录规则限制；PM/project member 可读 Project A |
+| 合同 | `construction.contract` / `fe_contract_a` | 已生效；`CONOUT2600001` / `FE-A Contract` | 含税原始金额 1130；最终合同价 1130；累计实付 1000 | 上游 Project A；下游结算 1 条 | finance/PM/owner 可读；状态操作继续由原 workflow contract 与模型方法控制 |
+| 结算 | `sc.settlement.order` / `fe_settlement_a` | 批准；`FE-A-SET-001` | 行合计 1000；扣款 0；调整后付款基数 1000；付款申请占额 1000；剩余可占额 0；台账实际已付当前为 0 | 上游合同；下游付款申请 2 条 | finance/PM 可读；本分支不新增结算状态操作 |
+| 付款申请 | `payment.request` / `fe_request_a_001` | 已批准；`FE-A-PR-001` | 申请/占额 1000；台账实际已付 0 | 上游合同、结算；下游付款执行 1 条；当前无台账 | finance 可读；专用 `payment.request.available_actions` 联合状态、方法、前置条件和角色组投影，执行统一走 `payment.request.execute` |
+| 付款执行 | `sc.payment.execution` / `fe_execution_a` | 已付款；`FE-A-PE-001` | 计划/执行金额 1000；实付 1000 | 上游付款申请、合同；台账经付款申请关联 | finance 可读；既有 `action_confirm/action_paid/action_cancel` 受模型状态、审批与财务组共同保护，本分支不绕过为通用 write |
+| 付款台账 | `payment.ledger` / 固定链当前 0 条 | 无独立业务编号；由付款申请完成或付款执行登记付款自动生成 | `amount` 是唯一台账实付事实 | 上游付款申请，结算由付款申请反查 | 仅后端 `_ensure_payment_ledger` 的受控上下文可创建；前端不得直接 create/write |
+
+关系字段的原始 page/form contract 形态为 many2one `[id, display_name]` 或 one2many ID/行集合：合同 `project_id`，结算 `contract_id/payment_request_ids`，付款申请 `contract_id/settlement_id/ledger_line_ids`，付款执行 `payment_request_id/contract_id`。项目到合同、合同到结算、付款申请到执行没有完整的双向前端关系契约，必须由只读工作区契约在用户现有 record rule 内投影；无权记录不得先读取名称再禁用链接。
+
+金额语义已经由 `operating_metrics` 冻结：`settlement_reserved_amount_map` 汇总状态在 submit/approve/approved/done 的付款申请占额，`settlement_remaining_reservable_amount` 计算后端剩余可占额，`settlement_actual_paid_amount_map` 只以 `payment.ledger` 为实际已付事实，`contract_actual_paid_amount_map` 只汇总已付款执行。现有结算兼容字段 `paid_amount/amount_paid` 实际承载占额而非台账实付；因此工作区必须显式标注“已占额”和“实际已付”，并由后端补充非存储只读事实字段，不能把兼容字段改名冒充实付。
+
+币种由各记录 `currency_id` 返回，货币字段的 `currency_field` 仍是唯一格式化依据；状态标签来自 Odoo Selection 描述和 workflow contract 的 statusbar。操作按钮由付款申请专用可用操作契约与现有 intent 共同决定，成功后至少重读当前付款申请、关联结算摘要、付款执行和付款台账；失败时不修改本地状态。
+
+四角色现行边界为：finance 可读合同、结算、付款申请和付款执行，并可在公司 A/B 间切换；project member 只可读 Project A，当前 record rule 不允许读取该固定合同及任何财务对象；PM 可读 Project A、合同和结算但无付款申请/执行 ACL；owner 可读合同，但 Project A 主表及结算/付款对象受现有规则或 ACL 拒绝。上述事实不构成本分支修改 ACL、record rule 或 fixture 授权的依据。特别地，J04 文案中的 finance 直接打开 Project A 主表与当前记录规则不一致；实现只能把 Project A 作为财务链内的安全上下文文本/不可点击关系，正式项目详情入口仍由有权的 PM 验证，除非后续权限分支明确授权。
+
+J04–J06 先前只能证明列表和通用详情可打开，根因是通用 form canvas 将所有字段同权平铺：没有声明式 L1–L5 资金工作区、没有安全的正反向关系投影、没有区分占额与台账实付，也没有验收专用且可复位的合法状态转换记录。固定 `fe_execution_a` 是 fixture 直接写入 `paid` 状态，并未调用业务方法，所以固定链没有付款台账；它不能被当作操作闭环证据。FE-B04 必须使用同一 acceptance fixture 框架增加可复位的 `FE Journey` 记录，并只通过正式 intent 完成一次真实转换。
+
+## FE-B04 合同—结算—付款工作区交付事实
+
+最终实现以 `financial_workspace_contract` 为唯一声明式详情投影：后端按模型声明 L2 事实、L3 关系、L4 明细和 L5 审计信息，前端 `FinancialRelationshipWorkspace`、统一货币格式化和关系链接只消费契约，不在 `ContractFormPage` 中新增逐模型分支。legacy 与 Unified Page Contract V2 均携带同一 `businessWorkspace/businessActions`；付款操作仍由 `payment.request.available_actions` 和 `payment.request.execute` 决定，前端不直接 write 状态或计算金额。
+
+关系投影先以当前用户执行 `_safe_record`、ACL 和 record rule 检查，再读取标签和生成正式 record route；不可读关系不返回标题或链接。公司/经营范围切换会清空 activity page 标题和 KeepAlive cache epoch，随后重新执行 `system.init`，因此公司 A 的详情标题不会残留到公司 B。finance 对 Project A 主表和合同正式 action 的既有权限限制保持不变：J04 的项目入口、合同、结算由 PM 的合法权限完成；finance 负责 J05、J06 和公司隔离。未修改 ACL、record rule、角色策略、导航分母或金额/状态机。
+
+金额展示直接使用后端字段与 `operating_metrics`：合同原始/最终/累计实付，结算原始/扣款/调整后基数/占额/台账实付/剩余可占额，付款申请申请额/占额/台账金额，以及执行计划额/实付结果分别展示；0 与 null 使用不同显示语义，币种随每个事实返回，混合币种风险由后端契约标记且不换算。固定链明确显示付款申请占额 1000 CNY、台账实付 0 CNY和“暂无实付 / 台账结果”，没有把已付款执行反算成台账金额。
+
+J04 PASS：PM 打开 Project A，沿真实关系进入 `CONOUT2600001` 和 `FE-A-SET-001`，验证 1130/1000 CNY、刷新后关系恢复并从结算反向返回合同。J05 PASS：finance 从结算进入 `FE-A-PR-001`、`FE-A-PE-001` 和显式空台账，逐级返回时编号、状态、币种和占额/实付口径一致。J06 PASS：专用 `FE-JOURNEY-PAYMENT-001` 从 draft 经确认对话框调用 `payment.request.execute` 转为 submit；详情权威重载后提交按钮消失，关联结算占额从 0 变为 100、剩余从 100 变为 0，台账实付仍为 0。相同 request ID、新 request ID 重放、无权限角色和非法状态均未产生第二次状态/金额/台账变更。
+
+浏览器报告 `artifacts/frontend-financial-workspace/report.json` 记录 J04/J05/J06、公司 A→B→A、project member 无泄露拒绝和 1440×900、1280×800、390×844 三种尺寸全部 PASS；console error、pageerror 与非预期 HTTP 错误均为 0。窄屏下详情容器显式允许 grid item 收缩，宽明细表只在自身容器内滚动，页面根节点无横向滚动。对话框 Enter 提交、初始焦点和返回焦点均由公共确认组件处理，提交期间禁用并防止重复触发。

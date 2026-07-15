@@ -1279,7 +1279,7 @@ class PageAssembler:
             return
         model = str(model_name or "").strip()
         profile = str(render_profile or data.get("render_profile") or "").strip().lower()
-        if not model or profile != "edit" or not record_id or int(record_id or 0) <= 0:
+        if not model or profile not in {"", "edit", "readonly"} or not record_id or int(record_id or 0) <= 0:
             return
         payload = call_extension_hook_first(
             self.env,
@@ -1292,7 +1292,8 @@ class PageAssembler:
         if not isinstance(payload, dict):
             return
         actions = payload.get("actions") if isinstance(payload.get("actions"), list) else []
-        if not actions:
+        business_workspace = payload.get("business_workspace") if isinstance(payload.get("business_workspace"), dict) else {}
+        if not actions and not business_workspace:
             return
         views = data.get("views") if isinstance(data.get("views"), dict) else {}
         form = views.get("form") if isinstance(views.get("form"), dict) else {}
@@ -1333,6 +1334,8 @@ class PageAssembler:
                 button["semantic"] = "primary_action" if bool(action.get("primary")) else "secondary_action"
         form["header_buttons"] = header_buttons
         form["business_actions"] = actions
+        if business_workspace:
+            form["business_workspace"] = business_workspace
         attachments = payload.get("attachments") if isinstance(payload.get("attachments"), dict) else {}
         if attachments:
             current_attachments = form.get("attachments") if isinstance(form.get("attachments"), dict) else {}
