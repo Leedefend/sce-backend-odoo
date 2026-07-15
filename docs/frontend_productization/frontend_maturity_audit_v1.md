@@ -178,3 +178,36 @@ J04–J06 先前只能证明列表和通用详情可打开，根因是通用 for
 J04 PASS：PM 打开 Project A，沿真实关系进入 `CONOUT2600001` 和 `FE-A-SET-001`，验证 1130/1000 CNY、刷新后关系恢复并从结算反向返回合同。J05 PASS：finance 从结算进入 `FE-A-PR-001`、`FE-A-PE-001` 和显式空台账，逐级返回时编号、状态、币种和占额/实付口径一致。J06 PASS：专用 `FE-JOURNEY-PAYMENT-001` 从 draft 经确认对话框调用 `payment.request.execute` 转为 submit；详情权威重载后提交按钮消失，关联结算占额从 0 变为 100、剩余从 100 变为 0，台账实付仍为 0。相同 request ID、新 request ID 重放、无权限角色和非法状态均未产生第二次状态/金额/台账变更。
 
 浏览器报告 `artifacts/frontend-financial-workspace/report.json` 记录 J04/J05/J06、公司 A→B→A、project member 无泄露拒绝和 1440×900、1280×800、390×844 三种尺寸全部 PASS；console error、pageerror 与非预期 HTTP 错误均为 0。窄屏下详情容器显式允许 grid item 收缩，宽明细表只在自身容器内滚动，页面根节点无横向滚动。对话框 Enter 提交、初始焦点和返回焦点均由公共确认组件处理，提交期间禁用并防止重复触发。
+
+## FE-B05 我的工作、业务表单与审批实施前事实
+
+现有入口为 `/my-work` 与 scene `my_work.workspace`，前端 `MyWorkView` 调用正式 intent `my.work.summary`。旧契约聚合 `mail.activity`、`tier.review`、历史 `sc.workflow.workitem`、项目任务/风险、负责项目、消息和关注记录，分区为“待我处理/我负责/@我的/我关注的”；它没有产品要求的“我发起的/最近完成”，也没有付款审批所需的金额、公司、往来方、发起人、状态和可用 action。更关键的是旧 handler 使用 `sudo` 搜索、计数和读取 record title，再尝试按项目范围裁剪，数量与最终列表不是同一权限结果，不能作为本分支的权威工作项边界。
+
+付款申请已有完整正式 intent 链：`payment.request.available_actions` 组合当前 Odoo state、模型方法、业务前置条件和正式角色组；所有状态转换统一由 `payment.request.execute` 委托 submit/approve/reject/done handler，具备 request-id 幂等、审计和后端权限拒绝。审批交接的正式角色是 `smart_construction_custom.group_sc_role_executive`（管理层），验收账号 `demo_role_executive` 已存在；finance 角色负责 draft→submit 和 approved→done，executive 负责 submit→approved 或 submit→draft（reject，reason 必填）。PM、owner 和 project member 没有付款审批 action 证据，不纳入付款待办。
+
+| 业务对象 | 当前状态 | 可执行操作 | 正式 capability / intent | 合法角色 | 权威待办语义 | 完成后去向 |
+| --- | --- | --- | --- | --- | --- | --- |
+| 合同 `construction.contract` | 由 workflow contract 返回 | 仅 contract 明确允许的模型方法 | `sc.workflow.contract.service` | 按现有 contract action | 本分支没有稳定的审批工作项证据 | 保持业务详情 |
+| 结算 `sc.settlement.order` | draft/submit/approve/done 等既有状态 | 由 workflow contract 返回 | `sc.workflow.contract.service` | PM/finance 现有权限 | 没有可证明与角色一一对应的待办载体 | 保持业务详情 |
+| 付款申请 `payment.request` | draft | submit | `payment.request.available_actions` → `payment.request.execute` | finance | 进入“我发起的”，不进入审批人的“待我处理” | submit 后交接 executive |
+| 付款申请 `payment.request` | submit | approve/reject | 同上；正式角色组 `group_sc_role_executive` | executive | executive“待我处理” | approve/reject 后从待办移除并进入最近完成 |
+| 付款申请 `payment.request` | approved | done | 同上 | finance | finance“待我处理” | done 后进入最近完成并产生既有台账副作用 |
+| 付款执行 `sc.payment.execution` | 既有状态 | 模型 contract 明确操作 | 现有 workflow/model method | finance | 当前没有独立 My Work 权威投影 | 保持资金详情 |
+
+表单字段的 label、required、readonly、selection、relation/domain、default、currency 和 help 均来自 action/page contract 的 field schema、native view modifier 与 onchange；保存走 `api.data` create/write，提交走付款专用 intent。后端错误通过统一 envelope 的 field errors、reason code、message 和 suggested action 返回。当前 J07 阻塞于 My Work 的不可信 `sudo` 聚合、非产品分区和工作项事实缺失；J08 阻塞于结算详情没有权威“新建付款申请”入口、表单缺少付款业务分组，以及旧浏览器 handoff smoke 可因 token/候选缺失标记 skipped，不能证明真实提交—审批—待办迁移。
+
+本分支据此只建立付款申请的权威工作项投影：当前用户必须先通过 payment.request 的 ACL/record rule，随后每条记录再由 available-actions contract 判定是否进入待处理；“我发起的”按 `create_uid` 且仍在当前公司/项目范围读取；“最近完成”只展示当前用户发起或真实参与审批且已离开可操作状态的记录。不得用 `sudo`、中文状态文案或前端数组模拟转移。
+
+## FE-B05 我的工作、业务表单与审批交付事实
+
+最终 My Work 契约由 `payment_request_work_item_service` 在当前用户环境内聚合，不使用 `sudo`：先验证付款申请模型读取权限与 finance/executive 正式 capability，再按当前唯一 active company、record rule、`create_uid` 和 `payment.request.available_actions` 生成“待我处理/我发起的/最近完成”。数量与列表来自同一结果；project member、PM、owner 没有付款工作项 capability 时在读取敏感记录前返回空产品工作区。公司切换、角色切换、logout/login、保存和状态 intent 成功后均重新请求契约，不通过前端数组模拟迁移。最近完成只在现有审计载体可证明当前用户真实参与时返回；无法安全证明时隐藏该分区。
+
+角色矩阵冻结为：finance 可创建、保存、编辑并提交付款申请，approved 状态下可执行既有 done 操作；正式 executive 角色 `group_sc_role_executive` 可审批或拒绝 submit 状态申请，拒绝理由必填；project member、PM、owner 均没有付款审批按钮和工作项。验收沿用已有 `demo_role_executive`，没有新增角色、ACL、record rule、金额公式或状态转换。Journey fixture 仅在 `sc_frontend_acceptance` 增加可复位起始记录，并由正式 intent 产生 submit、approve/reject 结果。
+
+付款申请表单字段 schema 继续取自 action/page contract 和原生 view modifier；资金工作区只补充权威 entry defaults、关系显示名和 `project_scope_policy=exempt`。该策略只阻止全局项目上下文污染 finance 的公司级 create，不放宽后端访问：显式 company、settlement、contract、project 值仍由现有 ACL、record rule、domain、onchange 和 create 校验。提交返回 `type=refresh` 时前端保留当前业务详情并重新加载权威状态，不再误跟随 legacy compatibility action 进入无权 action。
+
+J07 PASS：finance 公司 A 打开 My Work 时待处理 4、我发起的 5，数量与列表一致；进入付款申请、返回并提交草稿后工作项重新读取；A→B 时 A 项消失且 B 项出现，B→A 后 A 结果恢复。J08 PASS：finance 从专用结算入口创建 `PRQ2600028`，验证默认项目/合同/结算与必填校验，保存、刷新、重新编辑并提交；logout 后 `demo_role_executive` 登录，申请进入待处理，批准后移出待办；finance 再登录可见 approved 权威状态。缺少必填、拒绝缺少理由两条失败路径均保持状态、金额和工作项数量不变，合法拒绝才产生正式状态转换；重复提交由提交中禁用、request-id 幂等和后端非法状态共同阻止。
+
+浏览器报告 `artifacts/frontend-my-work-approval/report.json` 记录 J07/J08、1440×900、1280×800、390×844、project member 隔离全部 PASS；console error、pageerror 和非预期 HTTP 错误为 0。390 宽度下卡片和表单为单列且页面无横向滚动；原生 dialog 打开后焦点进入，关闭后返回触发按钮，提交期间按钮禁用。FE-B02/B03/B04 回归分别保持 70/70 权威叶节点可达、action 876/menu 606 明确拒绝、页面身份守卫通过、J02–J06 PASS，四个已移除入口没有回升。
+
+当前明确边界：产品 My Work 只投影具有完整权限和动作事实的付款申请；合同、结算、付款执行等对象尚无可证明的统一工作项载体，因此未以状态字符串推断加入。最近完成在审计参与证据不可读时隐藏，不以扩大审计模型权限换取展示。
