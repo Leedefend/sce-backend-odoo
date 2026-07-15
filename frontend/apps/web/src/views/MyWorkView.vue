@@ -1,6 +1,12 @@
 <template>
+  <MyWorkApprovalWorkspace
+    v-if="productWorkspace && !loading && !errorText"
+    :workspace="productWorkspace"
+    @refresh="load"
+  />
+
   <PageRenderer
-    v-if="useUnifiedMyWorkRenderer"
+    v-else-if="useUnifiedMyWorkRenderer"
     :contract="myWorkOrchestrationContract"
     :datasets="myWorkOrchestrationDatasets"
     @action="handleMyWorkBlockAction"
@@ -473,7 +479,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { completeMyWorkItemsBatch, fetchMyWorkSummary, type MyWorkRecordItem, type MyWorkSection, type MyWorkSummaryItem } from '../api/myWork';
+import { completeMyWorkItemsBatch, fetchMyWorkSummary, type MyWorkRecordItem, type MyWorkSection, type MyWorkSummaryItem, type ProductMyWorkWorkspace } from '../api/myWork';
 import { trackUsageEvent } from '../api/usage';
 import StatusPanel from '../components/StatusPanel.vue';
 import { buildStatusError, resolveEmptyCopy, resolveErrorCopy, resolveSuggestedAction, type StatusError } from '../composables/useStatus';
@@ -486,6 +492,7 @@ import { executePageContractAction } from '../app/pageContractActionRuntime';
 import PageRenderer from '../components/page/PageRenderer.vue';
 import type { PageBlockActionEvent, PageOrchestrationContract } from '../app/pageOrchestration';
 import { useSessionStore } from '../stores/session';
+import MyWorkApprovalWorkspace from '../components/business/MyWorkApprovalWorkspace.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -534,6 +541,7 @@ const statusError = ref<StatusError | null>(null);
 const sections = ref<MyWorkSection[]>([]);
 const summary = ref<MyWorkSummaryItem[]>([]);
 const items = ref<MyWorkRecordItem[]>([]);
+const productWorkspace = ref<ProductMyWorkWorkspace | null>(null);
 const activeSection = ref<string>('todo');
 const todoSelectionIds = ref<number[]>([]);
 const retryFailedIds = ref<number[]>([]);
@@ -938,6 +946,7 @@ async function load() {
     sections.value = Array.isArray(data.sections) ? data.sections : [];
     summary.value = Array.isArray(data.summary) ? data.summary : [];
     items.value = Array.isArray(data.items) ? data.items : [];
+    productWorkspace.value = data.product_workspace || null;
     generatedAt.value = String(data.generated_at || '');
     summaryStatus.value = data.status || null;
     summaryVisibility.value = data.visibility || null;
@@ -973,6 +982,7 @@ async function load() {
     errorText.value = err instanceof Error ? err.message : pageText('error_request_failed', '请求失败');
     statusError.value = buildStatusError(err, errorText.value);
     summaryVisibility.value = null;
+    productWorkspace.value = null;
   } finally {
     suspendAutoLoad.value = false;
     loading.value = false;

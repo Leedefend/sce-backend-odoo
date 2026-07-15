@@ -95,8 +95,8 @@ function withCurrentProjectContext(session: ReturnType<typeof useSessionStore>, 
       || payload.context?.projectScopePolicy
       || '',
   ).trim().toLowerCase();
+  const shouldUseProjectScope = projectScopePolicy !== 'global' && projectScopePolicy !== 'exempt';
   if (isMenuListRequest) {
-    const shouldUseProjectScope = projectScopePolicy !== 'global' && projectScopePolicy !== 'exempt';
     const context = {
       ...(payload.context || {}),
       ...(companyId ? { company_id: companyId } : {}),
@@ -133,8 +133,10 @@ function withCurrentProjectContext(session: ReturnType<typeof useSessionStore>, 
     ...(payload.context || {}),
     ...(companyId ? { company_id: companyId } : {}),
     ...(operationStrategy ? { operation_strategy: operationStrategy } : {}),
-    ...(projectId ? { current_project_id: projectId } : {}),
+    ...(projectScopePolicy ? { project_scope_policy: projectScopePolicy } : {}),
+    ...(shouldUseProjectScope && projectId ? { current_project_id: projectId } : {}),
   };
+  if (!shouldUseProjectScope) delete context.current_project_id;
   if (params && typeof params === 'object' && !Array.isArray(params)) {
     const paramsRecord = params as Record<string, unknown>;
     const requestContext = (paramsRecord.context && typeof paramsRecord.context === 'object' && !Array.isArray(paramsRecord.context))
@@ -144,11 +146,17 @@ function withCurrentProjectContext(session: ReturnType<typeof useSessionStore>, 
       ...requestContext,
       ...(companyId ? { company_id: companyId } : {}),
       ...(operationStrategy ? { operation_strategy: operationStrategy } : {}),
-      ...(projectId ? { current_project_id: projectId } : {}),
+      ...(projectScopePolicy ? { project_scope_policy: projectScopePolicy } : {}),
+      ...(shouldUseProjectScope && projectId ? { current_project_id: projectId } : {}),
     };
     if (companyId) paramsRecord.company_id = companyId;
     if (operationStrategy) paramsRecord.operation_strategy = operationStrategy;
-    if (projectId) paramsRecord.current_project_id = projectId;
+    if (shouldUseProjectScope && projectId) {
+      paramsRecord.current_project_id = projectId;
+    } else {
+      delete paramsRecord.current_project_id;
+      delete (paramsRecord.context as Record<string, unknown>).current_project_id;
+    }
   }
   return {
     ...payload,

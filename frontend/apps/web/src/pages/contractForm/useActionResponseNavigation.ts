@@ -22,6 +22,11 @@ export function useActionResponseNavigation(params: {
     const resultRecord = result && typeof result === 'object'
       ? result as Record<string, unknown>
       : null;
+    // Odoo model methods can return a compatibility action alongside the
+    // product gateway's authoritative refresh result.  Refresh keeps the user
+    // on the current business record; the embedded action is not a new
+    // navigation instruction and may not belong to the role's product nav.
+    if (String(resultRecord?.type || '').trim().toLowerCase() === 'refresh') return false;
     const entryTarget = resultRecord?.entry_target && typeof resultRecord.entry_target === 'object'
       ? resultRecord.entry_target as Record<string, unknown>
       : null;
