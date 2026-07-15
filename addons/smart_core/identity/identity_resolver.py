@@ -7,6 +7,12 @@ from odoo.addons.smart_core.core.navigation_entry_target import build_scene_entr
 from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
 
 ROLE_SURFACE_MAP = {
+    "restricted": {
+        "label": "Restricted User",
+        "landing_scene_candidates": ["workspace.home"],
+        "menu_xmlids": [],
+        "deny_all_navigation": True,
+    },
     "owner": {
         "label": "Owner",
         "landing_scene_candidates": ["portal.dashboard", "workspace.home"],
@@ -141,7 +147,7 @@ class IdentityResolver:
                     evidence["candidate_roles"] = sorted(capability_hits.keys())
                 return role, evidence
 
-        return "owner", {"source": "default_owner", "matched_groups": []}
+        return "restricted", {"source": "no_authoritative_role", "matched_groups": []}
 
     def resolve_role_code(self, user_xmlids: set) -> str:
         role_code, _ = self.resolve_role_code_with_evidence(user_xmlids)
@@ -179,6 +185,8 @@ class IdentityResolver:
         label = role_override.get("label")
         if isinstance(label, str) and label.strip():
             merged["label"] = label.strip()
+        if isinstance(role_override.get("deny_all_navigation"), bool):
+            merged["deny_all_navigation"] = role_override["deny_all_navigation"]
         return merged
 
     def _walk_nav_nodes(self, nodes):
@@ -262,7 +270,7 @@ class IdentityResolver:
         role_surface_overrides: dict | None = None,
     ) -> dict:
         role_code, role_evidence = self.resolve_role_code_with_evidence(user_xmlids)
-        role_meta = self._role_surface_map.get(role_code) or self._role_surface_map.get("owner") or {}
+        role_meta = self._role_surface_map.get(role_code) or self._role_surface_map.get("restricted") or {}
         role_meta = self._merge_role_meta(role_code, role_meta, role_surface_overrides)
         scene_candidates = self._merge_scene_candidates(
             list(role_meta.get("landing_scene_candidates") or []),
@@ -302,6 +310,7 @@ class IdentityResolver:
             "model_blocklist": model_blocklist,
             "model_prefix_blocklist": model_prefix_blocklist,
             "group_key_blocklist": group_key_blocklist,
+            "deny_all_navigation": bool(role_meta.get("deny_all_navigation")),
         }
         landing_entry_target = build_scene_entry_target(
             scene_key=landing_scene_key,
@@ -325,6 +334,7 @@ class IdentityResolver:
                 "model_blocklist": list(role_meta.get("model_blocklist") or []),
                 "model_prefix_blocklist": list(role_meta.get("model_prefix_blocklist") or []),
                 "group_key_blocklist": list(role_meta.get("group_key_blocklist") or []),
+                "deny_all_navigation": bool(role_meta.get("deny_all_navigation")),
             }
         return payload
 
@@ -358,6 +368,8 @@ class IdentityResolver:
     def filter_nav_for_role_surface(self, nav_tree: list, role_surface: dict) -> list:
         if not isinstance(nav_tree, list) or not isinstance(role_surface, dict):
             return nav_tree if isinstance(nav_tree, list) else []
+        if role_surface.get("deny_all_navigation"):
+            return []
 
         allow_xmlids = {x for x in (role_surface.get("menu_xmlids") or []) if isinstance(x, str) and x}
         block_xmlids = {x for x in (role_surface.get("menu_blocklist_xmlids") or []) if isinstance(x, str) and x}

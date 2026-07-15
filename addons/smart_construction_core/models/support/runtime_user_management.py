@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-from odoo import api, fields, models
+from odoo import _, api, fields, models
+from odoo.exceptions import ValidationError
 from odoo.osv import expression
 
 
@@ -258,7 +259,10 @@ class ResUsers(models.Model):
                 safe_vals["groups_id"] = [(4, internal_group.id)]
 
         if not existing_user and not safe_vals.get("password"):
-            safe_vals["password"] = self.env.context.get("sc_default_initial_password") or "123456"
+            initial_password = self.env.context.get("sc_default_initial_password")
+            if not initial_password:
+                raise ValidationError(_("创建用户必须通过受控运行时提供初始密码。"))
+            safe_vals["password"] = initial_password
         return safe_vals
 
     @api.model_create_multi
@@ -281,7 +285,10 @@ class ResUsers(models.Model):
             if commands:
                 vals["groups_id"] = commands
             if self.env.context.get("sc_runtime_user_management") and not vals.get("password"):
-                vals["password"] = self.env.context.get("sc_default_initial_password") or "123456"
+                initial_password = self.env.context.get("sc_default_initial_password")
+                if not initial_password:
+                    raise ValidationError(_("创建用户必须通过受控运行时提供初始密码。"))
+                vals["password"] = initial_password
         return super().create(vals_list)
 
     def write(self, vals):

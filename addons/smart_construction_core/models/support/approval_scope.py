@@ -81,7 +81,7 @@ class ScApprovalScopeUserWizard(models.TransientModel):
     name = fields.Char(required=True, string="姓名")
     login = fields.Char(required=True, string="登录名")
     email = fields.Char(string="邮箱")
-    password = fields.Char(default="123456", required=True, string="初始密码")
+    password = fields.Char(required=True, string="初始密码")
 
     def action_create_user(self):
         self.ensure_one()

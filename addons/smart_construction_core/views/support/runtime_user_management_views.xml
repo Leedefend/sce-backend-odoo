@@ -29,7 +29,7 @@
                             <field name="login" string="登录账号" required="1"/>
                             <field name="name" string="姓名" required="1"/>
                             <field name="active" string="启用"/>
-                            <field name="password" string="重置密码" password="True" placeholder="新建默认 123456；编辑时为空则不调整"/>
+                            <field name="password" string="重置密码" password="True" placeholder="新建时必须填写；编辑时为空则不调整"/>
                         </group>
                         <group string="联系方式">
                             <field name="phone" string="手机号"/>
@@ -88,7 +88,7 @@
                 ref('smart_core.group_smart_core_admin'),
             ]),
         ]"/>
-        <field name="context">{'active_test': False, 'sc_runtime_user_management': True, 'sc_default_initial_password': '123456'}</field>
+        <field name="context">{'active_test': False, 'sc_runtime_user_management': True}</field>
         <field name="groups_id" eval="[(6, 0, [
             ref('smart_construction_core.group_sc_cap_business_config_admin'),
             ref('smart_core.group_smart_core_admin'),

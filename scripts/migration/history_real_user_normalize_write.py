@@ -9,12 +9,6 @@ import re
 from pathlib import Path
 
 
-INITIAL_PASSWORD = os.getenv("REAL_USER_INITIAL_PASSWORD", "123456")
-BUSINESS_CONFIG_ADMIN_LOGINS = {
-    item.strip().lower()
-    for item in os.getenv("REAL_USER_BUSINESS_CONFIG_ADMIN_LOGINS", "wutao").split(",")
-    if item.strip()
-}
 EXCLUDED_LEGACY_USER_IDS = {
     item.strip()
     for item in os.getenv("REAL_USER_EXCLUDED_LEGACY_IDS", "10000000").split(",")
@@ -184,14 +178,9 @@ business_initiator_group = env.ref(  # noqa: F821
     "smart_construction_core.group_sc_cap_business_initiator",
     raise_if_not_found=False,
 )
-business_config_group = env.ref(  # noqa: F821
-    "smart_construction_core.group_sc_cap_business_config_admin",
-    raise_if_not_found=False,
-)
 occupied_logins = set(all_users.mapped("login")) - set(real_users.mapped("login"))
 assigned_logins: set[str] = set()
 updated = []
-business_config_admin_updates = []
 blocked = []
 
 for user in real_users.sorted("id"):
@@ -203,26 +192,16 @@ for user in real_users.sorted("id"):
         blocked.append({"id": user.id, "name": user.name, "legacy_id": legacy_id, "unknown_chars": unknown_chars})
         continue
     login, suffix_used = target_login(base_login, legacy_id, occupied_logins, assigned_logins)
-    vals = {
-        "login": login,
-        "password": INITIAL_PASSWORD,
-    }
+    vals = {"login": login}
     internal_group_applied = bool(internal_group and internal_group not in user.groups_id)
     business_initiator_group_applied = bool(
         business_initiator_group and business_initiator_group not in user.groups_id
-    )
-    business_config_group_applied = bool(
-        login.lower() in BUSINESS_CONFIG_ADMIN_LOGINS
-        and business_config_group
-        and business_config_group not in user.groups_id
     )
     group_commands = []
     if internal_group_applied:
         group_commands.append((4, internal_group.id))
     if business_initiator_group_applied:
         group_commands.append((4, business_initiator_group.id))
-    if business_config_group_applied:
-        group_commands.append((4, business_config_group.id))
     if group_commands:
         vals["groups_id"] = group_commands
     if profile:
@@ -244,51 +223,16 @@ for user in real_users.sorted("id"):
             "old_login": before["login"],
             "login": login,
             "suffix_used": suffix_used,
-            "password_initialized": True,
+            "password_initialized": False,
             "profile_used": bool(profile),
             "internal_group_applied": internal_group_applied,
             "business_initiator_group_applied": business_initiator_group_applied,
-            "business_config_admin_target": login.lower() in BUSINESS_CONFIG_ADMIN_LOGINS,
-            "business_config_group_applied": business_config_group_applied,
+            "business_config_admin_target": False,
+            "business_config_group_applied": False,
             "email_before": before["email"],
             "email_after": vals.get("email", before["email"]),
             "phone_before": before["phone"],
             "phone_after": vals.get("phone", before["phone"]),
-        }
-    )
-
-for admin_login in sorted(BUSINESS_CONFIG_ADMIN_LOGINS):
-    admin_user = Users.search([("login", "=", admin_login)], limit=1)
-    if not admin_user:
-        blocked.append({"login": admin_login, "reason": "missing_business_config_admin_login"})
-        continue
-    if not admin_user.active:
-        blocked.append({"login": admin_login, "id": admin_user.id, "reason": "inactive_business_config_admin_login"})
-        continue
-    group_commands = []
-    group_applied = {
-        "internal_group_applied": False,
-        "business_initiator_group_applied": False,
-        "business_config_group_applied": False,
-    }
-    if internal_group and internal_group not in admin_user.groups_id:
-        group_commands.append((4, internal_group.id))
-        group_applied["internal_group_applied"] = True
-    if business_initiator_group and business_initiator_group not in admin_user.groups_id:
-        group_commands.append((4, business_initiator_group.id))
-        group_applied["business_initiator_group_applied"] = True
-    if business_config_group and business_config_group not in admin_user.groups_id:
-        group_commands.append((4, business_config_group.id))
-        group_applied["business_config_group_applied"] = True
-    if group_commands:
-        admin_user.write({"groups_id": group_commands})
-    business_config_admin_updates.append(
-        {
-            "id": admin_user.id,
-            "login": admin_user.login,
-            "name": admin_user.name,
-            "group_write_count": len(group_commands),
-            **group_applied,
         }
     )
 
@@ -308,17 +252,17 @@ else:
         "db": env.cr.dbname,  # noqa: F821
         "mode": "history_real_user_normalize_write",
         "decision": "real_users_normalized_for_login",
-        "initial_password": INITIAL_PASSWORD,
+        "initial_password_applied": False,
         "excluded_legacy_user_ids": sorted(EXCLUDED_LEGACY_USER_IDS),
         "excluded_count": len(excluded),
         "excluded": excluded,
         "updated_count": len(updated),
         "suffix_count": sum(1 for row in updated if row["suffix_used"]),
-        "business_config_admin_logins": sorted(BUSINESS_CONFIG_ADMIN_LOGINS),
-        "business_config_admin_count": len(business_config_admin_updates),
-        "business_config_admin_updates": business_config_admin_updates,
+        "business_config_admin_logins": [],
+        "business_config_admin_count": 0,
+        "business_config_admin_updates": [],
         "updated": updated,
-        "db_writes": len(updated) + sum(1 for row in business_config_admin_updates if row["group_write_count"]),
+        "db_writes": len(updated),
     }
 
 output = artifact_root() / "history_real_user_normalize_write_result_v1.json"

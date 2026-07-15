@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from odoo.exceptions import ValidationError
 from odoo.tests.common import TransactionCase, tagged
 
 
@@ -59,3 +60,35 @@ class TestRuntimeUserManagement(TransactionCase):
         users = self.env["res.users"].search([("sc_runtime_source_login", "ilike", "search_original")])
 
         self.assertIn(user, users)
+
+    def test_runtime_user_creation_requires_explicit_initial_password(self):
+        Users = self.env["res.users"].with_context(sc_runtime_user_management=True)
+
+        with self.assertRaises(ValidationError):
+            Users._sc_runtime_user_safe_vals({"login": "boundary_user", "name": "Boundary User"})
+
+    def test_runtime_user_creation_accepts_context_secret_without_default(self):
+        Users = self.env["res.users"].with_context(
+            sc_runtime_user_management=True,
+            sc_default_initial_password="runtime-only-secret",
+        )
+
+        vals = Users._sc_runtime_user_safe_vals({"login": "boundary_user", "name": "Boundary User"})
+
+        self.assertEqual(vals["password"], "runtime-only-secret")
+
+    def test_security_changes_increment_token_epoch(self):
+        user = self._create_user_with_profile("token_epoch_boundary", "Token Epoch Boundary")
+        before = user.token_version
+
+        user.write({"active": False})
+
+        self.assertEqual(user.token_version, before + 1)
+
+    def test_profile_changes_do_not_increment_token_epoch(self):
+        user = self._create_user_with_profile("profile_epoch_boundary", "Profile Epoch Boundary")
+        before = user.token_version
+
+        user.write({"name": "Profile Epoch Boundary Updated"})
+
+        self.assertEqual(user.token_version, before)

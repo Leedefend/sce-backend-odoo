@@ -10,6 +10,20 @@ class ResUsers(models.Model):
 
     token_version = fields.Integer(default=0)
 
+    def write(self, vals):
+        if self.env.context.get("sc_skip_token_epoch_bump"):
+            return super().write(vals)
+
+        security_fields = {"active", "company_id", "company_ids", "groups_id", "login", "password"}
+        must_invalidate = bool(security_fields.intersection(vals)) and "token_version" not in vals
+        result = super().write(vals)
+        if must_invalidate:
+            for user in self.exists():
+                user.with_context(sc_skip_token_epoch_bump=True).write(
+                    {"token_version": int(user.token_version or 0) + 1}
+                )
+        return result
+
     def source_authority_contract(self):
         return {
             "kind": self.SOURCE_KIND,
