@@ -4,7 +4,7 @@ Generated from repository source files. This report is informational during the 
 
 ## Summary
 
-- Scanned files: `4008`
+- Scanned files: `4011`
 - Files requiring split plan: `42`
 - Files above warning threshold: `64`
 
@@ -44,7 +44,7 @@ Generated from repository source files. This report is informational during the 
 | 1741 | Python source | `addons/smart_core/core/page_contracts_builder.py` |
 | 1741 | Vue source | `frontend/apps/web/src/views/SceneView.vue` |
 | 1693 | Python source | `addons/smart_construction_core/core_extension.py` |
-| 1689 | Python source | `scripts/verify/industry_module_product_boundary_guard.py` |
+| 1648 | Python source | `scripts/verify/industry_module_product_boundary_guard.py` |
 | 1634 | Python source | `addons/smart_core/core/scene_ready_contract_builder.py` |
 | 1597 | Python source | `addons/smart_construction_core/models/support/direct_acceptance_formal_visible_fields.py` |
 | 1555 | Python source | `addons/smart_construction_core/models/support/contract_center.py` |
@@ -69,8 +69,8 @@ Generated from repository source files. This report is informational during the 
 | 1405 | Python source | `scripts/migration/scbs_visible_hr_tender_strict_fields_backfill_write.py` |
 | 1400 | Python source | `addons/smart_core/handlers/business_config_surface.py` |
 | 1396 | XML data/view | `addons/smart_construction_core/data/view_orchestration_contract_generated_data.xml` |
+| 1385 | Python source | `addons/smart_core/delivery/menu_service.py` |
 | 1383 | XML data/view | `addons/smart_construction_core/views/support/legacy_direct_acceptance_views.xml` |
-| 1383 | Python source | `addons/smart_core/delivery/menu_service.py` |
 | 1380 | XML data/view | `addons/smart_construction_core/views/support/audit_list_fields_views.xml` |
 | 1370 | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 1336 | Python source | `scripts/verify/release_v2_0_0_control_docs_guard.py` |
@@ -162,7 +162,7 @@ Generated from repository source files. This report is informational during the 
 | 1741 | split_plan_required | Python source | `addons/smart_core/core/page_contracts_builder.py` |
 | 1741 | split_plan_required | Vue source | `frontend/apps/web/src/views/SceneView.vue` |
 | 1693 | split_plan_required | Python source | `addons/smart_construction_core/core_extension.py` |
-| 1689 | split_plan_required | Python source | `scripts/verify/industry_module_product_boundary_guard.py` |
+| 1648 | split_plan_required | Python source | `scripts/verify/industry_module_product_boundary_guard.py` |
 | 1634 | split_plan_required | Python source | `addons/smart_core/core/scene_ready_contract_builder.py` |
 | 1597 | split_plan_required | Python source | `addons/smart_construction_core/models/support/direct_acceptance_formal_visible_fields.py` |
 | 1555 | split_plan_required | Python source | `addons/smart_construction_core/models/support/contract_center.py` |
@@ -178,8 +178,8 @@ Generated from repository source files. This report is informational during the 
 | 1405 | warning | Python source | `scripts/migration/scbs_visible_hr_tender_strict_fields_backfill_write.py` |
 | 1400 | warning | Python source | `addons/smart_core/handlers/business_config_surface.py` |
 | 1396 | warning | XML data/view | `addons/smart_construction_core/data/view_orchestration_contract_generated_data.xml` |
+| 1385 | warning | Python source | `addons/smart_core/delivery/menu_service.py` |
 | 1383 | warning | XML data/view | `addons/smart_construction_core/views/support/legacy_direct_acceptance_views.xml` |
-| 1383 | warning | Python source | `addons/smart_core/delivery/menu_service.py` |
 | 1380 | warning | XML data/view | `addons/smart_construction_core/views/support/audit_list_fields_views.xml` |
 | 1370 | warning | Python source | `addons/smart_core/utils/contract_governance.py` |
 | 1336 | warning | Python source | `scripts/verify/release_v2_0_0_control_docs_guard.py` |
