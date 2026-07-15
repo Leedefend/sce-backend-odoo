@@ -4,7 +4,7 @@ Generated from repository source files. This report is informational during the 
 
 ## Summary
 
-- Scanned files: `3975`
+- Scanned files: `3983`
 - Files requiring split plan: `42`
 - Files above warning threshold: `64`
 
@@ -27,8 +27,8 @@ Generated from repository source files. This report is informational during the 
 | 2903 | Python source | `addons/smart_core/tests/test_menu_configuration_audit.py` |
 | 2830 | Python source | `addons/smart_construction_core/models/core/material_acceptance.py` |
 | 2585 | Python source | `addons/smart_construction_core/tests/test_user_feedback_business_views.py` |
+| 2531 | Vue source | `frontend/apps/web/src/views/MyWorkView.vue` |
 | 2529 | XML data/view | `addons/smart_construction_core/views/menu_business_taxonomy.xml` |
-| 2521 | Vue source | `frontend/apps/web/src/views/MyWorkView.vue` |
 | 2443 | Python source | `addons/smart_core/core/unified_page_contract_v2_assembler.py` |
 | 2331 | Python source | `addons/smart_core/handlers/system_init.py` |
 | 2289 | Python source | `addons/smart_construction_core/models/core/project_core.py` |
@@ -99,12 +99,12 @@ Generated from repository source files. This report is informational during the 
 | 966 | Python source | `addons/smart_core/handlers/load_contract.py` |
 | 966 | Python source | `scripts/verify/scbsly_direct_project_strict_visible_acceptance.py` |
 | 944 | Python source | `scripts/ops/scbs_55_user_acceptance_menu_policy_apply.py` |
+| 915 | Python source | `addons/smart_construction_core/handlers/my_work_summary.py` |
 | 912 | Vue source | `frontend/apps/web/src/components/action/ActionSurfaceToolbar.vue` |
 | 902 | Python source | `scripts/migration/fresh_db_material_stock_document_projection_write.py` |
 | 892 | Python source | `scripts/verify/release_capability_audit.py` |
 | 886 | Python source | `addons/smart_construction_scene/profiles/workspace_home_scene_content.py` |
 | 879 | Python source | `scripts/verify/business_oca_runtime_smoke.py` |
-| 869 | Python source | `addons/smart_construction_core/handlers/my_work_summary.py` |
 | 867 | Python source | `addons/smart_construction_core/models/support/scene_orchestration.py` |
 | 860 | Python source | `addons/smart_core/core/view_orchestrator.py` |
 | 857 | JavaScript source | `scripts/verify/scbs55_last6_strict_visible_acceptance.js` |
@@ -143,8 +143,8 @@ Generated from repository source files. This report is informational during the 
 | 2903 | split_plan_required | Python source | `addons/smart_core/tests/test_menu_configuration_audit.py` |
 | 2830 | split_plan_required | Python source | `addons/smart_construction_core/models/core/material_acceptance.py` |
 | 2585 | split_plan_required | Python source | `addons/smart_construction_core/tests/test_user_feedback_business_views.py` |
+| 2531 | split_plan_required | Vue source | `frontend/apps/web/src/views/MyWorkView.vue` |
 | 2529 | split_plan_required | XML data/view | `addons/smart_construction_core/views/menu_business_taxonomy.xml` |
-| 2521 | split_plan_required | Vue source | `frontend/apps/web/src/views/MyWorkView.vue` |
 | 2443 | split_plan_required | Python source | `addons/smart_core/core/unified_page_contract_v2_assembler.py` |
 | 2331 | split_plan_required | Python source | `addons/smart_core/handlers/system_init.py` |
 | 2289 | split_plan_required | Python source | `addons/smart_construction_core/models/core/project_core.py` |
