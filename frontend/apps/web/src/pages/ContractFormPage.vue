@@ -704,6 +704,8 @@ import {
 } from './contractForm/saveRecordHelpers';
 import { useCreatedRecordNavigationRuntime } from './contractForm/useCreatedRecordNavigationRuntime';
 import { useFormNavigationActionsRuntime } from './contractForm/useFormNavigationActionsRuntime';
+import { applyRouteRelationLabel, isProjectScopeExempt, scopedCreateContext, scopedOnchangeContext } from './contractForm/financialFormScope';
+import { collectActionParams as collectActionParamsFromPlan } from './contractForm/actionExecutionPlan';
 import {
   formCreateContext as formCreateContextFromState,
   resolveCreateDefaults as resolveCreateDefaultsFromState,
@@ -723,17 +725,6 @@ import {
   type FormContractReadiness,
 } from './contractForm/contractRuntimeVm';
 
-async function collectActionParams(action: ContractAction): Promise<Record<string, unknown> | null> {
-  const requiredParams = new Set((action.requiredParams || []).map((item) => item.toLowerCase()));
-  if (!action.requiresReason && !requiredParams.has('reason')) return {};
-  const reason = window.prompt(`${action.label || '操作'}原因`)?.trim() || '';
-  if (!reason) {
-    applyPageStatusEvent({ kind: 'status', transaction: 'runAction', status: 'error', errorMessage: '请填写操作原因' });
-    return null;
-  }
-  return { reason };
-}
-
 const route = useRoute();
 const router = useRouter();
 const session = useSessionStore();
@@ -746,10 +737,7 @@ const {
   currentQuery: () => route.query,
 });
 
-function resolveWorkspaceContextQuery() {
-  return readWorkspaceContext(route.query as Record<string, unknown>);
-}
-
+function resolveWorkspaceContextQuery() { return readWorkspaceContext(route.query as Record<string, unknown>); }
 const status = ref<UiStatus>('loading');
 const isComponentActive = ref(true);
 const instanceRouteIdentity = ref('');
@@ -1045,7 +1033,7 @@ const {
   applyClientMode: (mode, toggle) => applyClientMode(mode, toggle),
   applyProjectionRefreshPolicy: (policy) => applyProjectionRefreshPolicy(policy),
   busyKind,
-  collectActionParams: (action) => collectActionParams(action),
+  collectActionParams: (action) => collectActionParamsFromPlan(action, () => applyPageStatusEvent({ kind: 'status', transaction: 'runAction', status: 'error', errorMessage: '请填写操作原因' })),
   confirmActionSafety: (action) => confirmActionSafety(action),
   currentQuery: () => route.query,
   ensureSavedBeforeRecordAction: () => ensureSavedBeforeRecordAction(),
@@ -5059,10 +5047,7 @@ function buildOnchangeValues() {
 async function runOnchangeRoundtrip() {
   if (!model.value) return;
   if (!changedFieldSet.size) return;
-  // A route-level exempt policy represents a fixed, authoritative business
-  // relationship supplied by its entry contract.  Generic onchange would
-  // re-read project anchors that the finance actor intentionally cannot browse.
-  if (String(route.query.project_scope_policy || '').trim() === 'exempt') {
+  if (isProjectScopeExempt(route.query)) {
     changedFieldSet.clear();
     return;
   }
@@ -5074,11 +5059,7 @@ async function runOnchangeRoundtrip() {
       res_id: recordId.value,
       values: buildOnchangeValues(),
       changed_fields: changed,
-      context: pickContractNavQuery(route.query as Record<string, unknown>, {
-        current_project_id: String(route.query.project_scope_policy || '').trim() !== 'exempt'
-          ? Number(formData.project_id || 0) || undefined
-          : undefined,
-      }),
+      context: scopedOnchangeContext(route.query, formData.project_id),
     });
     const { patch, modifiersPatch, linePatches, warnings } = normalizeOnchangeResponse(response);
     onchangeWarnings.value = warnings;
@@ -5388,14 +5369,7 @@ async function loadRecord() {
         incoming: name in defaults ? defaults[name] : '',
         target: hydrationTarget,
       });
-      if (fieldType(descriptor) === 'many2one') {
-        const relationId = Number(formData[name] || 0);
-        const routeLabel = String(route.query[`default_${name}_label`] || '').trim();
-        if (relationId > 0 && routeLabel) {
-          upsertRelationOption(name, { id: relationId, label: routeLabel });
-          relationKeywords[name] = routeLabel;
-        }
-      }
+      if (fieldType(descriptor) === 'many2one') applyRouteRelationLabel(route.query, name, Number(formData[name] || 0), (label) => { upsertRelationOption(name, { id: Number(formData[name]), label }); relationKeywords[name] = label; });
     });
     originalValues.value = snapshotOriginalFormValues(fieldNames, formData);
     nativeLayoutVisibilityRevision.value += 1;
@@ -5480,10 +5454,7 @@ async function reload() {
       if (reloadToken !== activeReloadToken) return;
       applyPageStatusEvent({ kind: 'status', transaction: 'formReload', status: 'ok' });
       retainedRouteIdentity.value = formRouteIdentity();
-      // Relation labels/domains are part of the authoritative form contract in
-      // both generic and financial workspaces.  Skipping this hydration left
-      // route defaults rendered as raw database IDs on create/edit forms.
-      if (!financialWorkspace.value && String(route.query.project_scope_policy || '').trim() !== 'exempt') {
+      if (!financialWorkspace.value && !isProjectScopeExempt(route.query)) {
         void preloadFormAuxiliaryData(reloadToken);
       }
     } catch (err) {
@@ -5821,20 +5792,6 @@ async function applyProjectionRefreshPolicy(policy?: ContractAction['refreshPoli
   });
 }
 
-function createRecordContext() {
-  const context: Record<string, unknown> = {
-    ...formCreateContextFromState({ contract: contract.value, v2ContractStore: v2ContractStore.value }),
-    ...pickContractNavQuery(route.query as Record<string, unknown>),
-  };
-  if (String(route.query.project_scope_policy || '').trim() === 'exempt') {
-    delete context.current_project_id;
-    delete context.default_project_id;
-    return context;
-  }
-  if (Number(formData.project_id || 0) > 0) context.current_project_id = Number(formData.project_id);
-  return context;
-}
-
 async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']): Promise<boolean | number> {
   if (!canSave.value || !model.value) return false;
   submissionFeedback.value = null;
@@ -5905,11 +5862,8 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']): Prom
       await applyProjectionRefreshPolicy(refreshPolicy || { on_success: ['scene_projection'] });
       return true;
     }
-    const created = await createContractFormRecord({
-      model: model.value,
-      vals: values,
-      context: createRecordContext(),
-    });
+    const context = scopedCreateContext(route.query, formCreateContextFromState({ contract: contract.value, v2ContractStore: v2ContractStore.value }), formData.project_id);
+    const created = await createContractFormRecord({ model: model.value, vals: values, context });
     if (created?.id) {
       const attachmentsUploaded = await uploadPendingNativeAttachments(Number(created.id));
       if (!attachmentsUploaded) {
