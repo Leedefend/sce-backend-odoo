@@ -4,22 +4,22 @@ Generated from `test_inventory.csv`.
 
 ## Totals
 
-- Total assets: `1171`
+- Total assets: `1174`
 - Review queue: `4`
 - Unknown runtime: `3`
 - Long-running assets: `332`
 - Manual gate review: `4`
 - Aggregate-covered assets: `230`
-- PR dedupe candidates: `609`
+- PR dedupe candidates: `612`
 
 ## By Layer
 
 | Layer | Count |
 | --- | ---: |
-| governance | 356 |
-| contract | 309 |
+| governance | 357 |
+| contract | 310 |
 | data_migration | 217 |
-| unit | 152 |
+| unit | 153 |
 | odoo_integration | 56 |
 | e2e | 38 |
 | security | 22 |
@@ -30,7 +30,7 @@ Generated from `test_inventory.csv`.
 
 | Decision Gate | Count |
 | --- | ---: |
-| pr_candidate | 833 |
+| pr_candidate | 836 |
 | integration_candidate | 293 |
 | release_candidate | 36 |
 | manual_review | 4 |
@@ -43,7 +43,7 @@ Generated from `test_inventory.csv`.
 
 | Disposition | Count |
 | --- | ---: |
-| deduplicate_before_required | 609 |
+| deduplicate_before_required | 612 |
 | keep_integration_or_release_only | 292 |
 | covered_by_aggregate | 225 |
 | keep_release_only | 36 |
@@ -146,7 +146,7 @@ Generated from `test_inventory.csv`.
 
 | Runtime | Count |
 | --- | ---: |
-| <5m | 835 |
+| <5m | 838 |
 | 10-30m | 294 |
 | 30-60m | 38 |
 | unknown | 3 |
@@ -156,10 +156,10 @@ Generated from `test_inventory.csv`.
 
 | Owner | Count |
 | --- | ---: |
-| architecture owner | 356 |
-| platform owner | 309 |
+| architecture owner | 357 |
+| platform owner | 310 |
 | data owner | 217 |
-| test owner | 153 |
+| test owner | 154 |
 | backend owner | 56 |
 | qa owner | 38 |
 | security owner | 22 |
@@ -169,7 +169,7 @@ Generated from `test_inventory.csv`.
 
 | Directory | Count |
 | --- | ---: |
-| scripts/verify | 867 |
+| scripts/verify | 870 |
 | scripts/migration | 215 |
 | scripts/ops | 37 |
 | frontend/apps/web/scripts | 24 |
@@ -281,7 +281,7 @@ Generated from `test_inventory.csv`.
 | T-ASSET-375 | contract | `scripts/verify/construction_core_extension_intent_handlers_split_guard.py` | platform owner |
 | T-ASSET-376 | governance | `scripts/verify/construction_core_extension_policy_accessors_split_guard.py` | architecture owner |
 | T-ASSET-377 | governance | `scripts/verify/construction_core_extension_policy_maps_split_guard.py` | architecture owner |
-| ... | ... | 529 more | ... |
+| ... | ... | 532 more | ... |
 
 ## Dedupe Hotspots
 
@@ -289,6 +289,7 @@ Generated from `test_inventory.csv`.
 | --- | ---: |
 | `scripts/verify/construction_core_extension` | 12 |
 | `scripts/verify/contract_governance_form` | 5 |
+| `scripts/verify/frontend_financial_workspace` | 3 |
 | `scripts/verify/frontend_page_identity` | 3 |
 | `scripts/verify/business_form_policy` | 2 |
 | `scripts/verify/contract_business_category` | 2 |
@@ -316,7 +317,6 @@ Generated from `test_inventory.csv`.
 | `scripts/audit/boundary_audit_smart` | 1 |
 | `scripts/audit/scene_config` | 1 |
 | `scripts/ci/assert_audit_tp08` | 1 |
-| `scripts/ci/gate` | 1 |
 
 ## Residual Dedupe Hotspot Disposition
 
@@ -324,6 +324,7 @@ Generated from `test_inventory.csv`.
 | --- | ---: | --- | --- | --- |
 | `scripts/verify/construction_core_extension` | 12 | test owner | requires owner review | Requires owner review before mapping to an aggregate gate. |
 | `scripts/verify/contract_governance_form` | 5 | test owner | requires owner review | Requires owner review before mapping to an aggregate gate. |
+| `scripts/verify/frontend_financial_workspace` | 3 | test owner | requires owner review | Requires owner review before mapping to an aggregate gate. |
 | `scripts/verify/frontend_page_identity` | 3 | test owner | requires owner review | Requires owner review before mapping to an aggregate gate. |
 | `scripts/verify/business_form_policy` | 2 | architecture owner | owner-reviewed PR candidates | Retain as explicit PR candidates; no confirmed aggregate gate covers both policy coverage and field-hit audit. |
 | `scripts/verify/contract_business_category` | 2 | platform owner | owner-reviewed PR candidates | Retain as explicit PR candidates; action audit and binding audit are only wrapped by separate ops scripts. |

@@ -4,7 +4,7 @@ Generated from repository source files. This report is informational during the 
 
 ## Summary
 
-- Scanned files: `3964`
+- Scanned files: `3975`
 - Files requiring split plan: `42`
 - Files above warning threshold: `64`
 
@@ -23,7 +23,7 @@ Generated from repository source files. This report is informational during the 
 | 3190 | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
 | 3092 | Python source | `addons/smart_construction_core/models/support/p1_daily_business_visible_alias_fields.py` |
 | 3046 | Python source | `addons/smart_core/core/workspace_home_contract_builder.py` |
-| 3013 | Python source | `addons/smart_core/app_config_engine/services/assemblers/page_assembler.py` |
+| 3016 | Python source | `addons/smart_core/app_config_engine/services/assemblers/page_assembler.py` |
 | 2903 | Python source | `addons/smart_core/tests/test_menu_configuration_audit.py` |
 | 2830 | Python source | `addons/smart_construction_core/models/core/material_acceptance.py` |
 | 2585 | Python source | `addons/smart_construction_core/tests/test_user_feedback_business_views.py` |
@@ -33,17 +33,17 @@ Generated from repository source files. This report is informational during the 
 | 2331 | Python source | `addons/smart_core/handlers/system_init.py` |
 | 2289 | Python source | `addons/smart_construction_core/models/core/project_core.py` |
 | 2193 | Python source | `addons/smart_core/handlers/api_data.py` |
-| 2160 | Vue source | `frontend/apps/web/src/layouts/AppShell.vue` |
+| 2161 | Vue source | `frontend/apps/web/src/layouts/AppShell.vue` |
 | 2051 | Python source | `scripts/verify/backend_business_fact_model_audit.py` |
-| 1975 | TypeScript source | `frontend/apps/web/src/stores/session.ts` |
-| 1971 | Python source | `addons/smart_construction_core/models/core/payment_request.py` |
+| 1989 | TypeScript source | `frontend/apps/web/src/stores/session.ts` |
+| 1977 | Python source | `addons/smart_construction_core/models/core/payment_request.py` |
 | 1877 | Python source | `addons/smart_core/tests/test_ui_contract_v2_boundaries.py` |
 | 1850 | Python source | `addons/smart_core/handlers/menu_configuration.py` |
 | 1847 | Python source | `addons/smart_construction_core/models/support/product_policy_sync.py` |
 | 1844 | Python source | `scripts/migration/scbs_55_legacy_visible_field_full_reconcile_probe.py` |
-| 1787 | Python source | `addons/smart_construction_core/core_extension.py` |
 | 1741 | Python source | `addons/smart_core/core/page_contracts_builder.py` |
 | 1741 | Vue source | `frontend/apps/web/src/views/SceneView.vue` |
+| 1693 | Python source | `addons/smart_construction_core/core_extension.py` |
 | 1689 | Python source | `scripts/verify/industry_module_product_boundary_guard.py` |
 | 1634 | Python source | `addons/smart_core/core/scene_ready_contract_builder.py` |
 | 1597 | Python source | `addons/smart_construction_core/models/support/direct_acceptance_formal_visible_fields.py` |
@@ -139,7 +139,7 @@ Generated from repository source files. This report is informational during the 
 | 3190 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
 | 3092 | split_plan_required | Python source | `addons/smart_construction_core/models/support/p1_daily_business_visible_alias_fields.py` |
 | 3046 | split_plan_required | Python source | `addons/smart_core/core/workspace_home_contract_builder.py` |
-| 3013 | split_plan_required | Python source | `addons/smart_core/app_config_engine/services/assemblers/page_assembler.py` |
+| 3016 | split_plan_required | Python source | `addons/smart_core/app_config_engine/services/assemblers/page_assembler.py` |
 | 2903 | split_plan_required | Python source | `addons/smart_core/tests/test_menu_configuration_audit.py` |
 | 2830 | split_plan_required | Python source | `addons/smart_construction_core/models/core/material_acceptance.py` |
 | 2585 | split_plan_required | Python source | `addons/smart_construction_core/tests/test_user_feedback_business_views.py` |
@@ -149,19 +149,19 @@ Generated from repository source files. This report is informational during the 
 | 2331 | split_plan_required | Python source | `addons/smart_core/handlers/system_init.py` |
 | 2289 | split_plan_required | Python source | `addons/smart_construction_core/models/core/project_core.py` |
 | 2193 | split_plan_required | Python source | `addons/smart_core/handlers/api_data.py` |
-| 2160 | split_plan_required | Vue source | `frontend/apps/web/src/layouts/AppShell.vue` |
+| 2161 | split_plan_required | Vue source | `frontend/apps/web/src/layouts/AppShell.vue` |
 | 2054 | warning | XML data/view | `addons/smart_construction_core/security/sc_record_rules.xml` |
 | 2051 | split_plan_required | Python source | `scripts/verify/backend_business_fact_model_audit.py` |
-| 1975 | split_plan_required | TypeScript source | `frontend/apps/web/src/stores/session.ts` |
-| 1971 | split_plan_required | Python source | `addons/smart_construction_core/models/core/payment_request.py` |
+| 1989 | split_plan_required | TypeScript source | `frontend/apps/web/src/stores/session.ts` |
+| 1977 | split_plan_required | Python source | `addons/smart_construction_core/models/core/payment_request.py` |
 | 1877 | split_plan_required | Python source | `addons/smart_core/tests/test_ui_contract_v2_boundaries.py` |
 | 1850 | split_plan_required | Python source | `addons/smart_core/handlers/menu_configuration.py` |
 | 1847 | split_plan_required | Python source | `addons/smart_construction_core/models/support/product_policy_sync.py` |
 | 1844 | split_plan_required | Python source | `scripts/migration/scbs_55_legacy_visible_field_full_reconcile_probe.py` |
 | 1807 | warning | XML data/view | `addons/smart_construction_core/data/business_category_seed.xml` |
-| 1787 | split_plan_required | Python source | `addons/smart_construction_core/core_extension.py` |
 | 1741 | split_plan_required | Python source | `addons/smart_core/core/page_contracts_builder.py` |
 | 1741 | split_plan_required | Vue source | `frontend/apps/web/src/views/SceneView.vue` |
+| 1693 | split_plan_required | Python source | `addons/smart_construction_core/core_extension.py` |
 | 1689 | split_plan_required | Python source | `scripts/verify/industry_module_product_boundary_guard.py` |
 | 1634 | split_plan_required | Python source | `addons/smart_core/core/scene_ready_contract_builder.py` |
 | 1597 | split_plan_required | Python source | `addons/smart_construction_core/models/support/direct_acceptance_formal_visible_fields.py` |
