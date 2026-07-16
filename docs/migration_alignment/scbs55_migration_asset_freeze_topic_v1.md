@@ -238,7 +238,7 @@ make migration.assets.user_acceptance_online_probe
 FRONTEND_URL=http://1.95.85.92:18081 \
 DB_NAME=sc_demo \
 E2E_LOGIN=wutao \
-E2E_PASSWORD=****** \
+E2E_PASSWORD=<REVOKED_LEGACY_SECRET> \
 make migration.assets.user_acceptance_browser_field_guard
 ```
 

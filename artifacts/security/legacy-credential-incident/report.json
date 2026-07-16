@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "repository_baseline": "859dae5bf0511facfa5ad95d8d93693ad40ffe75",
+  "revocation": {
+    "legacy_credentials_revoked": false,
+    "legacy_sessions_revoked": false,
+    "revoked_at": null,
+    "revoked_by": null
+  },
+  "risk_acceptance": {
+    "legacy_system_still_required": true,
+    "credential_rotation_deferred": true,
+    "allowed_use": "data_completion_and_migration_only",
+    "retirement_deadline": null,
+    "retirement_deadline_status": "formal_cutover_date_not_yet_supplied",
+    "accepted_by": "Delivery owner"
+  },
+  "fingerprint_inventory": {
+    "pr_candidate_fingerprints": 15,
+    "confirmed_history_fingerprints": 3,
+    "raw_values_recorded": false
+  },
+  "current_tree": {
+    "target_files_scanned": 8553,
+    "confirmed_exposures_before_cleanup": 1,
+    "replacements": 1,
+    "confirmed_exposures_after_cleanup": 0,
+    "unreviewed_candidate_matches": 264,
+    "confirmed_fingerprint_matches_in_noncredential_context": 63
+  },
+  "github_metadata": {
+    "pr_bodies_scanned": 998,
+    "candidate_matches_before_classification": 92,
+    "confirmed_replacements": 47,
+    "modified_prs": [245, 246, 247, 248, 259, 260, 261, 262, 263, 265, 266, 267, 268, 269, 270, 271, 272, 273, 788],
+    "remaining_candidate_matches": 47,
+    "classification": {
+      "confirmed_exposure_remaining": 0,
+      "test_fixture": 25,
+      "normal_text": 11,
+      "unresolved": 11
+    },
+    "unresolved_owner": "Security owner",
+    "unresolved_deadline": "formal legacy cutover date",
+    "issue_comment_confirmed_exposures": 0,
+    "review_comment_confirmed_exposures": 0,
+    "metadata_writes": 0
+  },
+  "session_invalidation": {
+    "executed": false,
+    "reason": "explicitly_skipped_under_time_bounded_risk_acceptance"
+  },
+  "production": {
+    "database_writes": 0,
+    "user_writes": 0,
+    "server_configuration_writes": 0,
+    "old_credentials_tested": false
+  },
+  "decision": "ACCEPTED_UNTIL_LEGACY_SYSTEM_RETIREMENT"
+}
