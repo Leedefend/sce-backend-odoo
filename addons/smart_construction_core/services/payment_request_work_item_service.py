@@ -105,6 +105,7 @@ class PaymentRequestWorkItemService:
                         "reason_label": "拒绝原因" if action.get("requires_reason") else "",
                         "reason_help": "请说明拒绝原因，提交后会写入正式审批记录。" if action.get("requires_reason") else "",
                         "next_state": str(action.get("next_state_hint") or ""),
+                        "presentation": dict(action.get("presentation") or {}),
                     }
                 )
         return rows

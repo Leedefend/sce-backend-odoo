@@ -13,7 +13,6 @@ required = {
     "layouts/AppShell.vue": "usePageIdentityRuntime",
     "views/ActionView.vue": "usePublishedPageIdentity",
     "pages/ContractFormPage.vue": "usePublishedPageIdentity",
-    "views/RecordView.vue": "usePublishedPageIdentity",
     "App.vue": "document.title",
     "views/AccessDeniedView.vue": "usePageIdentityRuntime",
     "views/NotFoundView.vue": "usePageIdentityRuntime",
@@ -55,4 +54,4 @@ form_labels = (FRONTEND / "pages/contractForm/uiLabels.ts").read_text(encoding="
 if "`记录 #${params.recordId}`" in form_labels:
     fail("form subtitle still exposes record id")
 
-print("[frontend_page_identity_guard] PASS writers=1 integrations=7")
+print("[frontend_page_identity_guard] PASS writers=1 integrations=6")

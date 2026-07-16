@@ -1729,7 +1729,7 @@ mod.upgrade: guard.codex.fast.upgrade guard.prod.danger check-compose-project ch
 # ======================================================
 # ==================== Policy Ops ======================
 # ======================================================
-.PHONY: db.frontend.acceptance.ensure demo.frontend.fixture verify.frontend.fixture verify.frontend.fixture.guard verify.frontend.fixture.browser verify.frontend.navigation.access verify.frontend.page_identity.browser verify.frontend.page_identity.deep.browser verify.frontend.financial_workspace.guard verify.frontend.financial_workspace.runtime verify.frontend.financial_workspace.action verify.frontend.financial_workspace.v2_contract verify.frontend.financial_workspace.browser verify.frontend.my_work_approval.runtime verify.frontend.my_work_approval.browser verify.frontend.delivery_hardening.browser verify.frontend.shell_usability.browser policy.apply.business_full policy.apply.role_matrix policy.ensure.role_surface_demo smoke.business_full smoke.role_matrix verify.portal.role_surface_preflight.container verify.portal.role_surface_smoke.container p2.smoke p3.smoke p3.audit codex.preflight codex.merge codex.rollback codex.pr.body codex.release.note db.policy stage.preflight stage.run ops.auth.dev.apply ops.auth.dev.rollback ops.auth.dev.verify
+.PHONY: db.frontend.acceptance.ensure demo.frontend.fixture verify.frontend.fixture verify.frontend.fixture.guard verify.frontend.fixture.browser verify.frontend.navigation.access verify.frontend.page_identity.browser verify.frontend.page_identity.deep.browser verify.frontend.financial_workspace.guard verify.frontend.financial_workspace.runtime verify.frontend.financial_workspace.action verify.frontend.financial_workspace.v2_contract verify.frontend.financial_workspace.browser verify.frontend.core_record_form.audit verify.frontend.core_record_form.journeys verify.frontend.my_work_approval.runtime verify.frontend.my_work_approval.browser verify.frontend.delivery_hardening.browser verify.frontend.shell_usability.browser policy.apply.business_full policy.apply.role_matrix policy.ensure.role_surface_demo smoke.business_full smoke.role_matrix verify.portal.role_surface_preflight.container verify.portal.role_surface_smoke.container p2.smoke p3.smoke p3.audit codex.preflight codex.merge codex.rollback codex.pr.body codex.release.note db.policy stage.preflight stage.run ops.auth.dev.apply ops.auth.dev.rollback ops.auth.dev.verify
 FRONTEND_ACCEPTANCE_DB := $(if $(filter command line,$(origin DB_NAME)),$(DB_NAME),sc_frontend_acceptance)
 
 db.frontend.acceptance.ensure: guard.prod.forbid check-compose-project check-compose-env
@@ -1813,6 +1813,25 @@ verify.frontend.financial_workspace.browser: guard.prod.forbid check-compose-pro
 	$(MAKE) --no-print-directory backend.acceptance.up; $(MAKE) --no-print-directory frontend.acceptance.up; \
 	trap '$(MAKE) --no-print-directory demo.frontend.fixture DB_NAME=$(FRONTEND_ACCEPTANCE_DB); $(MAKE) --no-print-directory frontend.acceptance.down; $(MAKE) --no-print-directory backend.acceptance.down' EXIT; \
 	$(RUN_ENV) DB_NAME=$(FRONTEND_ACCEPTANCE_DB) SC_ENVIRONMENT=acceptance SC_ALLOW_DEMO_DATA=1 FRONTEND_URL=$${FRONTEND_URL:-http://127.0.0.1:5175} ARTIFACTS_DIR=artifacts/frontend-financial-workspace FRONTEND_FINANCIAL_WORKSPACE_TARGETS_JSON="$${FRONTEND_FINANCIAL_WORKSPACE_TARGETS_JSON}" node scripts/verify/frontend_financial_workspace_browser.mjs
+
+verify.frontend.core_record_form.audit: guard.prod.forbid check-compose-project check-compose-env
+	@set -eu; \
+	$(MAKE) --no-print-directory demo.frontend.fixture DB_NAME=$(FRONTEND_ACCEPTANCE_DB); \
+	target_output="$$( $(RUN_ENV) DB_NAME=$(FRONTEND_ACCEPTANCE_DB) SC_ENVIRONMENT=acceptance SC_ALLOW_DEMO_DATA=1 bash scripts/ops/odoo_shell_exec.sh < scripts/verify/frontend_financial_workspace_runtime_ids.py 2>&1 )"; \
+	FRONTEND_FINANCIAL_WORKSPACE_TARGETS_JSON="$$(printf '%s\n' "$$target_output" | sed -n 's/^FRONTEND_FINANCIAL_WORKSPACE_TARGETS_JSON=//p' | tail -n 1)"; \
+	test -n "$$FRONTEND_FINANCIAL_WORKSPACE_TARGETS_JSON" || { printf '%s\n' "$$target_output"; exit 2; }; \
+	$(MAKE) --no-print-directory backend.acceptance.up; $(MAKE) --no-print-directory frontend.acceptance.up; \
+	trap '$(MAKE) --no-print-directory demo.frontend.fixture DB_NAME=$(FRONTEND_ACCEPTANCE_DB); $(MAKE) --no-print-directory frontend.acceptance.down; $(MAKE) --no-print-directory backend.acceptance.down' EXIT; \
+	$(RUN_ENV) DB_NAME=$(FRONTEND_ACCEPTANCE_DB) SC_ENVIRONMENT=acceptance SC_ALLOW_DEMO_DATA=1 FRONTEND_URL=$${FRONTEND_URL:-http://127.0.0.1:5175} GIT_SHA=$$(git rev-parse HEAD) FE_PRO_03_PHASE=$${FE_PRO_03_PHASE:-final} FRONTEND_FINANCIAL_WORKSPACE_TARGETS_JSON="$$FRONTEND_FINANCIAL_WORKSPACE_TARGETS_JSON" node scripts/verify/frontend_core_record_form_professional_audit.mjs
+
+verify.frontend.core_record_form.journeys: guard.prod.forbid check-compose-project check-compose-env
+	@set -e; \
+	$(MAKE) --no-print-directory demo.frontend.fixture DB_NAME=$(FRONTEND_ACCEPTANCE_DB); \
+	target_output="$$( $(RUN_ENV) DB_NAME=$(FRONTEND_ACCEPTANCE_DB) SC_ENVIRONMENT=acceptance SC_ALLOW_DEMO_DATA=1 bash scripts/ops/odoo_shell_exec.sh < scripts/verify/frontend_financial_workspace_runtime_ids.py 2>&1 )"; \
+	targets_line="$$(echo "$$target_output" | grep '^FRONTEND_FINANCIAL_WORKSPACE_TARGETS_JSON=' | tail -1)"; test -n "$$targets_line"; export "$$targets_line"; \
+	$(MAKE) --no-print-directory backend.acceptance.up; $(MAKE) --no-print-directory frontend.acceptance.up; \
+	trap '$(MAKE) --no-print-directory demo.frontend.fixture DB_NAME=$(FRONTEND_ACCEPTANCE_DB); $(MAKE) --no-print-directory frontend.acceptance.down; $(MAKE) --no-print-directory backend.acceptance.down' EXIT; \
+	$(RUN_ENV) DB_NAME=$(FRONTEND_ACCEPTANCE_DB) SC_ENVIRONMENT=acceptance SC_ALLOW_DEMO_DATA=1 FRONTEND_URL=$${FRONTEND_URL:-http://127.0.0.1:5175} ARTIFACTS_DIR=artifacts/frontend-professional/fe-pro-03/journeys FRONTEND_FINANCIAL_WORKSPACE_TARGETS_JSON="$${FRONTEND_FINANCIAL_WORKSPACE_TARGETS_JSON}" node scripts/verify/frontend_core_record_form_journeys.mjs
 
 verify.frontend.my_work_approval.runtime: guard.prod.forbid check-compose-project check-compose-env
 	@python3 -m py_compile scripts/verify/frontend_my_work_approval_runtime.py addons/smart_construction_core/services/payment_request_work_item_service.py

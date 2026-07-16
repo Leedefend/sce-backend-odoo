@@ -111,6 +111,7 @@ def main() -> int:
         "ActionViewShell.vue",
         "ProjectsIntakeView.vue",
         "MyWorkView.vue",
+        "RecordView.vue",
     }
 
     for view in view_files:
@@ -177,18 +178,9 @@ def main() -> int:
             "useActionViewSurfaceIntentRuntime({",
         ],
         "RecordView.vue": [
-            "const pageContract = usePageContract('record');",
-            "loadActionContractRaw(",
-            "buildRecordRuntimeFromContract(",
-            "readRecordDiagnosticsRaw(",
-            "writeRecordDiagnosticsRaw(",
-            "lastIntent.value = 'api.data.read'",
-            "lastIntent.value = 'api.data.write'",
-            "pageSectionEnabled(",
-            "pageSectionStyle(",
-            "pageSectionTagIs(",
-            "pageSectionEnabled('project_summary', true)",
-            "pageSectionEnabled('chatter', true)",
+            "ContractFormPage",
+            "data-record-view-compatibility-delegate",
+            "single authoritative page path",
         ],
         "MyWorkView.vue": [
             "fetchMyWorkSummary",

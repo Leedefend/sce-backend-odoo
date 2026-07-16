@@ -124,12 +124,9 @@ def main() -> int:
         "pageSectionEnabled('quick_actions', false)",
     ]
     required_record_tokens = [
-        "const pageContract = usePageContract('record');",
-        "const pageSectionEnabled = pageContract.sectionEnabled;",
-        "const pageSectionStyle = pageContract.sectionStyle;",
-        "const pageSectionTagIs = pageContract.sectionTagIs;",
-        "pageSectionEnabled('project_summary', true)",
-        "pageSectionEnabled('chatter', true)",
+        "ContractFormPage",
+        "data-record-view-compatibility-delegate",
+        "single authoritative page path",
     ]
     required_scene_tokens = [
         "const pageSectionEnabled = pageContract.sectionEnabled;",

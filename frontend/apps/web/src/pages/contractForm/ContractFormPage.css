@@ -472,17 +472,6 @@
   background: var(--sc-app-panel-muted);
 }
 
-.contract-header-action-label {
-  display: inline-flex;
-  align-items: center;
-  min-height: 28px;
-  padding: 0 7px;
-  color: var(--sc-app-text-secondary);
-  font-size: 11px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
 .contract-form-native-shell :deep(.template-page-header-actions .sc-btn) {
   min-height: 30px;
   padding: 5px 11px;
@@ -497,23 +486,6 @@
 .contract-form-native-shell :deep(.template-page-header-actions .contract-header-config-action) {
   font-weight: 500;
   opacity: 0.78;
-}
-
-.contract-header-action-separator {
-  align-self: center;
-  width: 1px;
-  height: 16px;
-  background: var(--sc-app-border);
-}
-
-.contract-header-config-action {
-  color: var(--sc-semantic-text-muted);
-}
-
-.native-statusbar--header .native-statusbar-step {
-  min-width: 68px;
-  min-height: 30px;
-  padding: 0 10px;
 }
 
 @media (max-width: 860px) {

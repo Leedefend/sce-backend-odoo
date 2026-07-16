@@ -53,26 +53,26 @@
         <div class="work-card__actions">
           <button type="button" class="secondary sc-btn sc-btn-ghost" @click="openItem(item)">打开详情</button>
           <button
-            v-if="item.actions[0]"
+            v-if="primaryAction(item)"
             type="button"
             class="sc-btn sc-btn-primary"
             :disabled="busy"
-            @click="beginAction(item, item.actions[0])"
+            @click="beginAction(item, primaryAction(item)!)"
           >
-            {{ item.actions[0].label }}
+            {{ primaryAction(item)?.label }}
           </button>
           <button
-            v-for="action in item.actions.slice(1, 3)"
+            v-for="action in secondaryActions(item)"
             :key="action.key"
             type="button"
             class="secondary sc-btn sc-btn-secondary"
             :disabled="busy"
             @click="beginAction(item, action)"
           >{{ action.label }}</button>
-          <details v-if="item.actions.length > 3" class="more-actions">
+          <details v-if="overflowActions(item).length" class="more-actions">
             <summary>更多操作</summary>
             <button
-              v-for="action in item.actions.slice(3)"
+              v-for="action in overflowActions(item)"
               :key="action.key"
               type="button"
               class="secondary sc-btn sc-btn-ghost"
@@ -182,6 +182,22 @@ function formatFact(fact: ProductMyWorkFact) {
 function confirmationSummary(item: ProductMyWorkItem) {
   const highlighted = item.facts.find((fact) => fact.display_role === 'money');
   return highlighted ? `${item.record.label} · ${formatFact(highlighted)}` : item.record.label;
+}
+
+function primaryAction(item: ProductMyWorkItem) {
+  return item.actions.find((action) => action.presentation?.tier === 'primary');
+}
+
+function secondaryActions(item: ProductMyWorkItem) {
+  return item.actions
+    .filter((action) => action.presentation?.tier === 'secondary')
+    .slice(0, 2);
+}
+
+function overflowActions(item: ProductMyWorkItem) {
+  const primary = primaryAction(item);
+  const secondary = new Set(secondaryActions(item).map((action) => action.key));
+  return item.actions.filter((action) => action.key !== primary?.key && !secondary.has(action.key));
 }
 
 function openItem(item: ProductMyWorkItem) {

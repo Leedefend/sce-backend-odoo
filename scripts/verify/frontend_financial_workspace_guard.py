@@ -14,6 +14,11 @@ def fail(message):
 
 contract = (FRONTEND / "app/financialWorkspaceContract.ts").read_text(encoding="utf-8")
 workspace = (FRONTEND / "components/business/FinancialRelationshipWorkspace.vue").read_text(encoding="utf-8")
+record_components = "\n".join(
+    path.read_text(encoding="utf-8")
+    for path in sorted((FRONTEND / "components/product-record").glob("*.vue"))
+)
+workspace_surface = workspace + "\n" + record_components
 dialog = (FRONTEND / "components/business/IntentConfirmationDialog.vue").read_text(encoding="utf-8")
 page = (FRONTEND / "pages/ContractFormPage.vue").read_text(encoding="utf-8")
 action_rows = (FRONTEND / "pages/contractForm/authoritativeBusinessActionRows.ts").read_text(encoding="utf-8")
@@ -21,13 +26,13 @@ backend = (ROOT / "addons/smart_construction_core/services/financial_workspace_c
 assembler = (ROOT / "addons/smart_core/app_config_engine/services/assemblers/page_assembler.py").read_text(encoding="utf-8")
 
 for marker in (
-    "关键事实摘要", "上下游关系", "业务明细", "审计信息",
-    "formatWorkspaceMoney", "currency_risk", "data-relation-key",
+    "关键业务事实", "上下游关系", "业务明细", "审计信息",
+    "formatWorkspaceMoney", "currency_risk", "data-relation-key", "data-product-record-status",
 ):
-    if marker not in workspace:
+    if marker not in workspace_surface:
         fail("workspace is missing semantic marker %s" % marker)
 
-for marker in ("role=\"dialog\"", "aria-modal=\"true\"", "focus", "@submit.prevent"):
+for marker in ("<dialog", "showModal()", "focus", "@submit.prevent"):
     if marker not in dialog:
         fail("confirmation dialog is missing accessibility/submission guard %s" % marker)
 
@@ -37,7 +42,7 @@ if "Number.isFinite(amount)" not in contract or "Intl.NumberFormat" not in contr
     fail("money formatter is not centralized")
 
 for forbidden in ("model ===", "model !==", "includes(model)", "switch (model)", "switch(model)"):
-    if forbidden in workspace or forbidden in contract:
+    if forbidden in workspace_surface or forbidden in contract:
         fail("frontend workspace contains a model-specific branch: %s" % forbidden)
 
 if "FinancialRelationshipWorkspace" not in page or "IntentConfirmationDialog" not in page:
@@ -46,10 +51,13 @@ if "window.confirm" in page:
     fail("legacy browser confirmation remains in ContractFormPage")
 if "authoritativeMutationMethods" not in action_rows or "selectAuthoritativeBusinessActionRows" not in page:
     fail("authoritative intent actions do not suppress duplicate workflow mutations")
+if "model.value === 'payment.request'" in page or "action_create_payment_execution" in page:
+    fail("shared form page contains a payment-request action fallback")
 
 for marker in (
     "WORKSPACE_DECLARATIONS", "check_access_rule", "operating_metrics",
     "settlement_actual_paid_amount_map", "currency_mismatch", "projection_only",
+    "STATE_PRESENTATION", "WORKSPACE_PRESENTATION", '"presentation"',
 ):
     if marker not in backend:
         fail("backend projection is missing authority marker %s" % marker)

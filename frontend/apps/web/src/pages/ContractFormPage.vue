@@ -4,115 +4,28 @@
     :flow="isProjectIntakeCreateMode"
     :class="['sc-page', { 'contract-form-native-shell': useNativeFormTree }]"
     data-product-page-mode="form"
-    :data-v2-shadow-store="String(v2ShadowStoreReady)"
-    :data-v2-shadow-widgets="String(v2ShadowWidgetCount)"
-    :data-v2-shadow-actions="String(v2ShadowActionCount)"
-    :data-v2-shadow-button-statuses="String(v2ShadowButtonStatusCount)"
-    :data-v2-shadow-field-codes="String(v2ShadowFieldCodeCount)"
-    :data-v2-shadow-field-overlap="String(v2ShadowLegacyFieldOverlapCount)"
-    :data-v2-shadow-field-missing="v2ShadowLegacyFieldMissingPreview"
-    :data-v2-shadow-layout-source="v2ShadowLayoutSourceKind"
-    :data-v2-shadow-global-source="v2ShadowGlobalSourceKind"
-    :data-v2-shadow-source-context="v2ShadowSourceContextKind"
-    :data-v2-shadow-status-fields="String(v2ShadowStatusFieldCount)"
-    :data-v2-shadow-value-fields="String(v2ShadowValueFieldCount)"
+    :data-v2-shadow-store="String(v2ShadowStoreReady)" :data-v2-shadow-widgets="String(v2ShadowWidgetCount)"
+    :data-v2-shadow-actions="String(v2ShadowActionCount)" :data-v2-shadow-button-statuses="String(v2ShadowButtonStatusCount)"
+    :data-v2-shadow-field-codes="String(v2ShadowFieldCodeCount)" :data-v2-shadow-field-overlap="String(v2ShadowLegacyFieldOverlapCount)"
+    :data-v2-shadow-field-missing="v2ShadowLegacyFieldMissingPreview" :data-v2-shadow-layout-source="v2ShadowLayoutSourceKind"
+    :data-v2-shadow-global-source="v2ShadowGlobalSourceKind" :data-v2-shadow-source-context="v2ShadowSourceContextKind"
+    :data-v2-shadow-status-fields="String(v2ShadowStatusFieldCount)" :data-v2-shadow-value-fields="String(v2ShadowValueFieldCount)"
     :data-v2-shadow-main-data-fields="String(v2ShadowMainDataFieldCount)"
     :data-v2-shadow-readonly-values="String(v2ShadowReadonlyValueCount)"
     :data-v2-shadow-value-source="v2ShadowValueSourceKind"
     :data-v2-shadow-error="v2ContractDecodeError || '-'"
   >
-    <PageHeaderTemplate
-      :title="pageDisplayTitle"
-      :subtitle="pageDisplaySubtitle || undefined"
-      :hide-title="suppressPageHeaderTitle"
-    >
-      <template #meta>
-        <p v-if="showHud" class="meta">model={{ model }} · id={{ recordIdDisplay }} · action={{ actionId || '-' }}</p>
-        <p v-if="showHud && contractMetaLine" class="meta">{{ contractMetaLine }}</p>
-      </template>
-      <template #status>
-        <template v-if="isProjectIntakeCreateMode">
-          <p class="header-status-item">当前进度：{{ intakeRequiredSummary }}</p>
-          <p class="header-status-item" :class="{ 'header-status-item--danger': intakeMissingSummary !== '无' }">缺少：{{ intakeMissingSummary }}</p>
-        </template>
-        <section v-else-if="nativeStatusbar.visible" class="native-statusbar native-statusbar--header" aria-label="项目状态">
-          <button
-            v-for="item in nativeStatusbar.states"
-            :key="String(item.value)"
-            type="button"
-            class="native-statusbar-step"
-            :class="{
-              'native-statusbar-step--active': nativeStatusbar.current === String(item.value),
-              'native-statusbar-step--done': nativeStatusbar.reachedValues.includes(String(item.value)),
-            }"
-            :disabled="busy || nativeStatusbar.readonly"
-            @click="setStatusbarValue(String(item.value))"
-          >
-            {{ item.label }}
-          </button>
-        </section>
-      </template>
-      <template #actions>
-        <span class="contract-header-action-label">办理操作</span>
-        <button
-          v-if="!isProjectIntakeCreateMode"
-          class="sc-btn sc-btn-ghost sc-btn-sm"
-          :disabled="busy"
-          type="button" @click="router.back()"
-        >
-          返回列表
-        </button>
-        <button
-          v-if="showReturnToBusinessConfigAction"
-          class="sc-btn sc-btn-ghost sc-btn-sm"
-          :disabled="busy"
-          @click="returnToBusinessConfigDesigner"
-        >
-          返回工作台
-        </button>
-        <button
-          v-if="showDraftSaveAction"
-          class="sc-btn sc-btn-ghost sc-btn-sm"
-          :disabled="draftSaveDisabled"
-          @click="() => saveRecord()"
-        >
-          {{ draftSaveButtonLabel }}
-        </button>
-        <button
-          v-if="showPrimaryBusinessFormAction"
-          class="sc-btn sc-btn-primary sc-btn-sm"
-          :disabled="primaryFormActionDisabled"
-          @click="runPrimaryFormAction"
-        >
-          {{ submitButtonLabel }}
-        </button>
-        <button
-          v-for="action in headerBusinessActionsVisible"
-          :key="`hdr-${action.key}`"
-          :class="headerActionButtonClass(action)"
-          :disabled="busy || !action.enabled"
-          :title="action.hint"
-          @click="runAction(action)"
-        >
-          {{ action.label }}
-        </button>
-        <span v-if="headerConfigActionsVisible.length" class="contract-header-action-separator" aria-hidden="true" />
-        <button
-          v-for="action in headerConfigActionsVisible"
-          :key="`hdr-config-${action.key}`"
-          class="sc-btn sc-btn-ghost sc-btn-sm contract-header-config-action"
-          :disabled="busy || !action.enabled"
-          :title="action.hint"
-          @click="runAction(action)"
-        >
-          {{ action.label }}
-        </button>
-        <button v-if="showDiscardAction" class="sc-btn sc-btn-ghost sc-btn-sm" :disabled="busy" @click="discardChanges">{{ formUiLabel('discard') }}</button>
-        <button v-if="showDebugActionsVisible && !isProjectIntakeCreateMode" class="sc-btn sc-btn-ghost sc-btn-sm" :disabled="busy || !contract" @click="copyContractJson">复制配置</button>
-        <button v-if="showDebugActionsVisible && !isProjectIntakeCreateMode" class="sc-btn sc-btn-ghost sc-btn-sm" :disabled="busy || !contract" @click="exportContractJson">导出配置</button>
-        <button v-if="showDebugActionsVisible && !isProjectIntakeCreateMode" class="sc-btn sc-btn-ghost sc-btn-sm" :disabled="busy" @click="reload">{{ formUiLabel('reload') }}</button>
-      </template>
-    </PageHeaderTemplate>
+    <ContractFormProductHeader
+      :title="pageDisplayTitle" :subtitle="pageDisplaySubtitle" :hide-title="suppressPageHeaderTitle" :show-hud="showHud"
+      :model="model" :record-id-display="recordIdDisplay" :action-id="actionId" :contract-meta-line="contractMetaLine"
+      :intake-mode="isProjectIntakeCreateMode" :intake-required-summary="intakeRequiredSummary" :intake-missing-summary="intakeMissingSummary" :statusbar="nativeStatusbar"
+      :busy="busy" :show-return="showReturnToBusinessConfigAction" :show-draft-save="showDraftSaveAction" :draft-save-disabled="draftSaveDisabled" :draft-save-label="draftSaveButtonLabel"
+      :show-primary-form-action="showPrimaryBusinessFormAction" :primary-form-action-disabled="primaryFormActionDisabled" :submit-label="submitButtonLabel"
+      :direct-actions="headerBusinessDirectActions" :overflow-actions="headerBusinessOverflowActions" :config-actions="headerConfigActionsVisible"
+      :show-discard="showDiscardAction" :show-debug="showDebugActionsVisible" :contract-present="Boolean(contract)" :discard-label="formUiLabel('discard')" :reload-label="formUiLabel('reload')"
+      @back="returnToPreviousPage" @set-status="setStatusbarValue" @return-workbench="returnToBusinessConfigDesigner" @save-draft="saveRecord()"
+      @run-primary="runPrimaryFormAction" @run-action="runAction" @discard="discardChanges" @copy="copyContractJson" @export="exportContractJson" @reload="reload"
+    />
 
     <StatusPanel v-if="renderErrorMessage" :title="pageDisplayTitle" :message="renderErrorMessage" variant="error" :on-retry="reload" />
     <StatusPanel v-else-if="status === 'loading'" :title="pageDisplayTitle" variant="info" busy />
@@ -153,9 +66,12 @@
           :suggested-action="sceneValidationPanel.suggestedAction"
           variant="error"
         />
-        <p v-if="nonSceneValidationErrors.length" class="validation-error">
-          {{ nonSceneValidationErrors.join('；') }}
-        </p>
+        <ProductFormErrorSummary
+          :errors="nonSceneValidationErrors"
+          :conflict="formConflict"
+          @focus-error="focusValidationError"
+          @reload-latest="reloadLatestRecord"
+        />
         <p v-if="onchangeWarnings.length" class="validation-warn">
           {{ onchangeWarnings.map((item) => item.message || item.title || '').filter(Boolean).join('；') }}
         </p>
@@ -322,15 +238,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onErrorCaptured, reactive, ref, watch } from 'vue';
+import { computed, nextTick, onErrorCaptured, reactive, ref, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import StatusPanel from '../components/StatusPanel.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import FinancialRelationshipWorkspace from '../components/business/FinancialRelationshipWorkspace.vue';
+import ProductFormErrorSummary from '../components/product-record/ProductFormErrorSummary.vue';
 import IntentConfirmationDialog from '../components/business/IntentConfirmationDialog.vue';
 import AttachmentViewer from '../components/attachment/AttachmentViewer.vue';
 import LayoutShell from '../components/template/LayoutShell.vue';
-import PageHeaderTemplate from '../components/template/PageHeader.vue';
 import { type NativeFormLayoutNode } from '../components/template/NativeFormTreeRenderer.vue';
 import SceneBlocksRenderer from '../components/scene/SceneBlocksRenderer.vue';
 import PageFooterTemplate from '../components/template/PageFooter.vue';
@@ -343,6 +259,7 @@ import RelationSearchDialog from './contractForm/RelationSearchDialog.vue';
 import ContractModeSupportPanel from './contractForm/ContractModeSupportPanel.vue';
 import CurrentFormFieldSettingsPanel from './contractForm/CurrentFormFieldSettingsPanel.vue';
 import ContractFormActionBlocks from './contractForm/ContractFormActionBlocks.vue';
+import ContractFormProductHeader from './contractForm/ContractFormProductHeader.vue';
 import type {
   FormSectionFieldActionPayload,
   FormSectionFieldSchema,
@@ -419,9 +336,7 @@ import {
   collectUnifiedPageContractV2FieldContainerStatus,
   collectUnifiedPageContractV2FieldStatus,
   collectUnifiedPageContractV2FieldWidgets,
-  resolveUnifiedPageContractV2BusinessOperationProfile,
   resolveUnifiedPageContractV2FieldGroups,
-  resolveUnifiedPageContractV2FormStructureContract,
   resolveUnifiedPageContractV2MainData,
   resolveUnifiedPageContractV2,
   resolveUnifiedPageContractV2GlobalStatus,
@@ -509,7 +424,8 @@ import {
   normalizeOnchangeFieldPatch,
   normalizeOnchangeResponse,
 } from './contractForm/onchangeNormalization';
-import { dictOrEmpty, mergeFieldLabelsFromSource } from './contractForm/recordUtils';
+import { fieldRequiresServerOnchange, resolveContractActionRules } from './contractForm/contractActionRules';
+import { dictOrEmpty } from './contractForm/recordUtils';
 import {
   collectFormDataFieldNames,
   collectNativeFormDesignFields,
@@ -612,6 +528,9 @@ import {
   normalizeNativeFormStatusbar,
   normalizeWorkflowPhaseStatusbar,
   resolveStatusbarSelectionValue,
+  resolveWorkflowContractFromSources,
+  applyWorkflowAvailability,
+  shouldShowWorkflowAction,
   workflowActionMethodAliases,
   workflowActionRowForMethod,
 } from './contractForm/workflowContract';
@@ -698,6 +617,11 @@ import { useProjectContextChangeRuntime } from './contractForm/useProjectContext
 import { selectAuthoritativeBusinessActionRows } from './contractForm/authoritativeBusinessActionRows';
 import { isFormPageRouteOwner, useFormPageLifecycleRuntime } from './contractForm/useFormPageLifecycleRuntime';
 import { useFormAuxiliaryWatchersRuntime } from './contractForm/useFormAuxiliaryWatchersRuntime';
+import { useUnsavedFormGuard } from './contractForm/useUnsavedFormGuard';
+import { buildContractFormActions } from './contractForm/contractActionPresentation';
+import { focusProductFormValidationError } from './contractForm/formValidationFocus';
+import { groupContractHeaderActions } from './contractForm/contractHeaderActionPresentation';
+import { resolveContractFormFieldLabels } from './contractForm/formFieldLabels';
 import {
   buildSaveRecordPayload,
   validateBeforeSaveRecord,
@@ -746,6 +670,7 @@ const errorMessage = ref('');
 const loadError = reactive<{ status: number | null; reason: string; trace: string }>({ status: null, reason: '', trace: '' });
 const validationErrors = ref<string[]>([]);
 const submissionFeedback = ref<SubmissionFeedback>(null);
+const formConflict = ref(false);
 const intentConfirmationRef = ref<InstanceType<typeof IntentConfirmationDialog> | null>(null);
 const showOne2manyErrors = ref(false);
 const busyKind = ref<BusyKind>(null);
@@ -1280,12 +1205,11 @@ const currentBusinessCategoryLabel = computed(() => currentBusinessCategoryConte
 const currentBusinessCategoryCode = computed(() => currentBusinessCategoryContext.value.code);
 
 const pageIdentityInput = computed(() => buildContractFormPageIdentity({
-    action: currentActionMeta.value,
-    breadcrumbs: resolveRoutePageIdentity(route, session.menuTree).breadcrumbs,
-    businessCategoryLabel: currentBusinessCategoryLabel.value, contract: contract.value, formData,
-    isCreate: !recordId.value, isEdit: route.name === 'model-form', isProjectIntake: isProjectIntakeCreateMode.value,
-    menuName: currentMenuTitle.value, modelName: model.value,
-    recordMissing: recordMissing.value, renderError: Boolean(renderErrorMessage.value), status: status.value,
+  action: currentActionMeta.value, breadcrumbs: resolveRoutePageIdentity(route, session.menuTree).breadcrumbs,
+  businessCategoryLabel: currentBusinessCategoryLabel.value, contract: contract.value, formData,
+  isCreate: !recordId.value, isEdit: route.name === 'model-form', isProjectIntake: isProjectIntakeCreateMode.value,
+  menuName: currentMenuTitle.value, modelName: model.value, recordMissing: recordMissing.value,
+  renderError: Boolean(renderErrorMessage.value), status: status.value,
 }));
 const pageIdentity = usePublishedPageIdentity(pageIdentityInput, { routeKey: () => route.fullPath,
   active: () => isComponentActive.value && isFormPageRouteOwner(route.name), onTitle: (title) => session.updateActiveActivityTitle(title) });
@@ -1312,47 +1236,31 @@ const submitButtonLabel = computed(() => resolveSubmitButtonLabel({
   savingLabel: formUiLabel('saving'),
 }));
 const showPrimaryBusinessFormAction = computed(() => (!financialWorkspace.value || renderProfile.value === 'edit') && !showCurrentFormFieldConfigScope.value && !isProjectIntakeCreateMode.value);
-const showDraftSaveAction = computed(() => showPrimaryBusinessFormAction.value && !recordId.value && canSave.value && !primaryCreateFooterAction.value);
-const draftSaveButtonLabel = computed(() => (busy.value && busyKind.value === 'save' ? formUiLabel('saving') : '保存草稿'));
+const showDraftSaveAction = computed(() => {
+  if (!showPrimaryBusinessFormAction.value || !canSave.value || primaryCreateFooterAction.value) return false;
+  if (!recordId.value) return true;
+  return Boolean(primarySubmitAction.value) && hasChanges.value;
+});
+const draftSaveButtonLabel = computed(() => {
+  if (busy.value && busyKind.value === 'save') return formUiLabel('saving');
+  return recordId.value ? formUiLabel('save') : '保存草稿';
+});
 const showDiscardAction = computed(() => !isProjectIntakeCreateMode.value && Boolean(recordId.value) && hasChanges.value);
 
-const headerActionsVisible = computed(() => {
-  if (isProjectIntakeCreateMode.value) return [];
-  const filterPrimarySubmit = (actions: ContractAction[]) => actions.filter((action) => Boolean(action.mutation) || !isUnifiedSubmitAction(action));
-  if (useNativeFormTree.value) {
-    return filterPrimarySubmit(headerActions.value.filter((action) => action.sourceWidgetId === 'page.header'));
-  }
-  return filterPrimarySubmit(headerActions.value);
-});
+const groupedHeaderActions = computed(() => groupContractHeaderActions({
+  actions: headerActions.value, intakeMode: isProjectIntakeCreateMode.value, nativeTree: useNativeFormTree.value,
+  configurationMode: showCurrentFormFieldConfigScope.value, productRecord: Boolean(financialWorkspace.value),
+  isSubmitAction: isUnifiedSubmitAction,
+}));
+const headerBusinessDirectActions = computed(() => groupedHeaderActions.value.direct);
+const headerBusinessOverflowActions = computed(() => groupedHeaderActions.value.overflow);
+const headerConfigActionsVisible = computed(() => groupedHeaderActions.value.configuration);
 
-function isHeaderConfigAction(action: ContractAction) {
-  const label = String(action.label || '').trim();
-  const key = String(action.key || '').trim().toLowerCase();
-  const source = String(action.sourceWidgetId || '').trim().toLowerCase();
-  return label.includes('设置') || key.includes('setting') || key.includes('config') || source.includes('setting') || source.includes('config');
-}
-
-const headerBusinessActionsVisible = computed(() => {
-  if (showCurrentFormFieldConfigScope.value) return [];
-  return headerActionsVisible.value.filter((action) => !isHeaderConfigAction(action));
-});
-const headerConfigActionsVisible = computed(() => headerActionsVisible.value.filter((action) => isHeaderConfigAction(action) && action.enabled));
-
-function headerActionButtonClass(action: ContractAction) {
-  return ['sc-btn', 'sc-btn-sm', action.semantic === 'primary_action' && !isHeaderConfigAction(action) ? 'sc-btn-primary' : 'sc-btn-ghost'];
-}
-
-function contractV2ActionRules() {
-  const v2ActionRules = resolveUnifiedPageContractV2(contract.value)?.actionContract;
-  const v2ActionRuleList = parseMaybeJsonRecord(v2ActionRules).actionRuleList;
-  return Array.isArray(v2ActionRuleList)
-    ? v2ActionRuleList.filter((row): row is Record<string, unknown> => Boolean(row && typeof row === 'object' && !Array.isArray(row)))
-    : [];
-}
+const contractV2ActionRules = computed(() => resolveContractActionRules(contract.value));
 
 function contractFieldActions(field: FormSectionFieldSchema) {
   return buildContractFieldActionsFromRules({
-    rules: contractV2ActionRules(),
+    rules: contractV2ActionRules.value,
     fieldName: field.name,
     mode: activeContractMode.value,
     visibilityDraft: fieldVisibilityDraft,
@@ -1373,7 +1281,7 @@ function formSettingsFieldActions(field: FormSectionFieldSchema) {
 
 const activeContractModeActions = computed(() => {
   return buildActiveContractModeActions({
-    rules: contractV2ActionRules(),
+    rules: contractV2ActionRules.value,
     mode: activeContractMode.value,
     excludedKeys: [BUSINESS_CONFIG_ACTION_KEYS.currentFormFieldOrderSave],
   });
@@ -1649,7 +1557,7 @@ const {
   changedFieldGroupDraft: () => changedFieldGroupDraft(),
   changedFieldVisibilityDraft: () => changedFieldVisibilityDraft(),
   contractModeFeedback,
-  contractV2ActionRules: () => contractV2ActionRules(),
+  contractV2ActionRules: () => contractV2ActionRules.value,
   errorMessage,
   fieldGroupBase,
   fieldGroupSavedBase,
@@ -1687,7 +1595,7 @@ const contractModeBaseFieldRows = computed<ContractFieldGovernanceRow[]>(() => {
   const mode = activeContractMode.value;
   if (!mode) return [];
   const rows = new Map<string, ContractFieldGovernanceRow>();
-  contractV2ActionRules().forEach((rule) => {
+  contractV2ActionRules.value.forEach((rule) => {
     const sourceWidgetId = String(rule.sourceWidgetId || rule.source_widget_id || '').trim();
     if (!sourceWidgetId.startsWith('field.')) return;
     const expectedMode = contractActionRuleClientMode(rule);
@@ -3337,40 +3245,8 @@ async function loadRelationOptions() {
   });
 }
 
-function toActionId(raw: unknown) {
-  return toPositiveInt(raw);
-}
-
-function detectMethodName(key: string, payloadMethod: string) {
-  return detectObjectMethodFromActionKey(key, payloadMethod);
-}
-
 function currentWorkflowContract(): Record<string, unknown> {
-  const root = dictOrEmpty(contract.value);
-  const storeSnapshot = dictOrEmpty(v2ContractStore.value?.snapshot);
-  const storeDirect = dictOrEmpty(storeSnapshot.workflowContract);
-  if (Object.keys(storeDirect).length) return storeDirect;
-  const storeRuntime = dictOrEmpty(storeSnapshot.runtimeContract);
-  const storeNested = dictOrEmpty(storeRuntime.workflowContract);
-  if (Object.keys(storeNested).length) return storeNested;
-  const direct = root.workflowContract;
-  if (direct && typeof direct === 'object' && !Array.isArray(direct)) {
-    return direct as Record<string, unknown>;
-  }
-  const runtime = root.runtimeContract;
-  if (runtime && typeof runtime === 'object' && !Array.isArray(runtime)) {
-    const nested = (runtime as Record<string, unknown>).workflowContract;
-    if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
-      return nested as Record<string, unknown>;
-    }
-  }
-  const rawV2 = dictOrEmpty(root.__unified_page_contract_v2);
-  const rawDirect = dictOrEmpty(rawV2.workflowContract);
-  if (Object.keys(rawDirect).length) return rawDirect;
-  const rawRuntime = dictOrEmpty(rawV2.runtimeContract);
-  const rawNested = dictOrEmpty(rawRuntime.workflowContract);
-  if (Object.keys(rawNested).length) return rawNested;
-  return {};
+  return resolveWorkflowContractFromSources(contract.value, v2ContractStore.value?.snapshot);
 }
 
 function workflowContractActionRows(): Array<Record<string, unknown>> {
@@ -3384,88 +3260,16 @@ function blockingWorkflowEvidenceMessage() {
 }
 
 function applyWorkflowContractToAction(action: ContractAction): ContractAction {
-  const workflow = currentWorkflowContract();
-  if (!recordId.value || !action.methodName || !isWorkflowTransitionMethod(workflow, action.methodName)) return action;
-  const workflowRow = workflowActionRowForMethod(workflow, action.methodName);
-  const blockingMessage = blockingWorkflowEvidenceMessage();
-  if (!workflowRow) {
-    return {
-      ...action,
-      enabled: false,
-      hint: blockingMessage || '当前流程状态不允许执行该操作',
-    };
-  }
-  if (workflowRow.enabled === false) {
-    return {
-      ...action,
-      enabled: false,
-      hint: String(workflowRow.blocked_message || workflowRow.message || blockingMessage || workflowRow.reason_code || workflowRow.reasonCode || '').trim(),
-    };
-  }
-  return action;
-}
-
-function hasWorkflowContractActions() {
-  const workflow = currentWorkflowContract();
-  return Array.isArray(workflow.availableActions);
+  return applyWorkflowAvailability({ action, workflow: currentWorkflowContract(), recordId: recordId.value, blockingMessage: blockingWorkflowEvidenceMessage() });
 }
 
 function shouldShowWorkflowNativeAction(methodName: string) {
-  const method = String(methodName || '').trim();
-  const workflow = currentWorkflowContract();
-  if (!recordId.value || !method || !hasWorkflowContractActions() || !isWorkflowTransitionMethod(workflow, method)) return true;
-  return Boolean(workflowActionRowForMethod(workflow, method));
+  return shouldShowWorkflowAction(currentWorkflowContract(), recordId.value, methodName);
 }
 
-const workflowEvidenceGateRows = computed(() => {
-  return normalizeWorkflowEvidenceGateRows(currentWorkflowContract());
-});
+const workflowEvidenceGateRows = computed(() => normalizeWorkflowEvidenceGateRows(currentWorkflowContract()));
 
 const contractActions = computed<ContractAction[]>(() => {
-  const mapSceneReadyAction = (row: Record<string, unknown>): ContractAction | null => {
-    const protocol = normalizeSceneActionProtocol(row);
-    const key = String(row.key || '').trim();
-    if (!key) return null;
-    const target = parseMaybeJsonRecord(row.target);
-    const intent = String(row.intent || '').trim().toLowerCase();
-    const tier = String(row.tier || '').trim().toLowerCase();
-    const placement = String(row.placement || 'header').trim().toLowerCase();
-    const actionId = toActionId(target.action_id) ?? toActionId(target.ref);
-    const hasOpenTarget = Boolean(actionId || String(target.url || '').trim() || String(target.route || '').trim());
-    const kind = hasOpenTarget || intent === 'ui.contract' ? 'open' : 'object';
-    const semantic = tier === 'primary'
-      ? 'primary_action'
-      : tier === 'secondary'
-        ? 'secondary_action'
-        : '';
-    return {
-      key,
-      label: String(row.label || key),
-      kind,
-      level: placement,
-      selection: 'none',
-      actionId,
-      methodName: detectMethodName(key, String(target.method || '').trim()),
-      targetModel: String(target.model || model.value || '').trim(),
-      context: parseMaybeJsonRecord(target.context_raw),
-      domainRaw: String(target.domain_raw || '').trim(),
-      target: String(target.target || '').trim(),
-      url: String(target.url || target.route || '').trim(),
-      enabled: true,
-      hint: '',
-      intent,
-      semantic,
-      sourceWidgetId: String(row.sourceWidgetId || row.source_widget_id || '').trim(),
-      clientMode: String(target.mode || target.client_mode || row.clientMode || row.client_mode || '').trim(),
-      visibleProfiles: ['create', 'edit', 'readonly'],
-      requiredParams: normalizeRequiredParams(row.required_params),
-      requiresReason: row.requires_reason === true,
-      actionSafety: normalizeActionSafety(row.action_safety),
-      mutation: protocol?.mutation,
-      refreshPolicy: protocol?.refresh_policy,
-    };
-  };
-
   const sceneReadyActions = useSceneFormAugmentations.value && Array.isArray(sceneReadyFormSurface.value.actions)
     ? sceneReadyFormSurface.value.actions as Array<Record<string, unknown>>
     : [];
@@ -3473,232 +3277,24 @@ const contractActions = computed<ContractAction[]>(() => {
   const v2ButtonStatus = Object.keys(storeButtonStatus).length
     ? storeButtonStatus
     : collectUnifiedPageContractV2ButtonStatus(contract.value);
-  const merged: Array<Record<string, unknown>> = [];
-  const nativeFormContract = contract.value?.views?.form as Record<string, unknown> | undefined;
-  const { workflowRows, nativeRows } = selectAuthoritativeBusinessActionRows(nativeFormContract, workflowContractActionRows());
-  const workflowMethods = new Set<string>();
-  workflowRows.forEach((row) => {
-    const method = String(parseMaybeJsonRecord(row.payload).method || '').trim();
-    if (method) workflowMethods.add(method);
-    workflowActionMethodAliases(String(row.key || '').trim()).forEach((alias) => workflowMethods.add(alias));
-  });
-  merged.push(...workflowRows, ...nativeRows);
-  if (Array.isArray(contract.value?.buttons)) merged.push(...(contract.value?.buttons as Array<Record<string, unknown>>));
-  if (Array.isArray(contract.value?.toolbar?.header)) merged.push(...(contract.value?.toolbar?.header as Array<Record<string, unknown>>));
-  if (Array.isArray(contract.value?.toolbar?.sidebar)) merged.push(...(contract.value?.toolbar?.sidebar as Array<Record<string, unknown>>));
-  if (Array.isArray(contract.value?.toolbar?.footer)) merged.push(...(contract.value?.toolbar?.footer as Array<Record<string, unknown>>));
-  const v2ActionRules = resolveUnifiedPageContractV2(contract.value)?.actionContract;
-  const v2ActionRuleList = parseMaybeJsonRecord(v2ActionRules).actionRuleList;
-  if (Array.isArray(v2ActionRuleList)) {
-    v2ActionRuleList.forEach((raw) => {
-      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return;
-      const row = raw as Record<string, unknown>;
-      const sourceWidgetId = String(row.sourceWidgetId || row.source_widget_id || '').trim();
-      const targetScope = String(row.targetScope || row.target_scope || '').trim().toLowerCase();
-      const triggerType = String(row.triggerType || row.trigger_type || '').trim();
-      if (triggerType && triggerType !== 'click') return;
-      const key = String(row.actionKey || row.key || row.actionId || '').trim();
-      if (!key) return;
-      const target = parseMaybeJsonRecord(row.target);
-      const button = parseMaybeJsonRecord(row.button);
-      const clientMode = String(target.mode || target.client_mode || '').trim();
-      const intent = String(row.intent || '').trim();
-      const buttonType = String(button.type || button.buttonType || '').trim();
-      const buttonName = String(button.name || button.method || '').trim();
-      const isRootObjectAction = sourceWidgetId === 'page.root' && Boolean(buttonName);
-      if (sourceWidgetId !== 'page.header' && targetScope !== 'footer' && !isRootObjectAction) return;
-      const actionKind = buttonType === 'server' || buttonType === 'server_action'
-        ? 'server'
-        : buttonName
-          ? 'object'
-          : (clientMode ? 'client' : 'open');
-      merged.push({
-        key,
-        label: String(row.label || key).trim() || key,
-        kind: actionKind,
-        intent,
-        level: targetScope === 'footer' ? 'footer' : 'header',
-        selection: 'none',
-        sourceWidgetId,
-        target,
-        target_model: String(target.model || '').trim(),
-        payload: {
-          method: buttonName,
-          type: buttonType,
-          action_id: target.action_id,
-          ref: target.ref,
-          url: target.url || target.route,
-          target: target.target,
-          mode: clientMode,
-          client_mode: clientMode,
-          domain_raw: target.domain_raw,
-          context_raw: target.context_raw,
-        },
-        visible_profiles: ['create', 'edit', 'readonly'],
-      });
-    });
-  }
-  if (sceneReadyActions.length) {
-    merged.push(...sceneReadyActions);
-  }
-
-  const dedup = new Set<string>();
-  const out: ContractAction[] = [];
-  for (const row of merged) {
-    if (sceneReadyActions.length && !String(row.key || '').trim()) {
-      const mapped = mapSceneReadyAction(row);
-      if (!mapped || dedup.has(mapped.key)) continue;
-      const status = resolveV2ButtonStatus(mapped.key, v2ButtonStatus);
-      if (status?.visible === false) continue;
-      if (status?.disabled === true) {
-        mapped.enabled = false;
-        mapped.hint = status.reasonCode || mapped.hint || 'disabled_by_status_contract';
-      }
-      dedup.add(mapped.key);
-      out.push(mapped);
-      continue;
-    }
-    if (sceneReadyActions.includes(row)) {
-      const mapped = mapSceneReadyAction(row);
-      if (!mapped || dedup.has(mapped.key)) continue;
-      const status = resolveV2ButtonStatus(mapped.key, v2ButtonStatus);
-      if (status?.visible === false) continue;
-      if (status?.disabled === true) {
-        mapped.enabled = false;
-        mapped.hint = status.reasonCode || mapped.hint || 'disabled_by_status_contract';
-      }
-      dedup.add(mapped.key);
-      out.push(mapped);
-      continue;
-    }
-    const rowName = String(row.name || '').trim();
-    const rowLabel = normalizeActionLabel(row.label);
-    const keyBase = String(row.key || rowName || rowLabel || '').trim();
-    const key = dedup.has(keyBase) && rowLabel ? `${keyBase}:${rowLabel}` : keyBase;
-    if (!key || dedup.has(key)) continue;
-    dedup.add(key);
-    const payload = parseMaybeJsonRecord(row.payload);
-    const kind = normalizeActionKind(row.kind);
-    const protocol = normalizeSceneActionProtocol(row);
-    const targetRaw = parseMaybeJsonRecord(row.target);
-    const rowIntent = String(row.intent || '').trim();
-    const effectiveKind = protocol?.mutation ? 'mutation' : kind;
-    const level = String(row.level || 'body').trim().toLowerCase();
-    const actionId = toActionId(payload.action_id) ?? toActionId(payload.ref) ?? toActionId(row.actionId) ?? toActionId(row.action_id);
-    const methodName = detectMethodName(key, String(payload.method || row.method || '').trim());
-    const isWorkflowContractAction = row.workflow_contract_action === true;
-    if (!isWorkflowContractAction && methodName && workflowMethods.has(methodName)) continue;
-    if (isTierValidationActionHidden(methodName)) continue;
-    const targetModel = String(row.target_model || row.model || model.value || '').trim();
-    const context = parseMaybeJsonRecord(payload.context_raw);
-    const domainRaw = String(payload.domain_raw || '').trim();
-    const target = String(payload.target || '').trim();
-    const selectionRaw = String(row.selection || 'none').trim().toLowerCase();
-    const selection = selectionRaw === 'single' || selectionRaw === 'multi' ? selectionRaw : 'none';
-    const visibleProfiles = (
-      Array.isArray(row.visible_profiles) ? row.visible_profiles : ['create', 'edit']
-    )
-      .map((item) => String(item || '').trim().toLowerCase())
-      .filter((item): item is 'create' | 'edit' | 'readonly' => item === 'create' || item === 'edit' || item === 'readonly');
-    const requiredParams = normalizeRequiredParams(row.required_params);
-    const policy = evaluateActionPolicy(contract.value, key, policyContext.value);
-    if (!policy.visible) continue;
-    if (!evaluateNativeActionVisibility(row)) continue;
-    const status = resolveV2ButtonStatus(key, v2ButtonStatus);
-    if (status?.visible === false) continue;
-    const contractAllowed = typeof row.allowed === 'boolean' ? Boolean(row.allowed) : true;
-    const needRecord = effectiveKind === 'object' || effectiveKind === 'server' || effectiveKind === 'mutation' || level === 'row' || level === 'smart';
-    const blockedMessage = String(row.blocked_message || row.reason || row.reason_code || '').trim();
-    const warningMessage = String(row.warning_message || '').trim();
-    const enabled = contractAllowed && policy.enabled && (!needRecord || Boolean(recordId.value)) && status?.disabled !== true;
-    out.push({
-      key,
-      label: normalizeActionLabel(row.label, key),
-      kind: effectiveKind,
-      level,
-      selection,
-      actionId,
-      methodName,
-      targetModel,
-      context,
-      domainRaw,
-      target,
-      url: String(payload.url || row.url || '').trim(),
-      enabled,
-      hint: status?.disabled === true
-        ? status.reasonCode || 'disabled_by_status_contract'
-        : (needRecord && !recordId.value ? 'requires record id' : (contractAllowed ? (warningMessage || policy.reason) : blockedMessage)),
-      intent: rowIntent,
-      semantic: policy.semantic,
-      sourceWidgetId: String(row.sourceWidgetId || row.source_widget_id || '').trim(),
-      clientMode: String(targetRaw.mode || targetRaw.client_mode || row.clientMode || row.client_mode || '').trim(),
-      visibleProfiles,
-      requiredParams,
-      requiresReason: row.requires_reason === true || requiredParams.includes('reason'),
-      actionSafety: normalizeActionSafety(row.action_safety),
-      mutation: protocol?.mutation,
-      refreshPolicy: protocol?.refresh_policy,
-    });
-  }
-  if (
-    model.value === 'payment.request'
-    && recordId.value
-    && String(formData.type || 'pay').trim() === 'pay'
-    && !out.some((item) => item.methodName === 'action_create_payment_execution')
-  ) {
-    out.push({
-      key: 'action_create_payment_execution',
-      label: '生成付款登记',
-      kind: 'object',
-      level: 'header',
-      selection: 'none',
-      actionId: null,
-      methodName: 'action_create_payment_execution',
-      targetModel: 'payment.request',
-      context: {},
-      domainRaw: '',
-      target: '',
-      url: '',
-      enabled: true,
-      hint: '',
-      intent: '',
-      semantic: 'secondary_action',
-      sourceWidgetId: '',
-      clientMode: '',
-      visibleProfiles: ['edit', 'readonly'],
-      requiredParams: [],
-      requiresReason: false,
-    });
-  }
-  return out.sort((a, b) => {
-    const levelDelta = a.level.localeCompare(b.level);
-    if (levelDelta !== 0) return levelDelta;
-    return a.label.localeCompare(b.label, 'zh-CN');
-  }).filter((item) => {
-    const profiles = Array.isArray(item.visibleProfiles) ? item.visibleProfiles : [];
-    if (profiles.length && !profiles.includes(renderProfile.value)) return false;
-    if (item.selection !== 'none') return false;
-    return item.level !== 'toolbar';
+  return buildContractFormActions({
+    contract: contract.value,
+    model: model.value,
+    recordId: recordId.value,
+    renderProfile: renderProfile.value,
+    sceneReadyActions,
+    v2ButtonStatus,
+    workflowActionRows: workflowContractActionRows(),
+    policyContext: policyContext.value,
+    evaluateNativeActionVisibility,
+    isTierValidationActionHidden,
   });
 });
 
 const headerActions = computed(() => contractActions.value.filter((item) => item.level === 'header' || item.level === 'toolbar'));
 const bodyActions = computed(() => contractActions.value.filter((item) => item.level !== 'header' && item.level !== 'toolbar'));
 
-const contractFieldLabels = computed<Record<string, string>>(() => {
-  const labels: Record<string, string> = {};
-  const snapshot = dictOrEmpty(v2ContractStore.value?.snapshot);
-  const source = Object.keys(snapshot).length ? snapshot : contract.value;
-  const businessProfile = resolveUnifiedPageContractV2BusinessOperationProfile(source);
-  Object.entries(dictOrEmpty(businessProfile.field_labels)).forEach(([name, value]) => {
-    const label = String(value || '').trim();
-    if (name && label) labels[name] = label;
-  });
-  mergeFieldLabelsFromSource(resolveUnifiedPageContractV2FormStructureContract(source), labels);
-  mergeFieldLabelsFromSource(snapshot.formStructureContract, labels);
-  mergeFieldLabelsFromSource((contract.value as Record<string, unknown> | null | undefined)?.formStructureContract, labels);
-  return labels;
-});
+const contractFieldLabels = computed<Record<string, string>>(() => resolveContractFormFieldLabels(contract.value, v2ContractStore.value?.snapshot));
 
 function contractFieldLabel(name: string) {
   return contractFieldLabels.value[String(name || '').trim()] || '';
@@ -3878,8 +3474,8 @@ function contractActionFromNativeRow(row: Record<string, unknown>): ContractActi
     nativeAction.kind || row.kind || row.buttonType || payload.type || row.type || (rowName ? 'object' : ''),
   );
   const level = String(nativeAction.level || row.level || 'body').trim().toLowerCase();
-  const actionId = toActionId(payload.action_id) ?? toActionId(payload.ref) ?? toActionId(row.action_id) ?? toActionId(row.ref);
-  const methodName = detectMethodName(
+  const actionId = toPositiveInt(payload.action_id) ?? toPositiveInt(payload.ref) ?? toPositiveInt(row.action_id) ?? toPositiveInt(row.ref);
+  const methodName = detectObjectMethodFromActionKey(
     key,
     String(payload.method || row.method || (kind === 'object' || kind === 'server' ? rowName : '') || '').trim(),
   );
@@ -4127,6 +3723,26 @@ const sceneValidationPanel = computed(() => {
 const nonSceneValidationErrors = computed(() => (
   validationErrors.value.filter((item) => !String(item || '').trim().startsWith(sceneValidationRequiredErrorPrefix))
 ));
+
+function focusValidationError(message: string) {
+  focusProductFormValidationError(message, layoutNodes.value);
+}
+
+async function focusFirstValidationError() {
+  await nextTick();
+  const message = nonSceneValidationErrors.value[0] || validationErrors.value[0] || '';
+  if (message) focusValidationError(message);
+}
+
+async function reloadLatestRecord() {
+  const confirmed = await intentConfirmationRef.value?.confirm({
+    actionLabel: '加载最新数据',
+    message: '加载最新数据会放弃当前页面尚未保存的修改，是否继续？',
+  });
+  if (!confirmed) return;
+  formConflict.value = false;
+  await reload();
+}
 const contractVisibleFields = computed<string[]>(() => {
   const snapshot = dictOrEmpty(v2ContractStore.value?.snapshot);
   const source = Object.keys(snapshot).length ? snapshot : contract.value;
@@ -5017,26 +4633,19 @@ function markFieldChanged(name: string) {
   const key = String(name || '').trim();
   if (!key || applyingOnchangePatch.value) return;
   dirtyFieldSet.add(key);
+  if (!fieldRequiresServerOnchange(contractV2ActionRules.value, key)) return;
   changedFieldSet.add(key);
-  scheduleOnchange();
-}
-
-function scheduleOnchange() {
   if (onchangeTimer) clearTimeout(onchangeTimer);
-  onchangeTimer = setTimeout(() => {
-    void runOnchangeRoundtrip();
-  }, 300);
+  onchangeTimer = setTimeout(() => void runOnchangeRoundtrip(), 300);
 }
 
-function buildOnchangeValues() {
-  return buildOnchangeRequestPayload({
-    fields: contract.value?.fields,
-    formData,
-    originalValues: originalValues.value,
-    recordId: recordId.value,
-    buildOne2manyValue: buildOne2manyCommandValue,
-  });
-}
+const buildOnchangeValues = () => buildOnchangeRequestPayload({
+  fields: contract.value?.fields,
+  formData,
+  originalValues: originalValues.value,
+  recordId: recordId.value,
+  buildOne2manyValue: buildOne2manyCommandValue,
+});
 
 async function runOnchangeRoundtrip() {
   if (!model.value) return;
@@ -5705,7 +5314,7 @@ function onContractInlineFieldOrderDragEnd() {
 }
 
 function lowCodeApplyBaseParams() {
-  const configAction = contractV2ActionRules().find((rule) => contractActionRuleKey(rule) === BUSINESS_CONFIG_ACTION_KEYS.currentFormFieldOrderSave);
+  const configAction = contractV2ActionRules.value.find((rule) => contractActionRuleKey(rule) === BUSINESS_CONFIG_ACTION_KEYS.currentFormFieldOrderSave);
   const target = parseMaybeJsonRecord(configAction?.target);
   return buildLowCodeApplyBaseParams({
     actionId: actionId.value || route.query.action_id,
@@ -5795,6 +5404,7 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']): Prom
   if (!canSave.value || !model.value) return false;
   submissionFeedback.value = null;
   validationErrors.value = [];
+  formConflict.value = false;
   const validation = await validateBeforeSaveRecord({
     collectPolicyValidationErrors: (submittedFields) => [
       ...collectPolicyValidationErrors(contract.value, policyContext.value),
@@ -5830,6 +5440,7 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']): Prom
   if (!validation.ok || !validation.editableMap) {
     validationErrors.value = validation.validationErrors || [];
     submissionFeedback.value = validation.submissionFeedback || null;
+    await focusFirstValidationError();
     return false;
   }
   const editableMap = validation.editableMap;
@@ -5857,6 +5468,7 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']): Prom
         ifMatch: recordVersionPolicy() ? recordVersionToken.value : undefined,
       });
       submissionFeedback.value = { kind: 'success', message: formUiLabel('save_success') };
+      formConflict.value = false;
       dirtyFieldSet.clear();
       await applyProjectionRefreshPolicy(refreshPolicy || { on_success: ['scene_projection'] });
       return true;
@@ -5880,9 +5492,26 @@ async function saveRecord(refreshPolicy?: ContractAction['refreshPolicy']): Prom
     }
   } catch (err) {
     const fallback = recordId.value ? '保存失败，请检查填写内容' : '创建失败，请检查填写内容';
+    if (err instanceof ApiError && err.status === 401) {
+      await session.logout();
+      await router.replace('/login');
+      return false;
+    }
+    if (err instanceof ApiError && err.status === 403) {
+      await router.replace({ name: 'access-denied' });
+      return false;
+    }
+    if (err instanceof ApiError && err.status === 409) {
+      formConflict.value = true;
+      validationErrors.value = ['当前记录已发生变化，请加载最新数据后重新核对本次修改。'];
+      submissionFeedback.value = { kind: 'error', message: '记录已被其他操作更新，当前输入尚未写入。' };
+      await focusFirstValidationError();
+      return false;
+    }
     const message = sanitizeUiErrorMessage(err instanceof Error ? err.message : err, fallback);
     validationErrors.value = [message];
     submissionFeedback.value = { kind: 'error', message: message && message !== fallback ? message : fallback };
+    await focusFirstValidationError();
     return false;
   } finally {
     busyKind.value = null;
@@ -5907,6 +5536,17 @@ useFormPageLifecycleRuntime({
   status,
   ensureFormInitialReload: () => ensureFormInitialReload(),
 });
+const unsavedFormGuard = useUnsavedFormGuard({
+  dirty: () => hasChanges.value,
+  busy,
+  confirmLeave: async () => intentConfirmationRef.value?.confirm({
+    actionLabel: '离开页面',
+    message: '当前修改尚未保存。离开后这些修改将丢失，是否继续？',
+  }) ?? false,
+});
+async function returnToPreviousPage() {
+  await unsavedFormGuard.navigateAfterConfirm(() => router.back());
+}
 useFormAuxiliaryWatchersRuntime({
   autosaveSource: () => [
     intakeAutosaveKey.value,

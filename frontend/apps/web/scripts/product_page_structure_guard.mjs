@@ -78,7 +78,6 @@ const shellFiles = [
   "frontend/apps/web/src/views/ActionView.vue",
   "frontend/apps/web/src/pages/ListPage.vue",
   "frontend/apps/web/src/pages/KanbanPage.vue",
-  "frontend/apps/web/src/views/RecordView.vue",
   "frontend/apps/web/src/pages/ModelListPage.vue",
   "frontend/apps/web/src/views/PlaceholderView.vue",
 ];
@@ -119,19 +118,18 @@ const regionFiles = [
   {
     file: "frontend/apps/web/src/pages/ListPage.vue",
     markers: [
-      regionClass("pageToolbar"),
       regionClass("summaryStrip"),
       regionClass("feedbackLayer"),
       regionClass("mainSurface"),
     ],
   },
   {
-    file: "frontend/apps/web/src/pages/KanbanPage.vue",
-    markers: [regionClass("pageToolbar"), regionClass("mainSurface")],
+    file: "frontend/apps/web/src/components/product-list/ProductListHeader.vue",
+    markers: [regionClass("pageToolbar")],
   },
   {
-    file: "frontend/apps/web/src/views/RecordView.vue",
-    markers: [regionClass("pageHeader"), regionClass("primaryActions"), regionClass("mainSurface")],
+    file: "frontend/apps/web/src/pages/KanbanPage.vue",
+    markers: [regionClass("pageToolbar"), regionClass("mainSurface")],
   },
   {
     file: "frontend/apps/web/src/pages/ContractFormPage.vue",
@@ -139,7 +137,7 @@ const regionFiles = [
   },
   {
     file: "frontend/apps/web/src/views/BusinessConfigSurfaceView.vue",
-    markers: [regionClass("pageHeader"), regionClass("mainSurface")],
+    markers: [regionClass("pageHeader")],
   },
   {
     file: "frontend/apps/web/src/views/MenuConfigView.vue",
@@ -151,7 +149,6 @@ const pageModeFiles = [
   { file: "frontend/apps/web/src/views/ActionView.vue", mode: "list" },
   { file: "frontend/apps/web/src/pages/ListPage.vue", mode: "list" },
   { file: "frontend/apps/web/src/pages/KanbanPage.vue", mode: "list" },
-  { file: "frontend/apps/web/src/views/RecordView.vue", mode: "detail" },
   { file: "frontend/apps/web/src/pages/ModelListPage.vue", mode: "list" },
   { file: "frontend/apps/web/src/views/PlaceholderView.vue", mode: "workspace" },
   { file: "frontend/apps/web/src/pages/ContractFormPage.vue", mode: "form" },
@@ -413,7 +410,7 @@ assertContains(
   "business form main panel must use product panel surface",
 );
 assertContains(
-  "frontend/apps/web/src/views/BusinessConfigSurfaceView.vue",
+  "frontend/apps/web/src/views/businessConfigSurface/BusinessConfigCoverageWorkspace.vue",
   /sc-product-workspace/,
   "business config workspace must use product workspace class",
 );

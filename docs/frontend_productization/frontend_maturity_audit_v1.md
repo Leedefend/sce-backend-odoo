@@ -253,3 +253,11 @@ Finance 首页新增由工作项契约授权的“付款申请”快捷入口；
 源码规模从 `AppShell=2140/MyWorkView=2543/ListPage=3257/ActionView=3684` 变为 `2140/87/3222/3684`；MyWorkView 与 ListPage 合计从 5800 行降至 3309 行，下降 42.9%，AppShell 与 ActionView 未增长，新增 Vue 文件均低于 600 行。正式 My Work 仅负责 context epoch/request identity 与状态容器，任务展示和交互进入独立组件，未把旧模板移动成新巨型文件。
 
 最终浏览器证据包含四角色、1440×900/1280×800/768×1024/390×844 共 16 个表面以及 T01–T04：landing `/`、正式中文角色标签、技术词命中、横向溢出、axe critical/serious、console/pageerror 和非预期 HTTP 错误均为 0。J02–J11、finance 42/project member 9/PM 14/owner 5 共 70/70、action 876/menu 606 拒绝、四类已移除入口、公司 A→B→A、Project A 隔离和 logout 用户隔离全部通过。机器证据由 `frontend_work_center_list_professional_audit.mjs` 生成至 `artifacts/frontend-professional/fe-pro-02/`；J07/J08 与 J09–J11 分别记录于 My Work 和 delivery hardening 报告。
+
+## FE-PRO-03 核心业务详情与表单产品化
+
+五类核心详情统一使用页面身份/状态、主操作、业务事实、金额事实、关系链、业务明细与审计信息结构。行业包正式契约声明对象名称、状态 presentation、事实/金额语义、关系和操作层级；共享 Vue 只按结构渲染，没有新增模型、XML ID、字段名或中文标签分支。付款动作的 primary/secondary/destructive/confirmation/reason 已成为显式契约，My Work 同步消费，不再依赖数组位置。
+
+金额继续使用后端字段和既有 operating metrics，0/null/无台账/无权限分开，混合币种不换算。关系读取先通过 ACL/record rule，不可读关系不返回标题、金额或 ID。合同和付款申请表单增加错误摘要、字段聚焦、dirty 离开保护、409 保留输入与权威重载；onchange 只对契约声明的字段发出，消除了普通合同字段编辑产生的无意义 403。
+
+正式详情路径收敛为 `RecordView -> ContractFormPage`，RecordView 从 1525 行降至 15 行，ContractFormPage 从 5947 降至 5587 行，两者合计下降 25.0%；FinancialRelationshipWorkspace 从 196 降至 86 行。最终 32 个页面/尺寸组合技术标题、横向溢出、axe critical/serious、console/pageerror/非预期 HTTP 均为 0，首屏可执行动作最大 3。J04–J13 与 J02/J03 权限主回归通过，70 个权威叶节点保持 42/9/14/5。详细证据见 `frontend_core_record_form_productization_v1.md`。

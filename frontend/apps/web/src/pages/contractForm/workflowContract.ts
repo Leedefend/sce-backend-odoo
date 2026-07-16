@@ -1,7 +1,7 @@
 import { parseMaybeJsonRecord } from '../../app/contractRuntime';
 import { dictOrEmpty } from './recordUtils';
 import type { FieldDescriptor } from '@sc/schema';
-import type { NativeStatusbarVm, StatusbarState } from './types';
+import type { ContractAction, NativeStatusbarVm, StatusbarState } from './types';
 
 export type NativeFormStatusbarInput = {
   recordId: number;
@@ -193,4 +193,47 @@ export function resolveStatusbarSelectionValue(descriptor: FieldDescriptor | und
   const byLabel = selection.find((item) => String((item as unknown[])[1] ?? '') === raw);
   const matched = byCode || byLabel;
   return matched ? String((matched as unknown[])[0] ?? raw) || false : raw || false;
+}
+
+export function resolveWorkflowContractFromSources(
+  contractSource: unknown,
+  storeSnapshotSource: unknown,
+): Record<string, unknown> {
+  const root = dictOrEmpty(contractSource);
+  const snapshot = dictOrEmpty(storeSnapshotSource);
+  const candidates = [
+    dictOrEmpty(snapshot.workflowContract),
+    dictOrEmpty(dictOrEmpty(snapshot.runtimeContract).workflowContract),
+    dictOrEmpty(root.workflowContract),
+    dictOrEmpty(dictOrEmpty(root.runtimeContract).workflowContract),
+    dictOrEmpty(dictOrEmpty(root.__unified_page_contract_v2).workflowContract),
+    dictOrEmpty(dictOrEmpty(dictOrEmpty(root.__unified_page_contract_v2).runtimeContract).workflowContract),
+  ];
+  return candidates.find((candidate) => Object.keys(candidate).length) || {};
+}
+
+export function applyWorkflowAvailability(params: {
+  action: ContractAction;
+  workflow: Record<string, unknown>;
+  recordId: number;
+  blockingMessage: string;
+}): ContractAction {
+  const { action, workflow } = params;
+  if (!params.recordId || !action.methodName || !isWorkflowTransitionMethod(workflow, action.methodName)) return action;
+  const row = workflowActionRowForMethod(workflow, action.methodName);
+  if (!row) return { ...action, enabled: false, hint: params.blockingMessage || '当前流程状态不允许执行该操作' };
+  if (row.enabled === false) {
+    return {
+      ...action,
+      enabled: false,
+      hint: String(row.blocked_message || row.message || params.blockingMessage || row.reason_code || row.reasonCode || '').trim(),
+    };
+  }
+  return action;
+}
+
+export function shouldShowWorkflowAction(workflow: Record<string, unknown>, recordId: number, methodName: string) {
+  const method = String(methodName || '').trim();
+  if (!recordId || !method || !Array.isArray(workflow.availableActions) || !isWorkflowTransitionMethod(workflow, method)) return true;
+  return Boolean(workflowActionRowForMethod(workflow, method));
 }

@@ -44,13 +44,13 @@ def main() -> int:
         failures,
     )
     assert_contains(
-        "addons/smart_construction_core/core_extension.py",
+        "addons/smart_construction_core/core_extension_policy_maps.py",
         '"smart_construction_core.menu_sc_dashboard_cost_cockpit_fact": "cost.control"',
         "cost cockpit menu must be declared as a backend scene target",
         failures,
     )
     assert_contains(
-        "addons/smart_construction_core/core_extension.py",
+        "addons/smart_construction_core/core_extension_policy_maps.py",
         '"smart_construction_core.action_sc_dashboard_cost_cockpit_fact": "cost.control"',
         "cost cockpit action must be declared as a backend scene target",
         failures,
@@ -145,14 +145,8 @@ def main() -> int:
         failures,
     )
     assert_contains(
-        "frontend/apps/web/src/views/RecordView.vue",
-        "target.kind === 'entry_target'",
-        "record button navigation effects must consume backend entry_target",
-        failures,
-    )
-    assert_contains(
-        "frontend/apps/web/src/pages/ContractFormPage.vue",
-        "result?.entry_target",
+        "frontend/apps/web/src/pages/contractForm/useActionResponseNavigation.ts",
+        "resultRecord?.entry_target",
         "contract form button responses must consume backend entry_target",
         failures,
     )

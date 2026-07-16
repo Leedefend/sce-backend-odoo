@@ -28,7 +28,11 @@ actions = runtime.get("businessActions") if isinstance(runtime.get("businessActi
 submit = next((row for row in actions if isinstance(row, dict) and row.get("action_key") == "submit" and row.get("method") == "action_submit"), None)
 assert (result.ok if hasattr(result, "ok") else result.get("ok")) is True
 assert workspace.get("kind") == "payment_request" and workspace.get("record_id") == request.id
+assert workspace.get("version") == "2.0"
+assert (workspace.get("identity") or {}).get("object_label") == "付款申请"
+assert (workspace.get("state") or {}).get("semantic")
 assert submit and submit.get("allowed") is True
+assert (submit.get("presentation") or {}).get("tier") == "primary"
 assert (submit.get("mutation") or {}).get("operation") == "submit"
 assert (submit.get("action_safety") or {}).get("requires_confirm") is True
 print("[verify.frontend.financial_workspace.v2_contract] PASS")
