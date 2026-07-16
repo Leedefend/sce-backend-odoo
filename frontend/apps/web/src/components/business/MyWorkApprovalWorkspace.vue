@@ -1,10 +1,7 @@
 <template>
-  <section class="product-work" aria-labelledby="my-work-title">
+  <section class="product-work" aria-label="我的工作事项">
     <header class="product-work__header">
-      <div>
-        <h2 id="my-work-title">我的工作</h2>
-        <p>只展示当前账号、公司和项目范围内真正可处理的业务事项。</p>
-      </div>
+      <p>只展示当前账号、公司和项目范围内真正可处理的业务事项。</p>
       <button type="button" class="secondary sc-btn sc-btn-ghost" :disabled="busy" @click="$emit('refresh')">刷新</button>
     </header>
 
@@ -181,10 +178,9 @@ async function confirmAction() {
 </script>
 
 <style scoped>
-.product-work { display: grid; gap: 20px; }
-.product-work__header { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
-.product-work__header h1 { margin: 0; font-size: 28px; }
-.product-work__header p { margin: 8px 0 0; color: var(--sc-app-text-secondary); }
+.product-work { display: grid; gap: 18px; }
+.product-work__header { display: flex; justify-content: space-between; gap: 16px; align-items: center; }
+.product-work__header p { margin: 0; color: var(--sc-app-text-secondary); }
 .product-work__counts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
 .count-card { display: flex; justify-content: space-between; align-items: center; min-height: 72px; padding: var(--sc-product-space-2); background: var(--sc-app-panel); color: inherit; border: 1px solid var(--sc-app-border); border-radius: var(--sc-product-radius-panel); }
 .count-card strong { font-size: 24px; }
@@ -213,9 +209,18 @@ async function confirmAction() {
 .intent-dialog textarea { width: 100%; box-sizing: border-box; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
 @media (max-width: 640px) {
-  .product-work__header, .work-card { flex-direction: column; }
-  .product-work__counts { grid-template-columns: 1fr; }
-  .work-card dl { grid-template-columns: 1fr; }
+  .product-work { gap: 14px; }
+  .product-work__header, .work-card { align-items: stretch; flex-direction: column; }
+  .product-work__header { gap: 10px; }
+  .product-work__header .secondary { align-self: flex-start; }
+  .product-work__counts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .count-card { min-height: 62px; padding: 12px; }
+  .count-card strong { font-size: 22px; }
+  .work-card { gap: 14px; padding: 14px; }
+  .work-card h3 { margin: 9px 0 12px; font-size: 17px; line-height: 1.3; }
+  .work-card dl { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 14px; }
+  .work-card dt { font-size: 11px; }
+  .work-card dd { font-size: 13px; }
   .work-card__actions { width: 100%; }
   .work-card__actions button { flex: 1 1 auto; }
 }

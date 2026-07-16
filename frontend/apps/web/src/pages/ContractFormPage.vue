@@ -783,6 +783,12 @@ const v2ShadowStoreReady = computed(() => Boolean(v2ContractStore.value));
 const v2ShadowWidgetCount = computed(() => v2ContractStore.value?.widgetsById.size || 0);
 const v2ShadowActionCount = computed(() => v2ContractStore.value?.actionsById.size || 0);
 const v2ShadowButtonStatusCount = computed(() => v2ContractStore.value?.buttonStatusById.size || 0);
+function isContractFormRouteOwner() {
+  const name = String(route.name || '');
+  return name === 'record'
+    || name === 'model-form'
+    || name === 'scene';
+}
 function formRouteIdentity() {
   const query = route.query as Record<string, unknown>;
   return [
@@ -1288,7 +1294,7 @@ const pageIdentityInput = computed(() => buildContractFormPageIdentity({
     recordMissing: recordMissing.value, renderError: Boolean(renderErrorMessage.value), status: status.value,
 }));
 const pageIdentity = usePublishedPageIdentity(pageIdentityInput, { routeKey: () => route.fullPath,
-  active: () => isComponentActive.value, onTitle: (title) => session.updateActiveActivityTitle(title) });
+  active: () => isComponentActive.value && isContractFormRouteOwner(), onTitle: (title) => session.updateActiveActivityTitle(title) });
 const pageDisplayTitle = computed(() => pageIdentity.value.title);
 const pageDisplaySubtitle = computed(() => pageIdentity.value.subtitle || '');
 const financialWorkspace = computed(() => resolveFinancialWorkspaceContract(contract.value));
@@ -5904,6 +5910,7 @@ useFormPageLifecycleRuntime({
   onFieldOrderWindowDragStop,
   onRelationDialogDocumentKeydown,
   projectContextChangedEvent: PROJECT_CONTEXT_CHANGED_EVENT,
+  routeIsOwned: isContractFormRouteOwner,
   reload: () => reload(),
   retainedRouteIdentity,
   status,

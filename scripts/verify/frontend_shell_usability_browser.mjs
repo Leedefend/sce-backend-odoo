@@ -92,6 +92,7 @@ try {
   check(await mobile.locator('#primary-sidebar').count() === 0, 'mobile: sidebar must be closed initially');
   check(await mobile.locator('.mobile-record-card').count() > 0, 'mobile: record cards missing');
   check(!(await mobile.locator('table.flat-table').isVisible()), 'mobile: desktop table should be hidden');
+  check(!(await mobile.locator('.breadcrumb .crumb.active').isVisible().catch(() => false)), 'mobile: current breadcrumb duplicates page title');
   await noPageOverflow(mobile, 'mobile list');
   await mobile.screenshot({ path: path.join(OUT, 'screenshots', 'list-mobile.png'), fullPage: true });
   await mobile.getByRole('button', { name: '菜单', exact: true }).click();
@@ -99,6 +100,7 @@ try {
   check(await mobile.locator('.shell--mobile-sidebar-open').count() === 1, 'mobile: navigation drawer did not open');
   await mobile.keyboard.press('Escape');
   await mobile.locator('#primary-sidebar').waitFor({ state: 'detached', timeout: 5000 });
+  check(await mobile.getByRole('button', { name: '菜单', exact: true }).evaluate((node) => node === document.activeElement), 'mobile: drawer focus did not return to menu trigger');
   await mobile.locator('.mobile-record-card').first().click();
   await mobile.waitForURL((url) => url.pathname.startsWith('/r/'), { timeout: 45000 });
   await mobile.locator('.financial-workspace').waitFor({ timeout: 45000 });
@@ -107,6 +109,10 @@ try {
   await mobile.screenshot({ path: path.join(OUT, 'screenshots', 'detail-mobile.png'), fullPage: true });
   await mobile.getByRole('button', { name: '我的工作', exact: true }).click();
   await mobile.locator('.product-work').waitFor({ timeout: 45000 });
+  await mobile.waitForTimeout(500);
+  await mobile.screenshot({ path: path.join(OUT, 'screenshots', 'my-work-mobile.png'), fullPage: true });
+  const myWorkHeadings = await mobile.locator('h1').allTextContents();
+  check(myWorkHeadings.length === 1 && myWorkHeadings[0]?.trim() === '我的工作', `mobile: My Work h1 invalid url=${mobile.url()} headings=${JSON.stringify(myWorkHeadings)}`);
   await mobile.locator('.count-card[data-section-key="todo"]').press('Enter');
   const workCard = mobile.locator('.work-section[data-section-key="todo"] .work-card').filter({ hasText: 'FE-JOURNEY-PAYMENT-001' });
   const workDetailButton = workCard.getByRole('button', { name: '打开详情' });
@@ -116,7 +122,7 @@ try {
   await mobile.locator('.financial-workspace[data-workspace-kind="payment_request"]').waitFor({ timeout: 45000 }).catch(() => {
     throw new Error(`mobile My Work detail did not load, url=${mobile.url()}`);
   });
-  await mobile.getByText('FE-JOURNEY-PAYMENT-001', { exact: false }).first().waitFor({ timeout: 45000 });
+  await mobile.locator('h1').filter({ hasText: 'FE-JOURNEY-PAYMENT-001' }).waitFor({ timeout: 45000 });
   report.mobile = { drawer: 'PASS', cards: 'PASS', detail: 'PASS', my_work_detail: 'PASS', horizontal_overflow: 0 };
   report.errors = [...desktopRuntime.console, ...desktopRuntime.pageerror, ...desktopRuntime.http, ...mobileRuntime.console, ...mobileRuntime.pageerror, ...mobileRuntime.http];
   check(report.errors.length === 0, `browser runtime errors: ${JSON.stringify(report.errors)}`);

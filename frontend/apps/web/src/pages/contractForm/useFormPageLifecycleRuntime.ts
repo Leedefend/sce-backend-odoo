@@ -20,6 +20,7 @@ export function useFormPageLifecycleRuntime(params: {
   onFieldOrderWindowDragStop: () => void;
   onRelationDialogDocumentKeydown: (event: KeyboardEvent) => void;
   projectContextChangedEvent: string;
+  routeIsOwned: () => boolean;
   reload: () => Promise<void>;
   retainedRouteIdentity: Ref<string>;
   status: Ref<string>;
@@ -28,7 +29,7 @@ export function useFormPageLifecycleRuntime(params: {
   watch(
     () => params.formRouteIdentity(),
     (identity) => {
-      if (!params.isComponentActive.value) return;
+      if (!params.isComponentActive.value || !params.routeIsOwned()) return;
       if (!params.instanceRouteIdentity.value && identity) params.instanceRouteIdentity.value = identity;
       if (params.instanceRouteIdentity.value && identity !== params.instanceRouteIdentity.value) {
         params.instanceRouteIdentity.value = identity;
@@ -54,6 +55,7 @@ export function useFormPageLifecycleRuntime(params: {
 
   onActivated(() => {
     params.isComponentActive.value = true;
+    if (!params.routeIsOwned()) return;
     const identity = params.formRouteIdentity();
     if (identity && identity !== params.retainedRouteIdentity.value) {
       void params.reload();

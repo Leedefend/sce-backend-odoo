@@ -257,7 +257,7 @@ async function main() {
     await cardButton.focus(); await cardButton.press('Enter');
     await page.waitForFunction((previous) => window.location.href !== previous, workUrl, { timeout: 45000 });
     check(new URL(page.url()).pathname.startsWith('/r/payment.request/'), `J10 My Work target route invalid: ${page.url()}`);
-    await page.getByText('FE-JOURNEY-PAYMENT-001', { exact: false }).first().waitFor({ timeout: 45000 });
+    await page.locator('h1').filter({ hasText: 'FE-JOURNEY-PAYMENT-001' }).waitFor({ timeout: 45000 });
     await open(page, recordRoute(TARGETS.journey_request));
     const submit = page.locator('.template-page-header-actions button').filter({ hasText: /^提交$/ }).first();
     await submit.focus(); await submit.press('Enter');

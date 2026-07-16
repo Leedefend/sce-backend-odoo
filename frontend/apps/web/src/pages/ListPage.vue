@@ -2840,10 +2840,17 @@ onBeforeUnmount(() => {
   }
 
   .mobile-record-card__head strong {
+    flex: 1 1 auto;
     min-width: 0;
     font-size: 15px;
     line-height: 1.35;
     overflow-wrap: anywhere;
+  }
+
+  .mobile-record-card__head .status-badge {
+    flex: 0 0 auto;
+    max-width: 42%;
+    white-space: nowrap;
   }
 
   .mobile-record-card__facts {

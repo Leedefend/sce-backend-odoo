@@ -198,6 +198,7 @@
                 class="crumb"
                 :class="{ active: index === displayBreadcrumb.length - 1 }"
                 :disabled="!item.to"
+                :aria-current="index === displayBreadcrumb.length - 1 ? 'page' : undefined"
                 @click="item.to && router.push(item.to)"
               >
                 {{ item.label }}
@@ -218,7 +219,7 @@
           </div>
           <GlobalMessagePanel />
           <button
-            v-if="mobileViewport"
+            v-if="showMobileWorkShortcut"
             class="mobile-work-shortcut sc-btn sc-btn-sm"
             type="button"
             @click="router.push('/my-work')"
@@ -226,6 +227,7 @@
             我的工作
           </button>
           <button
+            ref="sidebarToggleButton"
             class="sidebar-toggle sc-btn sc-btn-sm"
             type="button"
             aria-controls="primary-sidebar"
@@ -316,7 +318,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, provide, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, provide, ref, watch } from 'vue';
 import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router';
 import MenuTree from '../components/MenuTree.vue';
 import StatusPanel from '../components/StatusPanel.vue';
@@ -406,6 +408,7 @@ const query = ref('');
 const sidebarHidden = ref(false);
 const mobileViewport = ref(false);
 const mobileSidebarOpen = ref(false);
+const sidebarToggleButton = ref<HTMLButtonElement | null>(null);
 const projectMenuOpen = ref(false);
 const projectSearch = ref('');
 const projectSearching = ref(false);
@@ -972,9 +975,15 @@ function persistSidebarHidden(hidden: boolean): void {
 }
 
 const sidebarVisible = computed(() => mobileViewport.value ? mobileSidebarOpen.value : !sidebarHidden.value);
+const showMobileWorkShortcut = computed(() => mobileViewport.value && !['my-work', 'scene-my-work'].includes(String(route.name || '')));
 
-function closeMobileSidebar(): void {
+async function closeMobileSidebar(): Promise<void> {
+  const wasOpen = mobileSidebarOpen.value;
   mobileSidebarOpen.value = false;
+  if (wasOpen) {
+    await nextTick();
+    sidebarToggleButton.value?.focus();
+  }
 }
 
 function syncMobileViewport(event?: MediaQueryListEvent): void {
@@ -2272,10 +2281,14 @@ async function logout() {
     gap: 4px;
   }
   .topbar .headline {
-    font-size: 22px;
-    line-height: 1.15;
+    font-size: 21px;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
   }
   .breadcrumb .crumb:not(:nth-last-child(-n + 2)) {
+    display: none;
+  }
+  .breadcrumb .crumb.active {
     display: none;
   }
   .topbar-actions {
