@@ -185,6 +185,10 @@ verify.workbench.product_acceptance.guard: guard.prod.forbid
 verify.frontend.contract_text_hardcode.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_contract_text_hardcode_guard.py
 
+.PHONY: verify.frontend.shared_surface_semantic_boundary.guard
+verify.frontend.shared_surface_semantic_boundary.guard: guard.prod.forbid
+	@python3 scripts/verify/frontend_shared_surface_semantic_boundary_guard.py
+
 .PHONY: verify.frontend.page_contract_boundary.guard
 verify.frontend.page_contract_boundary.guard: guard.prod.forbid
 	@python3 scripts/verify/frontend_page_contract_boundary_guard.py
@@ -2245,4 +2249,3 @@ policy.ensure.extension_modules: guard.prod.forbid check-compose-project check-c
 	  echo "[policy.ensure.extension_modules] HINT: re-run with AUTO_FIX_EXTENSION_MODULES=1 to auto-fix + restart"; \
 	  exit 2; \
 	fi
-

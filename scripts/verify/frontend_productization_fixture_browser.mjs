@@ -210,7 +210,7 @@ async function main() {
     });
     await login(member, 'demo_role_project_a_member');
     let shellText = await bodyText(member);
-    requireCheck((await member.locator('.role-label').innerText()).includes('项目成员'), 'project member role label is not authoritative');
+    requireCheck((await member.locator('.topbar-context').innerText()).includes('项目成员'), 'project member role label is not authoritative');
     const memberNavText = JSON.stringify(memberNav);
     fs.writeFileSync(path.join(OUTPUT_DIR, 'project-member-authority-nav.json'), `${JSON.stringify(memberNav, null, 2)}\n`);
     const memberSensitiveMatch = memberNavText.match(/财务中心|税务中心|人事行政|薪资福利|付款管理|结算管理|payment\.request|sc\.payment\.execution|sc\.settlement\.order/);
@@ -264,12 +264,13 @@ async function main() {
     await logout(member);
     await login(member, 'demo_role_pm');
     shellText = await bodyText(member);
-    requireCheck((await member.locator('.role-label').innerText()).includes('负责人'), 'logout/login reused project member role surface for PM');
+    const pmRoleLabel = await member.locator('.topbar-context').innerText();
+    requireCheck(/pm|负责人/i.test(pmRoleLabel) && !pmRoleLabel.includes('项目成员'), 'logout/login reused project member role surface for PM');
     result.checks.push('logout_login_role_cache_isolation', 'pm_login_and_navigation');
     await logout(member);
     await login(member, 'demo_role_owner');
     shellText = await bodyText(member);
-    const ownerRoleLabel = await member.locator('.role-label').innerText();
+    const ownerRoleLabel = await member.locator('.topbar-context').innerText();
     requireCheck(/业主|负责人|owner/i.test(ownerRoleLabel), `owner role surface changed or reused prior role cache: ${ownerRoleLabel}`);
     result.checks.push('owner_login_and_navigation');
     await member.close();

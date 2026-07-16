@@ -750,6 +750,7 @@ ci.local.quick: guard.prod.forbid security.secrets.scan security.legacy_credenti
 	@python3 scripts/verify/frontend_page_contract_boundary_guard.py
 	@python3 scripts/verify/frontend_page_contract_orchestration_consumption_guard.py
 	@python3 scripts/verify/frontend_contract_consumer_intrusion_guard.py
+	@python3 scripts/verify/frontend_shared_surface_semantic_boundary_guard.py
 	@scripts/dev/pnpm_exec.sh -C frontend/apps/web lint:src
 	@scripts/dev/pnpm_exec.sh -C frontend/apps/web typecheck:strict
 	@git diff --check

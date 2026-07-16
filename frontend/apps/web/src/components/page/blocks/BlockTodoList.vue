@@ -21,11 +21,6 @@
         :key="item.id"
         class="todo-item"
         :class="[`tone-${item.tone || 'info'}`, { actionable: Boolean(item.actionKey) }]"
-        :tabindex="item.actionKey ? 0 : undefined"
-        :role="item.actionKey ? 'button' : undefined"
-        @click="emitAction(item.actionKey || 'open_scene', item.raw)"
-        @keydown.enter.prevent="emitAction(item.actionKey || 'open_scene', item.raw)"
-        @keydown.space.prevent="emitAction(item.actionKey || 'open_scene', item.raw)"
       >
         <div>
           <p class="todo-title">
@@ -79,7 +74,7 @@ const items = computed(() => {
       pendingCount: Number(row.count || row.pending_count || 0),
       status: String(row.status || '').toLowerCase(),
       source: normalizeSource(row.source),
-      sourceLabel: String(row.source_label || row.sourceLabel || sourceLabel(row.source)),
+      sourceLabel: String(row.source_label || row.sourceLabel || '业务事项'),
       tone: String(row.tone || 'warning').toLowerCase(),
       buttonText: String(row.action_label || row.button_label || '进入处理'),
       actionKey: String(row.action_key || ''),
@@ -105,20 +100,6 @@ function normalizeSource(value: unknown) {
   return String(value || 'business').toLowerCase().replace(/[^a-z0-9_-]/g, '_');
 }
 
-function sourceLabel(value: unknown) {
-  const raw = String(value || '').trim();
-  const mapping: Record<string, string> = {
-    business: '业务事项',
-    'sc.workflow.workitem': '流程待办',
-    'tier.review': '审批复核',
-    'mail.activity': '待办活动',
-    'mail.followers': '关注动态',
-    'project.task': '项目任务',
-    'project.project': '项目主数据',
-    capability_fallback: '系统补充',
-  };
-  return mapping[raw] || mapping[raw.toLowerCase()] || raw || '业务事项';
-}
 </script>
 
 <style scoped>

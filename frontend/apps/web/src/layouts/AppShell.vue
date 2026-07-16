@@ -32,8 +32,6 @@
         </button>
       </div>
 
-      <p class="enterprise-line">当前企业：{{ enterpriseLabel }}</p>
-
       <div v-if="showRecordContext" class="project-context" :class="{ 'project-context--disabled': !projectContextEnabled }">
         <div class="project-trigger-row">
           <button
@@ -71,7 +69,7 @@
               </option>
             </select>
           </label>
-          <div v-if="operationOptions.length" class="business-scope-segments" role="group" aria-label="经营方式">
+          <div v-if="operationOptions.length" class="business-scope-segments" role="group" :aria-label="recordContextLabel">
             <button
               v-for="operation in operationOptions"
               :key="`operation-${operation.operation_strategy || 'all'}`"
@@ -114,21 +112,6 @@
         </div>
       </div>
 
-      <div class="role-surface">
-        <p class="role-label">当前角色：{{ roleLabel }}</p>
-        <div class="role-actions">
-          <button
-            v-if="showRoleLandingAction"
-            class="ghost mini"
-            :title="roleLandingTitle"
-            @click="openRoleLanding"
-          >
-            {{ roleLandingActionLabel }}
-          </button>
-          <button class="ghost mini" @click="router.push('/my-work')">我的工作</button>
-        </div>
-      </div>
-
       <div v-if="showPublishedApps" class="published-apps" data-platform-app-catalog="true">
         <div class="published-apps__header">
           <span>平台发布</span>
@@ -152,17 +135,16 @@
       </div>
 
       <div class="nav-shell">
-        <div class="search">
-          <input v-model="query" type="search" aria-label="搜索业务菜单" placeholder="搜索菜单..." />
-        </div>
-
         <div class="menu">
-          <MenuTree
+          <PrimaryNavigation
             :nodes="filteredMenu"
             :active-menu-id="activeMenuId"
             :capabilities="capabilities"
-            :search-active="Boolean(query.trim())"
+            :active-path="route.path"
+            :search="query"
             @select="handleSelect"
+            @navigate="pushRoute"
+            @update:search="query = $event"
           />
         </div>
       </div>
@@ -182,15 +164,15 @@
 
     <section
       class="content"
-      :class="{ 'content--scene-compact': sceneHeaderMinimal, 'content--with-activity-tabs': activityPages.length }"
+      :class="{ 'content--with-activity-tabs': activityPages.length }"
     >
       <header
         class="topbar sc-toolbar"
-        :class="{ 'topbar--compact': activeLayout.header === 'compact', 'topbar--minimal': useMinimalTopbar, 'topbar--scene-minimal': sceneHeaderMinimal }"
+        :class="{ 'topbar--compact': activeLayout.header === 'compact', 'topbar--minimal': useMinimalTopbar }"
       >
         <div class="topbar-main">
-          <p v-if="!useMinimalTopbar && !sceneHeaderMinimal" class="eyebrow">智能工程协作平台</p>
-          <div v-if="!sceneHeaderMinimal" class="topbar-title-row">
+          <p v-if="!useMinimalTopbar" class="eyebrow">{{ config.appBrand.name }}</p>
+          <div class="topbar-title-row">
             <div class="breadcrumb">
               <button
                 v-for="(item, index) in displayBreadcrumb"
@@ -206,15 +188,10 @@
             </div>
             <h1 v-if="showTopbarHeadline" class="headline">{{ pageTitle }}</h1>
           </div>
-          <p v-if="!useMinimalTopbar && sceneHeaderMinimal && sceneHeaderAnchorLine" class="scene-anchor-line">{{ sceneHeaderAnchorLine }}</p>
-          <p v-if="!useMinimalTopbar && !sceneHeaderMinimal && topbarSubtitle" class="headline-subtitle">{{ topbarSubtitle }}</p>
+          <p v-if="!useMinimalTopbar && topbarSubtitle" class="headline-subtitle">{{ topbarSubtitle }}</p>
         </div>
         <div class="topbar-actions">
           <div class="topbar-context" aria-label="当前工作上下文">
-            <span class="topbar-context-company">{{ enterpriseLabel }}</span>
-            <span class="topbar-context-separator">·</span>
-            <span>{{ currentProjectLabel }}</span>
-            <span class="topbar-context-separator">·</span>
             <span>{{ roleLabel }}</span>
           </div>
           <GlobalMessagePanel />
@@ -320,7 +297,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, provide, ref, watch } from 'vue';
 import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router';
-import MenuTree from '../components/MenuTree.vue';
+import PrimaryNavigation from '../components/product-shell/PrimaryNavigation.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import GlobalMessagePanel from '../components/GlobalMessagePanel.vue';
@@ -357,7 +334,6 @@ type PublishedApp = {
   badges: Record<string, unknown>;
 };
 const PROJECT_CONTEXT_CHANGED_EVENT = 'sc:project-context-changed';
-const BUSINESS_CONFIG_ROOT_MENU_XMLID = 'smart_construction_core.menu_sc_root';
 const SIDEBAR_HIDDEN_STORAGE_KEY = 'sc_shell_sidebar_hidden';
 
 function asDict(value: unknown): UnknownDict | null {
@@ -431,26 +407,10 @@ const routeAllowsEmptyMenu = computed(() => route.meta?.adminOnly === true || ro
 const rootTitle = computed(() => {
   const root = rootNode.value;
   const rawTitle = normalizeDeliveryText(root?.title || root?.name || root?.label || '');
-  if (!rawTitle || rawTitle === '系统菜单') return config.appBrand.name || '智能施工企业管理平台';
+  if (!rawTitle || rawTitle === '系统菜单') return config.appBrand.name || '业务工作平台';
   return rawTitle;
 });
 const userName = computed(() => session.user?.name ?? '访客');
-const enterpriseLabel = computed(() => {
-  const user = session.user as Record<string, unknown> | null;
-  const company = user?.company;
-  if (company && typeof company === 'object' && !Array.isArray(company)) {
-    const nested = company as Record<string, unknown>;
-    const name = String(nested.name || nested.display_name || '').trim();
-    if (name) return name;
-  }
-  if (Array.isArray(company) && company.length >= 2) {
-    const name = String(company[1] || '').trim();
-    if (name) return name;
-  }
-  const directName = String(user?.company_name || '').trim();
-  if (directName) return directName;
-  return effectiveDb.value && effectiveDb.value !== 'N/A' ? effectiveDb.value : '默认企业';
-});
 const sidebarSubtitle = computed(() => {
   if (!isDeliveryMode.value) return userName.value;
   const raw = String(userName.value || '').trim();
@@ -462,12 +422,9 @@ const sidebarSubtitle = computed(() => {
 const roleLabel = computed(() => {
   const label = String(roleSurface.value?.role_label || '').trim();
   const code = String(roleSurface.value?.role_code || '').trim();
-  if (isDeliveryMode.value) {
-    return resolveDeliveryRoleLabel(label, code);
-  }
   if (label) return normalizeDeliveryText(label);
   if (code) return normalizeDeliveryText(code.toUpperCase());
-  return '负责人';
+  return '当前用户';
 });
 const projectContext = computed(() => session.projectContext);
 const projectContextEnabled = computed(() => Boolean(projectContext.value?.enabled));
@@ -485,16 +442,11 @@ const selectedCompanyId = computed(() =>
 const selectedOperationStrategy = computed(() =>
   String(projectContext.value?.operation_strategy || '').trim(),
 );
-const isProjectRecordContext = computed(() =>
-  projectContext.value?.legacy_project_context === true
-    || String(projectContext.value?.model || '').trim() === 'project.project',
-);
 const recordContextLabel = computed(() =>
-  String(projectContext.value?.selector?.label || (isProjectRecordContext.value ? '当前项目' : '当前记录')).trim()
-    || (isProjectRecordContext.value ? '当前项目' : '当前记录')
+  String(projectContext.value?.selector?.label || '当前范围').trim() || '当前范围'
 );
 const recordContextSubject = computed(() => recordContextLabel.value.replace(/^当前/, '') || '记录');
-const recordContextAllLabel = computed(() => (isProjectRecordContext.value ? '全部项目' : '全部记录'));
+const recordContextAllLabel = computed(() => String(projectContext.value?.selector?.all_label || '全部').trim() || '全部');
 const recordContextEmptyText = computed(() => `无匹配${recordContextSubject.value}`);
 const clearRecordContextTitle = computed(() => `清除${recordContextLabel.value}，显示${recordContextAllLabel.value}`);
 const currentProjectLabel = computed(() => {
@@ -510,32 +462,13 @@ const projectSearchPlaceholder = computed(() =>
     || `搜索${recordContextSubject.value}名称`,
 );
 const roleLandingPath = computed(() => session.resolveLandingPath('/'));
-const roleLandingActionLabel = computed(() => {
-  const sceneKey = String(session.defaultRoute?.scene_key || roleSurface.value?.landing_scene_key || '').trim();
-  if (sceneKey) {
-    const scene = getSceneByKey(sceneKey);
-    const label = String(scene?.label || '').trim();
-    if (label && label !== '工作台' && label !== '角色首页') return label;
-    if (label) return '角色首页';
-  }
-  const path = String(roleLandingPath.value || '').trim();
-  if (path === '/' || path === '/home' || path === '/workbench' || path === '/s/workspace.home') return '角色首页';
-  if (path === '/my-work' || path === '/s/my_work.workspace') return '我的工作';
-  return '默认入口';
-});
-const roleLandingTitle = computed(() => `打开当前角色默认入口：${roleLandingActionLabel.value}`);
-const showRoleLandingAction = computed(() => roleLandingActionLabel.value !== '角色首页');
 const capabilities = computed(() => session.capabilities);
 const initMeta = computed(() => asDict(session.initMeta));
 const isPlatformAdmin = computed(() => session.user?.is_platform_admin === true);
 const visiblePublishedApps = computed(() => (isPlatformAdmin.value ? appCatalog.value : []));
 const showPublishedApps = computed(() => isPlatformAdmin.value && (visiblePublishedApps.value.length > 0 || appCatalogLoading.value));
 const activeAppId = computed(() => {
-  const sceneKey = String(routeSceneKey.value || '').trim();
-  if (sceneKey.startsWith('project') || sceneKey.startsWith('projects')) return 'projects';
-  if (sceneKey.includes('contract')) return 'contract_management';
-  if (route.name === 'home' || route.name === 'scene-home') return 'workspace';
-  return '';
+  return String(route.meta?.appId || '').trim();
 });
 const effectiveDb = computed(() => asText(initMeta.value?.effective_db) ?? 'N/A');
 const navVersion = computed(() => {
@@ -598,7 +531,7 @@ const compactRouteKeepsHeadline = computed(() => [
   'access-denied',
   'not-found',
 ].includes(String(route.name || '')));
-const showTopbarHeadline = computed(() => !sceneHeaderMinimal.value && (!useMinimalTopbar.value || compactRouteKeepsHeadline.value));
+const showTopbarHeadline = computed(() => !useMinimalTopbar.value || compactRouteKeepsHeadline.value);
 const sidebarClass = computed(() =>
   activeLayout.value.sidebar === 'scroll' ? 'sidebar--scroll' : 'sidebar--fixed'
 );
@@ -630,27 +563,7 @@ const isDeliveryMode = computed(() => isDeliveryModeEnabled());
 function normalizeDeliveryText(input: string) {
   const source = String(input || '').trim();
   if (!source) return '';
-  return source
-    .replace(/\s*\(\d+\)\s*$/g, '')
-    .replace(/^project\s*manager$/i, '负责人')
-    .replace(/^purchase\s*manager$/i, '采购经理')
-    .replace(/^finance$/i, '财务主管')
-    .replace(/^executive$/i, '管理层')
-    .replace(/^ops$/i, '运维专员')
-    .replace(/^admin$/i, '系统管理员');
-}
-
-function resolveDeliveryRoleLabel(roleLabelRaw: string, roleCodeRaw: string) {
-  const normalizedLabel = normalizeDeliveryText(roleLabelRaw);
-  if (/[^\u0020-\u007e]/.test(normalizedLabel) && normalizedLabel) return normalizedLabel;
-  const code = String(roleCodeRaw || '').trim().toLowerCase();
-  if (/pm|project/.test(code)) return '负责人';
-  if (/finance/.test(code)) return '财务主管';
-  if (/purchase|material/.test(code)) return '采购经理';
-  if (/executive|boss|leader/.test(code)) return '管理层';
-  if (/ops|operation/.test(code)) return '运维专员';
-  if (/admin/.test(code)) return '系统管理员';
-  return normalizedLabel || '负责人';
+  return source.replace(/\s*\(\d+\)\s*$/g, '');
 }
 
 function projectOptionLabel(option: ProjectContextOption | null | undefined) {
@@ -666,10 +579,6 @@ function projectNameLabel(option: ProjectContextOption | null | undefined) {
 }
 
 function operationScopeLabel(option: BusinessScopeOperationOption | null | undefined) {
-  const strategy = String(option?.operation_strategy || '').trim().toLowerCase();
-  if (!strategy) return '全部';
-  if (strategy === 'direct') return '直营';
-  if (strategy === 'joint') return '联营';
   return String(option?.operation_strategy_label || option?.operation_strategy || '').trim() || '全部';
 }
 
@@ -695,38 +604,8 @@ function normalizePublishedApps(raw: unknown): PublishedApp[] {
 }
 
 function resolvePublishedAppLabel(appId: string, rawLabel: string | undefined, key: string) {
-  const normalized = String(appId || '').trim().toLowerCase();
   const backendLabel = String(rawLabel || '').trim();
-  if (backendLabel && backendLabel !== normalized && backendLabel !== key) {
-    return backendLabel;
-  }
-  const labels: Record<string, string> = {
-    workspace: '角色首页',
-    projects: '项目管理',
-    project: '项目立项',
-    contract: '合同管理',
-    contracts: '合同中心',
-    cost: '成本管理',
-    finance: '资金财务',
-    payments: '收付款',
-    dashboard: '经营驾驶舱',
-    data: '数据中心',
-    config: '业务配置',
-    my_work: '我的工作',
-    delivery: '交付控制',
-    enterprise: '企业组织',
-    operation: '运营管理',
-    portal: '门户工作台',
-    portfolio: '项目组合',
-    quality: '质量管理',
-    resource: '资源管理',
-    risk: '风险管理',
-    safety: '安全管理',
-    task: '任务协同',
-    release_management: '产品发布',
-    company_access: '公司访问',
-  };
-  return labels[normalized] || backendLabel || normalized || key;
+  return backendLabel || String(appId || '').trim() || key;
 }
 
 async function loadPublishedApps() {
@@ -753,15 +632,7 @@ async function loadPublishedApps() {
 }
 
 function appMark(app: PublishedApp) {
-  const id = String(app.appId || '').trim();
   const label = String(app.label || '').trim();
-  if (id === 'workspace') return '首';
-  if (id.includes('release')) return '发';
-  if (id.includes('access')) return '权';
-  if (id.includes('project')) return '项';
-  if (id.includes('contract')) return '合';
-  if (id.includes('finance') || id.includes('payment')) return '财';
-  if (id.includes('cost')) return '成';
   return label.slice(0, 1) || '应';
 }
 
@@ -774,21 +645,6 @@ function appBadge(app: PublishedApp) {
 function pushRoute(path: string) {
   if (!path) return;
   router.push(path).catch(() => {});
-}
-
-function businessConfigWorkbenchRoute(queryOverride: LocationQueryRaw = {}) {
-  return {
-    path: '/admin/business-config',
-    query: {
-      ...queryOverride,
-      root_menu_xmlid: BUSINESS_CONFIG_ROOT_MENU_XMLID,
-    },
-  };
-}
-
-function isBusinessConfigWorkbenchNode(node: NavNode) {
-  const label = String(node.title || node.name || node.label || '').trim();
-  return label === '配置工作台' || label === '业务配置工作台';
 }
 
 function openAppTarget(target: unknown, fallbackAppId: string) {
@@ -926,20 +782,8 @@ const pageIdentity = usePageIdentityRuntime();
 const pageTitle = computed(() => pageIdentity.title.value);
 const topbarSubtitle = computed(() => pageIdentity.subtitle.value);
 
-const sceneHeaderMinimal = computed(() => [
-  'projects.intake',
-  'workspace.home',
-  'dashboard.company',
-].includes(String(routeSceneKey.value || '').trim()));
-
-const sceneHeaderAnchorLine = computed(() => {
-  if (!sceneHeaderMinimal.value) return '';
-  if (String(routeSceneKey.value || '').trim() !== 'projects.intake') return '';
-  return '项目立项 / 创建项目';
-});
-
 provide('pageTitle', pageTitle);
-const showHud = computed(() => hudEnabled.value && !isDeliveryMode.value);
+const showHud = computed(() => isPlatformAdmin.value && hudEnabled.value && !isDeliveryMode.value);
 const themeMode = ref<ScTheme>('system');
 const themeLabel = computed(() => (themeMode.value === 'system' ? '跟随系统' : themeMode.value === 'dark' ? '暗色' : '亮色'));
 
@@ -1380,10 +1224,6 @@ function handleSelect(node: NavNode) {
   const targetMenuId = Number(node.menu_id || node.id || 0);
   const menuQuery = buildMenuSelectionQuery();
   if (targetMenuId <= 0) return;
-  if (isBusinessConfigWorkbenchNode(node)) {
-    router.push(businessConfigWorkbenchRoute(menuQuery)).catch(() => {});
-    return;
-  }
   const resolved = resolveMenuAction(menuTree.value, targetMenuId);
   if (resolved.kind === 'redirect') {
     const entryTarget = asDict(resolved.target?.entry_target);
@@ -1418,10 +1258,6 @@ function handleSelect(node: NavNode) {
     return;
   }
   router.push(`/m/${targetMenuId}`).catch(() => {});
-}
-
-function openRoleLanding() {
-  router.push(roleLandingPath.value).catch(() => {});
 }
 
 function returnToBusinessSurface() {
@@ -1812,18 +1648,6 @@ async function logout() {
   padding: 8px;
   color: var(--sc-semantic-text-muted);
   font-size: 12px;
-}
-
-.role-label {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--sc-app-text-secondary);
-}
-
-.role-actions {
-  display: flex;
-  gap: 4px;
 }
 
 .published-apps {

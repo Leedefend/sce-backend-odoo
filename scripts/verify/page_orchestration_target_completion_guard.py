@@ -15,7 +15,7 @@ HOME_VIEW = ROOT / "frontend/apps/web/src/views/HomeView.vue"
 WORKBENCH_VIEW = ROOT / "frontend/apps/web/src/views/WorkbenchView.vue"
 MY_WORK_VIEW = ROOT / "frontend/apps/web/src/views/MyWorkView.vue"
 REGISTRY = ROOT / "frontend/apps/web/src/app/pageBlockRegistry.ts"
-MAKEFILE = ROOT / "Makefile"
+MAKEFILES = (ROOT / "Makefile", *sorted((ROOT / "make").glob("*.mk")))
 
 
 def _read(path: Path) -> str:
@@ -46,7 +46,7 @@ def main() -> int:
         "workbench_view": _read(WORKBENCH_VIEW),
         "my_work_view": _read(MY_WORK_VIEW),
         "registry": _read(REGISTRY),
-        "makefile": _read(MAKEFILE),
+        "makefile": "\n".join(_read(path) for path in MAKEFILES),
     }
     errors: list[str] = []
 
@@ -160,10 +160,8 @@ def main() -> int:
         "HomeView.vue",
         files["home_view"],
         [
-            "<PageRenderer",
-            'v-if="useUnifiedHomeRenderer"',
-            "route.query.legacy_home",
-            "return hasV1 && isDashboard && zones.length > 0;",
+            "<ContractRoleHome />",
+            "components/role-home/ContractRoleHome.vue",
         ],
         errors,
     )
@@ -183,7 +181,7 @@ def main() -> int:
         files["my_work_view"],
         [
             "<PageRenderer",
-            'v-if="useUnifiedMyWorkRenderer"',
+            'v-else-if="useUnifiedMyWorkRenderer"',
             "route.query.legacy_my_work",
             "return hasV1 && zones.length > 0;",
         ],

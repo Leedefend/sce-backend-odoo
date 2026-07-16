@@ -1,5 +1,5 @@
 <template>
-  <article class="block block-record-summary" :class="summaryClass">
+  <article class="block block-record-summary">
     <header class="block-header">
       <h4>{{ block.title || '摘要' }}</h4>
       <div v-if="actions.length" class="summary-actions">
@@ -41,29 +41,19 @@ const emit = defineEmits<{
 const actions = computed(() => Array.isArray(props.block.actions) ? props.block.actions : []);
 
 const rows = computed(() => {
-  if (Array.isArray(props.dataset)) {
-    return props.dataset.map((item, index) => {
-      const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
-      return {
-        key: String(row.key || `summary-${index + 1}`),
-        label: String(row.label || row.title || `项 ${index + 1}`),
-        value: String(row.value ?? row.description ?? '--'),
-      };
-    });
-  }
-  if (!props.dataset || typeof props.dataset !== 'object') return [];
-  return Object.entries(props.dataset as Record<string, unknown>).slice(0, 10).map(([key, value]) => ({
-    key,
-    label: key,
-    value: typeof value === 'object' ? JSON.stringify(value) : String(value ?? '--'),
-  }));
-});
-
-const summaryClass = computed(() => {
-  const zone = String(props.zoneKey || '');
-  if (zone.includes('header')) return 'summary-zone-header';
-  if (zone.includes('cost')) return 'summary-zone-cost';
-  return 'summary-zone-default';
+  const source = props.dataset && typeof props.dataset === 'object' ? props.dataset as Record<string, unknown> : {};
+  const rawRows = Array.isArray(props.dataset)
+    ? props.dataset
+    : (Array.isArray(source.rows) ? source.rows : (Array.isArray(source.items) ? source.items : []));
+  return rawRows.map((item, index) => {
+    const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
+    const rawValue = row.value ?? row.description;
+    return {
+      key: String(row.key || `summary-${index + 1}`),
+      label: String(row.label || row.title || `项 ${index + 1}`),
+      value: rawValue === null || rawValue === undefined || typeof rawValue === 'object' ? '--' : String(rawValue),
+    };
+  });
 });
 
 function emitAction(actionKey: string) {
@@ -110,33 +100,4 @@ function emitAction(actionKey: string) {
 .summary-label { margin: 0; font-size: 12px; color: var(--sc-app-text-secondary); }
 .summary-value { margin: 4px 0 0; font-size: 14px; font-weight: 600; color: var(--sc-app-text-primary); }
 
-.summary-zone-header {
-  border-color: var(--sc-app-info-border);
-  background: var(--sc-app-info-bg);
-}
-.summary-zone-header .summary-grid {
-  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-}
-.summary-zone-header .summary-item {
-  background: var(--sc-app-panel);
-  min-height: 78px;
-}
-.summary-zone-header .summary-value {
-  font-size: 15px;
-}
-
-.summary-zone-cost .summary-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
-.summary-zone-cost .summary-item {
-  background: var(--sc-app-warning-bg);
-  border-color: var(--sc-app-warning-border);
-  min-height: 82px;
-}
-
-@media (max-width: 1200px) {
-  .summary-zone-cost .summary-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
 </style>

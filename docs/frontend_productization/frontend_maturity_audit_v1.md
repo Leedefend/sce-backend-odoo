@@ -225,3 +225,15 @@ session、公司、项目、角色和 logout 共用单调递增 context epoch。
 浏览器证据位于 `artifacts/frontend-delivery-hardening/`。J09 对付款申请权威 `api.data read` 注入断网、409 和 401，分别验证错误文案、真实 Retry、权威刷新与安全重新登录；J10 在 390×844 仅以键盘完成登录、My Work、详情和确认框开关，并验证焦点约束及返回；J11 验证乱序公司响应和跨角色缓存隔离。18 个代表表面在 1440×900、1280×800、768×1024、390×844 共 72 个组合页面级横向溢出为 0；固定 `@axe-core/playwright@4.10.2` 对 18 个桌面表面执行 WCAG 2.1 A/AA 扫描，critical/serious 阻断为 0。J09 注入期以及无权限表面的预期浏览器资源错误单独记录并从非预期错误统计隔离，最终 console、pageerror、unhandled rejection 和非预期 HTTP 均为 0。
 
 性能使用固定验收 runtime 对登录、My Work、付款申请/结算/付款执行详情、付款申请表单打开和公司切换各运行 5 次，保留所有原始样本、中位数与最慢值。最终中位数/最慢值分别为：登录 1382/1612ms、My Work 942/947ms、付款详情 1970/2051ms、结算详情 1965/1989ms、付款执行 1463/1466ms、表单 1411/1418ms、公司切换 849/1516ms。绝对指标已满足的维度直接通过；未满足绝对中位数的详情/表单逐指标与同硬件 `origin/main` 基线比较，均有改善。测量采用已初始化 SPA 路由响应，不隐藏业务数据、不减少权限检查、不跳过 mutation 后权威刷新；完整原始样本写入 `performance.json`，不能外推为生产 SLA。
+
+## FE-PRO-01 岗位首页与共享前端语义边界
+
+本分支首先纠正了共享前端承载行业语义的架构越界。正式边界冻结为：`smart_core` 与共享 Web Shell 只提供平台机制，行业包通过既有 page/navigation/work-item contract 交付标题、分组、记录、状态和动作；共享 `AppShell`、首页、导航与通用 page block 只能按契约原样投影，不得维护角色到页面内容、模型到中文名称、菜单到业务域或 zone 到视觉语义的第二套映射。普通角色也不能看到 contract/payload/registry/trace 等诊断信息，诊断 HUD 同时受平台管理员身份和显式诊断开关约束。
+
+该边界已写入 `native_view_reuse_frontend_spec_v1.md`，并由 `frontend_shared_surface_semantic_boundary_guard.py` 在本地快速 CI 与完整 CI 中扫描共享表面。门禁覆盖角色码分支、模型分支、scene/group/zone/XML ID 语义推断、行业中文 literal、行业模型/XML ID、共享业务分组映射和未受管理员约束的诊断入口。`BlockProgressSummary`、`BlockRecordSummary` 与 `BlockRecordTable` 中原有的资金指标 fallback、任意对象 JSON 转储以及按 zone 推断合同/财务样式也一并移除；未知数据只能显示契约提供的 rows/items 或通用安全空状态。
+
+最终首页只有一条正式路径：`HomeView -> ContractRoleHome -> useContractRoleHome`。首页标题和说明取自 page orchestration contract，任务与汇总取自已授权 My Work contract，快捷入口取自权威 `menuTree`，最近访问按 user/company context 隔离；组件不读取角色码，不推断行业模型，不计算业务金额。四角色运行时看到的行业名称来自各自已授权的后端契约，这不构成前端行业硬编码。当前后端 `role_surface` 对 finance/PM/owner 仍返回英文角色标签，且登录 landing policy 不总是直接落到 `/`；本分支没有用前端角色翻译或路由覆盖掩盖这两个契约缺口。
+
+Shell 信息层级收敛为产品身份、唯一公司/项目上下文、权威导航和页面内容；角色信息只在顶栏出现一次，桌面和移动端共用同一导航数据。首页固定为当前事项、业务概览、常用入口和最近访问四类通用区域，窄屏优先当前事项。`AppShell.vue` 从 2316 行降至 2141 行，`HomeView.vue` 从 3525 行降至 8 行，合计从 5841 行降至 2149 行，下降 63.2%；新增 Vue 文件均低于 600 行，没有把旧首页机械迁移到新的巨型组件。
+
+四角色、三尺寸共 12 个最终浏览器表面均通过：技术词命中 0、敏感越权命中 0、页面横向溢出 0、axe critical/serious 0、console/pageerror/非预期 HTTP 错误 0。权威导航保持 finance 42、project member 9、PM 14、owner 5，共 70/70；项目成员敏感 action/menu、FE-B02R 已移除入口及公司/角色/logout 隔离保持原有拒绝。证据位于 `artifacts/frontend-professional/fe-pro-01/`，其中 baseline/final 各 12 张截图，`comparison-report.json` 记录源码规模和前后质量指标。

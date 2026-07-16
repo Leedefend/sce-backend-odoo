@@ -18,6 +18,7 @@ PLACEHOLDER_VIEW = ROOT / "frontend/apps/web/src/views/PlaceholderView.vue"
 SCENE_HEALTH_VIEW = ROOT / "frontend/apps/web/src/views/SceneHealthView.vue"
 USAGE_ANALYTICS_VIEW = ROOT / "frontend/apps/web/src/views/UsageAnalyticsView.vue"
 HOME_VIEW = ROOT / "frontend/apps/web/src/views/HomeView.vue"
+HOME_RUNTIME = ROOT / "frontend/apps/web/src/composables/shared-surface/useContractRoleHome.ts"
 MY_WORK_VIEW = ROOT / "frontend/apps/web/src/views/MyWorkView.vue"
 SCENE_PACKAGES_VIEW = ROOT / "frontend/apps/web/src/views/ScenePackagesView.vue"
 PAGE_ACTION_RUNTIME = ROOT / "frontend/apps/web/src/app/pageContractActionRuntime.ts"
@@ -54,6 +55,7 @@ def main() -> int:
     scene_health_text = _read(SCENE_HEALTH_VIEW)
     usage_analytics_text = _read(USAGE_ANALYTICS_VIEW)
     home_text = _read(HOME_VIEW)
+    home_runtime_text = _read(HOME_RUNTIME)
     my_work_text = _read(MY_WORK_VIEW)
     scene_packages_text = _read(SCENE_PACKAGES_VIEW)
     action_runtime_text = _read(PAGE_ACTION_RUNTIME)
@@ -85,6 +87,8 @@ def main() -> int:
         errors.append(f"missing file: {USAGE_ANALYTICS_VIEW.relative_to(ROOT).as_posix()}")
     if not home_text:
         errors.append(f"missing file: {HOME_VIEW.relative_to(ROOT).as_posix()}")
+    if not home_runtime_text:
+        errors.append(f"missing file: {HOME_RUNTIME.relative_to(ROOT).as_posix()}")
     if not my_work_text:
         errors.append(f"missing file: {MY_WORK_VIEW.relative_to(ROOT).as_posix()}")
     if not scene_packages_text:
@@ -311,16 +315,20 @@ def main() -> int:
         home_text,
         "HomeView.vue",
         [
-            "import { executePageContractAction } from '../app/pageContractActionRuntime';",
-            "const pageActionIntent = pageContract.actionIntent;",
-            "const pageActionTarget = pageContract.actionTarget;",
-            "const pageGlobalActions = pageContract.globalActions;",
-            "const heroQuickActions = computed(() => {",
-            "v-for=\"action in heroQuickActions\"",
-            "@click=\"executeHeroAction(action.key)\"",
-            "async function executeHeroAction(actionKey: string) {",
-            "const handled = await executePageContractAction({",
-            "onFallback: async (key) => {",
+            "import ContractRoleHome from '../components/role-home/ContractRoleHome.vue';",
+            "<ContractRoleHome />",
+        ],
+        errors,
+    )
+    _expect(
+        home_runtime_text,
+        "useContractRoleHome.ts",
+        [
+            "const pageContract = usePageContract('home');",
+            "fetchMyWorkSummary(",
+            "result.product_workspace",
+            "topNodes(session.menuTree)",
+            "session.activityPages",
         ],
         errors,
     )

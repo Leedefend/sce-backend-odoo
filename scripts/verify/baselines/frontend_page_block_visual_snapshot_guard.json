@@ -19,13 +19,13 @@
   "block_files": {
     "frontend/apps/web/src/components/page/blocks/BlockAccordionGroup.vue": "ce7a53a9fc2b23ca5fde5f33306db0264ba6e1c2f0c3f4f82a43d80627bad85f",
     "frontend/apps/web/src/components/page/blocks/BlockActivityFeed.vue": "59cb69f504f5c517f184a8934e6e39f69c46467edb10120215b7f5d772e2eb03",
-    "frontend/apps/web/src/components/page/blocks/BlockAlertPanel.vue": "c52d52b93af891ca3c950d0227726fcb622f313b58cc49308a4adfd0436fc250",
+    "frontend/apps/web/src/components/page/blocks/BlockAlertPanel.vue": "d091cc276e429c79c88eccc2fe0958608d748918691cc5669c6de042c8659da1",
     "frontend/apps/web/src/components/page/blocks/BlockEntryGrid.vue": "02d1d60eb68cf42fbf15d029ef46d3b028736ca91f3e6b20812b3c5bc4fc350d",
     "frontend/apps/web/src/components/page/blocks/BlockMetricRow.vue": "af6f27feba82b0c608c95f6d3f38f432e9cc5aa3ecbd2c210e14cd510a93ed10",
-    "frontend/apps/web/src/components/page/blocks/BlockProgressSummary.vue": "39a01a1542fd3c0eb2dd24ca7745679dce4b4cbee6b843c767cd82476c3b115e",
-    "frontend/apps/web/src/components/page/blocks/BlockRecordSummary.vue": "b810434915eb09d29e544e22766cdb757aa04fef6c968e71d48a29a25902e00a",
-    "frontend/apps/web/src/components/page/blocks/BlockRecordTable.vue": "f115c09ce0866a4a9d02f38ec0f136c43bc103f4f2f9f4de2c24df0f40562a58",
-    "frontend/apps/web/src/components/page/blocks/BlockTodoList.vue": "4647975e405ecdf25c77f98cb3ad00395b32ca5d66728f6fc8bbdddbd125d7dc"
+    "frontend/apps/web/src/components/page/blocks/BlockProgressSummary.vue": "4d728d7edfb05764721c0511f0e0fcf35ffd80fe16365ca33cc22dea719ee42e",
+    "frontend/apps/web/src/components/page/blocks/BlockRecordSummary.vue": "4a45b30e54bb73067e654b289cf150152e31a612c797119abdce1032440ce885",
+    "frontend/apps/web/src/components/page/blocks/BlockRecordTable.vue": "752c2216a872b69374b70f73bb494f9fa132efafb963eb6a458f257199647c13",
+    "frontend/apps/web/src/components/page/blocks/BlockTodoList.vue": "6035bce2f98f215ab15688d51af2eb5f2b68a03f718d401d073a2d614efaa229"
   },
   "registry_file": {
     "frontend/apps/web/src/app/pageBlockRegistry.ts": "2f5633be12b180ee5e5b5d57f6a5a382458db9be591c353e26276f4bd42ff49a"

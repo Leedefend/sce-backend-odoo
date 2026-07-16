@@ -1,6 +1,5 @@
 # Frontend Home Contract Boundary Report
 
 - ok: `True`
-- checked_files: `4`
-- contract_boundary: `workspace_home_only`
+- contract_boundary: `page_identity_plus_authoritative_my_work_navigation_activity`
 - error_count: `0`
