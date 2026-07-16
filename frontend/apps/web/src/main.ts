@@ -6,6 +6,9 @@ import App from './App.vue';
 import './styles/design-system.css';
 import './styles/product-patterns.css';
 import { bootTheme } from './styles/theme';
+import { installStaleAssetRecovery } from './app/staleAssetRecovery';
+
+installStaleAssetRecovery();
 
 const app = createApp(App);
 
