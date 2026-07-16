@@ -815,7 +815,6 @@ github.remote_execution_plan:
 security.online_capture.unit:
 	@python3 scripts/verify/test_online_capture_security.py
 	@python3 scripts/ci/test_secret_scan.py
-	@python3 scripts/ci/test_legacy_credential_guard.py
 	@node scripts/verify/test_online_capture_security.js
 	@node --check scripts/verify/online_capture_security.js
 
@@ -825,5 +824,4 @@ security.secrets.scan: security.online_capture.unit
 security.secret_scan: security.secrets.scan
 
 security.legacy_credential_guard:
-	@python3 scripts/ci/test_legacy_credential_guard.py
-	@python3 scripts/ci/legacy_credential_guard.py
+	@python3 scripts/ci/secret_scan.py --legacy-only

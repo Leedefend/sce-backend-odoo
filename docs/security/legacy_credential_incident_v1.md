@@ -1,23 +1,25 @@
 # Legacy credential incident v1
 
-Status: `BLOCKED_BY_MANUAL_CREDENTIAL_REVOCATION`
+Status: `ACCEPTED_UNTIL_LEGACY_SYSTEM_RETIREMENT` (not `CLOSED`)
 
 Repository baseline: `859dae5bf0511facfa5ad95d8d93693ad40ffe75`
 
 ## Manual prerequisite
 
-The required external confirmation has not been provided:
+The delivery owner has accepted temporary continued use under this boundary:
 
 ```text
-LEGACY_CREDENTIALS_REVOKED=false
-LEGACY_SESSIONS_REVOKED=false
-REVOKED_AT=null
-REVOKED_BY=null
+LEGACY_SYSTEM_STILL_REQUIRED=true
+LEGACY_CREDENTIAL_ROTATION_DEFERRED=true
+LEGACY_SYSTEM_ALLOWED_USE=data_completion_and_migration_only
+LEGACY_SYSTEM_RETIREMENT_DEADLINE=pending formal cutover date
+RISK_ACCEPTED_BY=Delivery owner
 ```
 
-No old credential was tested, no replacement credential was requested, and no
-production user or database was accessed. GitHub PR bodies were read only and
-were not edited.
+This acceptance does not close the incident or assert credential/session
+revocation. Old credentials are not tested, replacement credentials are not
+requested, and production users/databases remain out of scope. Legacy access
+is limited to the controlled management network and data completion/migration.
 
 ## Fingerprint inventory
 
@@ -28,11 +30,32 @@ also contains three separately confirmed repository-history incident
 fingerprints from the 2026-07-15 incident record. It contains no raw value,
 length, prefix, suffix or reversible encoding.
 
-The 15 PR fingerprints remain `UNREVIEWED`. Replaying them against the current
-tree produced hundreds of matches in test and historical documentation, which
-proves that a regular-expression match cannot safely be treated as a live
-credential. Bulk PR replacement is therefore prohibited until a security owner
-confirms revocation and reviews each candidate class.
+The 15 PR fingerprints were replayed against the current tree and PR bodies.
+The classifier separates confirmed migration assignments from test fixtures,
+normal text and unresolved candidates. A regular-expression match is not
+treated as a live credential by itself.
+
+## Branch-size audit
+
+The SEC-POST-01 checkpoint initially changed 14 files with 1,710 additions and
+1,233 deletions. Its changed-line composition was:
+
+| Category | Changed lines |
+| --- | ---: |
+| Production code | 0 |
+| CI/Make wiring | 13 |
+| Scanner implementation | 253 |
+| Scanner test fixture/code | 77 |
+| Generated inventory/reports | 2,438 |
+| Security catalog, report and documentation | 162 |
+
+The generated churn came from inserting two new script assets into a
+sequential-ID inventory, which renumbered nearly the entire report. The
+standalone legacy scanner and test also duplicated the existing secret scanner.
+SEC-POST-01R merged legacy handling into `secret_scan.py`, removed both extra
+scripts and restored the generated inventory to its mainline form. The final
+branch has nine changed files and no generated inventory churn, no PR-body
+copy, no raw match context and no reversible credential characteristic.
 
 ## Current-tree remediation
 
@@ -43,7 +66,7 @@ found zero blocking current-tree matches.
 
 | Measure | Result |
 | --- | ---: |
-| Target text files scanned | 6,977 |
+| Target text files scanned | 8,553 |
 | Confirmed current-tree exposures before cleanup | 1 |
 | Confirmed current-tree exposures after cleanup | 0 |
 | Current-tree replacements | 1 |
@@ -51,12 +74,17 @@ found zero blocking current-tree matches.
 
 ## GitHub metadata inventory
 
-The offline export contained 998 PR bodies. The current classifier produced 92
-candidate assignments across the 15 candidate fingerprints. These are not all
-confirmed leaks. PRs #788 and #269 remain high-priority manual-review items
-from the earlier incident. No PR body was changed because credential/session
-revocation is not confirmed. The prior global comment scan found zero issue
-comment and zero review-comment matches; comments were not modified.
+The offline export contained 998 PR bodies. Nineteen PRs were minimally edited
+to replace 47 confirmed assignments; the affected PRs are #245–#248, #259–#263,
+#265–#273 and #788. PR #269 and #788 each contained four replacements. Every
+edited body was re-read, confirmed fingerprints were absent, placeholders were
+present and the PR remained closed/open exactly as before.
+
+The remaining 47 candidate matches are classified as 25 `TEST_FIXTURE`, 11
+`NORMAL_TEXT` and 11 `UNRESOLVED`. Unresolved items are owned by the Security
+owner with deadline at the formal legacy cutover date; they were not modified.
+The prior global comment scan found zero issue-comment and zero review-comment
+matches, so comments were not changed.
 
 ## Guard contract
 
@@ -64,7 +92,7 @@ comment and zero review-comment matches; comments were not modified.
 - `make security.legacy_credential_guard` requires the fingerprint catalog,
   scans the worktree and additions relative to `origin/main`, and fails on any
   confirmed history fingerprint.
-- `scripts/ci/legacy_credential_guard.py --pr-jsonl <offline-export>` adds an
+- `scripts/ci/secret_scan.py --legacy-only --pr-jsonl <offline-export>` adds an
   offline PR-body scan without contacting GitHub or writing metadata.
 - Output is limited to path/PR, line, rule ID and fingerprint ID. Candidate
   values are never included.
@@ -72,7 +100,8 @@ comment and zero review-comment matches; comments were not modified.
 
 ## Deferred actions
 
-After the external system owner supplies all four revocation fields, the
-security owner must classify the PR candidates, replace only confirmed PR-body
-leaks, re-read each edited body, and run the test-session invalidation matrix.
-Until then the P0 must not be closed and no security-cleanup PR may be opened.
+Generic session invalidation is skipped by the explicit risk acceptance; it
+must be completed when the legacy system is retired. The owner must replace the
+missing formal cutover date before retirement execution. At cutover, disable
+the legacy entry point and revoke all legacy sessions. Until that evidence
+exists the incident remains accepted, not closed.
