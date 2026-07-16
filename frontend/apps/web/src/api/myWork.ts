@@ -96,7 +96,24 @@ export type ProductMyWorkAction = {
   intent: string;
   params: { id?: number; action?: string };
   requires_reason?: boolean;
+  reason_label?: string;
+  reason_help?: string;
   next_state?: string;
+};
+
+export type ProductMyWorkMoney = {
+  value: number | null;
+  currency: string;
+  currency_symbol?: string;
+  digits?: number;
+};
+
+export type ProductMyWorkFact = {
+  key: string;
+  label: string;
+  value?: string;
+  display_role?: 'text' | 'money' | 'datetime' | string;
+  money?: ProductMyWorkMoney;
 };
 
 export type ProductMyWorkItem = {
@@ -105,13 +122,11 @@ export type ProductMyWorkItem = {
   business_type: string;
   record: { label: string };
   state: { key: string; label: string };
-  project?: { id: number; label: string } | null;
-  company?: { id: number; label: string } | null;
-  partner?: { id: number; label: string } | null;
-  amount: { value: number | null; currency: string; currency_symbol?: string; digits?: number };
-  initiator?: { id: number; label: string } | null;
   initiated_at?: string;
   updated_at?: string;
+  facts: ProductMyWorkFact[];
+  search_text: string;
+  sort_values: Record<string, string | number | null>;
   actions: ProductMyWorkAction[];
   completed_event?: { code?: string; label?: string; at?: string };
   target: { route: string; model: string; record_id: number; action_xmlid?: string; menu_xmlid?: string };
@@ -125,8 +140,26 @@ export type ProductMyWorkWorkspace = {
   counts: Record<string, number>;
   total: number;
   completed_unavailable_reason?: string;
+  presentation: {
+    description: string;
+    search_label: string;
+    search_placeholder: string;
+    default_sort: string;
+    sort_options: Array<{ key: string; label: string; kind: 'text_desc' | 'text_asc' | 'number_desc' | 'number_asc' | string }>;
+    quick_links: Array<{ key: string; label: string; detail?: string; route: string }>;
+  };
   source_authority: string;
 };
+
+export async function executeProductMyWorkAction(action: ProductMyWorkAction, reason = '') {
+  return intentRequest<{ success?: boolean; message?: string }>({
+    intent: action.intent,
+    params: {
+      ...action.params,
+      ...(action.requires_reason ? { reason } : {}),
+    },
+  });
+}
 
 export async function fetchMyWorkSummary(
   limit = 20,
