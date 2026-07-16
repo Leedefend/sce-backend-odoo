@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 <template>
   <section
-    class="page sc-page sc-product-workspace-stack"
+    class="page sc-page"
     data-product-page-mode="list"
   >
     <PageHeader
@@ -408,9 +408,36 @@
           </table>
         </article>
       </section>
+      <section v-if="!showGroupedRows" class="mobile-record-list" aria-label="移动端记录列表">
+        <button
+          v-for="(row, index) in records"
+          :key="`mobile-${String(row.id ?? index)}`"
+          class="mobile-record-card"
+          type="button"
+          @click="handleRow(row)"
+        >
+          <span class="mobile-record-card__head">
+            <strong>{{ semanticCell(mobileIdentityField, row[mobileIdentityField]).text }}</strong>
+            <span
+              v-if="mobileStatusField"
+              class="status-badge"
+              :class="`tone-${semanticCell(mobileStatusField, row[mobileStatusField]).tone}`"
+            >
+              {{ semanticCell(mobileStatusField, row[mobileStatusField]).text }}
+            </span>
+          </span>
+          <span class="mobile-record-card__facts">
+            <span v-for="col in mobileFactColumns" :key="`mobile-${String(row.id ?? index)}-${col}`" class="mobile-record-fact">
+              <small>{{ columnLabel(col) }}</small>
+              <b>{{ semanticCell(col, row[col]).text }}</b>
+            </span>
+          </span>
+          <span class="mobile-record-card__open">查看详情 <span aria-hidden="true">→</span></span>
+        </button>
+      </section>
       <table
         v-if="!showGroupedRows"
-        class="flat-table"
+        class="flat-table desktop-record-table"
         :class="{ 'has-selection-column': showSelectionColumn }"
         :style="tableWidthStyle"
       >
@@ -1685,6 +1712,24 @@ const displayedColumns = computed(() => {
   });
   return filtered.length ? filtered : source.slice(0, 1);
 });
+const mobileIdentityField = computed(() => {
+  const preferred = String(rowPrimary.value || '').trim();
+  if (preferred && displayedColumns.value.includes(preferred) && !isStatusLikeColumn(preferred)) return preferred;
+  return displayedColumns.value.find((field) => !isStatusLikeColumn(field) && !isNumericColumn(field))
+    || displayedColumns.value.find((field) => !isStatusLikeColumn(field))
+    || displayedColumns.value[0]
+    || '';
+});
+const mobileStatusField = computed(() => displayedColumns.value.find((field) => isStatusLikeColumn(field)) || '');
+const mobileFactColumns = computed(() => {
+  const identity = mobileIdentityField.value;
+  const status = mobileStatusField.value;
+  const candidates = displayedColumns.value.filter((field) => field !== identity && field !== status);
+  const relation = candidates.filter((field) => ['many2one', 'reference'].includes(String(columnOption(field)?.type || '')));
+  const amount = candidates.filter((field) => isNumericColumn(field));
+  const date = candidates.filter((field) => ['date', 'datetime'].includes(String(columnOption(field)?.type || '')));
+  return [...new Set([...relation.slice(0, 2), ...amount.slice(0, 1), ...date.slice(0, 1), ...candidates])].slice(0, 4);
+});
 const tableMinWidthPx = computed(() => {
   const fixedWidth = (showSelectionColumn.value ? 44 : 0)
     + (showRowNumberColumn.value ? 64 : 0)
@@ -2062,13 +2107,17 @@ onBeforeUnmount(() => {
   display: grid;
   gap: var(--sc-product-workspace-stack-gap);
   min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .list-toolbar {
+  box-sizing: border-box;
   position: relative;
   z-index: 35;
   display: grid;
-  grid-template-columns: minmax(180px, 240px) minmax(0, 1fr) max-content;
+  grid-template-columns: minmax(0, 1fr) max-content;
   align-items: center;
   gap: 10px;
   border: 1px solid var(--sc-app-border);
@@ -2080,8 +2129,7 @@ onBeforeUnmount(() => {
 }
 
 .list-title {
-  min-width: 0;
-  justify-self: start;
+  display: none;
 }
 
 .list-title h2 {
@@ -2202,6 +2250,10 @@ onBeforeUnmount(() => {
   box-shadow: 0 20px 40px var(--sc-app-shadow);
   overscroll-behavior: contain;
   touch-action: pan-x pan-y;
+}
+
+.mobile-record-list {
+  display: none;
 }
 
 .list-plain-search {
@@ -2724,6 +2776,117 @@ onBeforeUnmount(() => {
   .list-plain-search {
     width: 100%;
     flex: 1 1 auto;
+  }
+}
+
+@media (max-width: 760px) {
+  .list-toolbar {
+    position: static;
+    padding: 8px;
+    min-height: 0;
+    box-shadow: none;
+  }
+
+  .list-header-toolbar :deep(.action-toolbar) {
+    padding: 0;
+  }
+
+  .list-header-toolbar :deep(.view-switch) {
+    display: none;
+  }
+
+  .table {
+    max-height: none;
+    overflow: visible;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .desktop-record-table {
+    display: none;
+  }
+
+  .mobile-record-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .mobile-record-card {
+    display: grid;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    min-width: 0;
+    border: 1px solid var(--sc-app-border);
+    border-radius: 10px;
+    background: var(--sc-app-panel);
+    color: var(--sc-app-text-primary);
+    padding: 14px;
+    text-align: left;
+    box-shadow: 0 4px 12px var(--sc-app-shadow);
+    cursor: pointer;
+  }
+
+  .mobile-record-card:focus-visible {
+    outline: 3px solid var(--sc-app-focus-ring);
+    outline-offset: 2px;
+  }
+
+  .mobile-record-card__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .mobile-record-card__head strong {
+    min-width: 0;
+    font-size: 15px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  .mobile-record-card__facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 14px;
+  }
+
+  .mobile-record-fact {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .mobile-record-fact small {
+    color: var(--sc-app-text-secondary);
+    font-size: 11px;
+  }
+
+  .mobile-record-fact b {
+    color: var(--sc-app-text-primary);
+    font-size: 13px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .mobile-record-card__open {
+    justify-self: end;
+    color: var(--sc-app-info-text);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .pagination-footer {
+    position: static;
+    justify-content: stretch;
+    padding-top: 0;
+  }
+
+  .pagination-actions--bottom {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
   }
 }
 

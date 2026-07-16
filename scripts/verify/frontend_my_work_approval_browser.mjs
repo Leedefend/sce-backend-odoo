@@ -50,7 +50,12 @@ async function login(page, user) {
 }
 
 async function logout(page) {
-  await page.getByRole('button', { name: '退出登录' }).click();
+  const logoutButton = page.getByRole('button', { name: '退出登录' });
+  if (!(await logoutButton.isVisible().catch(() => false))) {
+    const menuButton = page.getByRole('button', { name: '菜单', exact: true });
+    if (await menuButton.isVisible().catch(() => false)) await menuButton.click();
+  }
+  await logoutButton.click();
   await page.waitForURL((url) => url.pathname.includes('/login'), { timeout: 30000 });
 }
 

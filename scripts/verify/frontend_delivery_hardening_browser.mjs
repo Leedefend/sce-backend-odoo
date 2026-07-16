@@ -59,7 +59,11 @@ function capture(page) {
     if (response.status() < 400 || !response.url().includes('/api/v1/')) return;
     let intent = ''; try { intent = JSON.parse(response.request().postData() || '{}').intent || ''; } catch {}
     const row = { status: response.status(), url: response.url(), intent };
-    if (response.status() === 403 && state.expectedRequests.has(response.request())) {
+    if (
+      response.status() === 403
+      && intent === 'ui.contract.v2'
+      && (state.expectedRequests.has(response.request()) || state.expectForbidden)
+    ) {
       state.expectedHttp.push(row);
       const consoleIndex = state.console.findIndex((line) => /Failed to load resource/i.test(line));
       if (consoleIndex >= 0) state.expectedConsole.push(...state.console.splice(consoleIndex, 1));
@@ -93,7 +97,12 @@ async function login(page, user, keyboard = false) {
   await page.locator('.layout-shell').waitFor({ timeout: 45000 });
 }
 async function logout(page) {
-  await page.getByRole('button', { name: '退出登录' }).click();
+  const logoutButton = page.getByRole('button', { name: '退出登录' });
+  if (!(await logoutButton.isVisible().catch(() => false))) {
+    const menuButton = page.getByRole('button', { name: '菜单', exact: true });
+    if (await menuButton.isVisible().catch(() => false)) await menuButton.click();
+  }
+  await logoutButton.click();
   await page.waitForURL((url) => url.pathname.includes('/login'), { timeout: 30000 });
 }
 async function waitBusiness(page) {
@@ -247,6 +256,7 @@ async function main() {
     const workUrl = page.url();
     await cardButton.focus(); await cardButton.press('Enter');
     await page.waitForFunction((previous) => window.location.href !== previous, workUrl, { timeout: 45000 });
+    check(new URL(page.url()).pathname.startsWith('/r/payment.request/'), `J10 My Work target route invalid: ${page.url()}`);
     await page.getByText('FE-JOURNEY-PAYMENT-001', { exact: false }).first().waitFor({ timeout: 45000 });
     await open(page, recordRoute(TARGETS.journey_request));
     const submit = page.locator('.template-page-header-actions button').filter({ hasText: /^提交$/ }).first();
@@ -341,6 +351,8 @@ async function main() {
             await page.getByRole('dialog').waitFor({ timeout: 15000 });
           } else if (surface.mode === 'network') {
             await page.getByRole('heading', { name: '网络连接异常' }).waitFor({ timeout: 45000 });
+          } else if (surface.name === 'denied') {
+            await page.getByRole('heading', { name: '无权访问' }).waitFor({ timeout: 45000 });
           } else {
             await page.waitForTimeout(250);
           }

@@ -101,7 +101,7 @@
 .card {
   border: 1px solid var(--sc-app-border);
   border-radius: var(--sc-product-panel-radius);
-  padding: 18px 20px 20px;
+  padding: 16px 18px 18px;
   background: var(--sc-app-panel);
   max-width: 1360px;
   width: 100%;
@@ -534,6 +534,11 @@
     text-align: left;
   }
 
+  .native-statusbar--header {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
   .contract-form-native-shell :deep(.template-page-header-actions) {
     flex: 0 0 auto;
     justify-content: flex-start;
@@ -583,16 +588,16 @@
 }
 
 .contract-form-native-shell :deep(.native-form-tree) {
-  gap: 18px;
+  gap: 12px;
 }
 
 .contract-form-native-shell :deep(.native-container--sheet) {
-  gap: 18px;
+  gap: 12px;
 }
 
 .contract-form-native-shell :deep(.native-container--group) {
-  gap: 14px;
-  padding: 14px 14px 16px;
+  gap: 10px;
+  padding: 12px 14px 14px;
   border: 1px solid var(--sc-app-border);
   border-radius: 8px;
   background: color-mix(in srgb, var(--sc-app-panel) 86%, var(--sc-app-muted-bg));
@@ -805,6 +810,20 @@
 
   .page--flow {
     padding: 14px 12px 20px;
+  }
+
+  .card {
+    padding: 12px;
+  }
+
+  .contract-form-native-shell :deep(.native-form-tree),
+  .contract-form-native-shell :deep(.native-container--sheet) {
+    gap: 10px;
+  }
+
+  .contract-form-native-shell :deep(.native-container--group) {
+    gap: 9px;
+    padding: 11px 12px 12px;
   }
 
   .header-status {

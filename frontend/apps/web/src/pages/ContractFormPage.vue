@@ -1293,7 +1293,9 @@ const pageDisplayTitle = computed(() => pageIdentity.value.title);
 const pageDisplaySubtitle = computed(() => pageIdentity.value.subtitle || '');
 const financialWorkspace = computed(() => resolveFinancialWorkspaceContract(contract.value));
 
-const suppressPageHeaderTitle = computed(() => useNativeFormTree.value && !isProjectIntakeCreateMode.value && !financialWorkspace.value);
+// AppShell owns the single authoritative business h1 for record/form routes.
+// This local header remains the stable status and action surface.
+const suppressPageHeaderTitle = computed(() => true);
 
 const intakeCreateButtonLabel = computed(() => {
   if (!isProjectIntakeCreateMode.value) return '创建项目';

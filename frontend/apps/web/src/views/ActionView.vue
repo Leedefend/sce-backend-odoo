@@ -3302,6 +3302,9 @@ function refreshForProjectContextChange(): void {
 .page {
   display: grid;
   gap: var(--sc-product-workspace-stack-gap);
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .page-actions {
