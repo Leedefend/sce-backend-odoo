@@ -3,7 +3,7 @@
 Date: 2026-07-14
 Owner: Frontend owner
 Target file: `frontend/apps/web/src/views/ActionView.vue`
-Current size: 3,681 lines
+Current size: 3,684 lines
 Phase: Stage 6 business category create nav query split
 
 ## Purpose
@@ -150,7 +150,7 @@ Stage 6 is complete:
   `buildBusinessCategoryCreateNavQuery` helper;
 - `ActionView.vue` keeps `createRouteQueryForBusinessCategory` as carry-query
   orchestration only;
-- `ActionView.vue` is locked at `<=3681` lines;
+- `ActionView.vue` is locked at `<=3684` lines; the three-line increase records the responsive width containment added in PR `#1081` and must not become a new growth allowance;
 - no router, API, session, lifecycle, window, or notification side effects were
   moved.
 

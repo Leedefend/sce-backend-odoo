@@ -672,13 +672,33 @@ verify.unified_page_contract.lite: guard.prod.forbid
 # ----------------------------------------------------------------------
 # v1.1 Engineering Convergence quality entries
 # ----------------------------------------------------------------------
-.PHONY: ci ci.local.quick test.frontend test.unit test.odoo.integration test.contract test.e2e.preflight test.e2e.fixed_data.odoo test.e2e test.all test.inventory test.inventory.summary test.e2e.matrix architecture.module_dependency_map architecture.complexity_report architecture.complexity_baseline_lock architecture.split_plan_queue github.remote_execution_plan security.secrets.scan
+.PHONY: ci ci.local.quick ci.generated_reports.guard refresh.generated_reports test.frontend test.unit test.odoo.integration test.contract test.e2e.preflight test.e2e.fixed_data.odoo test.e2e test.all test.inventory test.inventory.summary test.e2e.matrix architecture.module_dependency_map architecture.complexity_report architecture.complexity_baseline_lock architecture.split_plan_queue github.remote_execution_plan security.secrets.scan
 
-ci: guard.prod.forbid security.secrets.scan test.inventory test.inventory.summary test.e2e.matrix architecture.module_dependency_map architecture.complexity_report architecture.complexity_baseline_lock architecture.split_plan_queue verify.unified_page_contract.v2.web_architecture github.remote_execution_plan test.unit test.frontend test.contract test.e2e.preflight
+ci: guard.prod.forbid security.secrets.scan ci.generated_reports.guard architecture.complexity_baseline_lock verify.unified_page_contract.v2.web_architecture test.unit test.frontend test.contract test.e2e.preflight
 	@git diff --check
 	@echo "[OK] v1.1 PR quality gate passed"
 
-ci.local.quick: guard.prod.forbid architecture.complexity_baseline_lock verify.unified_page_contract.v2.web_architecture
+ci.generated_reports.guard: guard.prod.forbid
+	@python3 scripts/ci/generate_test_inventory.py
+	@python3 scripts/ci/summarize_test_inventory.py
+	@python3 scripts/ci/generate_e2e_journey_matrix.py
+	@python3 scripts/ci/generate_module_dependency_map.py
+	@python3 scripts/ci/generate_complexity_budget_report.py
+	@python3 scripts/ci/generate_split_plan_queue.py
+	@python3 scripts/ci/generate_github_remote_execution_plan.py
+	@echo "[OK] tracked generated reports are current"
+
+refresh.generated_reports: guard.prod.forbid
+	@python3 scripts/ci/generate_test_inventory.py --write
+	@python3 scripts/ci/summarize_test_inventory.py --write
+	@python3 scripts/ci/generate_e2e_journey_matrix.py --write
+	@python3 scripts/ci/generate_module_dependency_map.py --write
+	@python3 scripts/ci/generate_complexity_budget_report.py --write
+	@python3 scripts/ci/generate_split_plan_queue.py --write
+	@python3 scripts/ci/generate_github_remote_execution_plan.py --write
+	@echo "[OK] tracked generated reports refreshed; review and commit any changes before push"
+
+ci.local.quick: guard.prod.forbid ci.generated_reports.guard architecture.complexity_baseline_lock verify.unified_page_contract.v2.web_architecture
 	@python3 scripts/ci/verify_contract_form_split_evidence.py
 	@python3 scripts/verify/contract_form_runtime_state_protocol_guard.py
 	@scripts/verify/contract_form_runtime_state_behavior_guard.sh
