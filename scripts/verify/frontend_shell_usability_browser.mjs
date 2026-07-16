@@ -64,6 +64,24 @@ try {
   await login(desktop);
   await desktop.goto(`${BASE_URL}${listRoute(TARGETS.payment_request)}`, { waitUntil: 'domcontentloaded', timeout: 45000 });
   await desktop.locator('table.flat-table').waitFor({ timeout: 45000 });
+  const horizontalScroll = await desktop.locator('.table[role="region"]').evaluate((container) => {
+    const table = container.querySelector('table.flat-table');
+    if (!(table instanceof HTMLElement)) return { scrollable: false, labelled: false, focusable: false };
+    const originalMinWidth = table.style.minWidth;
+    table.style.minWidth = `${container.clientWidth + 400}px`;
+    container.scrollLeft = 240;
+    const result = {
+      scrollable: container.scrollWidth > container.clientWidth && container.scrollLeft > 0,
+      labelled: container.getAttribute('aria-label') === '业务列表，可横向滚动',
+      focusable: container.tabIndex === 0,
+    };
+    container.scrollLeft = 0;
+    table.style.minWidth = originalMinWidth;
+    return result;
+  });
+  check(horizontalScroll.scrollable, 'desktop list: horizontal table scrolling is unavailable');
+  check(horizontalScroll.labelled, 'desktop list: horizontal table region lacks an accessible name');
+  check(horizontalScroll.focusable, 'desktop list: horizontal table region is not keyboard focusable');
   const createBox = await desktop.getByRole('button', { name: '新建', exact: true }).boundingBox();
   check(createBox && createBox.x + createBox.width <= 1440, 'desktop: create action clipped outside viewport');
   check(await desktop.locator('h1').count() === 1, 'desktop list: expected one h1');
@@ -81,7 +99,7 @@ try {
   await desktop.locator('[data-field-name="amount"]').waitFor({ timeout: 45000 });
   check(await desktop.locator('h1').count() === 1, 'desktop form: expected one h1');
   await noPageOverflow(desktop, 'desktop form');
-  report.desktop = { list: 'PASS', detail: 'PASS', form: 'PASS', create_action_visible: true };
+  report.desktop = { list: 'PASS', detail: 'PASS', form: 'PASS', create_action_visible: true, horizontal_scroll: 'PASS' };
   await desktop.close();
 
   const mobile = await browser.newPage({ viewport: { width: 390, height: 844 } });

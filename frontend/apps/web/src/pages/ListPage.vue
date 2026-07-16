@@ -127,7 +127,13 @@
         <span v-if="selectedCount > 0 && batchMessage" class="batch-message">{{ batchMessage }}</span>
       </section>
 
-      <section class="table sc-product-main-surface">
+
+      <section
+        class="table sc-product-main-surface"
+        role="region"
+        aria-label="业务列表，可横向滚动"
+        tabindex="0"
+      >
 	        <section v-if="showGroupedRows" class="grouped-table">
         <header class="grouped-toolbar">
           <div class="grouped-toolbar-title">
@@ -2240,16 +2246,24 @@ onBeforeUnmount(() => {
 }
 
 .table {
+  display: block;
+  min-width: 0;
   width: 100%;
   max-width: 100%;
   max-height: max(420px, calc(100vh - 210px));
-  overflow-x: auto;
+  overflow-x: scroll;
   overflow-y: auto;
+  scrollbar-gutter: stable;
   background: var(--sc-app-panel);
   border-radius: 8px;
   box-shadow: 0 20px 40px var(--sc-app-shadow);
   overscroll-behavior: contain;
   touch-action: pan-x pan-y;
+}
+
+.table:focus-visible {
+  outline: 3px solid var(--sc-app-focus-ring);
+  outline-offset: 2px;
 }
 
 .mobile-record-list {
