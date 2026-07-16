@@ -56,12 +56,19 @@ if [[ "${GIT_SAFE_PUSH_FAKE_GIT:-0}" == "1" && "$(basename "$0")" == "git" ]]; t
   exit $?
 fi
 
+if [[ "${GIT_SAFE_PUSH_FAKE_MAKE:-0}" == "1" && "$(basename "$0")" == "make" ]]; then
+  printf 'make %s\n' "$*" >>"${FAKE_GIT_LOG:?}"
+  [[ "${FAKE_GENERATED_REPORTS_STALE:-0}" != "1" ]]
+  exit $?
+fi
+
 if [[ "${1:-}" == "--self-test" ]]; then
   self="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
   tmp_dir="$(mktemp -d)"
   trap 'rm -rf "$tmp_dir"' EXIT
   mkdir -p "$tmp_dir/bin"
   ln -s "$self" "$tmp_dir/bin/git"
+  ln -s "$self" "$tmp_dir/bin/make"
   log_file="$tmp_dir/git.log"
   output=''
   status=0
@@ -72,6 +79,7 @@ if [[ "${1:-}" == "--self-test" ]]; then
     output="$(
       PATH="$tmp_dir/bin:$PATH" \
         GIT_SAFE_PUSH_FAKE_GIT=1 \
+        GIT_SAFE_PUSH_FAKE_MAKE=1 \
         FAKE_GIT_LOG="$log_file" \
         FAKE_BRANCH="${FAKE_BRANCH:-fix/test-branch}" \
         FAKE_MISSING_REMOTES="${FAKE_MISSING_REMOTES:-}" \
@@ -80,6 +88,7 @@ if [[ "${1:-}" == "--self-test" ]]; then
         FAKE_PUSH_FAIL_REMOTES="${FAKE_PUSH_FAIL_REMOTES:-}" \
         FAKE_DIRTY="${FAKE_DIRTY:-0}" \
         FAKE_INVALID_BRANCH="${FAKE_INVALID_BRANCH:-0}" \
+        FAKE_GENERATED_REPORTS_STALE="${FAKE_GENERATED_REPORTS_STALE:-0}" \
         bash "$self" 2>&1
     )"
     status=$?
@@ -107,6 +116,12 @@ if [[ "${1:-}" == "--self-test" ]]; then
   assert_nonzero 'origin inaccessible'; assert_output 'origin inaccessible' "remote 'origin' is not accessible"; assert_push_count 'origin inaccessible' 0
   FAKE_INACCESSIBLE_REMOTES=gitee run_push
   assert_nonzero 'gitee inaccessible'; assert_output 'gitee inaccessible' "remote 'gitee' is not accessible"; assert_push_count 'gitee inaccessible' 0
+
+  FAKE_GENERATED_REPORTS_STALE=1 run_push
+  assert_nonzero 'stale generated reports'
+  assert_output 'stale generated reports' "generated reports are stale"
+  assert_push_count 'stale generated reports' 0
+  grep -q '^make --no-print-directory ci.generated_reports.guard$' "$log_file" || fail 'stale generated reports: local guard missing'
 
   FAKE_EXISTING_REMOTES='origin gitee' run_push
   assert_zero 'existing branches'; assert_push_count 'existing branches' 2
@@ -137,7 +152,7 @@ if [[ "${1:-}" == "--self-test" ]]; then
   FAKE_INVALID_BRANCH=1 run_push
   assert_nonzero 'invalid branch name'; assert_output 'invalid branch name' 'invalid local branch name'; assert_push_count 'invalid branch name' 0
 
-  printf 'PASS: git_safe_push isolated scenarios=11 (no real remotes)\n'
+  printf 'PASS: git_safe_push isolated scenarios=12 (no real remotes)\n'
   exit 0
 fi
 
@@ -164,6 +179,12 @@ fi
 
 if [[ -n "$(git status --porcelain --untracked-files=all)" ]]; then
   echo "❌ working tree dirty; commit or stash before push" >&2
+  exit 2
+fi
+
+echo "[pr.push] verifying tracked generated reports before remote access"
+if ! make --no-print-directory ci.generated_reports.guard; then
+  echo "❌ generated reports are stale; run 'make refresh.generated_reports', review, and commit the result before pushing" >&2
   exit 2
 fi
 

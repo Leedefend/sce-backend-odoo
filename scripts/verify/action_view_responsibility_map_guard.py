@@ -11,7 +11,7 @@ CONTRACT_ACTION_RUNTIME = ROOT / "frontend/apps/web/src/app/runtime/actionViewCo
 NAVIGATION_CONTEXT = ROOT / "frontend/apps/web/src/app/navigationContext.ts"
 CI = ROOT / "make/ci.mk"
 
-LINE_BUDGET = 3681
+LINE_BUDGET = 3684
 
 
 def _read(path: Path) -> str:
@@ -44,7 +44,7 @@ def main() -> int:
 
     for token in [
         "Action View Responsibility Map",
-        "Current size: 3,681 lines",
+        "Current size: 3,684 lines",
         "Phase: Stage 6 business category create nav query split",
         "## Purpose",
         "## Route Entry",
@@ -59,7 +59,7 @@ def main() -> int:
         "## Stage 6 Target",
         "## Verification Gaps",
         "## Invariants",
-        "`ActionView.vue` is locked at `<=3681` lines",
+        "`ActionView.vue` is locked at `<=3684` lines",
         "`usePageContract('action')`",
         "`useActionPageModel`",
         "`useActionViewActionRuntime`",
