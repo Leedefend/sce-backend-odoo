@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "repository_baseline": "859dae5bf0511facfa5ad95d8d93693ad40ffe75",
+  "revocation": {
+    "legacy_credentials_revoked": false,
+    "legacy_sessions_revoked": false,
+    "revoked_at": null,
+    "revoked_by": null
+  },
+  "fingerprint_inventory": {
+    "pr_candidate_fingerprints": 15,
+    "confirmed_history_fingerprints": 3,
+    "raw_values_recorded": false
+  },
+  "current_tree": {
+    "target_files_scanned": 6977,
+    "confirmed_exposures_before_cleanup": 1,
+    "replacements": 1,
+    "confirmed_exposures_after_cleanup": 0,
+    "unreviewed_candidate_matches": 321
+  },
+  "github_metadata": {
+    "pr_bodies_scanned": 998,
+    "candidate_matches": 92,
+    "confirmed_replacements": 0,
+    "unresolved_candidate_fingerprints": 15,
+    "high_priority_prs_pending_review": [788, 269],
+    "issue_comment_confirmed_exposures": 0,
+    "review_comment_confirmed_exposures": 0,
+    "metadata_writes": 0
+  },
+  "session_invalidation": {
+    "executed": false,
+    "reason": "manual_session_revocation_not_confirmed"
+  },
+  "production": {
+    "database_writes": 0,
+    "user_writes": 0,
+    "server_configuration_writes": 0,
+    "old_credentials_tested": false
+  },
+  "decision": "BLOCKED_BY_MANUAL_CREDENTIAL_REVOCATION"
+}

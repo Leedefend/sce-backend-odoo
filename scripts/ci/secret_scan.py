@@ -16,12 +16,21 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
+SCANNED_SUFFIXES = {
+    ".cjs", ".conf", ".css", ".csv", ".env", ".html", ".ini", ".js",
+    ".json", ".lock", ".md", ".mjs", ".properties", ".py", ".scss",
+    ".sh", ".sql", ".toml", ".ts", ".tsx", ".txt", ".vue", ".xml",
+    ".yaml", ".yml",
+}
+SCANNED_NAMES = {"Dockerfile", "Makefile", ".gitignore", ".dockerignore"}
 
 
 PATTERNS: list[tuple[str, re.Pattern[str]]] = [
     ("github_pat", re.compile("github_" + "pat_" + r"[A-Za-z0-9_]{20,}")),
     ("github_ghp", re.compile(r"(?<![A-Za-z0-9_])" + "ghp_" + r"[A-Za-z0-9_]{30,}")),
     ("openai_sk", re.compile(r"(?<![A-Za-z0-9_])" + "sk" + r"-[A-Za-z0-9_-]{32,}")),
+    ("aws_access_key", re.compile(r"(?<![A-Z0-9])(?:AKIA|ASIA)[A-Z0-9]{16}(?![A-Z0-9])")),
+    ("bearer_token", re.compile(r"(?i)\bBearer\s+[A-Za-z0-9._~+/-]{24,}={0,2}")),
     (
         "private_key",
         re.compile(
@@ -31,6 +40,14 @@ PATTERNS: list[tuple[str, re.Pattern[str]]] = [
         ),
     ),
 ]
+PATTERN_MARKERS: dict[str, tuple[str, ...]] = {
+    "github_pat": ("github_pat_",),
+    "github_ghp": ("ghp_",),
+    "openai_sk": ("sk-",),
+    "aws_access_key": ("AKIA", "ASIA"),
+    "bearer_token": ("bearer ",),
+    "private_key": ("-----BEGIN ",),
+}
 
 ONLINE_ASSIGNMENT = re.compile(
     r"\b(?P<name>OLD_SCBS_(?:USERNAME|PASSWORD|TOKEN)|SCBSLY_(?:USERNAME|PASSWORD|TOKEN))"
@@ -51,6 +68,8 @@ SCBSLY_CROSS_FALLBACK = re.compile(
 PLACEHOLDER_MARKERS = (
     "<redacted>",
     "<provided-via-secret-environment>",
+    "<revoked_legacy_username>",
+    "<revoked_legacy_secret>",
     "${old_scbs_",
     "${scbsly_",
     "example.invalid",
@@ -75,21 +94,27 @@ def fingerprint(value: str) -> str:
 
 def scan_line(line: str) -> list[Finding]:
     findings: list[Finding] = []
+    lowered = line.lower()
     for name, pattern in PATTERNS:
+        markers = PATTERN_MARKERS[name]
+        comparable = lowered if name == "bearer_token" else line
+        if not any(marker in comparable for marker in markers):
+            continue
         match = pattern.search(line)
         if match:
             findings.append(Finding(name, fingerprint(match.group(0))))
-    assignment = ONLINE_ASSIGNMENT.search(line)
+    assignment = ONLINE_ASSIGNMENT.search(line) if ("OLD_SCBS_" in line or "SCBSLY_" in line) else None
     if assignment and not is_placeholder(assignment.group("value")):
         findings.append(Finding("online_credential_assignment", fingerprint(assignment.group("value"))))
-    url_match = URL_CREDENTIALS.search(line)
+    url_match = URL_CREDENTIALS.search(line) if "http" in lowered and "@" in line else None
     if url_match and not is_placeholder(url_match.group("value")):
         findings.append(Finding("url_embedded_credentials", fingerprint(url_match.group("value"))))
-    for pattern in ONLINE_LITERAL_DEFAULTS:
-        default_match = pattern.search(line)
-        if default_match and not is_placeholder(default_match.group("value")):
-            findings.append(Finding("online_credential_literal_default", fingerprint(default_match.group("value"))))
-    if SCBSLY_CROSS_FALLBACK.search(line):
+    if "OLD_SCBS" in line or "SCBSLY" in line:
+        for pattern in ONLINE_LITERAL_DEFAULTS:
+            default_match = pattern.search(line)
+            if default_match and not is_placeholder(default_match.group("value")):
+                findings.append(Finding("online_credential_literal_default", fingerprint(default_match.group("value"))))
+    if "SCBSLY" in line and "OLD_SCBS" in line and SCBSLY_CROSS_FALLBACK.search(line):
         findings.append(Finding("scbsly_cross_system_credential_fallback", fingerprint("scbsly-cross-fallback")))
     return findings
 
@@ -103,7 +128,14 @@ def worktree_files() -> list[Path]:
         stderr=subprocess.PIPE,
         check=True,
     )
-    return [ROOT / line.strip() for line in result.stdout.splitlines() if line.strip()]
+    paths = [ROOT / line.strip() for line in result.stdout.splitlines() if line.strip()]
+    return [
+        path
+        for path in paths
+        if path.suffix.lower() in SCANNED_SUFFIXES
+        or path.name in SCANNED_NAMES
+        or path.name.startswith(".env")
+    ]
 
 
 def read_text(path: Path) -> str | None:

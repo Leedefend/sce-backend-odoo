@@ -33,4 +33,9 @@
 
 旧凭据仍可能存在于 reachable Git 历史、远端缓存和既有 clone 中，并可能在旧系统下线前保持有效。此风险由用户明确接受；它阻止将本事件标记为“凭据已撤销”，但不改变当前树清理和防复发门禁的技术事实。
 
+2026-07-16 后续状态：SEC-POST-01 的离线门禁与候选清单见
+`legacy_credential_incident_v1.md`。由于旧凭据及 session 仍未确认撤销，
+风险状态提升为 `BLOCKED_BY_MANUAL_CREDENTIAL_REVOCATION`；不得引用本
+文件早期的技术清理结果宣称 P0 已关闭。
+
 English: [repository_credential_incident_20260715.en.md](repository_credential_incident_20260715.en.md)

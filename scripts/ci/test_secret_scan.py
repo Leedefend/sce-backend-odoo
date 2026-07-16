@@ -41,9 +41,21 @@ class SecretScanTest(unittest.TestCase):
     def test_main_output_never_echoes_matching_value(self) -> None:
         secret = "fixture-value-that-must-not-be-printed"
         stderr = io.StringIO()
-        with mock.patch.object(secret_scan, "worktree_files", return_value=[]), contextlib.redirect_stderr(stderr):
-            self.assertEqual(secret_scan.main(), 0)
+        fixture_path = secret_scan.ROOT / "fictional-security-fixture.md"
+        with (
+            mock.patch.object(secret_scan, "worktree_files", return_value=[fixture_path]),
+            mock.patch.object(secret_scan, "read_text", return_value=f"{self.online_password_name}={secret}"),
+            contextlib.redirect_stderr(stderr),
+        ):
+            self.assertEqual(secret_scan.main(), 1)
         self.assertNotIn(secret, stderr.getvalue())
+        self.assertIn("fingerprint=", stderr.getvalue())
+
+    def test_cloud_and_bearer_shapes_are_rejected(self) -> None:
+        cloud_value = "AKIA" + "A" * 16
+        bearer_value = "Bearer " + "a" * 32
+        self.assertIn("aws_access_key", [item.rule for item in secret_scan.scan_line(cloud_value)])
+        self.assertIn("bearer_token", [item.rule for item in secret_scan.scan_line(bearer_value)])
 
 
 if __name__ == "__main__":
