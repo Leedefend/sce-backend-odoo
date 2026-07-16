@@ -182,7 +182,9 @@ async function main() {
     // J06: authoritative draft -> submit intent with confirmation and full reload.
     runtime = captureRuntime(page);
     workspace = await openWorkspace(page, TARGETS.journey_request, 'payment_request');
-    check((await workspace.innerText()).includes('状态：草稿'), 'J06 journey initial state is not draft');
+    const initialState = workspace.locator('.financial-workspace__status[data-state="draft"]');
+    await initialState.waitFor({ timeout: 45000 });
+    check((await initialState.innerText()).includes('草稿'), 'J06 journey initial state is not draft');
     const submit = page.locator('.template-page-header-actions button').filter({ hasText: /^提交$/ }).first();
     await page.waitForFunction(() => [...document.querySelectorAll('.template-page-header-actions button')]
       .some((node) => node.textContent?.trim() === '提交' && !node.disabled), null, { timeout: 45000 });

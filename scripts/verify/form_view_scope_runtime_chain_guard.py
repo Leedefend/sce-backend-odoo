@@ -49,19 +49,8 @@ def main() -> int:
         errors,
     )
     _assert(
-        "const requestedViewId = computed(() => (" in record_view
-        and "toPositiveInt(route.query.view_id) || toPositiveInt(route.query.viewId) || 0" in record_view,
-        "RecordView must read route view_id/viewId",
-        errors,
-    )
-    _assert(
-        "viewId: requestedViewId.value || undefined" in record_view,
-        "RecordView must pass requested viewId into action contract loader",
-        errors,
-    )
-    _assert(
-        "route.query.view_id" in record_view and "route.query.viewId" in record_view,
-        "RecordView reload key must include explicit view scope",
+        "ContractFormPage" in record_view and "data-record-view-compatibility-delegate" in record_view,
+        "RecordView must delegate explicit view scope to ContractFormPage",
         errors,
     )
     _assert(

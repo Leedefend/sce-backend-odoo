@@ -132,6 +132,7 @@ class TestPaymentRequestWorkItemService(TransactionCase):
         self.assertEqual(workspace["counts"]["initiated"], len(by_key["initiated"]["items"]))
         draft = next(item for item in by_key["todo"]["items"] if "WORK-ITEM-DRAFT-001" in item["record"]["label"])
         self.assertEqual([row["key"] for row in draft["actions"]], ["submit"])
+        self.assertEqual(draft["actions"][0]["presentation"]["tier"], "primary")
         self.assertEqual(draft["amount"]["value"], 100.0)
         self.assertEqual(
             [row["label"] for row in draft["facts"]],
@@ -148,6 +149,9 @@ class TestPaymentRequestWorkItemService(TransactionCase):
         todo = next(row for row in workspace["sections"] if row["key"] == "todo")
         submitted = next(item for item in todo["items"] if "WORK-ITEM-SUBMIT-001" in item["record"]["label"])
         self.assertEqual({row["key"] for row in submitted["actions"]}, {"approve", "reject"})
+        by_action = {row["key"]: row for row in submitted["actions"]}
+        self.assertEqual(by_action["approve"]["presentation"]["tier"], "primary")
+        self.assertEqual(by_action["reject"]["presentation"]["semantic"], "destructive")
         self.assertFalse(any("WORK-ITEM-DRAFT-001" in item["record"]["label"] for item in todo["items"]))
 
     def test_project_member_has_no_payment_work_item_or_sensitive_facts(self):

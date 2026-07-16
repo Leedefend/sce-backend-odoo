@@ -20,10 +20,9 @@ SCENE_TOKENS = [
 ]
 
 RECORD_TOKENS = [
-    "const readonlyHint = computed(() => {",
-    "session.productFacts.license?.level",
-    "const meta = session.capabilityCatalog[key];",
-    "缺少能力：",
+    "ContractFormPage",
+    "data-record-view-compatibility-delegate",
+    "single authoritative page path",
 ]
 
 

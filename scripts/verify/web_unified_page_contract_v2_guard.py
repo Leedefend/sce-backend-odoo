@@ -24,6 +24,7 @@ WEB_RECORD_RUNTIME = ROOT / "frontend/apps/web/src/app/contractRecordRuntime.ts"
 WEB_SURFACE_CONTRACT = ROOT / "frontend/apps/web/src/app/contracts/actionViewSurfaceContract.ts"
 WEB_RECORD_VIEW = ROOT / "frontend/apps/web/src/views/RecordView.vue"
 WEB_ACTION_VIEW = ROOT / "frontend/apps/web/src/views/ActionView.vue"
+WEB_NATIVE_LAYOUT = ROOT / "frontend/apps/web/src/pages/contractForm/nativeLayoutUtils.ts"
 
 
 def main() -> int:
@@ -46,6 +47,7 @@ def main() -> int:
     surface_source = WEB_SURFACE_CONTRACT.read_text(encoding="utf-8") if WEB_SURFACE_CONTRACT.exists() else ""
     record_view_source = WEB_RECORD_VIEW.read_text(encoding="utf-8") if WEB_RECORD_VIEW.exists() else ""
     action_view_source = WEB_ACTION_VIEW.read_text(encoding="utf-8") if WEB_ACTION_VIEW.exists() else ""
+    native_layout_source = WEB_NATIVE_LAYOUT.read_text(encoding="utf-8") if WEB_NATIVE_LAYOUT.exists() else ""
     form_page_source = (ROOT / "frontend/apps/web/src/pages/ContractFormPage.vue").read_text(encoding="utf-8")
     if "intent: 'ui.contract.v2'" not in source and 'intent: "ui.contract.v2"' not in source:
         errors.append("web contract API must request ui.contract.v2")
@@ -110,8 +112,8 @@ def main() -> int:
         errors.append("web record runtime must merge v2 containerStatus into form fields")
     if "collectUnifiedPageContractV2ButtonStatus" not in record_runtime_source or "resolveV2ActionButtonStatus" not in record_runtime_source:
         errors.append("web record runtime must apply v2 buttonStatus to form action buttons")
-    if "raw.disabled === true" not in record_view_source or "visible !== false" not in record_view_source:
-        errors.append("web record view must honor v2 button visible/disabled state after record runtime mapping")
+    if "ContractFormPage" not in record_view_source or "data-record-view-compatibility-delegate" not in record_view_source:
+        errors.append("web record compatibility view must delegate to the authoritative contract form runtime")
     if "collectUnifiedPageContractV2FieldStatus" not in shape_source:
         errors.append("web list shape runtime must honor v2 widget status for default column visibility")
     if "resolveUnifiedPageContractV2SelectorStatus" not in filter_source or "isSelectorEnabled" not in filter_source:
@@ -124,7 +126,11 @@ def main() -> int:
         errors.append("web contract form page must merge v2 widget status into runtime field states")
     if "resolveUnifiedPageContractV2GlobalStatus" not in form_page_source or "pageAuth === 'read'" not in form_page_source:
         errors.append("web contract form page must merge v2 globalStatus into form rights")
-    if "collectUnifiedPageContractV2FieldContainerStatus" not in form_page_source or "containerStatus?.visible === false" not in form_page_source:
+    if (
+        "collectUnifiedPageContractV2FieldContainerStatus" not in form_page_source
+        or "containerStatus: v2FieldContainerStatus" not in form_page_source
+        or "containerStatus?.visible === false" not in native_layout_source
+    ):
         errors.append("web contract form page must merge v2 containerStatus into layout field visibility/read state")
     if "collectUnifiedPageContractV2ButtonStatus" not in form_page_source or "resolveV2ButtonStatus" not in form_page_source:
         errors.append("web contract form page must merge v2 buttonStatus into contract actions")
