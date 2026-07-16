@@ -14,9 +14,13 @@ ROLE_SURFACE_OVERRIDES = {
             "smart_construction_core.menu_sc_business_config_center",
         ],
     },
+    "project_member": {
+        "label": "项目成员",
+        "landing_scene_candidates": ["workspace.home", "projects.list", "projects.ledger"],
+    },
     "owner": {
-        "label": "普通员工",
-        "landing_scene_candidates": ["projects.list", "project.initiation", "projects.intake"],
+        "label": "企业负责人",
+        "landing_scene_candidates": ["workspace.home", "projects.list", "project.initiation", "projects.intake"],
         "menu_xmlids": [
             "smart_construction_core.menu_sc_project_center",
             "smart_construction_core.menu_sc_contract_center",
@@ -25,6 +29,7 @@ ROLE_SURFACE_OVERRIDES = {
     "pm": {
         "label": "项目经理",
         "landing_scene_candidates": [
+            "workspace.home",
             "project.management",
             "project.dashboard",
             "projects.intake",
@@ -44,8 +49,8 @@ ROLE_SURFACE_OVERRIDES = {
         "menu_blocklist_xmlids": [],
     },
     "finance": {
-        "label": "财务人员",
-        "landing_scene_candidates": ["finance.payment_requests", "projects.ledger", "projects.list"],
+        "label": "财务主管",
+        "landing_scene_candidates": ["workspace.home", "finance.payment_requests", "projects.ledger", "projects.list"],
         "menu_xmlids": [
             "smart_construction_core.menu_sc_finance_center",
             "smart_construction_core.menu_sc_settlement_center",

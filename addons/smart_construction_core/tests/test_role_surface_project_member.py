@@ -34,6 +34,27 @@ class TestProjectMemberRoleSurface(TransactionCase):
             with self.subTest(expected=expected):
                 self.assertEqual(resolver.resolve_role_code(groups), expected)
 
+    def test_formal_role_surface_uses_authoritative_product_label_and_home(self):
+        resolver = self._resolver()
+        matrix = {
+            "finance": ({"smart_construction_custom.group_sc_role_finance"}, "财务主管"),
+            "project_member": ({"smart_construction_core.group_sc_cap_project_read"}, "项目成员"),
+            "pm": ({"smart_construction_custom.group_sc_role_pm"}, "项目经理"),
+            "owner": ({"smart_construction_custom.group_sc_role_owner"}, "企业负责人"),
+        }
+        for role, (groups, label) in matrix.items():
+            with self.subTest(role=role):
+                surface = resolver.build_role_surface(
+                    groups,
+                    [],
+                    {"projects.list", "projects.ledger"},
+                    ROLE_SURFACE_OVERRIDES,
+                )
+                self.assertEqual(surface["role_code"], role)
+                self.assertEqual(surface["role_label"], label)
+                self.assertEqual(surface["landing_scene_key"], "workspace.home")
+                self.assertEqual(surface["landing_path"], "/s/workspace.home")
+
     def test_release_actor_role_does_not_promote_project_reader_to_pm(self):
         class User:
             groups_id = type("Groups", (), {"get_external_id": lambda self: {1: "base.group_user"}})()

@@ -133,6 +133,14 @@ class TestPaymentRequestWorkItemService(TransactionCase):
         draft = next(item for item in by_key["todo"]["items"] if "WORK-ITEM-DRAFT-001" in item["record"]["label"])
         self.assertEqual([row["key"] for row in draft["actions"]], ["submit"])
         self.assertEqual(draft["amount"]["value"], 100.0)
+        self.assertEqual(
+            [row["label"] for row in draft["facts"]],
+            ["项目", "公司", "往来方", "金额", "发起人", "发起时间"],
+        )
+        self.assertIn("WORK-ITEM-DRAFT-001", draft["search_text"])
+        self.assertEqual(workspace["presentation"]["default_sort"], "updated_desc")
+        self.assertEqual(workspace["presentation"]["quick_links"][0]["label"], "付款申请")
+        self.assertTrue(workspace["presentation"]["quick_links"][0]["route"].startswith("/a/"))
         self.assertNotIn("model", draft["record"])
 
     def test_executive_only_gets_submitted_approval_item(self):
@@ -149,6 +157,7 @@ class TestPaymentRequestWorkItemService(TransactionCase):
         serialized = str(workspace)
         self.assertNotIn("WORK-ITEM-DRAFT-001", serialized)
         self.assertNotIn("100.0", serialized)
+        self.assertEqual(workspace["presentation"]["quick_links"], [])
 
     def test_company_scope_is_part_of_query_contract(self):
         workspace = self._workspace(self.finance)

@@ -79,6 +79,17 @@ class TestIdentityResolverEntryTarget(unittest.TestCase):
             ["workspace.home", "projects.ledger", "cost.project_budget"],
         )
 
+    def test_platform_home_candidate_does_not_require_startup_scene_preload(self):
+        resolver = target.IdentityResolver()
+        role_surface = resolver.build_role_surface(
+            set(),
+            [],
+            {"projects.ledger"},
+        )
+
+        self.assertEqual(role_surface.get("landing_scene_key"), "workspace.home")
+        self.assertEqual(role_surface.get("landing_path"), "/s/workspace.home")
+
     def test_build_role_surface_appends_available_scene_keys_when_nav_lacks_scene_identity(self):
         resolver = target.IdentityResolver()
         role_surface = resolver.build_role_surface(

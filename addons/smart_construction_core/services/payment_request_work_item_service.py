@@ -102,6 +102,8 @@ class PaymentRequestWorkItemService:
                         "intent": str(action.get("execute_intent") or ""),
                         "params": dict(action.get("execute_params") or {}),
                         "requires_reason": bool(action.get("requires_reason")),
+                        "reason_label": "拒绝原因" if action.get("requires_reason") else "",
+                        "reason_help": "请说明拒绝原因，提交后会写入正式审批记录。" if action.get("requires_reason") else "",
                         "next_state": str(action.get("next_state_hint") or ""),
                     }
                 )
@@ -133,6 +135,39 @@ class PaymentRequestWorkItemService:
             "route": "/r/%s/%s%s" % (self.MODEL, record.id, suffix),
         }
 
+    def _list_target(self):
+        action = self.env.ref(self.ACTION_XMLID, raise_if_not_found=False)
+        menu = self.env.ref(self.MENU_XMLID, raise_if_not_found=False)
+        action_id = int(action.id) if action else 0
+        menu_id = int(menu.id) if menu else 0
+        if not action_id:
+            return None
+        return {
+            "key": "payment_request_list",
+            "label": "付款申请",
+            "detail": "查看全部付款申请",
+            "route": "/a/%s?action_id=%s%s" % (
+                action_id,
+                action_id,
+                ("&menu_id=%s" % menu_id) if menu_id else "",
+            ),
+        }
+
+    def _presentation(self, *, include_quick_links):
+        quick_link = self._list_target() if include_quick_links else None
+        return {
+            "description": "只展示当前账号和当前业务范围内可处理的事项。",
+            "search_label": "查找工作事项",
+            "search_placeholder": "输入业务编号或关键信息",
+            "default_sort": "updated_desc",
+            "sort_options": [
+                {"key": "updated_desc", "label": "最近更新", "kind": "text_desc"},
+                {"key": "amount_desc", "label": "金额从高到低", "kind": "number_desc"},
+                {"key": "amount_asc", "label": "金额从低到高", "kind": "number_asc"},
+            ],
+            "quick_links": [quick_link] if quick_link else [],
+        }
+
     def _item(self, record, *, section, actions=None, completed_event=None):
         currency = record.currency_id
         project = record.project_id
@@ -140,6 +175,31 @@ class PaymentRequestWorkItemService:
         partner = record.partner_id
         initiator = record.create_uid
         amount = record.amount
+        money = {
+            "value": amount if amount is not None else None,
+            "currency": str(currency.name or "") if currency else "",
+            "currency_symbol": str(currency.symbol or "") if currency else "",
+            "digits": int((currency.decimal_places if currency else 2) or 2),
+        }
+        facts = [
+            {"key": "project", "label": "项目", "value": str(project.display_name or "") if project else "未关联"},
+            {"key": "company", "label": "公司", "value": str(company.display_name or "") if company else "未关联"},
+            {"key": "partner", "label": "往来方", "value": str(partner.display_name or "") if partner else "未填写"},
+            {"key": "amount", "label": "金额", "display_role": "money", "money": money},
+            {"key": "initiator", "label": "发起人", "value": str(initiator.display_name or "") if initiator else "未知"},
+            {"key": "initiated_at", "label": "发起时间", "display_role": "datetime", "value": str(record.create_date or "")},
+        ]
+        search_text = " ".join(
+            filter(
+                None,
+                [
+                    str(record.display_name or record.name or ""),
+                    "付款申请",
+                    str(self._state_labels.get(record.state) or record.state or ""),
+                    *(str(row.get("value") or "") for row in facts),
+                ],
+            )
+        )
         return {
             "key": "payment.request:%s" % record.id,
             "section": section,
@@ -152,15 +212,17 @@ class PaymentRequestWorkItemService:
             "project": self._ref(project),
             "company": self._ref(company),
             "partner": self._ref(partner),
-            "amount": {
-                "value": amount if amount is not None else None,
-                "currency": str(currency.name or "") if currency else "",
-                "currency_symbol": str(currency.symbol or "") if currency else "",
-                "digits": int((currency.decimal_places if currency else 2) or 2),
-            },
+            "amount": money,
             "initiator": self._ref(initiator),
             "initiated_at": str(record.create_date or ""),
             "updated_at": str(record.write_date or ""),
+            "facts": facts,
+            "search_text": search_text,
+            "sort_values": {
+                "updated_desc": str(record.write_date or record.create_date or ""),
+                "amount_desc": amount if amount is not None else 0,
+                "amount_asc": amount if amount is not None else 0,
+            },
             "actions": list(actions or []),
             "completed_event": dict(completed_event or {}),
             "target": self._target(record),
@@ -243,6 +305,7 @@ class PaymentRequestWorkItemService:
                 "counts": {row["key"]: 0 for row in sections},
                 "total": 0,
                 "completed_unavailable_reason": "FINANCE_CAPABILITY_NOT_AVAILABLE",
+                "presentation": self._presentation(include_quick_links=False),
                 "source_authority": "finance capability boundary + current-user ACL/rules",
             }
         todo = self._todo()
@@ -269,5 +332,6 @@ class PaymentRequestWorkItemService:
             "counts": {row["key"]: int(row["count"]) for row in sections},
             "total": sum(int(row["count"]) for row in sections),
             "completed_unavailable_reason": completed_unavailable_reason,
+            "presentation": self._presentation(include_quick_links=True),
             "source_authority": "current-user ACL/rules + canonical payment action contract",
         }
