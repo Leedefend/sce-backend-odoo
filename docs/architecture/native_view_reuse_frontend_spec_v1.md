@@ -202,7 +202,7 @@ AI 建议、风险预警、下一步动作等增强能力必须通过 zone/block
 
 ## 14. 共享前端语义边界（强制）
 
-`AppShell`、`HomeView`、共享导航、共享首页组件及其直接 composable 属于通用前端运行时，不属于任何行业产品包。该层只能消费正式契约并渲染，不得保存行业或岗位业务字典。
+`AppShell`、`HomeView`、`MyWorkView`、通用列表、共享导航、共享首页/任务/列表组件及其直接 API/composable 属于通用前端运行时，不属于任何行业产品包。该层只能消费正式契约并渲染，不得保存行业或岗位业务字典。
 
 共享层允许拥有的语义仅限：
 
@@ -218,8 +218,9 @@ AI 建议、风险预警、下一步动作等增强能力必须通过 zone/block
 - 通过 scene key、route、model、XML ID、菜单中文关键词推导行业或权限语义；
 - 在缺少契约字段时补写项目、合同、结算、付款、经营等行业 fallback；
 - 由前端生成待办数量、金额、风险、状态或业务入口；
+- 在共享任务卡或列表中直接读取 `project/contract/settlement/payment/partner/amount` 等行业事实字段；业务包必须把可展示事实归一为带 `label/display_role/value` 的 `facts` 契约，搜索和排序同样由契约声明；
 - 为满足视觉目标伪造后端未提供的首页区块。
 
 行业产品语义必须由正式 product/page/navigation/work-item contract 提供。契约缺失时，共享层只能显示通用安全空状态并记录契约缺口；不得猜测补齐。
 
-上述规则由 `verify.frontend.shared_surface_semantic_boundary.guard` 强制检查，并进入 `ci.local.quick` 与完整 CI。验收脚本和 fixture 可以引用固定角色或业务对象，但不得被生产运行时代码导入。
+上述规则由 `verify.frontend.shared_surface_semantic_boundary.guard` 强制检查，并进入 `ci.local.quick` 与完整 CI。门禁保护 Shell、Home、My Work、通用列表、任务组件、列表组件及其共享 API/composable；新增共享表面必须同步加入保护清单，不能等发生越界后再补。验收脚本和 fixture 可以引用固定角色或业务对象，但不得被生产运行时代码导入。

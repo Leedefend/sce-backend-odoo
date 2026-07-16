@@ -354,19 +354,25 @@ def main() -> int:
         my_work_text,
         "MyWorkView.vue",
         [
-            "import { executePageContractAction } from '../app/pageContractActionRuntime';",
-            "const pageActionIntent = pageContract.actionIntent;",
-            "const pageActionTarget = pageContract.actionTarget;",
-            "const pageGlobalActions = pageContract.globalActions;",
-            "const headerActions = computed(() => pageGlobalActions.value);",
-            "v-for=\"action in headerActions\"",
-            "@click=\"executeHeaderAction(action.key)\"",
-            "async function executeHeaderAction(actionKey: string) {",
-            "const handled = await executePageContractAction({",
-            "onRefresh: load,",
+            'data-my-work-renderer="product-workspace"',
+            "fetchMyWorkSummary",
+            "result.product_workspace || null",
+            "<MyWorkApprovalWorkspace",
+            '@refresh="load"',
+            "currentContextEpoch()",
+            "isCurrentContextEpoch(epoch)",
         ],
         errors,
     )
+    for forbidden in (
+        "executePageContractAction",
+        "pageContract.actionIntent",
+        "pageContract.globalActions",
+        "legacy",
+        "result.nav",
+    ):
+        if forbidden in my_work_text:
+            errors.append(f"MyWorkView.vue must not restore legacy page orchestration: {forbidden}")
     _expect(
         usage_analytics_text,
         "UsageAnalyticsView.vue",

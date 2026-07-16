@@ -4,8 +4,8 @@ Generated from repository source files. This report is informational during the 
 
 ## Summary
 
-- Scanned files: `4018`
-- Files requiring split plan: `41`
+- Scanned files: `4020`
+- Files requiring split plan: `40`
 - Files above warning threshold: `63`
 
 ## Split Plan Required
@@ -18,7 +18,7 @@ Generated from repository source files. This report is informational during the 
 | 3633 | Python source | `addons/smart_core/handlers/form_field_configuration.py` |
 | 3518 | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 3323 | Python source | `addons/smart_construction_core/tests/test_p0_state_closure.py` |
-| 3257 | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
+| 3222 | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
 | 3202 | Python source | `addons/smart_core/tests/test_form_field_configuration_params.py` |
 | 3092 | Python source | `addons/smart_construction_core/models/support/p1_daily_business_visible_alias_fields.py` |
 | 3046 | Python source | `addons/smart_core/core/workspace_home_contract_builder.py` |
@@ -26,7 +26,6 @@ Generated from repository source files. This report is informational during the 
 | 2903 | Python source | `addons/smart_core/tests/test_menu_configuration_audit.py` |
 | 2830 | Python source | `addons/smart_construction_core/models/core/material_acceptance.py` |
 | 2585 | Python source | `addons/smart_construction_core/tests/test_user_feedback_business_views.py` |
-| 2543 | Vue source | `frontend/apps/web/src/views/MyWorkView.vue` |
 | 2529 | XML data/view | `addons/smart_construction_core/views/menu_business_taxonomy.xml` |
 | 2443 | Python source | `addons/smart_core/core/unified_page_contract_v2_assembler.py` |
 | 2331 | Python source | `addons/smart_core/handlers/system_init.py` |
@@ -132,7 +131,7 @@ Generated from repository source files. This report is informational during the 
 | 3633 | split_plan_required | Python source | `addons/smart_core/handlers/form_field_configuration.py` |
 | 3518 | split_plan_required | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 3323 | split_plan_required | Python source | `addons/smart_construction_core/tests/test_p0_state_closure.py` |
-| 3257 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
+| 3222 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
 | 3202 | split_plan_required | Python source | `addons/smart_core/tests/test_form_field_configuration_params.py` |
 | 3092 | split_plan_required | Python source | `addons/smart_construction_core/models/support/p1_daily_business_visible_alias_fields.py` |
 | 3046 | split_plan_required | Python source | `addons/smart_core/core/workspace_home_contract_builder.py` |
@@ -140,7 +139,6 @@ Generated from repository source files. This report is informational during the 
 | 2903 | split_plan_required | Python source | `addons/smart_core/tests/test_menu_configuration_audit.py` |
 | 2830 | split_plan_required | Python source | `addons/smart_construction_core/models/core/material_acceptance.py` |
 | 2585 | split_plan_required | Python source | `addons/smart_construction_core/tests/test_user_feedback_business_views.py` |
-| 2543 | split_plan_required | Vue source | `frontend/apps/web/src/views/MyWorkView.vue` |
 | 2529 | split_plan_required | XML data/view | `addons/smart_construction_core/views/menu_business_taxonomy.xml` |
 | 2443 | split_plan_required | Python source | `addons/smart_core/core/unified_page_contract_v2_assembler.py` |
 | 2331 | split_plan_required | Python source | `addons/smart_core/handlers/system_init.py` |
@@ -206,6 +204,7 @@ Generated from repository source files. This report is informational during the 
 | 966 | warning | Python source | `addons/smart_core/handlers/load_contract.py` |
 | 966 | warning | Python source | `scripts/verify/scbsly_direct_project_strict_visible_acceptance.py` |
 | 944 | warning | Python source | `scripts/ops/scbs_55_user_acceptance_menu_policy_apply.py` |
+| 915 | warning | Python source | `addons/smart_construction_core/handlers/my_work_summary.py` |
 
 ## Interpretation
 

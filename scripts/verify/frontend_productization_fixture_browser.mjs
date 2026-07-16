@@ -265,13 +265,13 @@ async function main() {
     await login(member, 'demo_role_pm');
     shellText = await bodyText(member);
     const pmRoleLabel = await member.locator('.topbar-context').innerText();
-    requireCheck(/pm|负责人/i.test(pmRoleLabel) && !pmRoleLabel.includes('项目成员'), 'logout/login reused project member role surface for PM');
+    requireCheck(pmRoleLabel.trim() === '项目经理', `logout/login role surface mismatch for PM: ${pmRoleLabel}`);
     result.checks.push('logout_login_role_cache_isolation', 'pm_login_and_navigation');
     await logout(member);
     await login(member, 'demo_role_owner');
     shellText = await bodyText(member);
     const ownerRoleLabel = await member.locator('.topbar-context').innerText();
-    requireCheck(/业主|负责人|owner/i.test(ownerRoleLabel), `owner role surface changed or reused prior role cache: ${ownerRoleLabel}`);
+    requireCheck(ownerRoleLabel.trim() === '企业负责人', `owner role surface changed or reused prior role cache: ${ownerRoleLabel}`);
     result.checks.push('owner_login_and_navigation');
     await member.close();
     result.journeys = {

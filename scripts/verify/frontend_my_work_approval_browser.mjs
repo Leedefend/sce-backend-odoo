@@ -124,7 +124,8 @@ async function main() {
     const confirm = dialog.getByRole('button', { name: '确认提交' });
     check(await confirm.evaluate((node) => node === document.activeElement), 'J07 confirmation focus did not enter');
     await confirm.press('Enter');
-    await page.waitForFunction(() => !(document.body.innerText || '').includes('FE-JOURNEY-PAYMENT-001') || !(document.querySelector('[data-section-key="todo"]')?.textContent || '').includes('FE-JOURNEY-PAYMENT-001'), null, { timeout: 45000 });
+    await dialog.waitFor({ state: 'hidden', timeout: 45000 });
+    await page.locator('.work-section[data-section-key="todo"] .work-card').filter({ hasText: 'FE-JOURNEY-PAYMENT-001' }).waitFor({ state: 'detached', timeout: 45000 });
     await assertCountMatches(page, 'todo');
     await page.locator('.count-card[data-section-key="initiated"]').click();
     check(await page.locator('.work-card').filter({ hasText: 'FE-JOURNEY-PAYMENT-001' }).count() === 1, 'J07 submitted item left initiated section');
@@ -189,7 +190,9 @@ async function main() {
     const approvalCard = page.locator('.work-card').filter({ hasText: createdIdentifier }).first();
     await approvalCard.waitFor({ timeout: 45000 });
     await approvalCard.getByRole('button', { name: '审批' }).click();
-    await page.getByRole('dialog').getByRole('button', { name: '确认审批' }).click();
+    const approvalDialog = page.getByRole('dialog');
+    await approvalDialog.getByRole('button', { name: '确认审批' }).click();
+    await approvalDialog.waitFor({ state: 'hidden', timeout: 45000 });
     await page.waitForFunction((name) => !(document.body.innerText || '').includes(name), createdIdentifier, { timeout: 45000 });
     check(!(await page.locator('body').innerText()).includes(createdIdentifier), 'J08 approved item remained in todo');
     await logout(page);
@@ -212,7 +215,9 @@ async function main() {
     await page.getByRole('alert').filter({ hasText: '拒绝原因' }).waitFor({ timeout: 10000 });
     check(await rejectCard.count() === 1, 'reject without reason changed work item');
     await page.getByRole('dialog').getByLabel('拒绝原因').fill('验收拒绝原因');
-    await page.getByRole('dialog').getByRole('button', { name: '确认驳回' }).click();
+    const rejectDialog = page.getByRole('dialog');
+    await rejectDialog.getByRole('button', { name: '确认驳回' }).click();
+    await rejectDialog.waitFor({ state: 'hidden', timeout: 45000 });
     await page.waitForFunction(() => !(document.body.innerText || '').includes('FE-JOURNEY-REJECT-001'), null, { timeout: 45000 });
     report.failure_paths.reject_reason = 'PASS_DATA_UNCHANGED_BEFORE_VALID_REASON';
     await logout(page);

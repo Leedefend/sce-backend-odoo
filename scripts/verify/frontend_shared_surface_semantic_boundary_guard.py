@@ -12,10 +12,15 @@ ROOT = Path(__file__).resolve().parents[2]
 PROTECTED_FILES = (
     ROOT / "frontend/apps/web/src/layouts/AppShell.vue",
     ROOT / "frontend/apps/web/src/views/HomeView.vue",
+    ROOT / "frontend/apps/web/src/views/MyWorkView.vue",
+    ROOT / "frontend/apps/web/src/pages/ListPage.vue",
+    ROOT / "frontend/apps/web/src/components/business/MyWorkApprovalWorkspace.vue",
+    ROOT / "frontend/apps/web/src/api/myWork.ts",
 )
 PROTECTED_DIRS = (
     ROOT / "frontend/apps/web/src/components/page",
     ROOT / "frontend/apps/web/src/components/product-shell",
+    ROOT / "frontend/apps/web/src/components/product-list",
     ROOT / "frontend/apps/web/src/components/role-home",
     ROOT / "frontend/apps/web/src/app/shared-surface",
     ROOT / "frontend/apps/web/src/composables/shared-surface",
@@ -34,7 +39,7 @@ RULES: tuple[tuple[str, re.Pattern[str], str], ...] = (
     ),
     (
         "role-code-branch",
-        re.compile(r"(?:role_code|roleCode|role)\s*(?:===|==|includes\(|startsWith\(|match\(|\.test\()"),
+        re.compile(r"\b(?:role_code|roleCode|role)\s*(?:===|==|includes\(|startsWith\(|match\(|\.test\()"),
         "共享层不得按角色码分支。",
     ),
     (
@@ -61,6 +66,11 @@ RULES: tuple[tuple[str, re.Pattern[str], str], ...] = (
         "business-identifier-literal",
         re.compile(r"['\"`][^'\"`]*(?:smart_construction|project\.project|payment[._-]|settlement[._-]|finance[._-]|construction\.)[^'\"`]*['\"`]"),
         "共享层不得硬编码行业模块、模型或 XML ID。",
+    ),
+    (
+        "business-fact-field",
+        re.compile(r"item\.(?:project|contract|settlement|payment|partner|amount|company)(?:\?|\.|\[)"),
+        "共享列表与任务组件不得直接读取行业事实字段，必须渲染契约 facts。",
     ),
 )
 
