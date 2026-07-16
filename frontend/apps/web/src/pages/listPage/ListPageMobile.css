@@ -1,0 +1,117 @@
+@media (max-width: 760px) {
+  .list-toolbar {
+    position: static;
+    padding: 8px;
+    min-height: 0;
+    box-shadow: none;
+  }
+
+  .list-header-toolbar :deep(.action-toolbar) {
+    padding: 0;
+  }
+
+  .list-header-toolbar :deep(.view-switch) {
+    display: none;
+  }
+
+  .table {
+    max-height: none;
+    overflow: visible;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .desktop-record-table {
+    display: none;
+  }
+
+  .mobile-record-list {
+    display: grid;
+    gap: 10px;
+  }
+
+  .mobile-record-card {
+    display: grid;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    min-width: 0;
+    border: 1px solid var(--sc-app-border);
+    border-radius: 10px;
+    background: var(--sc-app-panel);
+    color: var(--sc-app-text-primary);
+    padding: 14px;
+    text-align: left;
+    box-shadow: 0 4px 12px var(--sc-app-shadow);
+    cursor: pointer;
+  }
+
+  .mobile-record-card:focus-visible {
+    outline: 3px solid var(--sc-app-focus-ring);
+    outline-offset: 2px;
+  }
+
+  .mobile-record-card__head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .mobile-record-card__head strong {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-size: 15px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  .mobile-record-card__head .status-badge {
+    flex: 0 0 auto;
+    max-width: 42%;
+    white-space: nowrap;
+  }
+
+  .mobile-record-card__facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px 14px;
+  }
+
+  .mobile-record-fact {
+    display: grid;
+    gap: 3px;
+    min-width: 0;
+  }
+
+  .mobile-record-fact small {
+    color: var(--sc-app-text-secondary);
+    font-size: 11px;
+  }
+
+  .mobile-record-fact b {
+    color: var(--sc-app-text-primary);
+    font-size: 13px;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .mobile-record-card__open {
+    justify-self: end;
+    color: var(--sc-app-info-text);
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .pagination-footer {
+    position: static;
+    justify-content: stretch;
+    padding-top: 0;
+  }
+
+  .pagination-actions--bottom {
+    width: 100%;
+    justify-content: space-between;
+    gap: 8px;
+  }
+}
