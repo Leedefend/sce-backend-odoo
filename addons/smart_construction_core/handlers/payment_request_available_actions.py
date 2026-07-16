@@ -40,6 +40,7 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
             "method": "action_submit",
             "allowed_states": {"draft"},
             "delivery_priority": 10,
+            "presentation": {"tier": "primary", "semantic": "default"},
         },
         {
             "key": "approve",
@@ -48,6 +49,7 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
             "method": "action_approve",
             "allowed_states": {"submit"},
             "delivery_priority": 20,
+            "presentation": {"tier": "primary", "semantic": "default"},
         },
         {
             "key": "reject",
@@ -57,6 +59,7 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
             "allowed_states": {"submit"},
             "required_params": ["reason"],
             "delivery_priority": 30,
+            "presentation": {"tier": "secondary", "semantic": "destructive"},
         },
         {
             "key": "done",
@@ -65,6 +68,7 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
             "method": "action_done",
             "allowed_states": {"approved"},
             "delivery_priority": 40,
+            "presentation": {"tier": "primary", "semantic": "default"},
         },
     ]
     _EXECUTE_INTENT = "payment.request.execute"
@@ -271,6 +275,11 @@ class PaymentRequestAvailableActionsHandler(BaseIntentHandler):
             "actor_matches_required_role": actor_matches_required_role,
             "handoff_required": handoff_required,
             "delivery_priority": int(spec.get("delivery_priority") or 100),
+            "presentation": {
+                **dict(spec.get("presentation") or {}),
+                "requires_confirmation": True,
+                "requires_reason": "reason" in required_params,
+            },
         }
 
     def handle(self, payload=None, ctx=None):

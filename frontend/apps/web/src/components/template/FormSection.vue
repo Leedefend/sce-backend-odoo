@@ -28,7 +28,7 @@
           @mouseup="emitFieldOrderPointerDrop(field, $event)"
         >
           <div class="field-label-row">
-            <label v-if="!fieldConfigEditable" class="label">{{ field.label }}<span v-if="field.required" class="required">*</span></label>
+            <label v-if="!fieldConfigEditable" class="label" :for="fieldControlId(field)">{{ field.label }}<span v-if="field.required" class="required">*</span></label>
             <input
               v-else
               class="field-label-editor"
@@ -113,15 +113,19 @@
               <template v-else-if="isBaseFieldType(field.type)">
                 <input
                   v-if="field.type === 'boolean'"
+                  :id="fieldControlId(field)"
                   :checked="Boolean(field.value)"
                   class="input-checkbox"
+                  :aria-required="field.required || undefined"
                   type="checkbox"
                   @change="emitFieldChange(field, ($event.target as HTMLInputElement).checked)"
                 />
                 <select
                   v-else-if="field.type === 'selection'"
+                  :id="fieldControlId(field)"
                   :value="String(field.inputValue ?? '')"
                   class="input"
+                  :aria-required="field.required || undefined"
                   @change="emitFieldChange(field, ($event.target as HTMLSelectElement).value)"
                 >
                   <option v-if="!field.required" value="">{{ selectPlaceholderText(field) }}</option>
@@ -135,7 +139,9 @@
                   </span>
                   <div class="many2one-combobox">
                     <input
+                      :id="fieldControlId(field)"
                       class="input"
+                      :aria-required="field.required || undefined"
                       type="text"
                       :value="many2oneTextValue(field)"
                       :placeholder="selectPlaceholderText(field)"
@@ -202,8 +208,11 @@
                 </div>
                 <div v-else-if="isDateRangeWidget(field)" class="native-date-range">
                   <input
+                    :id="fieldControlId(field)"
                     :value="String(field.inputValue ?? '')"
                     class="input"
+                    :aria-label="field.label"
+                    :aria-required="field.required || undefined"
                     type="date"
                     :placeholder="field.inputPlaceholder || inputPlaceholderText(field)"
                     @input="emitFieldChange(field, ($event.target as HTMLInputElement).value)"
@@ -214,22 +223,27 @@
                     :value="String(field.dateRangeEndInputValue ?? '')"
                     class="input"
                     type="date"
+                    :aria-label="`${field.label}结束日期`"
                     :placeholder="field.inputPlaceholder || inputPlaceholderText(field)"
                     @input="emitDateRangeEndChange(field, ($event.target as HTMLInputElement).value)"
                   />
                 </div>
                 <textarea
                   v-else-if="isMultilineField(field.type)"
+                  :id="fieldControlId(field)"
                   :value="String(field.inputValue ?? '')"
                   class="input input--textarea"
+                  :aria-required="field.required || undefined"
                   :placeholder="field.inputPlaceholder || inputPlaceholderText(field)"
                   rows="4"
                   @input="emitFieldChange(field, ($event.target as HTMLTextAreaElement).value)"
                 />
                 <input
                   v-else
+                  :id="fieldControlId(field)"
                   :value="String(field.inputValue ?? '')"
                   class="input"
+                  :aria-required="field.required || undefined"
                   :type="inputType(field.type)"
                   :placeholder="field.inputPlaceholder || inputPlaceholderText(field)"
                   @input="emitFieldChange(field, ($event.target as HTMLInputElement).value)"
@@ -237,8 +251,10 @@
               </template>
               <template v-else>
                 <input
+                  :id="fieldControlId(field)"
                   :value="String(field.inputValue ?? '')"
                   class="input"
+                  :aria-required="field.required || undefined"
                   :type="inputType(field.type)"
                   :placeholder="field.inputPlaceholder || inputPlaceholderText(field)"
                   @input="emitFieldChange(field, ($event.target as HTMLInputElement).value)"
@@ -321,6 +337,10 @@ const emit = defineEmits<{
   (e: 'field-add-after', payload: { field: FormSectionFieldSchema; groupTitle: string }): void;
   (e: 'field-select', payload: { field: FormSectionFieldSchema; groupTitle: string }): void;
 }>();
+
+function fieldControlId(field: FormSectionFieldSchema) {
+  return `product-form-field-${String(field.key || field.name).replace(/[^A-Za-z0-9_-]/g, '-')}`;
+}
 
 const slots = useSlots();
 const toneClass = computed(() => (props.tone === 'advanced' ? 'template-form-section--advanced' : 'template-form-section--core'));

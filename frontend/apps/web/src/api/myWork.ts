@@ -99,6 +99,12 @@ export type ProductMyWorkAction = {
   reason_label?: string;
   reason_help?: string;
   next_state?: string;
+  presentation?: {
+    tier?: 'primary' | 'secondary' | 'overflow' | string;
+    semantic?: 'default' | 'destructive' | string;
+    requires_confirmation?: boolean;
+    requires_reason?: boolean;
+  };
 };
 
 export type ProductMyWorkMoney = {

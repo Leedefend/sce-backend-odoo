@@ -11,6 +11,7 @@ from ..models.support import operating_metrics as opm
 WORKSPACE_DECLARATIONS = {
     "project.project": {
         "kind": "project",
+        "object_label": "项目",
         "facts": [
             ("company_id", "公司", "relation"),
             ("partner_id", "往来方", "relation"),
@@ -29,6 +30,7 @@ WORKSPACE_DECLARATIONS = {
     },
     "construction.contract": {
         "kind": "contract",
+        "object_label": "合同",
         "facts": [
             ("amount_total", "合同原始金额", "money"),
             ("amount_final", "当前 / 最终金额", "money"),
@@ -66,6 +68,7 @@ WORKSPACE_DECLARATIONS = {
     },
     "sc.settlement.order": {
         "kind": "settlement",
+        "object_label": "结算",
         "facts": [
             ("amount_total", "原始结算金额", "money"),
             ("deduction_amount", "调整 / 扣款金额", "money"),
@@ -105,6 +108,7 @@ WORKSPACE_DECLARATIONS = {
     },
     "payment.request": {
         "kind": "payment_request",
+        "object_label": "付款申请",
         "facts": [
             ("amount", "申请金额", "money"),
             ("__request_reserved", "对结算占额", "money"),
@@ -149,6 +153,7 @@ WORKSPACE_DECLARATIONS = {
     },
     "sc.payment.execution": {
         "kind": "payment_execution",
+        "object_label": "付款执行",
         "facts": [
             ("planned_amount", "执行金额", "money"),
             ("paid_amount", "实际支付结果", "money"),
@@ -183,6 +188,24 @@ WORKSPACE_DECLARATIONS = {
         ],
         "details": [],
     },
+}
+
+STATE_PRESENTATION = {
+    "draft": ("default", "尚未提交，可继续完善业务信息。"),
+    "submit": ("info", "已提交，正在等待获授权人员处理。"),
+    "approved": ("success", "已完成审批，可按正式流程继续办理。"),
+    "approve": ("success", "已完成审核，可继续办理下游业务。"),
+    "done": ("success", "该事项已完成。"),
+    "cancel": ("danger", "该事项已取消，不可继续办理。"),
+    "rejected": ("danger", "该事项未通过，请根据业务意见处理。"),
+}
+
+WORKSPACE_PRESENTATION = {
+    "facts": {"eyebrow": "关键业务事实", "title": "业务概览"},
+    "money": {"eyebrow": "金额事实", "title": "金额与币种"},
+    "relationships": {"eyebrow": "上下游关系", "title": "业务关系链"},
+    "details": {"eyebrow": "业务明细", "title": "明细事实"},
+    "audit": {"eyebrow": "审计信息", "title": "记录信息"},
 }
 
 
@@ -278,6 +301,7 @@ def _fact(record, field_name, label, kind):
         "key": field_name.lstrip("_"),
         "label": label,
         "kind": kind,
+        "group": "money" if kind == "money" else "business",
         "value": value if value is not False else None,
         "currency": _currency_payload(currency) if kind == "money" else None,
     }
@@ -326,6 +350,11 @@ def _relationship(env, record, declaration):
         inline_only = bool(declaration.get("inline_only"))
         currency = related.currency_id if "currency_id" in related._fields else None
         amount = related.amount if related._name == "payment.ledger" and "amount" in related._fields else None
+        status_value = _text(related.state) if "state" in related._fields else ""
+        status_label = status_value
+        if status_value and related._fields["state"].type == "selection":
+            status_label = dict(related._fields["state"]._description_selection(env)).get(status_value, status_value)
+        status_semantic, _status_description = STATE_PRESENTATION.get(status_value, ("default", ""))
         rows.append({
             "model": related._name,
             "id": int(related.id),
@@ -335,7 +364,9 @@ def _relationship(env, record, declaration):
             "amount": amount,
             "currency": _currency_payload(currency),
             "date": related.paid_at.isoformat() if related._name == "payment.ledger" and related.paid_at else None,
-            "status": _text(related.state) if "state" in related._fields else "",
+            "accessible": True,
+            "object_label": _text(related._description),
+            "status": {"value": status_value, "label": _text(status_label), "semantic": status_semantic},
         })
     return {
         "key": declaration["key"],
@@ -388,6 +419,7 @@ def build_financial_workspace_contract(env, model_name, record_id):
     state_label = state_value
     if "state" in record._fields and record._fields["state"].type == "selection":
         state_label = dict(record._fields["state"]._description_selection(env)).get(state_value, state_value)
+    state_semantic, state_description = STATE_PRESENTATION.get(_text(state_value), ("default", ""))
     currency = record.currency_id if "currency_id" in record._fields else None
     facts = [
         item
@@ -453,12 +485,22 @@ def build_financial_workspace_contract(env, model_name, record_id):
                 "source_authority": "payment.request create ACL + finance capability + approved settlement",
             })
     return {
-        "version": "1.0",
+        "version": "2.0",
         "kind": declaration["kind"],
+        "identity": {
+            "object_label": declaration["object_label"],
+            "business_title": _identity(record, ("name", "subject", "title")),
+        },
+        "presentation": deepcopy(WORKSPACE_PRESENTATION),
         "model": record._name,
         "record_id": int(record.id),
         "record_label": _identity(record, ("name", "subject", "title")),
-        "state": {"value": _text(state_value), "label": _text(state_label)},
+        "state": {
+            "value": _text(state_value),
+            "label": _text(state_label),
+            "semantic": state_semantic,
+            "description": state_description,
+        },
         "currency": _currency_payload(currency),
         "facts": facts,
         "relationships": relationships,
@@ -543,6 +585,7 @@ def build_financial_form_business_actions(env, model_name, record_id):
                 "handoff_hint": str(row.get("handoff_hint") or ""),
                 "requires_reason": bool(row.get("requires_reason")),
                 "required_params": list(row.get("required_params") or []), "primary": action_key == primary_key,
+                "presentation": dict(row.get("presentation") or {}),
                 "action_safety": {"classification": "danger", "requires_confirm": True,
                                   "confirm_message": f"确认{label}后，系统将重新读取付款申请及上下游金额状态。",
                                   "reason_code": "BUSINESS_STATE_TRANSITION"},

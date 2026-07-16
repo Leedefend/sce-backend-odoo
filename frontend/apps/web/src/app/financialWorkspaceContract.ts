@@ -10,6 +10,7 @@ export type WorkspaceFact = {
   key: string;
   label: string;
   kind: 'money' | 'relation' | 'date' | 'datetime' | string;
+  group?: 'business' | 'money' | string;
   value: unknown;
   currency?: WorkspaceCurrency | null;
 };
@@ -29,7 +30,9 @@ export type WorkspaceRelatedRecord = {
   amount?: number | null;
   currency?: WorkspaceCurrency | null;
   date?: string | null;
-  status?: string;
+  accessible?: boolean;
+  object_label?: string;
+  status?: { value: string; label: string; semantic?: string };
 };
 
 export type WorkspaceRelationship = {
@@ -59,7 +62,9 @@ export type FinancialWorkspaceContract = {
   model: string;
   record_id: number;
   record_label: string;
-  state: { value: string; label: string };
+  identity?: { object_label: string; business_title: string };
+  presentation?: Record<string, { eyebrow?: string; title?: string }>;
+  state: { value: string; label: string; semantic?: string; description?: string };
   currency?: WorkspaceCurrency | null;
   facts: WorkspaceFact[];
   relationships: WorkspaceRelationship[];
@@ -87,7 +92,7 @@ export function resolveFinancialWorkspaceContract(source: unknown): FinancialWor
   const candidate = record(form.business_workspace);
   const recordId = Number(candidate.record_id || 0);
   const facts = Array.isArray(candidate.facts) ? candidate.facts : [];
-  if (String(candidate.version || '') !== '1.0' || !recordId || !facts.length) return null;
+  if (!['1.0', '2.0'].includes(String(candidate.version || '')) || !recordId || !facts.length) return null;
   return candidate as unknown as FinancialWorkspaceContract;
 }
 
