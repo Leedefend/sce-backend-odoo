@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 <template>
   <section
     class="page sc-page"
@@ -27,30 +26,20 @@
       :on-retry="onReload"
     />
     <template v-else-if="status === 'empty'">
-      <section class="list-toolbar sc-product-page-toolbar">
-        <div class="list-title">
-          <h2>{{ title }}</h2>
-          <p v-if="toolbarSubtitle">{{ toolbarSubtitle }}</p>
-        </div>
-        <div class="list-header-toolbar">
-          <slot name="toolbar"></slot>
-        </div>
-        <div v-if="showPlainSearch" class="list-plain-search">
-          <input
-            type="search"
-            :value="plainSearchDraft"
-            :disabled="loading"
-            :placeholder="uiLabel('plain_search_placeholder', '输入关键字搜索')"
-            @compositionstart="plainSearchComposing = true"
-            @compositionend="onPlainSearchCompositionEnd"
-            @input="onPlainSearchInput"
-            @keydown.enter.prevent="submitPlainSearch"
-          />
-          <button type="button" class="pagination-btn" :disabled="loading" @click="submitPlainSearch">
-            {{ uiLabel('search_submit', '搜索') }}
-          </button>
-        </div>
-      </section>
+      <ProductListHeader
+        :title="title"
+        :subtitle="toolbarSubtitle"
+        :loading="loading"
+        :show-search="showPlainSearch"
+        :search-value="plainSearchDraft"
+        :search-label="uiLabel('search_submit', '搜索')"
+        :search-placeholder="uiLabel('plain_search_placeholder', '输入业务编号或名称')"
+        @search-input="onPlainSearchInput"
+        @search-submit="submitPlainSearch"
+        @search-clear="clearPlainSearch"
+        @composition-start="plainSearchComposing = true"
+        @composition-end="onPlainSearchCompositionEnd"
+      ><slot name="toolbar"></slot></ProductListHeader>
       <section class="list-empty-state">
         <div class="list-empty-copy">
           <h2>{{ emptyStateTitle }}</h2>
@@ -79,30 +68,20 @@
     </template>
 
     <template v-else>
-      <section class="list-toolbar sc-product-page-toolbar">
-        <div class="list-title">
-          <h2>{{ title }}</h2>
-          <p v-if="toolbarSubtitle">{{ toolbarSubtitle }}</p>
-        </div>
-        <div class="list-header-toolbar">
-          <slot name="toolbar"></slot>
-        </div>
-        <div v-if="showPlainSearch" class="list-plain-search">
-          <input
-            type="search"
-            :value="plainSearchDraft"
-            :disabled="loading"
-            :placeholder="uiLabel('plain_search_placeholder', '输入关键字搜索')"
-            @compositionstart="plainSearchComposing = true"
-            @compositionend="onPlainSearchCompositionEnd"
-            @input="onPlainSearchInput"
-            @keydown.enter.prevent="submitPlainSearch"
-          />
-          <button type="button" class="pagination-btn" :disabled="loading" @click="submitPlainSearch">
-            {{ uiLabel('search_submit', '搜索') }}
-          </button>
-        </div>
-      </section>
+      <ProductListHeader
+        :title="title"
+        :subtitle="toolbarSubtitle"
+        :loading="loading"
+        :show-search="showPlainSearch"
+        :search-value="plainSearchDraft"
+        :search-label="uiLabel('search_submit', '搜索')"
+        :search-placeholder="uiLabel('plain_search_placeholder', '输入业务编号或名称')"
+        @search-input="onPlainSearchInput"
+        @search-submit="submitPlainSearch"
+        @search-clear="clearPlainSearch"
+        @composition-start="plainSearchComposing = true"
+        @composition-end="onPlainSearchCompositionEnd"
+      ><slot name="toolbar"></slot></ProductListHeader>
 
       <section v-if="enableSummaryStrip && summaryItems.length" class="summary-strip sc-product-summary-strip">
         <article v-for="item in summaryItems" :key="item.key" class="summary-card" :class="`tone-${item.tone || 'neutral'}`">
@@ -222,6 +201,7 @@
                 class="group-page-input"
                 :value="groupJumpPageInput[group.key] || String(groupCurrentPage(group))"
                 :disabled="Boolean(group.loading) || groupTotalPages(group) <= 1"
+                :aria-label="uiLabel('group_page_input', `${group.label}页码`)"
                 inputmode="numeric"
                 pattern="[0-9]*"
                 @change="onGroupJumpInputChange(group.key, $event)"
@@ -260,6 +240,7 @@
                 <th v-if="showSelectionColumn" class="cell-select">
                   <input
                     type="checkbox"
+                    :aria-label="uiLabel('select_group_rows', `选择${group.label}当前页记录`)"
                     :checked="isGroupAllSelected(group)"
                     :disabled="loading || !groupSelectableRows(group).length"
                     @click.stop
@@ -321,13 +302,13 @@
               <tr
                 v-for="(row, index) in group.sampleRows"
                 :key="`group-row-${group.key}-${String(row.id ?? index)}`"
-                :class="rowToneClass(row)"
                 @click="handleRowClick(row, $event)"
               >
                 <td v-if="showSelectionColumn" class="cell-select" @click.stop>
                   <input
                     v-if="rowId(row)"
                     type="checkbox"
+                    :aria-label="uiLabel('select_record', `选择${semanticCell(mobileIdentityField, row[mobileIdentityField]).text}`)"
                     :checked="isSelected(row)"
                     :disabled="loading"
                     @change="onRowCheckboxChange(row, $event)"
@@ -458,6 +439,7 @@
             <th v-if="showSelectionColumn" class="cell-select">
               <input
                 type="checkbox"
+                :aria-label="uiLabel('select_page_rows', '选择当前页记录')"
                 :checked="allSelected"
                 :disabled="loading || !selectableRows.length"
                 @click.stop
@@ -542,13 +524,13 @@
           <tr
             v-for="(row, index) in records"
             :key="String(row.id ?? index)"
-            :class="rowToneClass(row)"
             @click="handleRowClick(row, $event)"
           >
             <td v-if="showSelectionColumn" class="cell-select" @click.stop>
               <input
                 v-if="rowId(row)"
                 type="checkbox"
+                :aria-label="uiLabel('select_record', `选择${semanticCell(mobileIdentityField, row[mobileIdentityField]).text}`)"
                 :checked="isSelected(row)"
                 :disabled="loading"
                 @change="onRowCheckboxChange(row, $event)"
@@ -683,6 +665,7 @@
             class="pagination-input"
             :value="pageJumpInput"
             :disabled="loading || totalPages <= 1"
+            :aria-label="uiLabel('pagination_page_input', '页码')"
             inputmode="numeric"
             pattern="[0-9]*"
             @input="onPageJumpInput"
@@ -740,6 +723,7 @@ import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import PageHeader from '../components/page/PageHeader.vue';
 import AttachmentViewer from '../components/attachment/AttachmentViewer.vue';
+import ProductListHeader from '../components/product-list/ProductListHeader.vue';
 import { resolveEmptyCopy, resolveErrorCopy, type StatusError } from '../composables/useStatus';
 import type { SceneListProfile } from '../app/resolvers/sceneRegistry';
 import { formatAttachmentReferenceValue, parseAttachmentReferenceLinks } from '../utils/display';
@@ -1042,23 +1026,6 @@ function rowNumericCellValue(value: unknown): number | null {
   return Number.isFinite(numeric) ? numeric : null;
 }
 
-function isOutputInvoiceAdjustmentRow(row: Record<string, unknown>) {
-  if (props.model !== 'sc.output.invoice.ledger') return false;
-  const adjustmentTexts = scalarTexts(row.adjustment_kind).map((text) => text.toLowerCase());
-  if (adjustmentTexts.some((text) => text === 'signed_adjustment' || text.includes('冲抵') || text.includes('红冲'))) {
-    return true;
-  }
-  return ['invoice_amount', 'amount_no_tax', 'tax_amount', 'surcharge_amount']
-    .some((field) => {
-      const numeric = rowNumericCellValue(row[field]);
-      return numeric !== null && numeric < 0;
-    });
-}
-
-function rowToneClass(row: Record<string, unknown>) {
-  return { 'row-tone-danger': isOutputInvoiceAdjustmentRow(row) };
-}
-
 function selectionLabel(option: ColumnOption | null, value: unknown) {
   const raw = normalizeCellRawValue(value);
   const key = String(raw ?? '').trim();
@@ -1142,8 +1109,7 @@ function isStatusColumn(field: string) {
 }
 
 function isStatusLikeColumn(field: string) {
-  const label = columnLabel(field).trim();
-  return isStatusColumn(field) || /^(状态|单据状态|开票状态|付款状态|结算状态|支付申请状态|账户状态)$/.test(label);
+  return isStatusColumn(field);
 }
 
 function isPrimaryTextColumn(field: string) {
@@ -1606,6 +1572,11 @@ function submitPlainSearch() {
   props.onSearch(plainSearchDraft.value || '');
 }
 
+function clearPlainSearch() {
+  plainSearchDraft.value = '';
+  props.onSearch('');
+}
+
 watch(
   currentPage,
   (page) => {
@@ -1978,13 +1949,7 @@ function isNumericColumn(field: string) {
 }
 
 function isNumericDisplayColumn(field: string) {
-  if (isNumericColumn(field)) return true;
-  const label = columnLabel(field).trim();
-  if (!label) return false;
-  if (/编号|单号|号码|账号|代码|日期|时间|状态|是否|项目|名称|单位|人员|录入人|附件|备注|类型/.test(label)) {
-    return false;
-  }
-  return /金额|税额|总额|余额|收入|支出|价税|含税|不含税|附加税|抵扣|付款|收款|借款|还款|未还款|利息|保证金|合同价|控制价|单价|数量|税率|累计|本期|已退|未退|张数|份数|天数/.test(label);
+  return isNumericColumn(field);
 }
 
 function numericCellValue(value: unknown) {

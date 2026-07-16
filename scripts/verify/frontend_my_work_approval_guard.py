@@ -44,15 +44,22 @@ def main() -> int:
             "item.business_type",
             "item.record.label",
             "item.state.label",
-            "item.project?.label",
-            "item.company?.label",
-            "formatMoney(item)",
-            "executePaymentRequestAction",
+            'v-for="fact in item.facts"',
+            "formatFact(fact)",
+            "workspace.presentation.search_placeholder",
+            "workspace.presentation.sort_options",
+            "executeProductMyWorkAction",
             "dialogRef.value?.showModal()",
             "emit('refresh')",
         ],
         "My Work product component",
     )
+    if "executePaymentRequestAction" in component:
+        raise SystemExit("[FAIL] product work component must execute the contract-provided intent")
+    forbidden_business_fields = ["item.project", "item.contract", "item.settlement", "item.partner", "item.amount"]
+    leaked_fields = [field for field in forbidden_business_fields if field in component]
+    if leaked_fields:
+        raise SystemExit(f"[FAIL] shared product work component reads industry fields directly: {leaked_fields}")
     require(
         contract,
         [

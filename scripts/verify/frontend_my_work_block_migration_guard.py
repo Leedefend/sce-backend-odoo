@@ -8,15 +8,23 @@ ROOT = Path(__file__).resolve().parents[2]
 MY_WORK_VIEW = ROOT / "frontend/apps/web/src/views/MyWorkView.vue"
 
 REQUIRED_TOKENS = [
+    "data-my-work-renderer=\"product-workspace\"",
+    "<MyWorkApprovalWorkspace",
+    ":workspace=\"workspace\"",
+    "fetchMyWorkSummary",
+    "currentContextEpoch()",
+    "isCurrentContextEpoch(epoch)",
+]
+
+FORBIDDEN_TOKENS = [
     "<PageRenderer",
-    "v-if=\"useUnifiedMyWorkRenderer\"",
-    ":contract=\"myWorkOrchestrationContract\"",
-    ":datasets=\"myWorkOrchestrationDatasets\"",
-    "@action=\"handleMyWorkBlockAction\"",
-    "const myWorkOrchestrationContract = computed<PageOrchestrationContract>(() => {",
-    "const useUnifiedMyWorkRenderer = computed(() => {",
-    "const myWorkOrchestrationDatasets = computed<Record<string, unknown>>(() => {",
-    "async function handleMyWorkBlockAction(event: PageBlockActionEvent)",
+    "useUnifiedMyWorkRenderer",
+    "myWorkOrchestrationContract",
+    "myWorkOrchestrationDatasets",
+    "retryRequestJson",
+    "copyRetryRequest",
+    "exportRetryRequestJson",
+    "legacy=1",
 ]
 
 
@@ -37,8 +45,12 @@ def main() -> int:
         if token not in text:
             errors.append(f"MyWorkView missing token: {token}")
 
-    if "<section v-else class=\"my-work\"" not in text:
-        errors.append("MyWorkView must keep legacy fallback section with v-else")
+    for token in FORBIDDEN_TOKENS:
+        if token in text:
+            errors.append(f"formal MyWorkView contains legacy token: {token}")
+
+    if text.count("data-my-work-renderer=\"product-workspace\"") != 1:
+        errors.append("formal MyWorkView must expose exactly one product renderer")
 
     if errors:
         return _fail(errors)

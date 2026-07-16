@@ -155,7 +155,11 @@ class IdentityResolver:
 
     def _pick_landing_scene(self, scene_candidates: List[str], scene_keys: set) -> str:
         for candidate in scene_candidates:
-            if candidate in scene_keys:
+            # workspace.home is the platform-owned safe landing surface.  It is
+            # available independently from the optional startup scene subset,
+            # so an explicit role policy may select it without a scene-registry
+            # entry being preloaded in the current boot payload.
+            if candidate == "workspace.home" or candidate in scene_keys:
                 return candidate
         if "portal.dashboard" in scene_keys:
             return "portal.dashboard"

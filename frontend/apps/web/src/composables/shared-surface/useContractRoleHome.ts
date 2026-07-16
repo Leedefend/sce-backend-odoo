@@ -87,16 +87,23 @@ export function useContractRoleHome() {
   const summaries = computed<SurfaceCount[]>(() => (workWorkspace.value?.sections || [])
     .map((section) => ({ key: section.key, label: section.label, value: section.count }))
     .slice(0, 4));
-  const quickLinks = computed<SurfaceLink[]>(() => topNodes(session.menuTree)
-    .map((node) => ({ group: node, target: firstReachable(node) }))
-    .filter((item): item is { group: NavNode; target: NavNode } => Boolean(item.target))
-    .map(({ group, target }) => ({
-      key: `${text(group.key || group.id)}:${nodeRoute(target)}`,
-      label: nodeLabel(group) || nodeLabel(target),
-      detail: nodeLabel(target),
-      route: nodeRoute(target),
-    }))
-    .slice(0, 7));
+  const quickLinks = computed<SurfaceLink[]>(() => {
+    const contractLinks = (workWorkspace.value?.presentation.quick_links || [])
+      .filter((item) => text(item.route) && text(item.label))
+      .map((item) => ({ key: text(item.key) || text(item.route), label: text(item.label), detail: text(item.detail), route: text(item.route) }));
+    const navigationLinks = topNodes(session.menuTree)
+      .map((node) => ({ group: node, target: firstReachable(node) }))
+      .filter((item): item is { group: NavNode; target: NavNode } => Boolean(item.target))
+      .map(({ group, target }) => ({
+        key: `${text(group.key || group.id)}:${nodeRoute(target)}`,
+        label: nodeLabel(group) || nodeLabel(target),
+        detail: nodeLabel(target),
+        route: nodeRoute(target),
+      }));
+    return [...contractLinks, ...navigationLinks]
+      .filter((item, index, rows) => rows.findIndex((row) => row.route === item.route) === index)
+      .slice(0, 7);
+  });
   const recentItems = computed<SurfaceLink[]>(() => {
     const companyId = Number(session.projectContext?.company_id || 0);
     return session.activityPages

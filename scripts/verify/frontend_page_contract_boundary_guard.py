@@ -110,6 +110,7 @@ def main() -> int:
         "ProjectManagementDashboardView.vue",
         "ActionViewShell.vue",
         "ProjectsIntakeView.vue",
+        "MyWorkView.vue",
     }
 
     for view in view_files:
@@ -191,8 +192,9 @@ def main() -> int:
         ],
         "MyWorkView.vue": [
             "fetchMyWorkSummary",
-            "completeMyWorkItem",
-            "completeMyWorkItemsBatch",
+            "MyWorkApprovalWorkspace",
+            "StatusPanel",
+            "result.product_workspace",
         ],
         "WorkbenchView.vue": [
             "diagnostic-only surface",

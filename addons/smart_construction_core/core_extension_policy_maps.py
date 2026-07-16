@@ -10,7 +10,7 @@ ROLE_SURFACE_OVERRIDES = {
     },
     "project_member": {
         "label": "项目成员",
-        "landing_scene_candidates": ["projects.list", "projects.ledger"],
+        "landing_scene_candidates": ["workspace.home", "projects.list", "projects.ledger"],
         "menu_xmlids": [
             "smart_construction_core.menu_sc_project_center",
             "smart_construction_core.menu_sc_contract_center",
@@ -56,7 +56,8 @@ ROLE_SURFACE_OVERRIDES = {
         ],
     },
     "owner": {
-        "landing_scene_candidates": ["projects.list", "projects.intake"],
+        "label": "企业负责人",
+        "landing_scene_candidates": ["workspace.home", "projects.list", "projects.intake"],
         "menu_xmlids": [
             "smart_construction_core.menu_sc_project_center",
             "smart_construction_core.menu_sc_contract_center",
@@ -69,7 +70,8 @@ ROLE_SURFACE_OVERRIDES = {
         ],
     },
     "pm": {
-        "landing_scene_candidates": ["portal.dashboard", "projects.ledger", "projects.list", "projects.intake"],
+        "label": "项目经理",
+        "landing_scene_candidates": ["workspace.home", "portal.dashboard", "projects.ledger", "projects.list", "projects.intake"],
         "menu_xmlids": [
             "smart_construction_core.menu_sc_project_center",
             "smart_construction_core.menu_sc_contract_center",
@@ -78,7 +80,8 @@ ROLE_SURFACE_OVERRIDES = {
         "menu_blocklist_xmlids": ["smart_construction_core.menu_sc_project_manage"],
     },
     "finance": {
-        "landing_scene_candidates": ["finance.payment_requests", "projects.ledger", "projects.list"],
+        "label": "财务主管",
+        "landing_scene_candidates": ["workspace.home", "finance.payment_requests", "projects.ledger", "projects.list"],
         "menu_xmlids": [
             "smart_construction_core.menu_sc_finance_center",
             "smart_construction_core.menu_sc_settlement_center",

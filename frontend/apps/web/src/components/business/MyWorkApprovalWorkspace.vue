@@ -1,7 +1,7 @@
 <template>
   <section class="product-work" aria-label="我的工作事项">
     <header class="product-work__header">
-      <p>只展示当前账号、公司和项目范围内真正可处理的业务事项。</p>
+      <p>{{ workspace.presentation.description }}</p>
       <button type="button" class="secondary sc-btn sc-btn-ghost" :disabled="busy" @click="$emit('refresh')">刷新</button>
     </header>
 
@@ -20,11 +20,25 @@
       </button>
     </div>
 
+    <section class="product-work__filters" aria-label="筛选和排序工作事项">
+      <label>
+        <span>{{ workspace.presentation.search_label }}</span>
+        <input v-model.trim="searchText" type="search" :placeholder="workspace.presentation.search_placeholder" />
+      </label>
+      <label>
+        <span>排序方式</span>
+        <select v-model="sortMode">
+          <option v-for="option in workspace.presentation.sort_options" :key="option.key" :value="option.key">{{ option.label }}</option>
+        </select>
+      </label>
+      <button v-if="searchText" type="button" class="secondary sc-btn sc-btn-ghost" @click="searchText = ''">清除查找</button>
+    </section>
+
     <p v-if="feedback" class="feedback" :class="{ error: feedbackError }" role="status">{{ feedback }}</p>
 
     <section v-for="section in visibleSections" :key="section.key" class="work-section" :data-section-key="section.key">
       <h2>{{ section.label }} <span>{{ section.count }}</span></h2>
-      <p v-if="!section.items.length" class="empty">当前范围内没有{{ section.label }}事项。</p>
+      <p v-if="!section.items.length" class="empty">{{ searchText ? '没有符合当前查找条件的事项。' : `当前范围内没有${section.label}事项。` }}</p>
       <article v-for="item in section.items" :key="item.key" class="work-card" :data-work-item-key="item.key">
         <div class="work-card__main">
           <div class="work-card__identity">
@@ -33,26 +47,39 @@
           </div>
           <h3>{{ item.record.label }}</h3>
           <dl>
-            <div><dt>项目</dt><dd>{{ item.project?.label || '未关联' }}</dd></div>
-            <div><dt>公司</dt><dd>{{ item.company?.label || '未关联' }}</dd></div>
-            <div><dt>往来方</dt><dd>{{ item.partner?.label || '未填写' }}</dd></div>
-            <div><dt>金额</dt><dd>{{ formatMoney(item) }}</dd></div>
-            <div><dt>发起人</dt><dd>{{ item.initiator?.label || '未知' }}</dd></div>
-            <div><dt>发起时间</dt><dd>{{ formatDate(item.initiated_at) }}</dd></div>
+            <div v-for="fact in item.facts" :key="fact.key"><dt>{{ fact.label }}</dt><dd>{{ formatFact(fact) }}</dd></div>
           </dl>
         </div>
         <div class="work-card__actions">
           <button type="button" class="secondary sc-btn sc-btn-ghost" @click="openItem(item)">打开详情</button>
           <button
-            v-for="action in item.actions"
-            :key="action.key"
+            v-if="item.actions[0]"
             type="button"
             class="sc-btn sc-btn-primary"
             :disabled="busy"
-            @click="beginAction(item, action)"
+            @click="beginAction(item, item.actions[0])"
           >
-            {{ action.label }}
+            {{ item.actions[0].label }}
           </button>
+          <button
+            v-for="action in item.actions.slice(1, 3)"
+            :key="action.key"
+            type="button"
+            class="secondary sc-btn sc-btn-secondary"
+            :disabled="busy"
+            @click="beginAction(item, action)"
+          >{{ action.label }}</button>
+          <details v-if="item.actions.length > 3" class="more-actions">
+            <summary>更多操作</summary>
+            <button
+              v-for="action in item.actions.slice(3)"
+              :key="action.key"
+              type="button"
+              class="secondary sc-btn sc-btn-ghost"
+              :disabled="busy"
+              @click="beginAction(item, action)"
+            >{{ action.label }}</button>
+          </details>
         </div>
       </article>
     </section>
@@ -60,13 +87,11 @@
     <dialog ref="dialogRef" class="intent-dialog" @close="restoreFocus">
       <form method="dialog" @submit.prevent>
         <h2>{{ pendingAction?.label || '确认操作' }}</h2>
-        <p v-if="pendingItem">
-          {{ pendingItem.record.label }} · {{ formatMoney(pendingItem) }}
-        </p>
+        <p v-if="pendingItem">{{ confirmationSummary(pendingItem) }}</p>
         <label v-if="pendingAction?.requires_reason">
-          拒绝原因
+          {{ pendingAction.reason_label || '操作原因' }}
           <textarea ref="reasonRef" v-model.trim="reason" rows="3" required aria-describedby="reason-help" />
-          <small id="reason-help">请说明拒绝原因，提交后会写入正式审批记录。</small>
+          <small id="reason-help">{{ pendingAction.reason_help || '请说明本次操作原因。' }}</small>
         </label>
         <p v-if="dialogError" class="feedback error" role="alert">{{ dialogError }}</p>
         <div class="dialog-actions">
@@ -81,15 +106,16 @@
 </template>
 
 <script setup lang="ts">
-import { computed, nextTick, ref } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
-import { executePaymentRequestAction } from '../../api/paymentRequest';
-import type { ProductMyWorkAction, ProductMyWorkItem, ProductMyWorkWorkspace } from '../../api/myWork';
+import { executeProductMyWorkAction, type ProductMyWorkAction, type ProductMyWorkFact, type ProductMyWorkItem, type ProductMyWorkMoney, type ProductMyWorkWorkspace } from '../../api/myWork';
 
 const props = defineProps<{ workspace: ProductMyWorkWorkspace }>();
 const emit = defineEmits<{ refresh: [] }>();
 const router = useRouter();
 const activeSection = ref('todo');
+const searchText = ref('');
+const sortMode = ref(props.workspace.presentation.default_sort);
 const busy = ref(false);
 const feedback = ref('');
 const feedbackError = ref(false);
@@ -103,20 +129,59 @@ let actionTrigger: HTMLElement | null = null;
 
 const visibleSections = computed(() => {
   const selected = props.workspace.sections.find((row) => row.key === activeSection.value);
-  return selected ? [selected] : props.workspace.sections;
+  const sections = selected ? [selected] : props.workspace.sections;
+  const query = searchText.value.toLocaleLowerCase('zh-CN');
+  return sections.map((section) => {
+    const items = section.items.filter((item) => {
+      if (!query) return true;
+      return String(item.search_text || '').toLocaleLowerCase('zh-CN').includes(query);
+    });
+    const option = props.workspace.presentation.sort_options.find((row) => row.key === sortMode.value);
+    items.sort((left, right) => {
+      const leftValue = left.sort_values?.[sortMode.value];
+      const rightValue = right.sort_values?.[sortMode.value];
+      if (option?.kind === 'number_desc') return Number(rightValue || 0) - Number(leftValue || 0);
+      if (option?.kind === 'number_asc') return Number(leftValue || 0) - Number(rightValue || 0);
+      if (option?.kind === 'text_asc') return String(leftValue || '').localeCompare(String(rightValue || ''));
+      return String(rightValue || '').localeCompare(String(leftValue || ''));
+    });
+    return { ...section, items };
+  });
 });
 
-function formatMoney(item: ProductMyWorkItem) {
-  if (item.amount.value === null || item.amount.value === undefined) return '未填写';
-  const digits = Number.isFinite(item.amount.digits) ? Number(item.amount.digits) : 2;
-  return `${item.amount.currency_symbol || ''}${Number(item.amount.value).toLocaleString('zh-CN', {
+watch(
+  () => props.workspace.query_scope,
+  () => {
+    searchText.value = '';
+    sortMode.value = props.workspace.presentation.default_sort;
+    const first = props.workspace.sections.find((section) => section.key === 'todo') || props.workspace.sections[0];
+    activeSection.value = first?.key || 'todo';
+  },
+  { deep: true },
+);
+
+function formatMoney(money?: ProductMyWorkMoney) {
+  if (!money || money.value === null || money.value === undefined) return '未填写';
+  const digits = Number.isFinite(money.digits) ? Number(money.digits) : 2;
+  return `${money.currency_symbol || ''}${Number(money.value).toLocaleString('zh-CN', {
     minimumFractionDigits: digits,
     maximumFractionDigits: digits,
-  })} ${item.amount.currency || ''}`.trim();
+  })} ${money.currency || ''}`.trim();
 }
 
 function formatDate(value?: string) {
   return value ? String(value).replace('T', ' ').slice(0, 16) : '未知';
+}
+
+function formatFact(fact: ProductMyWorkFact) {
+  if (fact.display_role === 'money') return formatMoney(fact.money);
+  if (fact.display_role === 'datetime') return formatDate(fact.value);
+  return fact.value || '未填写';
+}
+
+function confirmationSummary(item: ProductMyWorkItem) {
+  const highlighted = item.facts.find((fact) => fact.display_role === 'money');
+  return highlighted ? `${item.record.label} · ${formatFact(highlighted)}` : item.record.label;
 }
 
 function openItem(item: ProductMyWorkItem) {
@@ -150,19 +215,15 @@ async function confirmAction() {
   const action = pendingAction.value;
   if (!item || !action || busy.value) return;
   if (action.requires_reason && !reason.value) {
-    dialogError.value = '请填写拒绝原因。';
+    dialogError.value = `请填写${action.reason_label || '操作原因'}。`;
     reasonRef.value?.focus();
     return;
   }
   busy.value = true;
   dialogError.value = '';
   try {
-    const result = await executePaymentRequestAction({
-      paymentRequestId: item.target.record_id,
-      action: action.key,
-      reason: reason.value,
-    });
-    if (result.data.success === false) throw new Error(result.data.message || '操作失败');
+    const result = await executeProductMyWorkAction(action, reason.value);
+    if (result.success === false) throw new Error(result.message || '操作失败');
     feedback.value = `${item.record.label}已${action.label}，工作项已同步刷新。`;
     feedbackError.value = false;
     closeDialog();
@@ -182,6 +243,9 @@ async function confirmAction() {
 .product-work__header { display: flex; justify-content: space-between; gap: 16px; align-items: center; }
 .product-work__header p { margin: 0; color: var(--sc-app-text-secondary); }
 .product-work__counts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.product-work__filters { display: grid; grid-template-columns: minmax(240px, 1fr) minmax(180px, auto) auto; gap: 12px; align-items: end; padding: var(--sc-product-space-2); border: 1px solid var(--sc-app-border); border-radius: var(--sc-product-radius-panel); background: var(--sc-app-panel); }
+.product-work__filters label { display: grid; gap: 6px; color: var(--sc-app-text-secondary); font-size: var(--sc-product-text-sm); }
+.product-work__filters input, .product-work__filters select { min-height: var(--sc-product-control-height); padding: 0 12px; border: 1px solid var(--sc-app-border); border-radius: var(--sc-product-radius-control); background: var(--sc-app-panel); color: var(--sc-app-text-primary); }
 .count-card { display: flex; justify-content: space-between; align-items: center; min-height: 72px; padding: var(--sc-product-space-2); background: var(--sc-app-panel); color: inherit; border: 1px solid var(--sc-app-border); border-radius: var(--sc-product-radius-panel); }
 .count-card strong { font-size: 24px; }
 .count-card.active { border-color: var(--sc-semantic-surface-interactive); box-shadow: 0 0 0 3px var(--sc-app-focus-ring); }
@@ -199,6 +263,9 @@ async function confirmAction() {
 .work-card dt { color: var(--sc-app-text-secondary); font-size: var(--sc-product-text-sm); }
 .work-card dd { margin: 3px 0 0; overflow-wrap: anywhere; }
 .work-card__actions { display: flex; flex-wrap: wrap; gap: 8px; align-content: flex-start; }
+.more-actions { position: relative; }
+.more-actions summary { cursor: pointer; min-height: var(--sc-product-control-height); display: inline-flex; align-items: center; padding: 0 12px; border: 1px solid var(--sc-app-border); border-radius: var(--sc-product-radius-control); }
+.more-actions[open] { display: grid; gap: 8px; }
 .empty { padding: var(--sc-product-space-3); border: 1px dashed var(--sc-app-border); border-radius: var(--sc-product-radius-panel); color: var(--sc-app-text-secondary); }
 .feedback { margin: 0; padding: 10px 12px; border-radius: var(--sc-product-radius-control); background: var(--sc-app-success-bg); color: var(--sc-app-success-text); }
 .feedback.error { background: var(--sc-app-danger-bg); color: var(--sc-app-danger-text); }
@@ -214,6 +281,7 @@ async function confirmAction() {
   .product-work__header { gap: 10px; }
   .product-work__header .secondary { align-self: flex-start; }
   .product-work__counts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .product-work__filters { grid-template-columns: 1fr; padding: 12px; }
   .count-card { min-height: 62px; padding: 12px; }
   .count-card strong { font-size: 22px; }
   .work-card { gap: 14px; padding: 14px; }

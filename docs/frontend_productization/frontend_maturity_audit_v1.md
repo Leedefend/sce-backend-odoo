@@ -237,3 +237,19 @@ session、公司、项目、角色和 logout 共用单调递增 context epoch。
 Shell 信息层级收敛为产品身份、唯一公司/项目上下文、权威导航和页面内容；角色信息只在顶栏出现一次，桌面和移动端共用同一导航数据。首页固定为当前事项、业务概览、常用入口和最近访问四类通用区域，窄屏优先当前事项。`AppShell.vue` 从 2316 行降至 2141 行，`HomeView.vue` 从 3525 行降至 8 行，合计从 5841 行降至 2149 行，下降 63.2%；新增 Vue 文件均低于 600 行，没有把旧首页机械迁移到新的巨型组件。
 
 四角色、三尺寸共 12 个最终浏览器表面均通过：技术词命中 0、敏感越权命中 0、页面横向溢出 0、axe critical/serious 0、console/pageerror/非预期 HTTP 错误 0。权威导航保持 finance 42、project member 9、PM 14、owner 5，共 70/70；项目成员敏感 action/menu、FE-B02R 已移除入口及公司/角色/logout 隔离保持原有拒绝。证据位于 `artifacts/frontend-professional/fe-pro-01/`，其中 baseline/final 各 12 张截图，`comparison-report.json` 记录源码规模和前后质量指标。
+
+## FE-PRO-02 任务中心、列表模式与共享语义边界强化
+
+FE-PRO-01 遗留的两个权威契约缺口已由后端收口。正式角色码与展示名分离，`finance/project_member/pm/owner` 分别返回“财务主管/项目成员/项目经理/企业负责人”；`owner` 采用“企业负责人”是依据正式角色职责而非前端文案选择。四角色的 startup landing 均由 role surface/identity contract 返回 `workspace.home`，identity resolver 将平台安全首页视为合法 landing；登录组件没有角色分支或强制 `router.push('/')`。deep link、无权 deep link 和 logout 清理仍沿用既有安全策略。
+
+My Work 正式路径收敛为 `MyWorkView -> product_workspace -> MyWorkApprovalWorkspace`，不再执行 legacy `mail.activity/tier.review/workitem` 聚合，也不再存在 PageRenderer/legacy 参数切换、请求 JSON、intent 名、trace 或重放入口。任务数量、分区、记录身份、状态、展示事实、搜索语料、排序选项、可用动作、原因字段和快捷入口均来自行业包工作项契约；共享任务组件只渲染 `facts/presentation/sort_values/available actions`，不读取项目、合同、结算、付款、往来方或金额等行业字段。操作只执行契约声明的 intent，成功后权威重读；对话框保留焦点、原因校验、提交中禁用与重复触发防护。
+
+共享语义边界再次强化：门禁保护范围从 Shell/Home 扩展到 My Work、通用 ListPage、`components/product-list`、任务组件及 My Work API，共扫描 23 个共享文件。新增规则除角色/模型/scene/group/XML ID/行业 literal 外，还阻止任务卡和列表直接读取行业事实字段；业务包必须用带 `label/display_role/value` 的通用 facts 契约交付。该规则已同步写入 `native_view_reuse_frontend_spec_v1.md`，新增共享表面必须在同一变更中加入保护清单，禁止依靠事后人工复审。
+
+列表正式路径保持 `ActionView -> ListPage`，没有在 ActionView 复制第二套工具栏。`ProductListHeader` 统一标题、搜索、清除和 action slot；既有契约驱动筛选、selection action、分页、桌面表格和移动记录卡继续由同一 ListPage 消费。移动卡使用字段 schema 的 identity/status/type/display role 选取最多四项事实，不按模型或中文列名推断；选择框和页码输入补齐 accessible name。删除了按模型设置行样式以及按中文标签猜测状态/金额的共享前端逻辑。
+
+Finance 首页新增由工作项契约授权的“付款申请”快捷入口；共享首页只渲染契约 quick link，不知道其行业含义。T03 从首页进入列表、搜索、打开详情并返回的实际交互由 5 次降为 3 次；T01/T02 保持最小 1 次，T04 保持 5 次。T03/T04 返回后搜索、页码和滚动上下文按当前会话契约恢复。基线使用 `f1741c7bb0196931f63944cb85992bf418abc4f6` 的 detached 前端运行时重新实测，避免用失效 action 直达伪造基线。
+
+源码规模从 `AppShell=2140/MyWorkView=2543/ListPage=3257/ActionView=3684` 变为 `2140/87/3222/3684`；MyWorkView 与 ListPage 合计从 5800 行降至 3309 行，下降 42.9%，AppShell 与 ActionView 未增长，新增 Vue 文件均低于 600 行。正式 My Work 仅负责 context epoch/request identity 与状态容器，任务展示和交互进入独立组件，未把旧模板移动成新巨型文件。
+
+最终浏览器证据包含四角色、1440×900/1280×800/768×1024/390×844 共 16 个表面以及 T01–T04：landing `/`、正式中文角色标签、技术词命中、横向溢出、axe critical/serious、console/pageerror 和非预期 HTTP 错误均为 0。J02–J11、finance 42/project member 9/PM 14/owner 5 共 70/70、action 876/menu 606 拒绝、四类已移除入口、公司 A→B→A、Project A 隔离和 logout 用户隔离全部通过。机器证据由 `frontend_work_center_list_professional_audit.mjs` 生成至 `artifacts/frontend-professional/fe-pro-02/`；J07/J08 与 J09–J11 分别记录于 My Work 和 delivery hardening 报告。
