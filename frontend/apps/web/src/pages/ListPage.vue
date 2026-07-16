@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 <template>
   <section
-    class="page sc-page sc-product-workspace-stack"
+    class="page sc-page"
     data-product-page-mode="list"
   >
     <PageHeader
@@ -408,9 +408,36 @@
           </table>
         </article>
       </section>
+      <section v-if="!showGroupedRows" class="mobile-record-list" aria-label="移动端记录列表">
+        <button
+          v-for="(row, index) in records"
+          :key="`mobile-${String(row.id ?? index)}`"
+          class="mobile-record-card"
+          type="button"
+          @click="handleRow(row)"
+        >
+          <span class="mobile-record-card__head">
+            <strong>{{ semanticCell(mobileIdentityField, row[mobileIdentityField]).text }}</strong>
+            <span
+              v-if="mobileStatusField"
+              class="status-badge"
+              :class="`tone-${semanticCell(mobileStatusField, row[mobileStatusField]).tone}`"
+            >
+              {{ semanticCell(mobileStatusField, row[mobileStatusField]).text }}
+            </span>
+          </span>
+          <span class="mobile-record-card__facts">
+            <span v-for="col in mobileFactColumns" :key="`mobile-${String(row.id ?? index)}-${col}`" class="mobile-record-fact">
+              <small>{{ columnLabel(col) }}</small>
+              <b>{{ semanticCell(col, row[col]).text }}</b>
+            </span>
+          </span>
+          <span class="mobile-record-card__open">查看详情 <span aria-hidden="true">→</span></span>
+        </button>
+      </section>
       <table
         v-if="!showGroupedRows"
-        class="flat-table"
+        class="flat-table desktop-record-table"
         :class="{ 'has-selection-column': showSelectionColumn }"
         :style="tableWidthStyle"
       >
@@ -1685,6 +1712,24 @@ const displayedColumns = computed(() => {
   });
   return filtered.length ? filtered : source.slice(0, 1);
 });
+const mobileIdentityField = computed(() => {
+  const preferred = String(rowPrimary.value || '').trim();
+  if (preferred && displayedColumns.value.includes(preferred) && !isStatusLikeColumn(preferred)) return preferred;
+  return displayedColumns.value.find((field) => !isStatusLikeColumn(field) && !isNumericColumn(field))
+    || displayedColumns.value.find((field) => !isStatusLikeColumn(field))
+    || displayedColumns.value[0]
+    || '';
+});
+const mobileStatusField = computed(() => displayedColumns.value.find((field) => isStatusLikeColumn(field)) || '');
+const mobileFactColumns = computed(() => {
+  const identity = mobileIdentityField.value;
+  const status = mobileStatusField.value;
+  const candidates = displayedColumns.value.filter((field) => field !== identity && field !== status);
+  const relation = candidates.filter((field) => ['many2one', 'reference'].includes(String(columnOption(field)?.type || '')));
+  const amount = candidates.filter((field) => isNumericColumn(field));
+  const date = candidates.filter((field) => ['date', 'datetime'].includes(String(columnOption(field)?.type || '')));
+  return [...new Set([...relation.slice(0, 2), ...amount.slice(0, 1), ...date.slice(0, 1), ...candidates])].slice(0, 4);
+});
 const tableMinWidthPx = computed(() => {
   const fixedWidth = (showSelectionColumn.value ? 44 : 0)
     + (showRowNumberColumn.value ? 64 : 0)
@@ -2062,13 +2107,17 @@ onBeforeUnmount(() => {
   display: grid;
   gap: var(--sc-product-workspace-stack-gap);
   min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .list-toolbar {
+  box-sizing: border-box;
   position: relative;
   z-index: 35;
   display: grid;
-  grid-template-columns: minmax(180px, 240px) minmax(0, 1fr) max-content;
+  grid-template-columns: minmax(0, 1fr) max-content;
   align-items: center;
   gap: 10px;
   border: 1px solid var(--sc-app-border);
@@ -2080,8 +2129,7 @@ onBeforeUnmount(() => {
 }
 
 .list-title {
-  min-width: 0;
-  justify-self: start;
+  display: none;
 }
 
 .list-title h2 {
@@ -2202,6 +2250,10 @@ onBeforeUnmount(() => {
   box-shadow: 0 20px 40px var(--sc-app-shadow);
   overscroll-behavior: contain;
   touch-action: pan-x pan-y;
+}
+
+.mobile-record-list {
+  display: none;
 }
 
 .list-plain-search {
@@ -3188,3 +3240,4 @@ tbody tr:hover .cell-row-number {
 }
 
 </style>
+<style scoped src="./listPage/ListPageMobile.css"></style>

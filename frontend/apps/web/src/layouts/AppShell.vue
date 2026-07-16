@@ -2,7 +2,11 @@
   <div
     class="shell layout-shell"
     data-component="LayoutShell"
-    :class="{ 'shell--configuration': isConfigurationRoute, 'shell--sidebar-hidden': sidebarHidden }"
+    :class="{
+      'shell--configuration': isConfigurationRoute,
+      'shell--sidebar-hidden': !mobileViewport && sidebarHidden,
+      'shell--mobile-sidebar-open': mobileViewport && mobileSidebarOpen,
+    }"
     :data-layout-kind="activeLayout.kind"
     :data-sidebar-mode="activeLayout.sidebar"
     :data-header-mode="activeLayout.header"
@@ -10,13 +14,22 @@
     :data-page-identity-title="pageTitle"
   >
     <a class="skip-link" href="#main-content">跳至主要内容</a>
-    <aside v-if="!sidebarHidden" id="primary-sidebar" class="sidebar sidebar-nav" :class="sidebarClass" data-component="SidebarNav" aria-label="主导航">
+    <aside v-if="sidebarVisible" id="primary-sidebar" class="sidebar sidebar-nav" :class="sidebarClass" data-component="SidebarNav" aria-label="主导航">
       <div class="brand">
         <div class="logo">{{ shellLogoText }}</div>
         <div>
           <p class="title">{{ rootTitle }}</p>
           <p class="subtitle">{{ sidebarSubtitle }}</p>
         </div>
+        <button
+          v-if="mobileViewport"
+          class="mobile-sidebar-close"
+          type="button"
+          aria-label="关闭主导航"
+          @click="closeMobileSidebar"
+        >
+          ×
+        </button>
       </div>
 
       <p class="enterprise-line">当前企业：{{ enterpriseLabel }}</p>
@@ -159,6 +172,13 @@
         <button class="ghost sc-btn sc-btn-ghost" @click="logout">退出登录</button>
       </div>
     </aside>
+    <button
+      v-if="mobileViewport && mobileSidebarOpen"
+      class="mobile-sidebar-backdrop"
+      type="button"
+      aria-label="关闭导航遮罩"
+      @click="closeMobileSidebar"
+    />
 
     <section
       class="content"
@@ -178,6 +198,7 @@
                 class="crumb"
                 :class="{ active: index === displayBreadcrumb.length - 1 }"
                 :disabled="!item.to"
+                :aria-current="index === displayBreadcrumb.length - 1 ? 'page' : undefined"
                 @click="item.to && router.push(item.to)"
               >
                 {{ item.label }}
@@ -198,13 +219,22 @@
           </div>
           <GlobalMessagePanel />
           <button
+            v-if="showMobileWorkShortcut"
+            class="mobile-work-shortcut sc-btn sc-btn-sm"
+            type="button"
+            @click="router.push('/my-work')"
+          >
+            我的工作
+          </button>
+          <button
+            ref="sidebarToggleButton"
             class="sidebar-toggle sc-btn sc-btn-sm"
             type="button"
             aria-controls="primary-sidebar"
-            :aria-expanded="!sidebarHidden"
+            :aria-expanded="sidebarVisible"
             @click="toggleSidebar"
           >
-            {{ sidebarHidden ? '显示侧边栏' : '隐藏侧边栏' }}
+            {{ mobileViewport ? (mobileSidebarOpen ? '关闭菜单' : '菜单') : (sidebarHidden ? '显示侧边栏' : '隐藏侧边栏') }}
           </button>
           <button
             v-if="isConfigurationRoute"
@@ -288,7 +318,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, provide, ref, watch } from 'vue';
+import { computed, nextTick, onMounted, onUnmounted, provide, ref, watch } from 'vue';
 import { useRoute, useRouter, type LocationQueryRaw } from 'vue-router';
 import MenuTree from '../components/MenuTree.vue';
 import StatusPanel from '../components/StatusPanel.vue';
@@ -376,6 +406,9 @@ const route = useRoute();
 const router = useRouter();
 const query = ref('');
 const sidebarHidden = ref(false);
+const mobileViewport = ref(false);
+const mobileSidebarOpen = ref(false);
+const sidebarToggleButton = ref<HTMLButtonElement | null>(null);
 const projectMenuOpen = ref(false);
 const projectSearch = ref('');
 const projectSearching = ref(false);
@@ -385,6 +418,7 @@ const appCatalogLoading = ref(false);
 const appCatalogError = ref('');
 const openingAppId = ref('');
 let projectSearchTimer: ReturnType<typeof setTimeout> | null = null;
+let mobileMediaQuery: MediaQueryList | null = null;
 
 const menuTree = computed(() => session.menuTree);
 const roleSurface = computed(() => session.roleSurface);
@@ -549,7 +583,7 @@ const activeLayout = computed(() => {
   const scene = sceneKey ? getSceneByKey(sceneKey) : null;
   return resolveSceneLayout(scene);
 });
-const businessRouteUsesCompactTopbar = computed(() => route.name === 'action' || route.name === 'record');
+const businessRouteUsesCompactTopbar = computed(() => ['action', 'record', 'model-form'].includes(String(route.name || '')));
 const useMinimalTopbar = computed(() =>
   route.name === 'workbench'
   || route.name === 'home'
@@ -940,7 +974,33 @@ function persistSidebarHidden(hidden: boolean): void {
   }
 }
 
+const sidebarVisible = computed(() => mobileViewport.value ? mobileSidebarOpen.value : !sidebarHidden.value);
+const showMobileWorkShortcut = computed(() => mobileViewport.value && !['my-work', 'scene-my-work'].includes(String(route.name || '')));
+
+async function closeMobileSidebar(): Promise<void> {
+  const wasOpen = mobileSidebarOpen.value;
+  mobileSidebarOpen.value = false;
+  if (wasOpen) {
+    await nextTick();
+    sidebarToggleButton.value?.focus();
+  }
+}
+
+function syncMobileViewport(event?: MediaQueryListEvent): void {
+  const matches = event?.matches ?? mobileMediaQuery?.matches ?? false;
+  mobileViewport.value = matches;
+  if (!matches) mobileSidebarOpen.value = false;
+}
+
+function handleShellEscape(event: KeyboardEvent): void {
+  if (event.key === 'Escape' && mobileSidebarOpen.value) closeMobileSidebar();
+}
+
 function toggleSidebar(): void {
+  if (mobileViewport.value) {
+    mobileSidebarOpen.value = !mobileSidebarOpen.value;
+    return;
+  }
   sidebarHidden.value = !sidebarHidden.value;
   persistSidebarHidden(sidebarHidden.value);
 }
@@ -1182,6 +1242,10 @@ onMounted(() => {
   showExtractionStats.value = String(route.query.hud_stats || '').trim() === '1';
   void loadPublishedApps();
   if (typeof window === 'undefined') return;
+  mobileMediaQuery = window.matchMedia('(max-width: 960px)');
+  syncMobileViewport();
+  mobileMediaQuery.addEventListener('change', syncMobileViewport);
+  window.addEventListener('keydown', handleShellEscape);
   window.addEventListener(getTraceUpdateEventName(), handleTraceUpdate as (event: Event) => void);
   window.addEventListener('click', closeProjectMenu);
   handleTraceUpdate();
@@ -1196,6 +1260,9 @@ watch(
 
 onUnmounted(() => {
   if (typeof window === 'undefined') return;
+  mobileMediaQuery?.removeEventListener('change', syncMobileViewport);
+  mobileMediaQuery = null;
+  window.removeEventListener('keydown', handleShellEscape);
   window.removeEventListener(getTraceUpdateEventName(), handleTraceUpdate as (event: Event) => void);
   window.removeEventListener('click', closeProjectMenu);
   if (projectSearchTimer) {
@@ -1306,6 +1373,7 @@ function buildMenuSelectionQuery(): LocationQueryRaw {
 }
 
 function handleSelect(node: NavNode) {
+  closeMobileSidebar();
   if (!node.menu_id && node.id) {
     node.menu_id = node.id as number;
   }
@@ -1424,7 +1492,7 @@ async function logout() {
   height: 100vh;
   overflow: hidden;
   display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
+  grid-template-columns: 236px minmax(0, 1fr);
   background: var(--sc-app-bg);
   color: var(--ink);
   font-family: "Inter", "PingFang SC", "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
@@ -1439,7 +1507,7 @@ async function logout() {
 }
 
 .sidebar {
-  padding: 18px 16px 14px;
+  padding: 16px 14px 12px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -1461,6 +1529,11 @@ async function logout() {
   gap: 8px;
   align-items: center;
   padding: 1px 2px 6px;
+}
+
+.mobile-sidebar-close,
+.mobile-sidebar-backdrop {
+  display: none;
 }
 
 .enterprise-line {
@@ -1890,6 +1963,7 @@ async function logout() {
 }
 
 .content {
+  box-sizing: border-box;
   padding: 8px 14px 14px;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
@@ -2147,21 +2221,96 @@ async function logout() {
 @media (max-width: 960px) {
   .shell {
     grid-template-columns: 1fr;
-    height: auto;
+    height: 100dvh;
     min-height: 100vh;
-    overflow: visible;
+    overflow: hidden;
   }
   .sidebar {
-    grid-row: 2;
-    border-right: none;
-    border-top: 1px solid var(--sc-app-border);
-    height: auto;
-    position: static;
+    display: flex;
+    position: fixed;
+    z-index: 90;
+    inset: 0 auto 0 0;
+    width: min(320px, calc(100vw - 44px));
+    height: 100dvh;
+    box-sizing: border-box;
+    border-right: 1px solid var(--sc-app-border);
+    background: var(--sc-app-panel);
+    box-shadow: var(--sc-semantic-shadow-modal);
+    transform: translateX(-104%);
+    transition: transform 180ms ease;
+  }
+  .shell--mobile-sidebar-open .sidebar {
+    transform: translateX(0);
+  }
+  .mobile-sidebar-backdrop {
+    display: block;
+    position: fixed;
+    z-index: 80;
+    inset: 0;
+    border: 0;
+    background: var(--sc-app-overlay);
+  }
+  .mobile-sidebar-close {
+    display: grid;
+    place-items: center;
+    margin-left: auto;
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--sc-app-border);
+    border-radius: 8px;
+    background: var(--sc-app-panel);
+    color: var(--sc-app-text-primary);
+    font-size: 22px;
+    cursor: pointer;
   }
   .content {
-    height: auto;
-    overflow: visible;
+    height: 100dvh;
+    overflow: auto;
+    padding: 8px 12px 16px;
+  }
+  .topbar {
+    position: relative;
+    align-items: flex-start;
+  }
+  .topbar-main {
+    flex: 1 1 100%;
+  }
+  .topbar-title-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .topbar .headline {
+    font-size: 21px;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+  .breadcrumb .crumb:not(:nth-last-child(-n + 2)) {
+    display: none;
+  }
+  .breadcrumb .crumb.active {
+    display: none;
+  }
+  .topbar-actions {
+    justify-content: flex-start;
+  }
+  .topbar-context,
+  .theme-switch {
+    display: none;
+  }
+  .activity-tabs {
+    margin-inline: -2px;
   }
 
+}
+
+@media (max-width: 760px) {
+  .activity-tabs {
+    display: none;
+  }
+
+  .content--with-activity-tabs {
+    grid-template-rows: auto minmax(0, 1fr);
+  }
 }
 </style>

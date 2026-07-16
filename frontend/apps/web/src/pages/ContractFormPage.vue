@@ -696,7 +696,7 @@ import { applyFormRuntimeStatusEvent } from './contractForm/runtimeStateApplier'
 import { useContractDebugExportRuntime } from './contractForm/useContractDebugExportRuntime';
 import { useProjectContextChangeRuntime } from './contractForm/useProjectContextChangeRuntime';
 import { selectAuthoritativeBusinessActionRows } from './contractForm/authoritativeBusinessActionRows';
-import { useFormPageLifecycleRuntime } from './contractForm/useFormPageLifecycleRuntime';
+import { isFormPageRouteOwner, useFormPageLifecycleRuntime } from './contractForm/useFormPageLifecycleRuntime';
 import { useFormAuxiliaryWatchersRuntime } from './contractForm/useFormAuxiliaryWatchersRuntime';
 import {
   buildSaveRecordPayload,
@@ -1288,13 +1288,12 @@ const pageIdentityInput = computed(() => buildContractFormPageIdentity({
     recordMissing: recordMissing.value, renderError: Boolean(renderErrorMessage.value), status: status.value,
 }));
 const pageIdentity = usePublishedPageIdentity(pageIdentityInput, { routeKey: () => route.fullPath,
-  active: () => isComponentActive.value, onTitle: (title) => session.updateActiveActivityTitle(title) });
+  active: () => isComponentActive.value && isFormPageRouteOwner(route.name), onTitle: (title) => session.updateActiveActivityTitle(title) });
 const pageDisplayTitle = computed(() => pageIdentity.value.title);
 const pageDisplaySubtitle = computed(() => pageIdentity.value.subtitle || '');
 const financialWorkspace = computed(() => resolveFinancialWorkspaceContract(contract.value));
 
-const suppressPageHeaderTitle = computed(() => useNativeFormTree.value && !isProjectIntakeCreateMode.value && !financialWorkspace.value);
-
+const suppressPageHeaderTitle = computed(() => true);
 const intakeCreateButtonLabel = computed(() => {
   if (!isProjectIntakeCreateMode.value) return '创建项目';
   return busy.value && busyKind.value === 'save' ? '创建中…' : '创建项目';
@@ -5902,6 +5901,7 @@ useFormPageLifecycleRuntime({
   onFieldOrderWindowDragStop,
   onRelationDialogDocumentKeydown,
   projectContextChangedEvent: PROJECT_CONTEXT_CHANGED_EVENT,
+  routeIsOwned: () => isFormPageRouteOwner(route.name),
   reload: () => reload(),
   retainedRouteIdentity,
   status,
