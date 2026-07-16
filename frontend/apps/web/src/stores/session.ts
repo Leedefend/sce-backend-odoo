@@ -588,6 +588,7 @@ function normalizeProjectContext(raw: unknown): ProjectContextContract | null {
       selected_id_param: asText(selector.selected_id_param),
       limit: Number(selector.limit || 0) || undefined,
       label: asText(selector.label),
+      all_label: asText(selector.all_label),
       placeholder: asText(selector.placeholder),
     } : undefined,
     persistence: Object.keys(persistence).length ? {

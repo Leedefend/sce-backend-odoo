@@ -1,5 +1,5 @@
 <template>
-  <article class="block block-record-table" :class="tableClass">
+  <article class="block block-record-table">
     <header class="block-header">
       <h4>{{ block.title || '表格' }}</h4>
     </header>
@@ -8,7 +8,7 @@
       <table class="mini-table">
         <thead>
           <tr>
-            <th v-for="col in columns" :key="`col-${col}`">{{ columnLabel(col) }}</th>
+            <th v-for="(col, index) in columns" :key="`col-${col}`">{{ columnLabel(col, index) }}</th>
           </tr>
         </thead>
         <tbody>
@@ -54,18 +54,11 @@ const rows = computed<DataRow[]>(() => {
 
 const emptyMessage = computed(() => String(source.value.empty_message || '暂无数据'));
 
-const tableClass = computed(() => {
-  const zone = String(props.zoneKey || '');
-  if (zone.includes('contract')) return 'table-zone-contract';
-  if (zone.includes('finance')) return 'table-zone-finance';
-  return 'table-zone-default';
-});
-
-function columnLabel(col: string) {
+function columnLabel(col: string, index: number) {
   const labels = source.value.column_labels && typeof source.value.column_labels === 'object'
     ? source.value.column_labels as Record<string, string>
     : {};
-  return labels[col] || col;
+  return labels[col] || `字段 ${index + 1}`;
 }
 
 function stringify(value: unknown) {
@@ -86,13 +79,4 @@ function stringify(value: unknown) {
 .mini-table tbody tr:nth-child(2n) td { background: var(--sc-app-muted-bg); }
 .empty-text { margin: 6px 0 0; color: var(--sc-app-text-secondary); font-size: 13px; }
 
-.table-zone-contract {
-  border-color: var(--sc-app-info-border);
-  background: var(--sc-app-info-bg);
-}
-
-.table-zone-finance {
-  border-color: var(--sc-app-success-border);
-  background: var(--sc-app-success-bg);
-}
 </style>

@@ -20,7 +20,7 @@
         v-for="item in items"
         :key="item.id"
         class="alert-item"
-        :class="[`tone-${item.tone || 'danger'}`, { 'risk-emphasis': isRiskZone }]"
+        :class="`tone-${item.tone || 'danger'}`"
       >
         <p class="alert-title">
           <span>{{ item.title }}</span>
@@ -51,7 +51,6 @@ const emit = defineEmits<{
 }>();
 
 const actions = computed(() => (Array.isArray(props.block.actions) ? props.block.actions : []));
-const isRiskZone = computed(() => String(props.zoneKey || '').includes('risk'));
 const maxItems = computed(() => {
   const payload = (props.block.payload && typeof props.block.payload === 'object')
     ? props.block.payload as Record<string, unknown>
@@ -68,7 +67,7 @@ const items = computed(() => {
       title: String(row.title || `提醒 ${index + 1}`),
       description: String(row.description || row.message || ''),
       source: normalizeSource(row.source),
-      sourceLabel: String(row.source_label || row.sourceLabel || sourceLabel(row.source)),
+      sourceLabel: String(row.source_label || row.sourceLabel || '业务事项'),
       tone: String(row.tone || row.alert_level || 'danger').toLowerCase(),
       buttonText: String(row.action_label || row.button_label || '查看'),
       actionKey: String(row.action_key || ''),
@@ -94,18 +93,6 @@ function normalizeSource(value: unknown) {
   return String(value || 'business').toLowerCase().replace(/[^a-z0-9_-]/g, '_');
 }
 
-function sourceLabel(value: unknown) {
-  const raw = String(value || '').trim();
-  const mapping: Record<string, string> = {
-    business: '业务事项',
-    'payment.request': '收付款申请',
-    'project.budget': '预算管理',
-    'project.cost.ledger': '成本台账',
-    'sc.workflow.workitem': '流程待办',
-    capability_fallback: '系统补充',
-  };
-  return mapping[raw] || mapping[raw.toLowerCase()] || raw || '业务事项';
-}
 </script>
 
 <style scoped>

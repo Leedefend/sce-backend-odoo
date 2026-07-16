@@ -13,7 +13,7 @@
         <div v-if="item.kind === 'rate'" class="progress-track"><div class="progress-fill" :style="{ width: `${item.value}%` }" /></div>
       </article>
     </div>
-    <p v-if="!rows.length" class="empty-text">当前暂无可计算的进度数据，请先补齐任务计划。</p>
+    <p v-if="!rows.length" class="empty-text">当前暂无进度数据。</p>
   </article>
 </template>
 
@@ -40,28 +40,21 @@ function normalizeCount(raw: unknown) {
 }
 
 const rows = computed(() => {
-  if (Array.isArray(props.dataset)) {
-    return props.dataset.map((item, index) => {
-      const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
-      return {
-        key: String(row.key || `progress-${index + 1}`),
-        label: String(row.label || `进展 ${index + 1}`),
-        value: String(row.unit || '%') === '%' ? clampPercent(row.value) : normalizeCount(row.value),
-        unit: String(row.unit || '%'),
-        kind: String(row.unit || '%') === '%' ? 'rate' : 'count',
-      };
-    });
-  }
   const source = props.dataset && typeof props.dataset === 'object' ? props.dataset as Record<string, unknown> : {};
-  const bars = source.bars && typeof source.bars === 'object' ? source.bars as Record<string, unknown> : {};
-  const kpi = source.kpi && typeof source.kpi === 'object' ? source.kpi as Record<string, unknown> : {};
-  const rowsLocal = [
-    { key: 'contract', label: '履约率', value: clampPercent((bars as Record<string, unknown>).contract), unit: '%', kind: 'rate' },
-    { key: 'output', label: '指标完成率', value: clampPercent((bars as Record<string, unknown>).output), unit: '%', kind: 'rate' },
-    { key: 'cost_rate', label: '执行控制率', value: clampPercent((kpi as Record<string, unknown>).costRate || (kpi as Record<string, unknown>).cost_rate), unit: '%', kind: 'rate' },
-    { key: 'payment_rate', label: '完成率', value: clampPercent((kpi as Record<string, unknown>).paymentRate || (kpi as Record<string, unknown>).payment_rate), unit: '%', kind: 'rate' },
-  ];
-  return rowsLocal.filter((row) => row.value > 0);
+  const rawRows = Array.isArray(props.dataset)
+    ? props.dataset
+    : (Array.isArray(source.rows) ? source.rows : (Array.isArray(source.items) ? source.items : []));
+  return rawRows.map((item, index) => {
+    const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
+    const unit = String(row.unit || '%');
+    return {
+      key: String(row.key || `progress-${index + 1}`),
+      label: String(row.label || `进展 ${index + 1}`),
+      value: unit === '%' ? clampPercent(row.value) : normalizeCount(row.value),
+      unit,
+      kind: unit === '%' ? 'rate' : 'count',
+    };
+  });
 });
 
 const summaryText = computed(() => {

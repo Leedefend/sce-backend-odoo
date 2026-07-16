@@ -295,6 +295,7 @@ export interface ProjectContextContract {
     selected_id_param?: string;
     limit?: number;
     label?: string;
+    all_label?: string;
     placeholder?: string;
   };
   persistence?: {
