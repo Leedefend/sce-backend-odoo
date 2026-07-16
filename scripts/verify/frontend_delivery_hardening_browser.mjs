@@ -29,11 +29,10 @@ function listRoute(target) { return `/a/${target.action_id}?menu_id=${target.men
 function median(values) { const rows = [...values].sort((a, b) => a - b); return rows[Math.floor(rows.length / 2)] || 0; }
 function stats(values) { return { samples_ms: values, median_ms: median(values), slowest_ms: Math.max(...values, 0) }; }
 async function time(run) { const start = performance.now(); await run(); return Math.round(performance.now() - start); }
-
 function capture(page) {
   const state = {
     console: [], pageerror: [], unhandled: [], http: [], expectedHttp: [], expectedConsole: [],
-    expectForbidden: false, expectedConsoleAllowance: 0, expectedRequests: new WeakSet(),
+    expectForbidden: false, expectedConsoleAllowance: 0, pendingExpectedForbiddenResponses: 0,
   };
   page.on('request', (request) => {
     if (!state.expectForbidden || !request.url().includes('/api/v1/intent')) return;
@@ -42,7 +41,7 @@ function capture(page) {
       // The denied surface may encode the target model in either the v1 or v2
       // contract shape.  The request is authoritative here: this flag is only
       // enabled while opening the deliberately forbidden responsive surface.
-      if (body.intent === 'ui.contract.v2') state.expectedRequests.add(request);
+      if (body.intent === 'ui.contract.v2') state.pendingExpectedForbiddenResponses += 1;
     } catch {}
   });
   page.on('console', (message) => {
@@ -62,8 +61,9 @@ function capture(page) {
     if (
       response.status() === 403
       && intent === 'ui.contract.v2'
-      && (state.expectedRequests.has(response.request()) || state.expectForbidden)
+      && (state.pendingExpectedForbiddenResponses > 0 || state.expectForbidden)
     ) {
+      if (state.pendingExpectedForbiddenResponses > 0) state.pendingExpectedForbiddenResponses -= 1;
       state.expectedHttp.push(row);
       const consoleIndex = state.console.findIndex((line) => /Failed to load resource/i.test(line));
       if (consoleIndex >= 0) state.expectedConsole.push(...state.console.splice(consoleIndex, 1));

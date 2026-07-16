@@ -8,14 +8,8 @@ ROOT = Path(__file__).resolve().parents[2]
 
 REQUIRED = {
     "frontend/apps/web/src/views/HomeView.vue": [
-        "<PageRenderer",
-        'v-if="useUnifiedHomeRenderer"',
-        "const useUnifiedHomeRenderer = computed(() => {",
-        "route.query.legacy_home",
-        "const hasV1 =",
-        "const isDashboard =",
-        "return hasV1 && isDashboard && zones.length > 0;",
-        "<section v-else",
+        "<ContractRoleHome />",
+        "components/role-home/ContractRoleHome.vue",
     ],
     "frontend/apps/web/src/views/WorkbenchView.vue": [
         "<PageRenderer",
@@ -28,7 +22,7 @@ REQUIRED = {
     ],
     "frontend/apps/web/src/views/MyWorkView.vue": [
         "<PageRenderer",
-        'v-if="useUnifiedMyWorkRenderer"',
+        'v-else-if="useUnifiedMyWorkRenderer"',
         "const useUnifiedMyWorkRenderer = computed(() => {",
         "route.query.legacy_my_work",
         "const hasV1 =",

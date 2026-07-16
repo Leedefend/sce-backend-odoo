@@ -8,6 +8,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 SESSION_STORE = ROOT / "frontend/apps/web/src/stores/session.ts"
 HOME_VIEW = ROOT / "frontend/apps/web/src/views/HomeView.vue"
+HOME_RUNTIME = ROOT / "frontend/apps/web/src/composables/shared-surface/useContractRoleHome.ts"
 ACTION_VIEW = ROOT / "frontend/apps/web/src/views/ActionView.vue"
 RECORD_VIEW = ROOT / "frontend/apps/web/src/views/RecordView.vue"
 SCENE_VIEW = ROOT / "frontend/apps/web/src/views/SceneView.vue"
@@ -40,6 +41,7 @@ def _has_any(text: str, tokens: list[str]) -> bool:
 def main() -> int:
     session_text = _read(SESSION_STORE)
     home_text = _read(HOME_VIEW)
+    home_runtime_text = _read(HOME_RUNTIME)
     action_text = _read(ACTION_VIEW)
     record_text = _read(RECORD_VIEW)
     scene_text = _read(SCENE_VIEW)
@@ -58,6 +60,8 @@ def main() -> int:
         errors.append(f"missing file: {SESSION_STORE.relative_to(ROOT).as_posix()}")
     if not home_text:
         errors.append(f"missing file: {HOME_VIEW.relative_to(ROOT).as_posix()}")
+    if not home_runtime_text:
+        errors.append(f"missing file: {HOME_RUNTIME.relative_to(ROOT).as_posix()}")
     if not action_text:
         errors.append(f"missing file: {ACTION_VIEW.relative_to(ROOT).as_posix()}")
     if not record_text:
@@ -97,24 +101,12 @@ def main() -> int:
         "bundle:",
     ]
     required_home_tokens = [
-        "const productFacts = computed(() => session.productFacts);",
-        "const workspaceLayout = computed(() => (",
-        "homeLayoutText(",
-        "isHomeSectionEnabled(",
-        "isHomeSectionTag(",
-        "isHomeSectionOpenDefault(",
-        "normalizeEntryWithCapabilityMeta(",
-        "capabilityStateLabel(",
-        "const workspaceHome = computed(() => (session.workspaceHome || {}) as Record<string, unknown>);",
-        "capabilityStateFilter",
-        "capabilityStateCounts",
-        "capability_state_filter",
-        "const bucketKey = entry.groupKey || entry.sceneKey;",
-        "openBundleDashboard(",
-        "licenseLevelLabel",
-        "bundleNameLabel",
-        "capabilityGroupCards",
-        "<section v-if=\"isHomeSectionEnabled('group_overview') && isHomeSectionTag('group_overview', 'section') && capabilityGroupCards.length\" class=\"group-overview\"",
+        "const pageContract = usePageContract('home');",
+        "fetchMyWorkSummary(",
+        "result.product_workspace",
+        "topNodes(session.menuTree)",
+        "session.activityPages",
+        "isCurrentContextEpoch(requestEpoch)",
     ]
     required_shell_tokens = [
         "buildRuntimeNavigationRegistry(",
@@ -218,7 +210,7 @@ def main() -> int:
     ]
 
     ok_session, missing_session = _has_all(session_text, required_session_tokens)
-    ok_home, missing_home = _has_all(home_text, required_home_tokens)
+    ok_home, missing_home = _has_all(home_runtime_text, required_home_tokens)
     ok_shell, missing_shell = _has_all(shell_text, required_shell_tokens)
     ok_action, missing_action = _has_all(action_text, required_action_tokens)
     ok_record, missing_record = _has_all(record_text, required_record_tokens)
@@ -234,28 +226,7 @@ def main() -> int:
     if not ok_session:
         errors.extend([f"session.ts missing token: {token}" for token in missing_session])
     if not ok_home:
-        errors.extend([f"HomeView.vue missing token: {token}" for token in missing_home])
-    if not _has_any(home_text, [
-        "const capabilityGroups = computed(() => session.capabilityGroups);",
-        "session.workspaceCapabilityGroupRows",
-    ]):
-        errors.append("HomeView.vue missing product capability group consumption")
-    if not _has_any(home_text, [
-        "const capabilityCatalog = session.capabilityCatalog || {};",
-        "normalizeEntryWithCapabilityMeta(",
-    ]):
-        errors.append("HomeView.vue missing capability catalog consumption")
-    if not _has_any(home_text, [
-        "const capabilityGroupScoreMap = computed(() => {",
-        "const capabilityGroupCards = computed(() => {",
-    ]):
-        errors.append("HomeView.vue missing capability group score/card projection")
-    if not _has_any(home_text, [
-        "group.state_counts?.READY",
-        "workspaceCapabilityGroupRows",
-        "stateCounts.value.READY",
-    ]):
-        errors.append("HomeView.vue missing READY state count projection")
+        errors.extend([f"useContractRoleHome.ts missing token: {token}" for token in missing_home])
     if not ok_shell:
         errors.extend([f"AppShell.vue missing token: {token}" for token in missing_shell])
     if not ok_action:

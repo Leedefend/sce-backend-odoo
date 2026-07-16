@@ -1,50 +1,27 @@
 #!/usr/bin/env python3
-from __future__ import annotations
-
 from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
-HOME_VIEW = ROOT / "frontend/apps/web/src/views/HomeView.vue"
-
-REQUIRED_TOKENS = [
-    "<PageRenderer",
-    "v-if=\"useUnifiedHomeRenderer\"",
-    ":contract=\"strictHomeOrchestrationContract\"",
-    ":datasets=\"homeOrchestrationDatasets\"",
-    "@action=\"handleHomeBlockAction\"",
-    "const homeOrchestrationDatasets = computed<Record<string, unknown>>(() => {",
-    "provider === 'workspace.metrics.summary'",
-    "provider === 'workspace.todo.today'",
-    "provider === 'workspace.risk.alerts'",
-    "provider === 'workspace.scene.groups'",
-    "provider === 'workspace.capability.groups'",
-]
-
-
-def _fail(errors: list[str]) -> int:
-    print("[frontend_portal_dashboard_block_migration_guard] FAIL")
-    for err in errors:
-        print(f"- {err}")
-    return 1
+HOME = ROOT / "frontend/apps/web/src/views/HomeView.vue"
+SURFACE = ROOT / "frontend/apps/web/src/components/role-home/ContractRoleHome.vue"
+RUNTIME = ROOT / "frontend/apps/web/src/composables/shared-surface/useContractRoleHome.ts"
 
 
 def main() -> int:
-    if not HOME_VIEW.is_file():
-        return _fail([f"missing file: {HOME_VIEW.relative_to(ROOT).as_posix()}"])
-
-    text = HOME_VIEW.read_text(encoding="utf-8", errors="ignore")
-    errors: list[str] = []
-    for token in REQUIRED_TOKENS:
-        if token not in text:
-            errors.append(f"HomeView missing token: {token}")
-
-    if "<section v-else class=\"capability-home\"" not in text:
-        errors.append("HomeView must keep legacy fallback section with v-else")
-
+    combined = "\n".join(
+        path.read_text(encoding="utf-8", errors="ignore") if path.is_file() else ""
+        for path in (HOME, SURFACE, RUNTIME)
+    )
+    required = ["ContractRoleHome", "fetchMyWorkSummary", "quickLinks", "recentItems"]
+    forbidden = ["strictHomeOrchestrationContract", "homeOrchestrationDatasets", "legacy_home", "workspaceHome"]
+    errors = [f"missing token: {token}" for token in required if token not in combined]
+    errors += [f"legacy token remains: {token}" for token in forbidden if token in combined]
     if errors:
-        return _fail(errors)
-
+        print("[frontend_portal_dashboard_block_migration_guard] FAIL")
+        for error in errors:
+            print(f"- {error}")
+        return 1
     print("[frontend_portal_dashboard_block_migration_guard] PASS")
     return 0
 

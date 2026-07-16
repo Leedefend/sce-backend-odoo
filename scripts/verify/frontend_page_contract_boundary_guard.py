@@ -106,6 +106,7 @@ def main() -> int:
     ]
 
     page_contract_exempt_views = {
+        "HomeView.vue",
         "ProjectManagementDashboardView.vue",
         "ActionViewShell.vue",
         "ProjectsIntakeView.vue",
@@ -135,22 +136,8 @@ def main() -> int:
             "pageSectionEnabled('form', true)",
         ],
         "HomeView.vue": [
-            "session.workspaceHome",
-            "workspaceHome.value.layout",
-            "homeLayoutText(",
-            "isHomeSectionEnabled(",
-            "isHomeSectionTag(",
-            "isHomeSectionOpenDefault(",
-            "homeSectionOrderMap",
-            "homeSectionStyle('hero')",
-            "homeSectionStyle('metrics')",
-            "homeSectionStyle('scene_groups')",
-            "isHomeSectionTag('hero', 'header')",
-            "isHomeSectionTag('ops', 'details')",
-            "isHomeSectionOpenDefault('ops')",
-            "isHomeSectionOpenDefault('advice')",
-            "Array.isArray(workspaceHome.value.metrics)",
-            "Array.isArray(workspaceHome.value.today_actions)",
+            "import ContractRoleHome from '../components/role-home/ContractRoleHome.vue';",
+            "<ContractRoleHome />",
         ],
         "MenuView.vue": [
             "resolveMenuAction(",

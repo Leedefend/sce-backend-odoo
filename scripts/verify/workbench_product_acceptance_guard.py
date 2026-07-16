@@ -157,15 +157,10 @@ def _validate_frontend(errors: list[str]) -> None:
     for term in DIAGNOSTIC_TERMS:
         if term in text:
             errors.append(f"HomeView user surface must not contain diagnostic term: {term}")
-    required = [
-        "diagnosticsSummaryText",
-        "activeDiagnosticChips",
-        "diagnostic_summary",
-        "diagnostic_filter_chips",
-    ]
+    required = ["<ContractRoleHome />", "components/role-home/ContractRoleHome.vue"]
     for token in required:
         if token not in text:
-            errors.append(f"HomeView missing diagnostics channel token: {token}")
+            errors.append(f"HomeView missing product surface token: {token}")
 
 
 def main() -> int:
