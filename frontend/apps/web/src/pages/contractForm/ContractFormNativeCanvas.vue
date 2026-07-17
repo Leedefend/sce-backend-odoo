@@ -5,6 +5,7 @@
   <section
     v-if="useNativeFormTree"
     class="contract-form-canvas-shell"
+    data-form-canvas
     :class="{ 'contract-form-designer-canvas': designerMode }"
     aria-label="表单配置画布"
   >

@@ -39,7 +39,7 @@
 .router-host {
   min-width: 0;
   width: 100%;
-  overflow-x: clip;
+  overflow-x: visible;
 }
 
 .sc-page-frame,
@@ -50,13 +50,17 @@
   margin-inline: auto;
   padding: var(--sc-page-padding);
   color: var(--sc-app-text-primary);
+  max-width: min(100%, var(--sc-workspace-frame-max));
 }
 
-.sc-page-frame--data { max-width: min(100%, var(--sc-page-width-data)); }
-.sc-page-frame--standard,
-.sc-product-page-frame { max-width: min(100%, var(--sc-page-width-standard)); }
-.sc-page-frame--focused { max-width: min(100%, var(--sc-page-width-focused)); }
-.sc-page-frame--fluid { max-width: none; }
+.sc-content-layout--data-grid,
+.sc-content-layout--record-grid,
+.sc-content-layout--form-grid,
+.sc-content-layout--focused-form,
+.sc-content-layout--reading { --sc-content-layout-inline-size: 100%; }
+
+.sc-content-layout--focused-form { --sc-form-field-content-max: var(--sc-content-focused-form-max); }
+.sc-content-layout--reading { --sc-reading-content-max: var(--sc-content-reading-max); }
 
 .topbar-context {
   display: inline-flex;

@@ -743,7 +743,7 @@ tbody td {
 }
 
 .column-name-text {
-  max-width: 220px;
+  min-width: 220px;
 }
 
 .column-long-text > *,
@@ -762,6 +762,38 @@ tbody td {
 .column-numeric {
   min-width: 92px;
   text-align: right;
+}
+
+.column-layout-identity {
+  min-width: 220px;
+  width: auto;
+  max-width: 420px;
+}
+
+.column-layout-description {
+  min-width: 180px;
+  width: auto;
+  max-width: 420px;
+}
+
+.column-layout-status {
+  width: 1%;
+  min-width: 110px;
+}
+
+.column-layout-money,
+.column-layout-date {
+  width: 1%;
+  min-width: 120px;
+  white-space: nowrap;
+}
+
+.column-layout-money { text-align: right; }
+
+.column-layout-actions {
+  width: 1%;
+  min-width: 96px;
+  white-space: nowrap;
 }
 
 thead {

@@ -16,8 +16,8 @@ Generated from `test_inventory.csv`.
 
 | Layer | Count |
 | --- | ---: |
-| governance | 365 |
-| contract | 311 |
+| governance | 366 |
+| contract | 310 |
 | data_migration | 217 |
 | unit | 156 |
 | odoo_integration | 56 |
@@ -156,8 +156,8 @@ Generated from `test_inventory.csv`.
 
 | Owner | Count |
 | --- | ---: |
-| architecture owner | 365 |
-| platform owner | 311 |
+| architecture owner | 366 |
+| platform owner | 310 |
 | data owner | 217 |
 | test owner | 157 |
 | backend owner | 56 |

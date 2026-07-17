@@ -104,6 +104,7 @@
 
       <section
         class="table sc-product-main-surface"
+        data-workspace-primary-content
         role="region"
         aria-label="业务列表，可横向滚动"
         tabindex="0"
@@ -223,12 +224,12 @@
             v-if="!isGroupCollapsed(group.key)"
             class="group-table"
             :class="{ 'has-selection-column': showSelectionColumn }"
-            :style="tableWidthStyle"
+            :table-style="tableWidthStyle"
           >
             <colgroup>
               <col v-if="showSelectionColumn" class="col-select" />
               <col v-if="showRowNumberColumn" class="col-row-number" />
-              <col v-for="col in displayedColumns" :key="`group-col-width-${group.key}-${col}`" :style="columnWidthStyle(col)" />
+              <col v-for="col in displayedColumns" :key="`group-col-width-${group.key}-${col}`" :style="columnWidthStyle(col)" :class="columnDensityClass(col)" />
             </colgroup>
             <thead>
               <tr>
@@ -422,12 +423,12 @@
         v-if="!showGroupedRows"
         class="flat-table desktop-record-table"
         :class="{ 'has-selection-column': showSelectionColumn }"
-        :style="tableWidthStyle"
+        :table-style="tableWidthStyle"
       >
           <colgroup>
             <col v-if="showSelectionColumn" class="col-select" />
           <col v-if="showRowNumberColumn" class="col-row-number" />
-            <col v-for="col in displayedColumns" :key="`col-width-${col}`" :style="columnWidthStyle(col)" />
+            <col v-for="col in displayedColumns" :key="`col-width-${col}`" :style="columnWidthStyle(col)" :class="columnDensityClass(col)" />
             <col v-if="columnChoices.length" class="col-column-picker" />
           </colgroup>
         <thead>
@@ -1722,9 +1723,12 @@ const tableMinWidthPx = computed(() => {
   const dynamicWidth = displayedColumns.value.reduce((total, field) => {
     const explicit = effectiveColumnWidth(field);
     if (explicit) return total + explicit;
-    if (isNameLikeColumn(field)) return total + 220;
-    if (isLongTextColumn(field)) return total + 180;
-    if (isNumericColumn(field)) return total + 120;
+    const layoutKind = columnLayoutRole(field);
+    if (layoutKind === 'identity') return total + 220;
+    if (layoutKind === 'description') return total + 180;
+    if (layoutKind === 'status') return total + 110;
+    if (layoutKind === 'money' || layoutKind === 'date') return total + 120;
+    if (layoutKind === 'actions') return total + 96;
     return total + 128;
   }, 0);
   return Math.max(0, fixedWidth + dynamicWidth);
@@ -1845,32 +1849,34 @@ function columnWidthStyle(field: string) {
 }
 
 function isLongTextColumn(field: string) {
-  if (isNumericColumn(field)) return false;
-  const name = String(field || '').toLowerCase();
-  const label = columnLabel(field);
-  const type = String(columnOption(field)?.type || '').trim();
-  return [
-    'name',
-    'display_name',
-    'title',
-    'subject',
-    'description',
-  ].includes(name)
-    || ['char', 'text', 'html', 'many2one', 'reference'].includes(type)
-    || /名称|标题|摘要|说明|备注|开户行|账号|来源/.test(label);
+  const layoutKind = columnLayoutRole(field);
+  return layoutKind === 'identity' || layoutKind === 'description';
 }
 
 function isNameLikeColumn(field: string) {
-  const name = String(field || '').toLowerCase();
-  const label = columnLabel(field);
-  return ['name', 'display_name', 'title', 'subject'].includes(name) || /名称|标题/.test(label);
+  return columnLayoutRole(field) === 'identity';
+}
+
+function columnLayoutRole(field: string) {
+  const option = columnOption(field);
+  const cellRole = String(option?.cellRole || '').trim().toLowerCase();
+  const type = String(option?.type || '').trim().toLowerCase();
+  if (field === rowPrimary.value || cellRole === 'identity') return 'identity';
+  if (cellRole === 'status') return 'status';
+  if (['money', 'monetary', 'metric'].includes(cellRole) || ['integer', 'float', 'monetary'].includes(type)) return 'money';
+  if (['date', 'datetime'].includes(cellRole) || ['date', 'datetime'].includes(type)) return 'date';
+  if (['actions', 'action', 'favorite'].includes(cellRole)) return 'actions';
+  if (['description', 'long-text', 'reading'].includes(cellRole) || ['text', 'html'].includes(type)) return 'description';
+  return 'text';
 }
 
 function columnDensityClass(field: string) {
+  const layoutRole = columnLayoutRole(field);
   return {
     'column-long-text': isLongTextColumn(field),
     'column-name-text': isNameLikeColumn(field),
     'column-numeric': isNumericColumn(field),
+    [`column-layout-${layoutRole}`]: true,
   };
 }
 

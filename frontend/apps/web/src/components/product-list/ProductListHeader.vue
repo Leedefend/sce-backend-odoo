@@ -1,5 +1,5 @@
 <template>
-  <header class="product-list-header sc-product-page-toolbar">
+  <header class="product-list-header sc-product-page-toolbar" data-workspace-page-header>
     <div class="product-list-header__identity">
       <h2>{{ title }}</h2>
       <p v-if="subtitle">{{ subtitle }}</p>
