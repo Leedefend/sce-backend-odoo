@@ -824,11 +824,13 @@ function emitFieldSelect(field: FormSectionFieldSchema, event?: Event) {
   grid-column: span 1;
 }
 
-.field--wide {
+.field--wide,
+.field--full {
   grid-column: 1 / -1;
 }
 
-.field--full {
+.template-form-section-grid--columns-1 > .field--wide,
+.template-form-section-grid--columns-1 > .field--full {
   grid-column: 1 / -1;
 }
 
@@ -843,7 +845,8 @@ function emitFieldSelect(field: FormSectionFieldSchema, event?: Event) {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .field--wide {
+  .template-form-section-grid--columns-2 > .field--wide,
+  .template-form-section-grid--columns-3 > .field--wide {
     grid-column: span 2;
   }
 }
