@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Guard the full-width business form canvas and contract-driven responsive grid."""
 
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -37,9 +38,15 @@ for required in (
     "field--normal",
     "field--wide",
     "field--full",
+    ".template-form-section-grid--columns-1 > .field--wide",
+    ".template-form-section-grid--columns-2 > .field--wide",
+    ".template-form-section-grid--columns-3 > .field--wide",
 ):
     if required not in section:
         fail(f"responsive field grid contract missing: {required}")
+wide_container_rule = re.search(r"@container \(min-width: 680px\) \{(?P<body>.*?)\n\}", section, re.DOTALL)
+if not wide_container_rule or re.search(r"^\s*\.field--wide\s*\{", wide_container_rule.group("body"), re.MULTILINE):
+    fail("wide container rule is not scoped to declared two/three-column grids")
 for forbidden in ("fieldName", "description", "remark", "address", "location"):
     if forbidden in mapper:
         fail(f"field span guesses from business name/label: {forbidden}")

@@ -36,7 +36,7 @@ verify.frontend.typecheck.strict: guard.prod.forbid
 verify.frontend.lint.src: guard.prod.forbid
 	@scripts/dev/pnpm_exec.sh -C frontend/apps/web lint:src
 
-.PHONY: verify.frontend.page_width_contract.guard verify.frontend.workspace_content_alignment.guard verify.frontend.workspace_layout_contract.unit verify.frontend.form_canvas_layout.guard verify.frontend.form_canvas_layout.unit
+.PHONY: verify.frontend.page_width_contract.guard verify.frontend.workspace_content_alignment.guard verify.frontend.workspace_layout_contract.unit verify.frontend.form_canvas_layout.guard verify.frontend.form_canvas_layout.unit verify.frontend.form_grid_span.browser
 verify.frontend.workspace_layout_contract.unit: guard.prod.forbid
 	@node --experimental-strip-types scripts/verify/frontend_workspace_layout_contract_compatibility_test.ts
 
@@ -51,6 +51,9 @@ verify.frontend.form_canvas_layout.unit: guard.prod.forbid
 
 verify.frontend.form_canvas_layout.guard: guard.prod.forbid verify.frontend.form_canvas_layout.unit
 	@python3 scripts/verify/frontend_form_canvas_wide_grid_guard.py
+
+verify.frontend.form_grid_span.browser: guard.prod.forbid
+	@FE_PRO_04WR3_PHASE=$${FE_PRO_04WR3_PHASE:-final} GIT_SHA=$$(git rev-parse HEAD) FORM_SECTION_BLOB=$$(git hash-object frontend/apps/web/src/components/template/FormSection.vue) node scripts/verify/frontend_form_grid_span_browser.mjs
 
 .PHONY: verify.frontend.page_identity
 verify.frontend.page_identity: guard.prod.forbid

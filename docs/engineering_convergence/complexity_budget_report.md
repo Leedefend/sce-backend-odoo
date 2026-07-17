@@ -4,7 +4,7 @@ Generated from repository source files. This report is informational during the 
 
 ## Summary
 
-- Scanned files: `4081`
+- Scanned files: `4082`
 - Files requiring split plan: `38`
 - Files above warning threshold: `64`
 
@@ -80,7 +80,7 @@ Generated from repository source files. This report is informational during the 
 | 1252 | Python source | `addons/smart_construction_core/models/core/settlement_order.py` |
 | 1251 | Python source | `addons/smart_construction_core/models/core/expense_claim.py` |
 | 1226 | TypeScript source | `frontend/apps/web/src/pages/contractForm/nativeLayoutUtils.ts` |
-| 1187 | Vue source | `frontend/apps/web/src/components/template/FormSection.vue` |
+| 1190 | Vue source | `frontend/apps/web/src/components/template/FormSection.vue` |
 | 1153 | Python source | `addons/smart_construction_custom/models/user_formal_visible_fields.py` |
 | 1145 | Python source | `scripts/verify/visible_data_usability_matrix_probe.py` |
 | 1135 | Vue source | `frontend/apps/web/src/components/template/NativeFormTreeRenderer.vue` |
@@ -185,7 +185,7 @@ Generated from repository source files. This report is informational during the 
 | 1252 | warning | Python source | `addons/smart_construction_core/models/core/settlement_order.py` |
 | 1251 | warning | Python source | `addons/smart_construction_core/models/core/expense_claim.py` |
 | 1226 | warning | TypeScript source | `frontend/apps/web/src/pages/contractForm/nativeLayoutUtils.ts` |
-| 1187 | warning | Vue source | `frontend/apps/web/src/components/template/FormSection.vue` |
+| 1190 | warning | Vue source | `frontend/apps/web/src/components/template/FormSection.vue` |
 | 1153 | warning | Python source | `addons/smart_construction_custom/models/user_formal_visible_fields.py` |
 | 1145 | warning | Python source | `scripts/verify/visible_data_usability_matrix_probe.py` |
 | 1135 | warning | Vue source | `frontend/apps/web/src/components/template/NativeFormTreeRenderer.vue` |

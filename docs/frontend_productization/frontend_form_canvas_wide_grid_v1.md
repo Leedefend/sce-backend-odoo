@@ -49,3 +49,26 @@ FE-PRO-04WR2 只修复统一 Workspace Frame 内部的表单画布。外层 `bus
 - required 金额、409 恢复、dirty guard、关系搜索、x2many、公司 A→B→A 和 logout/login 隔离：PASS。
 - lint、strict typecheck、production build、`make ci.local.quick`、单次完整 `make ci`：PASS。
 - `ListPage.vue` / `ListPage.css` 相对本分支基线：零生产 diff。
+
+## WR3：单列 wide 隐式轨道修复
+
+WR2 最初在 `min-width: 680px` 容器查询中使用未限定父 grid 的 `.field--wide { grid-column: span 2; }`。当正式分组声明 `columns=1` 时，浏览器为 wide 字段创建第二条0px隐式轨道。WR3把该规则限定为 `columns-2/columns-3 > field--wide`，并显式保护columns-1的wide/full始终使用 `1 / -1`。生产CSS改动为新增6行、删除3行，断点、Workspace Frame和业务页面均未改变。
+
+1920宽度下的12项正式矩阵：
+
+| columns | span | computed tracks | computed column | implicit tracks | overflow |
+| ---: | --- | ---: | --- | ---: | ---: |
+| 1 | compact | 1 | span 1 | 0 | 0 |
+| 1 | normal | 1 | span 1 | 0 | 0 |
+| 1 | wide | 1 | 1 / -1 | 0 | 0 |
+| 1 | full | 1 | 1 / -1 | 0 | 0 |
+| 2 | compact | 2 | span 1 | 0 | 0 |
+| 2 | normal | 2 | span 1 | 0 | 0 |
+| 2 | wide | 2 | span 2 | 0 | 0 |
+| 2 | full | 2 | 1 / -1 | 0 | 0 |
+| 3 | compact | 3 | span 1 | 0 | 0 |
+| 3 | normal | 3 | span 1 | 0 | 0 |
+| 3 | wide | 3 | span 2 | 0 | 0 |
+| 3 | full | 3 | 1 / -1 | 0 | 0 |
+
+浏览器计算同时覆盖639、680、1239、1240、1920五个容器宽度，共60项，失败0。基线在680及以上的四个columns=1+wide场景均检测到1条隐式轨道；修复后均为0。测试fixture生成columns=1 wide/full、columns=2 wide、columns=3 wide及390单列截图，不进入生产模块或数据库。
