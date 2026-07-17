@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars, no-extra-boolean-cast, vue/attributes-order */
 <template>
   <LayoutShell
-    :flow="isProjectIntakeCreateMode"
+    :width-mode="recordPageWidthMode"
     :class="['sc-page', { 'contract-form-native-shell': useNativeFormTree }]"
     data-product-page-mode="form"
     :data-v2-shadow-store="String(v2ShadowStoreReady)" :data-v2-shadow-widgets="String(v2ShadowWidgetCount)"
@@ -247,6 +247,7 @@ import ProductFormErrorSummary from '../components/product-record/ProductFormErr
 import IntentConfirmationDialog from '../components/business/IntentConfirmationDialog.vue';
 import AttachmentViewer from '../components/attachment/AttachmentViewer.vue';
 import LayoutShell from '../components/template/LayoutShell.vue';
+import { contractPageWidthMode, resolvePageWidthMode } from '../components/design-system/pageWidth';
 import { type NativeFormLayoutNode } from '../components/template/NativeFormTreeRenderer.vue';
 import SceneBlocksRenderer from '../components/scene/SceneBlocksRenderer.vue';
 import PageFooterTemplate from '../components/template/PageFooter.vue';
@@ -622,10 +623,7 @@ import { buildContractFormActions } from './contractForm/contractActionPresentat
 import { focusProductFormValidationError } from './contractForm/formValidationFocus';
 import { groupContractHeaderActions } from './contractForm/contractHeaderActionPresentation';
 import { resolveContractFormFieldLabels } from './contractForm/formFieldLabels';
-import {
-  buildSaveRecordPayload,
-  validateBeforeSaveRecord,
-} from './contractForm/saveRecordHelpers';
+import { buildSaveRecordPayload, validateBeforeSaveRecord } from './contractForm/saveRecordHelpers';
 import { useCreatedRecordNavigationRuntime } from './contractForm/useCreatedRecordNavigationRuntime';
 import { useRecordCollaborationPresentation } from './contractForm/useRecordCollaborationPresentation';
 import { useRecordContractSemantics } from './contractForm/useRecordContractSemantics';
@@ -925,6 +923,7 @@ const recordId = computed(() => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 });
 const recordIdDisplay = computed(() => (recordId.value ? String(recordId.value) : 'new'));
+const recordPageWidthMode = computed(() => resolvePageWidthMode({ contractWidthMode: contractPageWidthMode(contract.value), pageKind: recordId.value ? (route.name === 'model-form' ? 'edit' : 'detail') : 'create' }));
 const showHud = computed(() => isHudEnabled(route));
 const showSceneBlocksDebug = computed(() => isSceneBlocksDebugEnabled(route));
 const requestedSurface = computed<'user' | 'native' | 'hud'>(() => {

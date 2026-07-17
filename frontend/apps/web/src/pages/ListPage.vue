@@ -1,5 +1,5 @@
 <template>
-  <ScPage
+  <section
     class="page sc-page"
     data-product-page-mode="list"
   >
@@ -711,7 +711,7 @@
 
     </template>
     <AttachmentViewer ref="attachmentViewerRef" />
-  </ScPage>
+  </section>
 </template>
 
 <script setup lang="ts">
@@ -724,7 +724,6 @@ import ScDataTable from '../components/design-system/ScDataTable.vue';
 import ScEmptyState from '../components/design-system/ScEmptyState.vue';
 import ScIcon from '../components/design-system/ScIcon.vue';
 import ScMobileRecordCard from '../components/design-system/ScMobileRecordCard.vue';
-import ScPage from '../components/design-system/ScPage.vue';
 import ScPageHeader from '../components/design-system/ScPageHeader.vue';
 import ScStatusBadge from '../components/design-system/ScStatusBadge.vue';
 import { resolveEmptyCopy, resolveErrorCopy, type StatusError } from '../composables/useStatus';

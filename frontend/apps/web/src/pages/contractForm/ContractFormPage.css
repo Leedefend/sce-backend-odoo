@@ -5,13 +5,6 @@
   padding-bottom: 24px;
 }
 
-.page--flow {
-  max-width: min(1080px, 100%);
-  margin: 0 auto;
-  padding: 24px 32px;
-  box-sizing: border-box;
-}
-
 .header {
   display: flex;
   justify-content: space-between;
@@ -103,15 +96,12 @@
   border-radius: var(--sc-product-panel-radius);
   padding: 16px 18px 18px;
   background: var(--sc-app-panel);
-  max-width: 1360px;
   width: 100%;
   min-width: 0;
-  margin: 0 auto;
   box-sizing: border-box;
 }
 
 .card--flow {
-  max-width: 1280px;
   width: 100%;
   border: 0;
   background: transparent;

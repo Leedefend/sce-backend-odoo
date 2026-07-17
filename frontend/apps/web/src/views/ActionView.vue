@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any */
 <template>
-  <section class="page sc-page sc-product-workspace-stack" data-product-page-mode="list">
+  <ScPage class="page sc-product-workspace-stack" data-product-page-mode="list" :width-mode="actionPageWidthMode">
     <!-- Page intent: 在列表场景中先判断状态，再给出下一步可执行动作。 -->
     <StatusPanel
       v-if="renderErrorMessage"
@@ -556,7 +556,7 @@
         </div>
       </section>
     </div>
-  </section>
+  </ScPage>
 </template>
 <script setup lang="ts">
 import { computed, inject, onActivated, onBeforeUnmount, onDeactivated, onErrorCaptured, onMounted, ref, watch, type Ref } from 'vue';
@@ -564,6 +564,8 @@ import { useRoute, useRouter } from 'vue-router';
 import type { ActionContract } from '@sc/schema';
 import { ApiError } from '../api/client';
 import ScIcon from '../components/design-system/ScIcon.vue';
+import ScPage from '../components/design-system/ScPage.vue';
+import { contractPageWidthMode, resolvePageWidthMode } from '../components/design-system/pageWidth';
 import { getUserViewPreference, setUserViewPreference } from '../api/preferences';
 import { executeButton } from '../api/executeButton';
 import { trackUsageEvent } from '../api/usage';
@@ -723,9 +725,7 @@ import {
   resolveLoadFinalizeSummaryKeyState,
   resolveLoadFinalizeTraceTimingState,
 } from '../app/runtime/actionViewLoadFinalizeRuntime';
-import {
-  resolveReloadTriggerPlan,
-} from '../app/runtime/actionViewLoadTriggerRuntime';
+import { resolveReloadTriggerPlan } from '../app/runtime/actionViewLoadTriggerRuntime';
 import {
   buildContractActionRouteTarget,
   buildContractActionButtonRequest,
@@ -1265,6 +1265,7 @@ const contractReadAllowed = ref(true);
 const contractWarningCount = ref(0);
 const contractDegraded = ref(false);
 const actionContract = ref<ActionViewRuntimeContract | null>(null);
+const actionPageWidthMode = computed(() => resolvePageWidthMode({ contractWidthMode: contractPageWidthMode(actionContract.value), pageKind: 'list' }));
 const resolvedModelRef = ref('');
 const activeGroupByField = ref('');
 const {
@@ -3303,7 +3304,6 @@ function refreshForProjectContextChange(): void {
   display: grid;
   gap: var(--sc-product-workspace-stack-gap);
   width: 100%;
-  max-width: 100%;
   box-sizing: border-box;
 }
 

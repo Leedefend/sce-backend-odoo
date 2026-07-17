@@ -17,8 +17,14 @@
   --sc-product-space-2: 16px;
   --sc-product-space-3: 24px;
   --sc-product-space-4: 32px;
-  --sc-product-page-gutter: 32px;
-  --sc-product-page-max-width: 1440px;
+  --sc-page-width-data: 1920px;
+  --sc-page-width-standard: 1440px;
+  --sc-page-width-focused: 1080px;
+  --sc-page-padding-wide: 32px;
+  --sc-page-padding-compact: 24px;
+  --sc-page-padding-mobile: 16px;
+  --sc-page-padding: var(--sc-page-padding-wide);
+  --sc-product-page-gutter: var(--sc-page-padding);
   --sc-product-text-sm: 12px;
   --sc-product-text-body: 14px;
   --sc-product-text-section: 16px;
@@ -62,11 +68,11 @@
 }
 
 @media (max-width: 1280px) {
-  :root { --sc-product-page-gutter: 24px; }
+  :root { --sc-page-padding: var(--sc-page-padding-compact); }
 }
 
 @media (max-width: 768px) {
-  :root { --sc-product-page-gutter: 16px; }
+  :root { --sc-page-padding: var(--sc-page-padding-mobile); }
 }
 
 :root[data-sc-theme="dark"] {

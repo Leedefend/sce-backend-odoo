@@ -1,5 +1,5 @@
 <template>
-  <section class="my-work-page" data-my-work-renderer="product-workspace">
+  <ScPage class="my-work-page" data-my-work-renderer="product-workspace" :width-mode="myWorkPageWidthMode">
     <StatusPanel v-if="loading" title="正在加载工作事项" message="正在读取当前账号可处理的业务事项。" variant="info" busy />
     <StatusPanel
       v-else-if="errorMessage"
@@ -21,19 +21,25 @@
       :on-retry="load"
       retry-label="刷新"
     />
-  </section>
+  </ScPage>
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { fetchMyWorkSummary, type ProductMyWorkWorkspace } from '../api/myWork';
 import { currentContextEpoch, isCurrentContextEpoch } from '../app/contextEpoch';
 import MyWorkApprovalWorkspace from '../components/business/MyWorkApprovalWorkspace.vue';
 import StatusPanel from '../components/StatusPanel.vue';
+import ScPage from '../components/design-system/ScPage.vue';
+import { contractPageWidthMode, resolvePageWidthMode } from '../components/design-system/pageWidth';
 import { useSessionStore } from '../stores/session';
 
 const session = useSessionStore();
 const workspace = ref<ProductMyWorkWorkspace | null>(null);
+const myWorkPageWidthMode = computed(() => resolvePageWidthMode({
+  contractWidthMode: contractPageWidthMode(workspace.value),
+  pageKind: 'workbench',
+}));
 const loading = ref(false);
 const errorMessage = ref('');
 let requestSequence = 0;

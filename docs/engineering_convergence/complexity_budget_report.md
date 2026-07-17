@@ -4,7 +4,7 @@ Generated from repository source files. This report is informational during the 
 
 ## Summary
 
-- Scanned files: `4076`
+- Scanned files: `4078`
 - Files requiring split plan: `38`
 - Files above warning threshold: `64`
 
@@ -29,7 +29,7 @@ Generated from repository source files. This report is informational during the 
 | 2331 | Python source | `addons/smart_core/handlers/system_init.py` |
 | 2289 | Python source | `addons/smart_construction_core/models/core/project_core.py` |
 | 2193 | Python source | `addons/smart_core/handlers/api_data.py` |
-| 2086 | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
+| 2085 | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
 | 2051 | Python source | `scripts/verify/backend_business_fact_model_audit.py` |
 | 2005 | TypeScript source | `frontend/apps/web/src/stores/session.ts` |
 | 1977 | Python source | `addons/smart_construction_core/models/core/payment_request.py` |
@@ -37,7 +37,7 @@ Generated from repository source files. This report is informational during the 
 | 1850 | Python source | `addons/smart_core/handlers/menu_configuration.py` |
 | 1847 | Python source | `addons/smart_construction_core/models/support/product_policy_sync.py` |
 | 1844 | Python source | `scripts/migration/scbs_55_legacy_visible_field_full_reconcile_probe.py` |
-| 1779 | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
+| 1778 | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
 | 1741 | Python source | `addons/smart_core/core/page_contracts_builder.py` |
 | 1741 | Vue source | `frontend/apps/web/src/views/SceneView.vue` |
 | 1693 | Python source | `addons/smart_construction_core/core_extension.py` |
@@ -141,7 +141,7 @@ Generated from repository source files. This report is informational during the 
 | 2331 | split_plan_required | Python source | `addons/smart_core/handlers/system_init.py` |
 | 2289 | split_plan_required | Python source | `addons/smart_construction_core/models/core/project_core.py` |
 | 2193 | split_plan_required | Python source | `addons/smart_core/handlers/api_data.py` |
-| 2086 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
+| 2085 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ListPage.vue` |
 | 2054 | warning | XML data/view | `addons/smart_construction_core/security/sc_record_rules.xml` |
 | 2051 | split_plan_required | Python source | `scripts/verify/backend_business_fact_model_audit.py` |
 | 2005 | split_plan_required | TypeScript source | `frontend/apps/web/src/stores/session.ts` |
@@ -151,7 +151,7 @@ Generated from repository source files. This report is informational during the 
 | 1847 | split_plan_required | Python source | `addons/smart_construction_core/models/support/product_policy_sync.py` |
 | 1844 | split_plan_required | Python source | `scripts/migration/scbs_55_legacy_visible_field_full_reconcile_probe.py` |
 | 1807 | warning | XML data/view | `addons/smart_construction_core/data/business_category_seed.xml` |
-| 1779 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
+| 1778 | split_plan_required | Vue source | `frontend/apps/web/src/pages/ContractFormPage.vue` |
 | 1741 | split_plan_required | Python source | `addons/smart_core/core/page_contracts_builder.py` |
 | 1741 | split_plan_required | Vue source | `frontend/apps/web/src/views/SceneView.vue` |
 | 1693 | split_plan_required | Python source | `addons/smart_construction_core/core_extension.py` |

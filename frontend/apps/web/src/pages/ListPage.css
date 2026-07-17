@@ -3,7 +3,6 @@
   gap: var(--sc-product-workspace-stack-gap);
   min-width: 0;
   width: 100%;
-  max-width: 100%;
   box-sizing: border-box;
 }
 
@@ -140,7 +139,7 @@
   width: 100%;
   max-width: 100%;
   max-height: max(420px, calc(100vh - 210px));
-  overflow-x: scroll;
+  overflow-x: auto;
   overflow-y: auto;
   scrollbar-gutter: stable;
   background: var(--sc-app-panel);

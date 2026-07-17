@@ -1,36 +1,34 @@
 <template>
-  <div :class="['template-layout-shell', { 'template-layout-shell--flow': flow }]" data-component="LayoutShell">
+  <div
+    :class="['template-layout-shell', 'sc-page-frame', pageWidthModeClass(resolvedWidthMode)]"
+    data-component="LayoutShell"
+    :data-page-width-mode="resolvedWidthMode"
+  >
     <slot />
   </div>
 </template>
 
 <script setup lang="ts">
-withDefaults(defineProps<{
-  flow?: boolean;
+import { computed } from 'vue';
+import {
+  normalizePageWidthMode,
+  pageWidthModeClass,
+  type PageWidthMode,
+} from '../design-system/pageWidth';
+
+const props = withDefaults(defineProps<{
+  widthMode?: PageWidthMode;
 }>(), {
-  flow: false,
+  widthMode: 'standard',
 });
+
+const resolvedWidthMode = computed(() => normalizePageWidthMode(props.widthMode));
 </script>
 
 <style scoped>
 .template-layout-shell {
   display: grid;
   gap: 8px;
-  width: 100%;
-  min-width: 0;
-  padding-bottom: 24px;
-}
-
-.template-layout-shell--flow {
-  max-width: min(1080px, 100%);
-  margin: 0 auto;
-  padding: 24px 32px;
-  box-sizing: border-box;
-}
-
-@media (max-width: 860px) {
-  .template-layout-shell--flow {
-    padding: 14px 12px 20px;
-  }
+  padding-bottom: calc(var(--sc-page-padding) + var(--sc-product-space-3));
 }
 </style>

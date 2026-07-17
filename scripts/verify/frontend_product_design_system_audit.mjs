@@ -13,18 +13,31 @@ const AxeBuilder = axeModule.default || axeModule;
 const BASE_URL = process.env.FRONTEND_URL || 'http://127.0.0.1:5175';
 const DB_NAME = process.env.DB_NAME || 'sc_frontend_acceptance';
 const PASSWORD = process.env.ROLE_SMOKE_PASSWORD || 'demo';
-const PHASE = process.env.FE_PRO_04_PHASE === 'final' ? 'final' : 'baseline';
-const ROOT = process.env.FE_PRO_04_ARTIFACT_ROOT || 'artifacts/frontend-professional/fe-pro-04';
+const WIDTH_AUDIT = Boolean(process.env.FE_PRO_04W_PHASE);
+const PHASE_SOURCE = WIDTH_AUDIT ? process.env.FE_PRO_04W_PHASE : process.env.FE_PRO_04_PHASE;
+const PHASE = PHASE_SOURCE === 'final' ? 'final' : 'baseline';
+const ROOT = WIDTH_AUDIT
+  ? (process.env.FE_PRO_04W_ARTIFACT_ROOT || 'artifacts/frontend-professional/fe-pro-04w')
+  : (process.env.FE_PRO_04_ARTIFACT_ROOT || 'artifacts/frontend-professional/fe-pro-04');
 const OUTPUT = path.join(ROOT, PHASE);
 const REPORT = path.join(ROOT, `${PHASE}-report.json`);
 const TARGETS = JSON.parse(process.env.FRONTEND_DELIVERY_HARDENING_TARGETS_JSON || '{}');
-const VIEWPORTS = [
-  { width: 1440, height: 900 },
-  { width: 1280, height: 800 },
-  { width: 768, height: 1024 },
-  { width: 390, height: 844 },
-];
-const DARK_CASES = new Set(['finance_home', 'my_work', 'contract_list', 'contract_detail', 'payment_request_create', 'approval_dialog', 'network_error']);
+const VIEWPORTS = WIDTH_AUDIT
+  ? [
+      { width: 1440, height: 900 },
+      { width: 1920, height: 1080 },
+      { width: 2560, height: 1440 },
+      { width: 390, height: 844 },
+    ]
+  : [
+      { width: 1440, height: 900 },
+      { width: 1280, height: 800 },
+      { width: 768, height: 1024 },
+      { width: 390, height: 844 },
+    ];
+const DARK_CASES = new Set(WIDTH_AUDIT
+  ? ['my_work', 'contract_list', 'contract_detail', 'payment_request_create']
+  : ['finance_home', 'my_work', 'contract_list', 'contract_detail', 'payment_request_create', 'approval_dialog', 'network_error']);
 const TECHNICAL_TERMS = ['payload', 'bundle', 'fallback', 'HUD', 'trace', 'JSON', 'registry', 'projection', 'provider', 'debug', 'capability map', '配置缺口', '契约未命中'];
 
 fs.mkdirSync(OUTPUT, { recursive: true });
@@ -37,16 +50,17 @@ function listRoute(target) { return `/a/${target.action_id}?menu_id=${target.men
 const ALL_CASES = [
   { key: 'finance_home', role: 'demo_role_finance', route: '/' },
   { key: 'project_member_home', role: 'demo_role_project_a_member', route: '/' },
-  { key: 'my_work', role: 'demo_role_finance', route: '/my-work' },
-  { key: 'project_list', role: 'demo_role_pm', route: () => listRoute(TARGETS.project) },
-  { key: 'contract_list', role: 'demo_role_pm', route: () => listRoute(TARGETS.contract) },
-  { key: 'payment_request_list', role: 'demo_role_finance', route: () => listRoute(TARGETS.payment_request) },
-  { key: 'contract_detail', role: 'demo_role_pm', route: () => recordRoute(TARGETS.contract) },
-  { key: 'settlement_detail', role: 'demo_role_finance', route: () => recordRoute(TARGETS.settlement) },
-  { key: 'payment_request_detail', role: 'demo_role_finance', route: () => recordRoute(TARGETS.payment_request) },
+  { key: 'my_work', role: 'demo_role_finance', pageKind: 'workbench', expectedWidthMode: 'data', route: '/my-work' },
+  { key: 'project_list', role: 'demo_role_pm', pageKind: 'list', expectedWidthMode: 'data', route: () => listRoute(TARGETS.project) },
+  { key: 'contract_list', role: 'demo_role_pm', pageKind: 'list', expectedWidthMode: 'data', route: () => listRoute(TARGETS.contract) },
+  { key: 'payment_request_list', role: 'demo_role_finance', pageKind: 'list', expectedWidthMode: 'data', route: () => listRoute(TARGETS.payment_request) },
+  { key: 'payment_execution_list', role: 'demo_role_finance', pageKind: 'list', expectedWidthMode: 'data', route: () => listRoute(TARGETS.payment_execution) },
+  { key: 'contract_detail', role: 'demo_role_pm', pageKind: 'detail', expectedWidthMode: 'standard', route: () => recordRoute(TARGETS.contract) },
+  { key: 'settlement_detail', role: 'demo_role_finance', pageKind: 'detail', expectedWidthMode: 'standard', route: () => recordRoute(TARGETS.settlement) },
+  { key: 'payment_request_detail', role: 'demo_role_finance', pageKind: 'detail', expectedWidthMode: 'standard', route: () => recordRoute(TARGETS.payment_request) },
   { key: 'payment_execution_detail', role: 'demo_role_finance', route: () => recordRoute(TARGETS.payment_execution) },
-  { key: 'contract_form', role: 'demo_role_pm', route: () => formRoute(TARGETS.contract) },
-  { key: 'payment_request_create', role: 'demo_role_finance', mode: 'create', route: () => recordRoute(TARGETS.work_settlement) },
+  { key: 'contract_form', role: 'demo_role_pm', pageKind: 'edit', expectedWidthMode: 'standard', route: () => formRoute(TARGETS.contract) },
+  { key: 'payment_request_create', role: 'demo_role_finance', pageKind: 'create', expectedWidthMode: 'focused', mode: 'create', route: () => recordRoute(TARGETS.work_settlement) },
   { key: 'payment_request_edit', role: 'demo_role_finance', route: () => formRoute(TARGETS.payment_request) },
   { key: 'permission_denied', role: 'demo_role_project_a_member', mode: 'denied', route: () => recordRoute(TARGETS.payment_request) },
   { key: 'not_found', role: 'demo_role_finance', mode: 'not-found', route: () => `/r/${TARGETS.payment_request.model}/999999?action_id=${TARGETS.payment_request.action_id}&menu_id=${TARGETS.payment_request.menu_id}` },
@@ -54,8 +68,10 @@ const ALL_CASES = [
   { key: 'empty_list', role: 'demo_role_finance', mode: 'empty', route: () => listRoute(TARGETS.payment_request) },
   { key: 'network_error', role: 'demo_role_finance', mode: 'network', route: () => recordRoute(TARGETS.payment_request) },
 ];
-const CASE_FILTER = String(process.env.FE_PRO_04_CASE || '').trim();
-const CASES = CASE_FILTER ? ALL_CASES.filter((entry) => entry.key === CASE_FILTER) : ALL_CASES;
+const WIDTH_CASE_KEYS = new Set(['project_list', 'contract_list', 'payment_request_list', 'payment_execution_list', 'contract_detail', 'settlement_detail', 'payment_request_detail', 'contract_form', 'payment_request_create', 'my_work']);
+const CASE_FILTER = String(process.env.FE_PRO_04_CASE || process.env.FE_PRO_04W_CASE || '').trim();
+const PROFILE_CASES = WIDTH_AUDIT ? ALL_CASES.filter((entry) => WIDTH_CASE_KEYS.has(entry.key)) : ALL_CASES;
+const CASES = CASE_FILTER ? PROFILE_CASES.filter((entry) => entry.key === CASE_FILTER) : PROFILE_CASES;
 check(CASES.length > 0, `unknown FE_PRO_04_CASE=${CASE_FILTER}`);
 const DARK_ONLY_CASES = [
   { key: 'approval_dialog', role: 'demo_role_finance', mode: 'dialog', route: () => recordRoute(TARGETS.journey_request) },
@@ -247,6 +263,49 @@ async function visualMetrics(page, runDetailedScan) {
   };
 }
 
+async function pageWidthMetrics(page) {
+  return page.evaluate(() => {
+    const rectOf = (node) => node?.getBoundingClientRect() || null;
+    const visible = (node) => {
+      if (!node) return false;
+      const style = window.getComputedStyle(node);
+      const rect = node.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden';
+    };
+    const sidebar = [...document.querySelectorAll('#primary-sidebar, .sidebar-nav')].find(visible) || null;
+    const main = document.querySelector('#main-content.router-host, main.router-host');
+    const directFrame = main ? [...main.children].find((node) => visible(node) && (
+      node.hasAttribute('data-page-width-mode')
+      || node.hasAttribute('data-product-page-mode')
+      || node.classList.contains('my-work-page')
+    )) : null;
+    const frame = directFrame || (main ? [...main.querySelectorAll('[data-page-width-mode], [data-product-page-mode], .my-work-page')].find(visible) : null);
+    const table = main ? [...main.querySelectorAll('.table, .sc-data-table__scroll, .data-table')].find(visible) : null;
+    const mainRect = rectOf(main);
+    const frameRect = rectOf(frame);
+    const frameStyle = frame ? window.getComputedStyle(frame) : null;
+    const paddingLeft = frameStyle ? Number.parseFloat(frameStyle.paddingLeft) || 0 : 0;
+    const paddingRight = frameStyle ? Number.parseFloat(frameStyle.paddingRight) || 0 : 0;
+    const mainWidth = mainRect?.width || 0;
+    const frameWidth = frameRect?.width || 0;
+    return {
+      viewport_width: window.innerWidth,
+      sidebar_width: Math.round(rectOf(sidebar)?.width || 0),
+      main_width: Math.round(mainWidth),
+      frame_width: Math.round(frameWidth),
+      content_width: Math.round(Math.max(0, frameWidth - paddingLeft - paddingRight)),
+      left_blank_width: Math.round(frameRect && mainRect ? frameRect.left - mainRect.left : 0),
+      right_blank_width: Math.round(frameRect && mainRect ? mainRect.right - frameRect.right : 0),
+      utilization_ratio: mainWidth > 0 ? Number((frameWidth / mainWidth).toFixed(4)) : 0,
+      table_client_width: table?.clientWidth || 0,
+      table_scroll_width: table?.scrollWidth || 0,
+      local_scroll: Boolean(table && table.scrollWidth > table.clientWidth + 1),
+      page_overflow: Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth),
+      width_mode: frame?.getAttribute('data-page-width-mode') || 'legacy',
+    };
+  });
+}
+
 async function captureEntry(browser, entry, theme = 'light') {
   console.log(`[fe-pro-04] ${entry.key}:${theme}:login`);
   const context = await browser.newContext({ viewport: VIEWPORTS[0], locale: 'zh-CN', colorScheme: theme });
@@ -259,7 +318,13 @@ async function captureEntry(browser, entry, theme = 'light') {
   if (theme === 'dark') await page.evaluate(() => document.documentElement.setAttribute('data-sc-theme', 'dark'));
   const company = await page.getByLabel('当前公司').inputValue({ timeout: 2000 }).catch(() => '');
   const rows = [];
-  const viewports = theme === 'dark' ? [{ width: 1440, height: 900 }] : VIEWPORTS;
+  const viewports = theme === 'dark'
+    ? (WIDTH_AUDIT
+        ? (entry.key === 'contract_list'
+            ? [{ width: 1920, height: 1080 }, { width: 390, height: 844 }]
+            : [{ width: 1920, height: 1080 }])
+        : [{ width: 1440, height: 900 }])
+    : VIEWPORTS;
   for (const viewport of viewports) {
     console.log(`[fe-pro-04] ${entry.key}:${theme}:${viewport.width}x${viewport.height}`);
     const viewportStarted = Date.now();
@@ -271,6 +336,8 @@ async function captureEntry(browser, entry, theme = 'light') {
     rows.push({
       surface: entry.key,
       role: entry.role,
+      page_kind: entry.pageKind || 'other',
+      expected_width_mode: entry.expectedWidthMode || 'standard',
       company,
       viewport: `${viewport.width}x${viewport.height}`,
       theme,
@@ -280,6 +347,7 @@ async function captureEntry(browser, entry, theme = 'light') {
       screenshot_sha256: '',
       accessibility_scanned: viewport.width === 1440,
       ...(await visualMetrics(page, viewport.width === 1440)),
+      ...(await pageWidthMetrics(page)),
     });
   }
   await context.close();
@@ -311,7 +379,7 @@ async function main() {
         pages.push(...dark.rows); runtime.push({ surface: entry.key, theme: 'dark', ...dark.runtime });
       }
     }
-    if (PHASE === 'final') {
+    if (PHASE === 'final' && !WIDTH_AUDIT) {
       for (const entry of DARK_ONLY_CASES) {
         const dark = await captureEntryWithRetry(browser, entry, 'dark');
         pages.push(...dark.rows); runtime.push({ surface: entry.key, theme: 'dark', ...dark.runtime });
@@ -322,7 +390,7 @@ async function main() {
       row.screenshot_sha256 = digest;
     }
     const report = {
-      schema_version: 'frontend_product_design_system_audit.v1',
+      schema_version: WIDTH_AUDIT ? 'frontend_page_width_audit.v1' : 'frontend_product_design_system_audit.v1',
       phase: PHASE,
       git_sha: process.env.GIT_SHA || '',
       database: DB_NAME,
@@ -366,13 +434,22 @@ async function main() {
       };
       fs.writeFileSync(path.join(ROOT, 'visual-regression-report.json'), `${JSON.stringify(comparison, null, 2)}\n`);
       check(pages.filter((row) => row.theme === 'light').length === CASES.length * VIEWPORTS.length, 'light visual matrix incomplete');
-      check(pages.filter((row) => row.theme === 'dark').length === DARK_CASES.size, 'dark visual sample incomplete');
+      check(pages.filter((row) => row.theme === 'dark').length === (WIDTH_AUDIT ? 5 : DARK_CASES.size), 'dark visual sample incomplete');
       check(!pages.some((row) => row.h1_count !== 1 || row.main_count !== 1), 'page landmark hierarchy failed');
       check(!pages.some((row) => row.font_level_count > 4), 'page typography hierarchy exceeds four visible levels');
       check(!pages.some((row) => row.viewport === '390x844' && row.desktop_record_table_visible > 0), 'desktop record table leaked into mobile layout');
       check(!pages.some((row) => row.horizontal_overflow > 1 || row.axe_critical_serious.length), 'responsive/accessibility visual guard failed');
       check(!pages.some((row) => row.technical_term_hits.length), 'technical product wording found');
       check(!runtime.some((row) => row.console.length || row.pageerror.length || row.http.length), 'unexpected runtime errors found');
+      if (WIDTH_AUDIT) {
+        const lightRows = pages.filter((row) => row.theme === 'light');
+        check(!lightRows.some((row) => row.width_mode !== row.expected_width_mode), 'page width mode contract mismatch');
+        check(!lightRows.some((row) => row.viewport_width === 1920 && row.width_mode === 'data' && row.utilization_ratio < 0.94), '1920 data-page utilization below 94%');
+        check(!lightRows.some((row) => row.width_mode === 'standard' && row.frame_width > 1441), 'standard page exceeded 1440px');
+        check(!lightRows.some((row) => row.width_mode === 'focused' && row.frame_width > 1081), 'focused page exceeded 1080px');
+        check(!lightRows.some((row) => row.viewport_width === 2560 && row.width_mode === 'data' && row.frame_width > 1921), 'data page exceeded 1920px');
+        check(!lightRows.some((row) => row.page_overflow > 1), 'page-level horizontal overflow found');
+      }
     }
     console.log(JSON.stringify({ report: REPORT, phase: PHASE, surfaces: CASES.length, rows: pages.length }, null, 2));
   } finally {
