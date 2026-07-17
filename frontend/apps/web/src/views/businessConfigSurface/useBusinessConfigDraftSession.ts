@@ -16,6 +16,13 @@ function requestId(prefix: string) {
   return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 }
 
+function publishFailureMessage(changeSet: BusinessConfigChangeSet) {
+  const firstError = changeSet.items
+    .flatMap((item) => item.validation_result?.errors || [])
+    .find((message) => String(message || '').trim());
+  return String(firstError || changeSet.failure_message || '变更集校验未通过，请修正后重试');
+}
+
 export function useBusinessConfigDraftSession(roleKey: () => string) {
   const changeSet = ref<BusinessConfigChangeSet | null>(null);
   const loading = ref(false);
@@ -65,7 +72,10 @@ export function useBusinessConfigDraftSession(roleKey: () => string) {
 
   async function publishDraft() {
     const validated = await validateDraft();
-    if (validated.state !== 'ready') return validated;
+    if (validated.state !== 'ready') {
+      error.value = publishFailureMessage(validated);
+      throw new Error(error.value);
+    }
     publishing.value = true;
     error.value = '';
     try {
@@ -74,6 +84,15 @@ export function useBusinessConfigDraftSession(roleKey: () => string) {
         role_key: roleKey() || undefined,
         request_id: requestId('publish'),
       });
+      const publishResult = changeSet.value.publish_result || {};
+      if (
+        changeSet.value.state !== 'published'
+        || publishResult.ok !== true
+        || publishResult.runtime_verified !== true
+      ) {
+        error.value = changeSet.value.failure_message || '发布结果未通过运行态验证';
+        throw new Error(error.value);
+      }
       return changeSet.value;
     } finally {
       publishing.value = false;

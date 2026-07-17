@@ -14,7 +14,7 @@ Generated from repository source files. This report is informational during the 
 | ---: | --- | --- |
 | 3684 | Vue source | `frontend/apps/web/src/views/ActionView.vue` |
 | 3633 | Python source | `addons/smart_core/handlers/form_field_configuration.py` |
-| 3518 | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
+| 3443 | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 3323 | Python source | `addons/smart_construction_core/tests/test_p0_state_closure.py` |
 | 3202 | Python source | `addons/smart_core/tests/test_form_field_configuration_params.py` |
 | 3092 | Python source | `addons/smart_construction_core/models/support/p1_daily_business_visible_alias_fields.py` |
@@ -32,7 +32,7 @@ Generated from repository source files. This report is informational during the 
 | 2051 | Python source | `scripts/verify/backend_business_fact_model_audit.py` |
 | 2005 | TypeScript source | `frontend/apps/web/src/stores/session.ts` |
 | 1977 | Python source | `addons/smart_construction_core/models/core/payment_request.py` |
-| 1877 | Python source | `addons/smart_core/tests/test_ui_contract_v2_boundaries.py` |
+| 1925 | Python source | `addons/smart_core/tests/test_ui_contract_v2_boundaries.py` |
 | 1851 | Python source | `addons/smart_core/handlers/menu_configuration.py` |
 | 1847 | Python source | `addons/smart_construction_core/models/support/product_policy_sync.py` |
 | 1844 | Python source | `scripts/migration/scbs_55_legacy_visible_field_full_reconcile_probe.py` |
@@ -102,7 +102,7 @@ Generated from repository source files. This report is informational during the 
 | 886 | Python source | `addons/smart_construction_scene/profiles/workspace_home_scene_content.py` |
 | 879 | Python source | `scripts/verify/business_oca_runtime_smoke.py` |
 | 867 | Python source | `addons/smart_construction_core/models/support/scene_orchestration.py` |
-| 860 | Python source | `addons/smart_core/core/view_orchestrator.py` |
+| 862 | Python source | `addons/smart_core/core/view_orchestrator.py` |
 | 857 | JavaScript source | `scripts/verify/scbs55_last6_strict_visible_acceptance.js` |
 | 846 | Python source | `scripts/migration/fresh_db_legacy_account_transaction_replay_adapter.py` |
 | 843 | Python source | `scripts/verify/contract_evidence_guard.py` |
@@ -125,7 +125,7 @@ Generated from repository source files. This report is informational during the 
 | ---: | --- | --- | --- |
 | 3684 | split_plan_required | Vue source | `frontend/apps/web/src/views/ActionView.vue` |
 | 3633 | split_plan_required | Python source | `addons/smart_core/handlers/form_field_configuration.py` |
-| 3518 | split_plan_required | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
+| 3443 | split_plan_required | Python source | `addons/smart_core/handlers/ui_contract_v2.py` |
 | 3323 | split_plan_required | Python source | `addons/smart_construction_core/tests/test_p0_state_closure.py` |
 | 3202 | split_plan_required | Python source | `addons/smart_core/tests/test_form_field_configuration_params.py` |
 | 3092 | split_plan_required | Python source | `addons/smart_construction_core/models/support/p1_daily_business_visible_alias_fields.py` |
@@ -144,7 +144,7 @@ Generated from repository source files. This report is informational during the 
 | 2051 | split_plan_required | Python source | `scripts/verify/backend_business_fact_model_audit.py` |
 | 2005 | split_plan_required | TypeScript source | `frontend/apps/web/src/stores/session.ts` |
 | 1977 | split_plan_required | Python source | `addons/smart_construction_core/models/core/payment_request.py` |
-| 1877 | split_plan_required | Python source | `addons/smart_core/tests/test_ui_contract_v2_boundaries.py` |
+| 1925 | split_plan_required | Python source | `addons/smart_core/tests/test_ui_contract_v2_boundaries.py` |
 | 1851 | split_plan_required | Python source | `addons/smart_core/handlers/menu_configuration.py` |
 | 1847 | split_plan_required | Python source | `addons/smart_construction_core/models/support/product_policy_sync.py` |
 | 1844 | split_plan_required | Python source | `scripts/migration/scbs_55_legacy_visible_field_full_reconcile_probe.py` |

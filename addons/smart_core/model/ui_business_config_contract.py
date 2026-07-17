@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
-from types import SimpleNamespace
+from dataclasses import dataclass
+from typing import Any
 
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
@@ -21,6 +22,60 @@ FORMAL_LIST_ACTION_IDS = {
     963, 964,
 }
 TEST_PLACEHOLDER_TOKENS = ("CODEX_", "codex_view_orch_surface")
+
+
+@dataclass(frozen=True)
+class ViewOrchestrationContractProjection:
+    """Typed runtime projection shared by published and preview contracts.
+
+    Runtime consumers must not depend on ORM relation objects: preview rows do
+    not exist in the database and therefore expose relation identifiers as
+    primitive integers.
+    """
+
+    id: int
+    name: str
+    contract_json: dict[str, Any]
+    view_type: str
+    action_id: int
+    view_id: int
+    role_key: str
+    priority: int
+    version_no: int
+    status: str
+    source_kind: str
+
+    @classmethod
+    def from_record(cls, record):
+        return cls(
+            id=int(record.id or 0),
+            name=str(record.name or ""),
+            contract_json=record.contract_json if isinstance(record.contract_json, dict) else {},
+            view_type=str(record.view_type or ""),
+            action_id=int(record.action_id.id or 0),
+            view_id=int(record.view_id.id or 0),
+            role_key=str(record.role_key or ""),
+            priority=int(record.priority or 100),
+            version_no=int(record.version_no or 1),
+            status=str(record.status or ""),
+            source_kind="published",
+        )
+
+    @classmethod
+    def from_preview_item(cls, item):
+        return cls(
+            id=0,
+            name="preview:%s" % item.target_key,
+            contract_json=item.draft_payload if isinstance(item.draft_payload, dict) else {},
+            view_type=str(item.view_type or ""),
+            action_id=int(item.action_id or 0),
+            view_id=int(item.view_id or 0),
+            role_key=str(item.role_key or ""),
+            priority=1_000_000,
+            version_no=int(item.base_version_no or 0) + 1,
+            status="preview",
+            source_kind="change_set_preview",
+        )
 
 
 class UIBusinessConfigContract(models.Model):
@@ -368,7 +423,7 @@ class UIBusinessConfigContract(models.Model):
         role_key: str | None = None,
     ):
         if not model_name:
-            return self.browse()
+            return []
         normalized_view_type = self._normalize_view_orchestration_view_type(view_type)
         domain = [
             ("active", "=", True),
@@ -396,7 +451,7 @@ class UIBusinessConfigContract(models.Model):
                 return False
             return True
 
-        effective = [contract for contract in records if applies(contract)]
+        effective = [ViewOrchestrationContractProjection.from_record(contract) for contract in records if applies(contract)]
 
         preview_token = str(self.env.context.get("business_config_preview_token") or "").strip()
         preview_user_id = int(self.env.context.get("business_config_preview_user_id") or 0)
@@ -420,23 +475,13 @@ class UIBusinessConfigContract(models.Model):
                             continue
                         if item.view_id and int(item.view_id) != int(view_id or 0):
                             continue
+                        if item.role_key and str(item.role_key or "").strip() != requested_role:
+                            continue
                         effective = [contract for contract in effective if contract.id != item.target_contract_id.id]
-                        effective.append(SimpleNamespace(
-                            id=0,
-                            name="preview:%s" % item.target_key,
-                            contract_json=item.draft_payload or {},
-                            view_type=item.view_type or False,
-                            action_id=SimpleNamespace(id=int(item.action_id or 0)),
-                            view_id=SimpleNamespace(id=int(item.view_id or 0)),
-                            role_key=item.role_key or False,
-                            priority=1_000_000,
-                            version_no=int(item.base_version_no or 0) + 1,
-                        ))
+                        effective.append(ViewOrchestrationContractProjection.from_preview_item(item))
 
         effective = sorted(effective, key=view_orchestration_apply_order_key)
-        if preview_token:
-            return effective
-        return self.browse([contract.id for contract in effective])
+        return effective
 
     @api.model
     def source_authority_contract(self) -> dict:

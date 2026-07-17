@@ -61,6 +61,8 @@ class ViewOrchestrator:
                         "id": int(config.id),
                         "name": config.name,
                         "version_no": int(config.version_no or 1),
+                        "status": str(config.status or ""),
+                        "source_kind": str(config.source_kind or "published"),
                     })
                     form_layout_overlay_applied = form_layout_overlay_applied or declares_form_layout_overlay
 

@@ -8,7 +8,12 @@ from odoo.exceptions import AccessError, ValidationError
 
 from ..core.base_handler import BaseIntentHandler
 from ..model.ui_business_config_change_set import ACTIVE_CHANGE_SET_STATES, stable_payload_hash
-from ..utils.backend_contract_boundaries import BUSINESS_CONFIG_INTENTS
+from ..utils.backend_contract_boundaries import (
+    BUSINESS_CONFIG_INTENTS,
+    LOWCODE_SOURCE_STATUS_TENANT_RUNTIME,
+    VIEW_ORCHESTRATION_SOURCE_TENANT_LOWCODING,
+    ensure_view_orchestration_source,
+)
 
 
 BUSINESS_CONFIG_GROUP = "smart_core.group_smart_core_business_config_admin"
@@ -191,6 +196,12 @@ class BusinessConfigChangeSetStageHandler(_ChangeSetBase):
         draft_payload = params.get("draft_payload") if isinstance(params.get("draft_payload"), dict) else {}
         if not draft_payload:
             return self._err(422, "EMPTY_DRAFT_PAYLOAD", "草稿配置不能为空。")
+        if config_type != "menu":
+            draft_payload = ensure_view_orchestration_source(
+                draft_payload,
+                VIEW_ORCHESTRATION_SOURCE_TENANT_LOWCODING,
+                LOWCODE_SOURCE_STATUS_TENANT_RUNTIME,
+            )
         target_key = _text(params.get("target_key"))
         model = _text(params.get("model"))
         if not target_key or not model:
@@ -485,7 +496,7 @@ class BusinessConfigChangeSetPublishHandler(_ChangeSetBase):
                     "state": "published",
                     "published_at": fields.Datetime.now(),
                     "rollback_snapshot_json": snapshot,
-                    "publish_result_json": {"request_id": request_id, "items": results, "runtime_verified": True},
+                    "publish_result_json": {"ok": True, "request_id": request_id, "items": results, "runtime_verified": True},
                 })
         except Exception as exc:
             record.write({"state": "failed", "failure_message": str(exc), "publish_request_id": False})
@@ -500,9 +511,24 @@ class BusinessConfigChangeSetRollbackHandler(_ChangeSetBase):
     def handle(self, payload=None, ctx=None):
         del ctx
         params = self._params(payload)
+        request_id = _text(params.get("request_id"))
+        if not request_id:
+            return self._err(400, "REQUEST_ID_REQUIRED", "回滚需要幂等请求ID。")
         record = self._owned(params)
         if not record:
             return self._err(404, "CHANGE_SET_NOT_FOUND", "未找到当前配置变更集。")
+        existing = self.env[CHANGE_SET_MODEL].sudo().search([
+            ("user_id", "=", self.env.user.id),
+            ("company_id", "=", self.env.company.id),
+            ("database_name", "=", self.env.cr.dbname),
+            ("publish_request_id", "=", request_id),
+        ], limit=1)
+        if existing:
+            existing.with_env(self.env).assert_owner_scope(role_key=_text(params.get("role_key")))
+            rollback_of = _integer((existing.publish_result_json or {}).get("rollback_of_change_set_id"))
+            if rollback_of == record.id:
+                return self._ok(existing.with_env(self.env).serialize())
+            return self._err(409, "REQUEST_ID_REUSED", "回滚请求ID已用于其他操作。")
         if record.state != "published":
             return self._err(409, "CHANGE_SET_NOT_PUBLISHED", "只有已发布变更集可以回滚。")
         publish_handler = BusinessConfigChangeSetPublishHandler(env=self.env)
@@ -548,8 +574,8 @@ class BusinessConfigChangeSetRollbackHandler(_ChangeSetBase):
                 "database_name": self.env.cr.dbname,
                 "state": "published",
                 "published_at": fields.Datetime.now(),
-                "publish_request_id": _text(params.get("request_id")) or "rollback-%s-%s" % (record.id, fields.Datetime.now()),
-                "publish_result_json": {"rollback_of_change_set_id": int(record.id), "restored": restored, "runtime_verified": True},
+                "publish_request_id": request_id,
+                "publish_result_json": {"ok": True, "rollback_of_change_set_id": int(record.id), "restored": restored, "runtime_verified": True},
             })
             record.write({"state": "superseded"})
         return self._ok(rollback_batch.with_env(self.env).serialize())

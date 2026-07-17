@@ -707,113 +707,24 @@ class UiContractV2Handler(BaseIntentHandler):
         ).strip().lower()
         if view_type != "form":
             return
-        layout_contract = contract.get("layoutContract") if isinstance(contract.get("layoutContract"), dict) else {}
-        container_tree = layout_contract.get("containerTree") if isinstance(layout_contract.get("containerTree"), list) else []
-        if not container_tree:
-            return
         governance = self._form_layout_governance(source_contract)
-        field_groups = governance.get("field_groups") if isinstance(governance.get("field_groups"), dict) else {}
-        if not field_groups:
-            return
-        hidden_field_names = {
-            str(item or "").strip()
-            for item in (governance.get("hidden_field_names") or [])
-            if str(item or "").strip()
-        }
-
-        configured_groups: list[tuple[str, list[str]]] = []
-        configured_names: set[str] = set()
-        for raw_title, raw_names in field_groups.items():
-            title = str(raw_title or "").strip()
-            if title and not self._form_layout_group_visible_from_governance(governance, title):
-                continue
-            names = [
-                str(name or "").strip()
-                for name in (raw_names if isinstance(raw_names, list) else [])
-                if str(name or "").strip()
-            ]
-            names = [name for name in names if name not in hidden_field_names]
-            names = [name for name in names if name not in configured_names]
-            if not title or not names:
-                continue
-            configured_names.update(names)
-            configured_groups.append((title, names))
-        if not configured_groups:
-            return
-
-        moved_nodes: dict[str, dict[str, Any]] = {}
-
-        def node_field_name(node: Any) -> str:
-            if not isinstance(node, dict):
-                return ""
-            return str(node.get("name") or node.get("field") or node.get("fieldCode") or "").strip()
-
-        def remove_configured_fields(nodes: list[Any]) -> list[Any]:
-            out: list[Any] = []
-            for node in nodes:
-                if not isinstance(node, dict):
-                    out.append(node)
-                    continue
-                node_type = str(node.get("type") or node.get("containerType") or "").strip().lower()
-                name = node_field_name(node)
-                if node_type == "field" and name in configured_names:
-                    moved_nodes.setdefault(name, deepcopy(node))
-                    continue
-                next_node = node
-                for key in ("children", "pages", "tabs", "nodes", "items", "widgetList"):
-                    children = next_node.get(key)
-                    if isinstance(children, list):
-                        cleaned = remove_configured_fields(children)
-                        if cleaned is not children:
-                            next_node = dict(next_node)
-                            next_node[key] = cleaned
-                out.append(next_node)
-            return out
-
-        container_tree = remove_configured_fields(container_tree)
-
-        def group_title(node: Any) -> str:
-            if not isinstance(node, dict):
-                return ""
-            if str(node.get("type") or node.get("containerType") or "").strip().lower() != "group":
-                return ""
-            return str(node.get("string") or node.get("label") or node.get("title") or "").strip()
-
-        def find_group(nodes: list[Any], title: str) -> dict[str, Any] | None:
-            for node in nodes:
-                if not isinstance(node, dict):
-                    continue
-                if group_title(node) == title:
-                    return node
-                for key in ("children", "pages", "tabs", "nodes", "items"):
-                    children = node.get(key)
-                    if isinstance(children, list):
-                        found = find_group(children, title)
-                        if found is not None:
-                            return found
-            return None
-
-        for index, (title, names) in enumerate(configured_groups, start=1):
-            group = find_group(container_tree, title)
-            if group is None:
-                group = {
-                    "type": "group",
-                    "name": "business_config_group_%s" % index,
-                    "string": title,
-                    "label": title,
-                    "children": [],
-                    "widgetList": [],
-                }
-                container_tree.append(group)
-            self._apply_form_layout_governance_to_group(group, title, source_contract=source_contract)
-            children = group.get("children") if isinstance(group.get("children"), list) else []
-            for name in names:
-                node = moved_nodes.get(name)
-                if isinstance(node, dict):
-                    children.append(deepcopy(node))
-            group["children"] = children
-
-        self._set_v2_container_tree(contract, container_tree)
+        model = str(
+            (source_contract or {}).get("model")
+            or ((contract.get("pageInfo") or {}).get("model") if isinstance(contract.get("pageInfo"), dict) else "")
+            or ""
+        ).strip()
+        runtime_governance = self._form_structure_governance(
+            source_contract or {},
+            model=model,
+            view_type=view_type,
+        )
+        if runtime_governance:
+            governance = {**governance, **runtime_governance}
+        _projection.apply_business_config_form_groups(
+            contract,
+            governance,
+            source_contract=source_contract,
+        )
 
     def _form_layout_governance(self, source_contract: dict[str, Any] | None) -> dict[str, Any]:
         return _projection.form_layout_governance(source_contract)
@@ -1704,6 +1615,11 @@ class UiContractV2Handler(BaseIntentHandler):
             for item in (form_structure_governance.get("field_names") or [])
             if str(item or "").strip()
         )
+        hidden_form_fields = {
+            str(item or "").strip()
+            for item in (form_structure_governance.get("hidden_field_names") or [])
+            if str(item or "").strip()
+        }
         form_field_candidates = source_form_field_candidates() if form_structure_governance else []
         source_section_titles: list[str] = []
         if form_structure_governance:
@@ -1734,7 +1650,9 @@ class UiContractV2Handler(BaseIntentHandler):
         priority_fields = unique([
             name
             for name in BUSINESS_OPERATION_FIELD_PRIORITY
-            if has_field(name) and field_type(name) not in {"one2many", "many2many"}
+            if has_field(name)
+            and name not in hidden_form_fields
+            and field_type(name) not in {"one2many", "many2many"}
         ])
         source_common_fields = (
             [
@@ -1755,11 +1673,12 @@ class UiContractV2Handler(BaseIntentHandler):
             else []
         )
         common_fields = unique(priority_fields + source_common_fields)
-        if note_field and note_field not in common_fields:
+        if note_field and note_field not in hidden_form_fields and note_field not in common_fields:
             common_fields.append(note_field)
         field_aliases = self._form_field_aliases(model, source_contract)
         if field_aliases:
             common_fields = unique([self._resolve_form_field_alias(name, field_aliases) for name in common_fields])
+        common_fields = [name for name in common_fields if name not in hidden_form_fields]
 
         amount_fields = [
             name
@@ -2012,16 +1931,22 @@ class UiContractV2Handler(BaseIntentHandler):
                     group_columns[title] = columns
                 for child_key in ("children", "pages", "tabs", "nodes", "items"):
                     collect_layout_group_columns(item.get(child_key))
+        configs = []
         try:
-            view_ids = source_contract.get("view_ids_by_type") if isinstance(source_contract.get("view_ids_by_type"), dict) else {}
-            configs = self.env["ui.business.config.contract"]._effective_view_orchestration_contracts(
-                model,
-                view_type="form",
-                action_id=source_contract.get("action_id") or source_contract.get("actionId"),
-                view_id=view_ids.get("form"),
-            )
-        except Exception:
-            configs = []
+            business_config_contract = self.env["ui.business.config.contract"]
+        except (KeyError, TypeError):
+            business_config_contract = None
+        if business_config_contract is not None:
+            try:
+                view_ids = source_contract.get("view_ids_by_type") if isinstance(source_contract.get("view_ids_by_type"), dict) else {}
+                configs = business_config_contract._effective_view_orchestration_contracts(
+                    model,
+                    view_type="form",
+                    action_id=self._source_action_id(source_contract),
+                    view_id=view_ids.get("form"),
+                )
+            except Exception:
+                _logger.exception("business config form preview projection failed for model=%s", model)
         hidden_field_names: set[str] = set()
         for config in configs:
             config_summaries.append({

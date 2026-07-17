@@ -20,9 +20,9 @@ export function useBusinessConfigPublishLifecycle(deps: Record<string, any>) {
       const suggestedListColumns = configuredListColumns.length ? [] : result.suggested_list_columns || [];
       const suggestedSearchFilters = (configuredSearchFilters.length || configuredSearchGroupBy.length) ? [] : result.suggested_search_filters || [];
       const suggestedSearchGroupBy = (configuredSearchFilters.length || configuredSearchGroupBy.length) ? [] : result.suggested_search_group_by || [];
-      listColumnsText.value = namesToText(configuredListColumns.length ? configuredListColumns : suggestedListColumns);
-      searchFiltersText.value = namesToText(configuredSearchFilters.length ? configuredSearchFilters : suggestedSearchFilters);
-      searchGroupByText.value = namesToText(configuredSearchGroupBy.length ? configuredSearchGroupBy : suggestedSearchGroupBy);
+      listColumnsText.value = namesToText(listSearchAudit.value?.has_business_list_config ? configuredListColumns : suggestedListColumns);
+      searchFiltersText.value = namesToText(listSearchAudit.value?.has_business_search_config ? configuredSearchFilters : suggestedSearchFilters);
+      searchGroupByText.value = namesToText(listSearchAudit.value?.has_business_search_config ? configuredSearchGroupBy : suggestedSearchGroupBy);
       listSearchBase.value = {
         list: normalizeNamesText(namesToText(configuredListColumns)),
         filter: normalizeNamesText(namesToText(configuredSearchFilters)),
@@ -104,12 +104,15 @@ export function useBusinessConfigPublishLifecycle(deps: Record<string, any>) {
       const listColumns = parseNames(listColumnsText.value);
       const searchFilters = parseNames(searchFiltersText.value);
       const searchGroupBy = parseNames(searchGroupByText.value);
-      if (listColumns.length) await stageUnifiedDraftItem({
+      const listChanged = normalizeNamesText(listColumnsText.value) !== listSearchBase.value.list;
+      const searchChanged = normalizeNamesText(searchFiltersText.value) !== listSearchBase.value.filter
+        || normalizeNamesText(searchGroupByText.value) !== listSearchBase.value.group;
+      if (listChanged) await stageUnifiedDraftItem({
         config_type: 'list', model: currentModel.value, view_type: 'tree', action_id: scopeAction.value, view_id: scopeView.value,
         role_key: scopeRole.value, target_key: contractTargetKey(currentModel.value, 'tree', scopeAction.value, scopeView.value),
         draft_payload: listContractPayload(listColumns), diff_summary: { summary: `列表列调整为 ${listColumns.length} 项` }, risk_level: 'low',
       });
-      if (searchFilters.length || searchGroupBy.length) await stageUnifiedDraftItem({
+      if (searchChanged) await stageUnifiedDraftItem({
         config_type: 'search', model: currentModel.value, view_type: 'search', action_id: scopeAction.value, view_id: scopeView.value,
         role_key: scopeRole.value, target_key: contractTargetKey(currentModel.value, 'search', scopeAction.value, scopeView.value),
         draft_payload: searchContractPayload(searchFilters, searchGroupBy), diff_summary: { summary: `搜索项 ${searchFilters.length}，分组项 ${searchGroupBy.length}` }, risk_level: 'low',
@@ -139,13 +142,18 @@ export function useBusinessConfigPublishLifecycle(deps: Record<string, any>) {
       const pivotDimensions = parseNames(pivotDimensionsText.value);
       const graphMeasures = parseNames(graphMeasuresText.value);
       const graphDimensions = parseNames(graphDimensionsText.value);
-      if (pivotMeasures.length || pivotDimensions.length) await stageUnifiedDraftItem({
+      const pivotChanged = normalizeNamesText(pivotMeasuresText.value) !== analysisBase.value.pivotMeasures
+        || normalizeNamesText(pivotDimensionsText.value) !== analysisBase.value.pivotDimensions;
+      const graphChanged = normalizeNamesText(graphMeasuresText.value) !== analysisBase.value.graphMeasures
+        || normalizeNamesText(graphDimensionsText.value) !== analysisBase.value.graphDimensions
+        || graphType.value !== analysisBase.value.graphType;
+      if (pivotChanged) await stageUnifiedDraftItem({
         config_type: 'analysis', model: currentModel.value, view_type: 'pivot', action_id: scopeAction.value, view_id: scopeView.value,
         role_key: scopeRole.value, target_key: contractTargetKey(currentModel.value, 'pivot', scopeAction.value, scopeView.value),
         draft_payload: analysisContractPayload('pivot', pivotMeasures, pivotDimensions, graphType.value),
         diff_summary: { summary: `透视指标 ${pivotMeasures.length}，维度 ${pivotDimensions.length}` }, risk_level: 'medium',
       });
-      if (graphMeasures.length || graphDimensions.length) await stageUnifiedDraftItem({
+      if (graphChanged) await stageUnifiedDraftItem({
         config_type: 'analysis', model: currentModel.value, view_type: 'graph', action_id: scopeAction.value, view_id: scopeView.value,
         role_key: scopeRole.value, target_key: contractTargetKey(currentModel.value, 'graph', scopeAction.value, scopeView.value),
         draft_payload: analysisContractPayload('graph', graphMeasures, graphDimensions, graphType.value),

@@ -41,9 +41,46 @@ function changeSetIntent(page, name, params = {}, expectOk = true) {
   return intent(page, name, { role_key: ROLE_KEY, ...params }, expectOk);
 }
 
-function orchestration(viewType, label, field = 'name') {
+function orchestration(viewType, label, field = 'name', visible = true) {
   const key = viewType === 'tree' ? 'columns' : 'fields';
-  return { view_orchestration: { source: 'smart_core.lowcode.business_config', views: { [viewType]: { [key]: [{ name: field, label, visible: true, sequence: 10 }] } } } };
+  return { view_orchestration: { source: 'smart_core.lowcode.business_config', views: { [viewType]: { [key]: [{ name: field, label, visible, sequence: 10 }] } } } };
+}
+
+function countNamedNodes(value, name) {
+  if (!value || typeof value !== 'object') return 0;
+  if (Array.isArray(value)) return value.reduce((sum, item) => sum + countNamedNodes(item, name), 0);
+  const own = String(value.name || '') === name ? 1 : 0;
+  return own + Object.values(value).reduce((sum, item) => sum + countNamedNodes(item, name), 0);
+}
+
+function previewEvidence(value, pathParts = [], rows = []) {
+  if (!value || typeof value !== 'object') return rows;
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => previewEvidence(item, [...pathParts, String(index)], rows));
+    return rows;
+  }
+  for (const [key, item] of Object.entries(value)) {
+    const pathValue = [...pathParts, key];
+    if (['name', 'source_kind', 'status'].includes(key) && /preview|change_set/i.test(String(item || ''))) {
+      rows.push({ path: pathValue.join('.'), value: String(item || '') });
+    }
+    previewEvidence(item, pathValue, rows);
+  }
+  return rows;
+}
+
+function keyEvidence(value, wanted, pathParts = [], rows = []) {
+  if (!value || typeof value !== 'object') return rows;
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => keyEvidence(item, wanted, [...pathParts, String(index)], rows));
+    return rows;
+  }
+  for (const [key, item] of Object.entries(value)) {
+    const pathValue = [...pathParts, key];
+    if (wanted.has(key) && ['string', 'number', 'boolean'].includes(typeof item)) rows.push({ path: pathValue.join('.'), value: item });
+    keyEvidence(item, wanted, pathValue, rows);
+  }
+  return rows;
 }
 
 await fs.mkdir(OUT, { recursive: true });
@@ -61,7 +98,12 @@ try {
   const opened = (await changeSetIntent(page, 'ui.business_config.change_set.open', { name: marker })).body.data;
   const token = opened.token;
   const targets = [
-    { config_type: 'form', target_key: `${marker}.form`, model: 'construction.contract', view_type: 'form', action_id: ACTION_ID, draft_payload: orchestration('form', `${marker}表单`) },
+    {
+      config_type: 'form', target_key: `${marker}.form`, model: 'construction.contract', view_type: 'form', action_id: ACTION_ID,
+      draft_payload: { view_orchestration: { source: 'smart_core.lowcode.business_config', views: { form: {
+        fields: [{ name: 'subject', label: `${marker}表单`, visible: false, sequence: 10 }],
+      } } } },
+    },
     { config_type: 'list', target_key: `${marker}.list`, model: 'construction.contract', view_type: 'tree', action_id: ACTION_ID, draft_payload: orchestration('tree', `${marker}列表`) },
     { config_type: 'menu', target_key: `${marker}.menu`, model: 'ir.ui.menu', draft_payload: { rows: [{ menu_id: MENU_ID, target_parent_menu_id: 0, custom_label: '', sequence_override: 0, visible: true, role_group_ids: [], note: marker }] } },
   ];
@@ -90,12 +132,42 @@ try {
   const preview = (await changeSetIntent(page, 'ui.business_config.change_set.preview', { change_set_token: token, device: 'desktop' })).body.data;
   const online = await intent(page, 'ui.contract.v2', { op: 'action_open', action_id: ACTION_ID, view_type: 'tree', client_type: 'web_pc', delivery_profile: 'full' });
   const draft = await intent(page, 'ui.contract.v2', { op: 'action_open', action_id: ACTION_ID, view_type: 'tree', client_type: 'web_pc', delivery_profile: 'full', preview_token: preview.preview.token, preview_role_key: ROLE_KEY });
+  const onlineForm = await intent(page, 'ui.contract.v2', { op: 'model', model: 'construction.contract', action_id: ACTION_ID, view_type: 'form', source_mode: 'backend_internal', client_type: 'web_pc', delivery_profile: 'full' });
+  const draftForm = await intent(page, 'ui.contract.v2', { op: 'model', model: 'construction.contract', action_id: ACTION_ID, view_type: 'form', source_mode: 'backend_internal', client_type: 'web_pc', delivery_profile: 'full', preview_token: preview.preview.token, preview_role_key: ROLE_KEY });
   const auditAfter = (await intent(page, 'ui.business_config.mutation_audit.snapshot')).body.data;
   const onlineJson = JSON.stringify(online.body?.data || {});
   const draftJson = JSON.stringify(draft.body?.data || {});
-  report.journeys['LC-J13'] = { preview_expires_at: preview.preview.expires_at, formal_mutations: preview.preview.formal_config_mutation_count, audit_before: auditBefore.count, audit_after: auditAfter.count };
+  const draftFormJson = JSON.stringify(draftForm.body?.data || {});
+  const onlineSubjectNodes = countNamedNodes(onlineForm.body?.data?.layoutContract?.containerTree || [], 'subject');
+  const draftSubjectNodes = countNamedNodes(draftForm.body?.data?.layoutContract?.containerTree || [], 'subject');
+  report.journeys['LC-J13'] = {
+    preview_expires_at: preview.preview.expires_at,
+    formal_mutations: preview.preview.formal_config_mutation_count,
+    audit_before: auditBefore.count,
+    audit_after: auditAfter.count,
+    list_status: draft.status,
+    list_error: draft.body?.error || null,
+    list_marker_present: draftJson.includes(`${marker}列表`),
+    list_preview_contract_present: draftJson.includes(`preview:${marker}.list`),
+    form_status: draftForm.status,
+    form_error: draftForm.body?.error || null,
+    form_marker_present: draftFormJson.includes(`${marker}表单`),
+    form_preview_contract_present: draftFormJson.includes(`preview:${marker}.form`),
+    form_preview_source_present: draftFormJson.includes('change_set_preview'),
+    form_preview_evidence: previewEvidence(draftForm.body?.data || {}).slice(0, 20),
+    online_subject_nodes: onlineSubjectNodes,
+    draft_subject_nodes: draftSubjectNodes,
+    form_route_evidence: keyEvidence(draftForm.body?.data || {}, new Set(['model', 'view_type', 'viewType', 'action_id'])).slice(0, 30),
+  };
   report.assertions.j13_preview_shows_draft = draftJson.includes(`${marker}列表`);
-  report.assertions.j13_online_unchanged = !onlineJson.includes(marker);
+  report.assertions.r01_form_preview_full_projection = draftForm.body?.ok === true
+    && draftForm.body?.data?.pageInfo?.model === 'construction.contract'
+    && draftForm.body?.data?.pageInfo?.viewType === 'form'
+    && onlineSubjectNodes > 0
+    && draftSubjectNodes === 0
+    && !draftFormJson.includes('AttributeError');
+  report.assertions.j13_online_unchanged = !onlineJson.includes(marker)
+    && !JSON.stringify(onlineForm.body?.data || {}).includes(marker);
   report.assertions.j13_zero_formal_writes = auditBefore.count === auditAfter.count && preview.preview.formal_config_mutation_count === 0;
 
   const validated = (await changeSetIntent(page, 'ui.business_config.change_set.validate', { change_set_token: token })).body.data;

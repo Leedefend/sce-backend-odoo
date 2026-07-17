@@ -75,7 +75,7 @@ class UIBusinessConfigChangeSet(models.Model):
         requested_role = str(role_key or "").strip()
         if requested_role != str(self.role_key or "").strip():
             raise ValidationError("CHANGE_SET_ROLE_MISMATCH")
-        if self._is_expired():
+        if self.state in ACTIVE_CHANGE_SET_STATES and self._is_expired():
             raise ValidationError("CHANGE_SET_EXPIRED")
         return self
 
