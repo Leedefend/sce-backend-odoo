@@ -13,16 +13,21 @@ const AxeBuilder = axeModule.default || axeModule;
 const BASE_URL = process.env.FRONTEND_URL || 'http://127.0.0.1:5175';
 const DB_NAME = process.env.DB_NAME || 'sc_frontend_acceptance';
 const PASSWORD = process.env.ROLE_SMOKE_PASSWORD || 'demo';
+const FORM_CANVAS_AUDIT = Boolean(process.env.FE_PRO_04WR2_PHASE);
 const WORKSPACE_COMPAT_AUDIT = Boolean(process.env.FE_PRO_04WR1_PHASE);
-const WORKSPACE_AUDIT = WORKSPACE_COMPAT_AUDIT || Boolean(process.env.FE_PRO_04WR_PHASE);
+const WORKSPACE_AUDIT = FORM_CANVAS_AUDIT || WORKSPACE_COMPAT_AUDIT || Boolean(process.env.FE_PRO_04WR_PHASE);
 const WIDTH_AUDIT = Boolean(process.env.FE_PRO_04W_PHASE);
-const PHASE_SOURCE = WORKSPACE_COMPAT_AUDIT
+const PHASE_SOURCE = FORM_CANVAS_AUDIT
+  ? process.env.FE_PRO_04WR2_PHASE
+  : WORKSPACE_COMPAT_AUDIT
   ? process.env.FE_PRO_04WR1_PHASE
   : WORKSPACE_AUDIT
   ? process.env.FE_PRO_04WR_PHASE
   : (WIDTH_AUDIT ? process.env.FE_PRO_04W_PHASE : process.env.FE_PRO_04_PHASE);
 const PHASE = PHASE_SOURCE === 'final' ? 'final' : 'baseline';
-const ROOT = WORKSPACE_COMPAT_AUDIT
+const ROOT = FORM_CANVAS_AUDIT
+  ? (process.env.FE_PRO_04WR2_ARTIFACT_ROOT || 'artifacts/frontend-professional/fe-pro-04wr2')
+  : WORKSPACE_COMPAT_AUDIT
   ? (process.env.FE_PRO_04WR1_ARTIFACT_ROOT || 'artifacts/frontend-professional/fe-pro-04wr1')
   : WORKSPACE_AUDIT
   ? (process.env.FE_PRO_04WR_ARTIFACT_ROOT || 'artifacts/frontend-professional/fe-pro-04wr')
@@ -32,7 +37,15 @@ const ROOT = WORKSPACE_COMPAT_AUDIT
 const OUTPUT = path.join(ROOT, PHASE);
 const REPORT = path.join(ROOT, `${PHASE}-report.json`);
 const TARGETS = JSON.parse(process.env.FRONTEND_DELIVERY_HARDENING_TARGETS_JSON || '{}');
-const VIEWPORTS = WORKSPACE_COMPAT_AUDIT
+const VIEWPORTS = FORM_CANVAS_AUDIT
+  ? [
+      { width: 1440, height: 900 },
+      { width: 1920, height: 1080 },
+      { width: 2560, height: 1440 },
+      { width: 768, height: 1024 },
+      { width: 390, height: 844 },
+    ]
+  : WORKSPACE_COMPAT_AUDIT
   ? [
       { width: 1920, height: 1080 },
       { width: 390, height: 844 },
@@ -59,7 +72,9 @@ const VIEWPORTS = WORKSPACE_COMPAT_AUDIT
       { width: 768, height: 1024 },
       { width: 390, height: 844 },
     ];
-const DARK_CASES = new Set(WORKSPACE_COMPAT_AUDIT
+const DARK_CASES = new Set(FORM_CANVAS_AUDIT
+  ? ['payment_request_create', 'contract_form']
+  : WORKSPACE_COMPAT_AUDIT
   ? []
   : WORKSPACE_AUDIT
   ? ['contract_list', 'contract_detail', 'contract_form', 'payment_request_create', 'permission_denied']
@@ -90,6 +105,10 @@ const ALL_CASES = [
   { key: 'contract_form', role: 'demo_role_pm', pageKind: 'edit', expectedWidthMode: 'standard', route: () => formRoute(TARGETS.contract) },
   { key: 'payment_request_create', role: 'demo_role_finance', pageKind: 'create', expectedWidthMode: 'focused', mode: 'create', route: () => recordRoute(TARGETS.work_settlement) },
   { key: 'payment_request_edit', role: 'demo_role_finance', route: () => formRoute(TARGETS.payment_request) },
+  { key: 'contract_create', role: 'demo_role_pm', pageKind: 'create', route: () => formRoute(TARGETS.contract, 'new') },
+  { key: 'relationship_form', role: 'demo_role_finance', pageKind: 'edit', route: () => formRoute(TARGETS.payment_request) },
+  { key: 'x2many_form', role: 'demo_role_pm', pageKind: 'edit', route: () => formRoute(TARGETS.contract) },
+  { key: 'long_text_form', role: 'demo_role_pm', pageKind: 'edit', route: () => formRoute(TARGETS.contract) },
   { key: 'permission_denied', role: 'demo_role_project_a_member', mode: 'denied', route: () => recordRoute(TARGETS.payment_request) },
   { key: 'not_found', role: 'demo_role_finance', mode: 'not-found', route: () => `/r/${TARGETS.payment_request.model}/999999?action_id=${TARGETS.payment_request.action_id}&menu_id=${TARGETS.payment_request.menu_id}` },
   { key: 'conflict', role: 'demo_role_finance', mode: 'conflict', route: () => recordRoute(TARGETS.payment_request) },
@@ -99,15 +118,24 @@ const ALL_CASES = [
 const WIDTH_CASE_KEYS = new Set(['project_list', 'contract_list', 'payment_request_list', 'payment_execution_list', 'contract_detail', 'settlement_detail', 'payment_request_detail', 'contract_form', 'payment_request_create', 'my_work']);
 const WORKSPACE_CASE_KEYS = new Set(['payment_request_list', 'contract_list', 'payment_execution_list', 'contract_detail', 'settlement_detail', 'payment_request_detail', 'contract_form', 'payment_request_create']);
 const WORKSPACE_COMPAT_CASE_KEYS = new Set(['payment_request_list', 'contract_detail', 'contract_form', 'payment_request_create']);
-const CASE_FILTER = String(process.env.FE_PRO_04_CASE || process.env.FE_PRO_04W_CASE || process.env.FE_PRO_04WR_CASE || '').trim();
-const PROFILE_CASES = WORKSPACE_COMPAT_AUDIT
+const FORM_CANVAS_CASE_KEYS = new Set(['payment_request_create', 'payment_request_edit', 'contract_create', 'contract_form', 'contract_detail', 'relationship_form', 'x2many_form', 'long_text_form']);
+const CASE_FILTER = String(process.env.FE_PRO_04_CASE || process.env.FE_PRO_04W_CASE || process.env.FE_PRO_04WR_CASE || process.env.FE_PRO_04WR2_CASE || '').trim();
+const PROFILE_CASES = FORM_CANVAS_AUDIT
+  ? ALL_CASES.filter((entry) => FORM_CANVAS_CASE_KEYS.has(entry.key))
+  : WORKSPACE_COMPAT_AUDIT
   ? ALL_CASES.filter((entry) => WORKSPACE_COMPAT_CASE_KEYS.has(entry.key))
   : WORKSPACE_AUDIT
   ? ALL_CASES.filter((entry) => WORKSPACE_CASE_KEYS.has(entry.key))
   : (WIDTH_AUDIT ? ALL_CASES.filter((entry) => WIDTH_CASE_KEYS.has(entry.key)) : ALL_CASES);
 const CASES = CASE_FILTER ? PROFILE_CASES.filter((entry) => entry.key === CASE_FILTER) : PROFILE_CASES;
 check(CASES.length > 0, `unknown FE_PRO_04_CASE=${CASE_FILTER}`);
-const DARK_ONLY_CASES = WORKSPACE_AUDIT
+const DARK_ONLY_CASES = FORM_CANVAS_AUDIT
+  ? [
+      { key: 'required_error', role: 'demo_role_finance', pageKind: 'create', mode: 'required-error', route: () => recordRoute(TARGETS.work_settlement) },
+      { key: 'conflict', role: 'demo_role_finance', pageKind: 'detail', mode: 'conflict', route: () => recordRoute(TARGETS.payment_request) },
+      { key: 'relationship_dialog', role: 'demo_role_pm', pageKind: 'create', mode: 'relation-dialog', route: () => formRoute(TARGETS.contract, 'new') },
+    ]
+  : WORKSPACE_AUDIT
   ? [{ key: 'permission_denied', role: 'demo_role_project_a_member', mode: 'denied', route: () => recordRoute(TARGETS.payment_request) }]
   : [{ key: 'approval_dialog', role: 'demo_role_finance', mode: 'dialog', route: () => recordRoute(TARGETS.journey_request) }];
 
@@ -175,7 +203,7 @@ async function prepareCase(page, entry) {
       'main .product-list-header__search input[type="search"]:visible',
     ].join(', ')).first().waitFor({ state: 'visible', timeout: 45000 });
   }
-  if (entry.mode === 'create') {
+  if (['create', 'required-error'].includes(entry.mode)) {
     await page.locator('.financial-workspace[data-workspace-kind="settlement"]').waitFor({ timeout: 45000 });
     await page.getByRole('button', { name: '新建付款申请', exact: true }).click();
     await page.waitForURL((url) => url.pathname.includes('/f/payment.request/new'), { timeout: 45000 });
@@ -190,6 +218,23 @@ async function prepareCase(page, entry) {
     await page.locator('.financial-workspace[data-workspace-kind="payment_request"]').waitFor({ timeout: 45000 });
     await page.locator('.template-page-header-actions button.sc-btn-primary').filter({ hasText: /^提交$/ }).first().click();
     await page.getByRole('dialog').waitFor({ timeout: 15000 });
+  }
+  if (FORM_CANVAS_AUDIT && entry.pageKind !== 'detail') {
+    await page.locator('[data-form-canvas]').first().waitFor({ state: 'visible', timeout: 45000 });
+  }
+  if (entry.mode === 'required-error') {
+    const required = page.locator('[data-form-canvas] [data-field-key] input[type="number"][aria-required="true"]:visible').first();
+    await required.waitFor({ state: 'visible', timeout: 15000 });
+    await required.fill('');
+    await page.locator('[data-product-page-mode="form"] button').filter({ hasText: /保存|创建/ }).first().click();
+    await page.locator('[data-form-error-summary], [role="alert"]').first().waitFor({ state: 'visible', timeout: 15000 });
+  }
+  if (entry.mode === 'relation-dialog') {
+    const relationInput = page.locator('[data-form-canvas] .many2one-combobox input:visible').first();
+    await relationInput.waitFor({ state: 'visible', timeout: 15000 });
+    await relationInput.focus();
+    await page.locator('.many2one-action:visible').filter({ hasText: /搜索更多/ }).first().click();
+    await page.locator('.relation-dialog').waitFor({ state: 'visible', timeout: 15000 });
   }
   const expectedHeading = {
     denied: '无权访问',
@@ -400,6 +445,7 @@ async function workspaceDomMetrics(page) {
       ? [...router.querySelectorAll('*')]
           .filter(visible)
           .filter((node) => {
+            if (window.getComputedStyle(node).position === 'fixed') return false;
             const scrollOwner = node.closest('.table, .sc-data-table__scroll, .data-table, .sc-table-shell');
             if (!scrollOwner || scrollOwner === node) return true;
             const overflow = window.getComputedStyle(scrollOwner).overflowX;
@@ -431,6 +477,65 @@ async function workspaceDomMetrics(page) {
       table_utilization_ratio: tableWrapper && actualTable && tableWrapper.client_width > 0
         ? Number((actualTable.width / tableWrapper.client_width).toFixed(4))
         : null,
+    };
+  });
+}
+
+async function formCanvasMetrics(page) {
+  return page.evaluate(() => {
+    const visible = (node) => {
+      if (!(node instanceof HTMLElement)) return false;
+      const style = window.getComputedStyle(node);
+      const rect = node.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden';
+    };
+    const first = (selector) => [...document.querySelectorAll(selector)].find(visible) || null;
+    const rect = (node) => node?.getBoundingClientRect() || null;
+    const primary = first('[data-workspace-primary-content]');
+    const canvas = first('[data-form-canvas]');
+    const sections = [...document.querySelectorAll('[data-form-canvas] .native-container--group, [data-form-canvas] .template-form-section')].filter(visible);
+    const grids = [...document.querySelectorAll('[data-form-canvas] .template-form-section-grid')].filter(visible);
+    const fields = [...document.querySelectorAll('[data-form-canvas] .template-form-section-grid > .field')].filter(visible);
+    const primaryRect = rect(primary);
+    const canvasRect = rect(canvas);
+    const primaryStyle = primary ? window.getComputedStyle(primary) : null;
+    const canvasStyle = canvas ? window.getComputedStyle(canvas) : null;
+    const primaryPaddingLeft = Number.parseFloat(primaryStyle?.paddingLeft || '0') || 0;
+    const primaryPaddingRight = Number.parseFloat(primaryStyle?.paddingRight || '0') || 0;
+    const canvasPaddingLeft = Number.parseFloat(canvasStyle?.paddingLeft || '0') || 0;
+    const canvasPaddingRight = Number.parseFloat(canvasStyle?.paddingRight || '0') || 0;
+    const sectionWidths = sections.map((node) => rect(node)?.width || 0).filter(Boolean);
+    const gridWidths = grids.map((node) => rect(node)?.width || 0).filter(Boolean);
+    const columnCounts = grids.map((node) => {
+      const columns = window.getComputedStyle(node).gridTemplateColumns;
+      return columns && columns !== 'none' ? columns.split(/\s+/).filter(Boolean).length : 0;
+    }).filter(Boolean);
+    const normalFields = fields.filter((node) => !node.classList.contains('field--full') && !node.classList.contains('field--wide'));
+    const normalWidths = normalFields.map((node) => rect(node)?.width || 0).filter(Boolean);
+    const controls = [...document.querySelectorAll('[data-form-canvas] .field :is(input, select, textarea)')].filter(visible);
+    const controlWidths = controls.map((node) => rect(node)?.width || 0).filter(Boolean);
+    const canvasWidth = canvasRect?.width || 0;
+    const primaryWidth = primaryRect?.width || 0;
+    const primaryAvailableWidth = Math.max(0, primaryWidth - primaryPaddingLeft - primaryPaddingRight);
+    const canvasAvailableWidth = Math.max(0, canvasWidth - canvasPaddingLeft - canvasPaddingRight);
+    return {
+      form_canvas_width: Number(canvasWidth.toFixed(2)),
+      primary_content_width: Number(primaryWidth.toFixed(2)),
+      primary_available_width: Number(primaryAvailableWidth.toFixed(2)),
+      canvas_utilization_ratio: primaryAvailableWidth ? Number((canvasWidth / primaryAvailableWidth).toFixed(4)) : null,
+      form_section_min_width: sectionWidths.length ? Number(Math.min(...sectionWidths).toFixed(2)) : null,
+      form_section_utilization_ratio: canvasAvailableWidth && sectionWidths.length ? Number((Math.min(...sectionWidths) / canvasAvailableWidth).toFixed(4)) : null,
+      field_grid_min_width: gridWidths.length ? Number(Math.min(...gridWidths).toFixed(2)) : null,
+      field_column_counts: [...new Set(columnCounts)].sort((a, b) => a - b),
+      max_normal_field_wrapper_width: normalWidths.length ? Number(Math.max(...normalWidths).toFixed(2)) : null,
+      max_input_control_width: controlWidths.length ? Number(Math.max(...controlWidths).toFixed(2)) : null,
+      full_span_field_count: fields.filter((node) => node.classList.contains('field--full')).length,
+      wide_span_field_count: fields.filter((node) => node.classList.contains('field--wide')).length,
+      relation_field_count: fields.filter((node) => node.querySelector('.many2one-widget-shell, .relation-field')).length,
+      x2many_field_count: fields.filter((node) => node.querySelector('.x2many-relation, .x2many-field, table')).length,
+      right_unused_space: primaryRect && canvasRect ? Number(Math.max(0, primaryRect.right - primaryPaddingRight - canvasRect.right).toFixed(2)) : null,
+      error_summary_width: Number((rect(first('[data-form-error-summary], .product-form-error-summary'))?.width || 0).toFixed(2)),
+      action_bar_width: Number((rect(first('[data-workspace-action-bar], .record-action-bar, .sc-action-bar'))?.width || 0).toFixed(2)),
     };
   });
 }
@@ -494,6 +599,7 @@ async function captureEntry(browser, entry, theme = 'light') {
       ...(await visualMetrics(page, viewport.width === 1440)),
       ...(await pageWidthMetrics(page)),
       ...(WORKSPACE_AUDIT ? await workspaceDomMetrics(page) : {}),
+      ...(FORM_CANVAS_AUDIT ? await formCanvasMetrics(page) : {}),
     });
   }
   await context.close();
@@ -536,7 +642,9 @@ async function main() {
       row.screenshot_sha256 = digest;
     }
     const report = {
-      schema_version: WORKSPACE_COMPAT_AUDIT
+      schema_version: FORM_CANVAS_AUDIT
+        ? 'frontend_form_canvas_wide_grid_audit.v1'
+        : WORKSPACE_COMPAT_AUDIT
         ? 'frontend_workspace_layout_contract_compatibility_audit.v1'
         : WORKSPACE_AUDIT
         ? 'frontend_workspace_content_alignment_audit.v1'
@@ -586,13 +694,19 @@ async function main() {
         }),
       };
       fs.writeFileSync(path.join(ROOT, 'visual-regression-report.json'), `${JSON.stringify(comparison, null, 2)}\n`);
-      const expectedLightRows = WORKSPACE_COMPAT_AUDIT
-        ? 6
+      const expectedLightRows = FORM_CANVAS_AUDIT
+        ? CASES.length * (VIEWPORTS.length + 1)
+        : WORKSPACE_COMPAT_AUDIT
+        ? CASES.reduce((count, entry) => count + (['contract_detail', 'contract_form'].includes(entry.key) ? 1 : 2), 0)
         : WORKSPACE_AUDIT
         ? CASES.length * (VIEWPORTS.length + 1)
         : CASES.length * VIEWPORTS.length;
       check(pages.filter((row) => row.theme === 'light').length === expectedLightRows, 'light visual matrix incomplete');
-      check(pages.filter((row) => row.theme === 'dark').length === (WORKSPACE_COMPAT_AUDIT ? 0 : ((WORKSPACE_AUDIT || WIDTH_AUDIT) ? 5 : DARK_CASES.size)), 'dark visual sample incomplete');
+      const expectedDarkRows = WORKSPACE_COMPAT_AUDIT
+        ? 0
+        : CASES.filter((entry) => DARK_CASES.has(entry.key)).length
+          + ((WORKSPACE_AUDIT || !WIDTH_AUDIT) ? DARK_ONLY_CASES.length : 0);
+      check(pages.filter((row) => row.theme === 'dark').length === expectedDarkRows, 'dark visual sample incomplete');
       check(!pages.some((row) => row.h1_count !== 1 || row.main_count !== 1), 'page landmark hierarchy failed');
       check(!pages.some((row) => row.font_level_count > 4), 'page typography hierarchy exceeds four visible levels');
       check(!pages.some((row) => row.viewport === '390x844' && row.desktop_record_table_visible > 0), 'desktop record table leaked into mobile layout');
@@ -619,6 +733,13 @@ async function main() {
         check(!lightRows.some((row) => row.viewport_width === 2560 && row.frame_width > 1921), 'workspace frame exceeded 1920px');
         check(!lightRows.some((row) => row.page_overflow > 1 || row.router_child_overflow_count > 0), 'document or router child overflow found');
         check(!lightRows.some((row) => row.table_utilization_ratio !== null && row.table_utilization_ratio < 0.98), 'table utilization below 98%');
+        if (FORM_CANVAS_AUDIT) {
+          const formRows = lightRows.filter((row) => row.form_canvas_width > 0);
+          check(!formRows.some((row) => row.canvas_utilization_ratio < (row.viewport_width === 390 ? 0.98 : 0.95)), 'form canvas utilization below threshold');
+          check(!formRows.some((row) => row.viewport_width >= 1440 && row.form_section_utilization_ratio < 0.95), 'desktop form section utilization below 95%');
+          check(!formRows.some((row) => row.max_normal_field_wrapper_width > 720), 'normal field wrapper exceeded 720px');
+          check(!formRows.some((row) => row.viewport_width === 390 && (row.field_column_counts.length !== 1 || row.field_column_counts[0] !== 1)), 'mobile form grid is not single-column');
+        }
       } else if (WIDTH_AUDIT) {
         const lightRows = pages.filter((row) => row.theme === 'light');
         check(!lightRows.some((row) => row.width_mode !== row.expected_width_mode), 'page width mode contract mismatch');

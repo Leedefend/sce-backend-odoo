@@ -59,7 +59,6 @@
 .sc-content-layout--focused-form,
 .sc-content-layout--reading { --sc-content-layout-inline-size: 100%; }
 
-.sc-content-layout--focused-form { --sc-form-field-content-max: var(--sc-content-focused-form-max); }
 .sc-content-layout--reading { --sc-reading-content-max: var(--sc-content-reading-max); }
 
 .topbar-context {

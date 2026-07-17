@@ -5,7 +5,7 @@
       <slot name="action" />
     </div>
     <p v-if="hint" class="template-form-section-hint">{{ hint }}</p>
-    <div class="template-form-section-grid" :style="gridStyle">
+    <div :class="['template-form-section-grid', `template-form-section-grid--columns-${columns}`]">
       <template v-if="fields.length">
         <div
           v-for="field in fields"
@@ -391,10 +391,6 @@ function fieldDescribedBy(field: FormSectionFieldSchema) {
 const slots = useSlots();
 const toneClass = computed(() => (props.tone === 'advanced' ? 'template-form-section--advanced' : 'template-form-section--core'));
 const showHead = computed(() => Boolean(props.title || slots.action));
-const gridStyle = computed(() => ({
-  gridTemplateColumns: props.columns === 1 ? '1fr' : `repeat(${props.columns === 3 ? 3 : 2}, minmax(0, 1fr))`,
-}));
-
 function isBaseFieldType(type: TemplateFieldType) {
   return [
     'char',
@@ -416,11 +412,15 @@ function isRelationEditorField(field: FormSectionFieldSchema) {
 }
 
 function defaultSpanClass(type: TemplateFieldType) {
-  return isMultilineField(type) ? 'field--full' : 'field--half';
+  return isMultilineField(type) || isRelationEditorType(type) ? 'field--full' : 'field--normal';
 }
 
 function isMultilineField(type: TemplateFieldType) {
   return ['text', 'html'].includes(String(type || '').trim().toLowerCase());
+}
+
+function isRelationEditorType(type: TemplateFieldType) {
+  return ['many2many', 'one2many'].includes(String(type || '').trim().toLowerCase());
 }
 
 function inputType(type: TemplateFieldType) {
@@ -445,9 +445,7 @@ function fieldIdentity(field: FormSectionFieldSchema) {
 }
 
 function fieldSpanClass(field: FormSectionFieldSchema) {
-  const span = field.spanClass || defaultSpanClass(field.type);
-  if (props.columns === 1 && span.includes('field--wide')) return span.replace('field--wide', 'field--full');
-  return span;
+  return field.spanClass || defaultSpanClass(field.type);
 }
 
 function fieldClass(field: FormSectionFieldSchema) {
@@ -692,6 +690,7 @@ function emitFieldSelect(field: FormSectionFieldSchema, event?: Event) {
 .template-form-section {
   grid-column: 1 / -1;
   min-width: 0;
+  container-type: inline-size;
   border: 0;
   border-top: 1px solid var(--sc-app-border);
   border-radius: 0;
@@ -754,6 +753,7 @@ function emitFieldSelect(field: FormSectionFieldSchema, event?: Event) {
 
 .template-form-section-grid {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   row-gap: 16px;
   column-gap: 24px;
   min-width: 0;
@@ -818,12 +818,14 @@ function emitFieldSelect(field: FormSectionFieldSchema, event?: Event) {
   background: color-mix(in srgb, var(--sc-app-muted-bg) 72%, transparent);
 }
 
+.field--compact,
+.field--normal,
 .field--half {
   grid-column: span 1;
 }
 
 .field--wide {
-  grid-column: span 2;
+  grid-column: 1 / -1;
 }
 
 .field--full {
@@ -833,6 +835,23 @@ function emitFieldSelect(field: FormSectionFieldSchema, event?: Event) {
 .field--large .input,
 .field--large textarea.input {
   min-height: 92px;
+}
+
+@container (min-width: 680px) {
+  .template-form-section-grid--columns-2,
+  .template-form-section-grid--columns-3 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .field--wide {
+    grid-column: span 2;
+  }
+}
+
+@container (min-width: 1240px) {
+  .template-form-section-grid--columns-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .field-label-row {
@@ -1157,16 +1176,6 @@ select.input {
 }
 
 @media (max-width: 860px) {
-  .template-form-section-grid {
-    grid-template-columns: 1fr !important;
-    row-gap: 16px;
-    column-gap: 0;
-  }
-
-  .field--wide {
-    grid-column: 1 / -1;
-  }
-
   .native-date-range {
     grid-template-columns: 1fr;
   }

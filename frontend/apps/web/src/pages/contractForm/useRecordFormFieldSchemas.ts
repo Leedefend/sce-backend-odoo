@@ -58,7 +58,7 @@ export function useRecordFormFieldSchemas(context: {
   const layoutNodes=computed<LayoutNode[]>(()=>buildLegacyLayoutNodes({fields:context.contract.value?.fields||{},order:context.contract.value?.views?.form?.layout||[],containerStatus:collectUnifiedPageContractV2FieldContainerStatus(context.contract.value),visibleFields:context.contractVisibleFields.value,fallbackFieldNames:[...context.coreFieldNames.value,...context.advancedFieldNames.value],isCreate:!context.recordId.value,readonly:context.recordId.value?!context.rights.value.write:!context.rights.value.create,resolveFieldLabel:context.contractFieldLabel,evaluatePolicy:(name,descriptor)=>evaluateFieldPolicy(context.contract.value,name,{required:Boolean(descriptor?.required),readonly:Boolean(descriptor?.readonly)},context.evaluatePolicyContext.value),runtimeState:(name)=>context.runtimeFieldStates.value[name]||{invisible:false,readonly:false,required:false}}));
   buildSectionFieldSchemas=createFormSectionFieldSchemaBuilder({
     resolveFieldType:(descriptor)=>fieldType(descriptor)||'char',resolveRequired:(field)=>Boolean((field as LayoutNode).required),
-    resolveSpanClass:(field)=>(field as LayoutNode).spanClass||resolveFieldSpanClass({fieldName:field.name,fieldType:fieldType(field.descriptor)}),
+    resolveSpanClass:(field)=>(field as LayoutNode).spanClass||resolveFieldSpanClass({fieldType:fieldType(field.descriptor)}),
     resolveRawValue:(name)=>context.formData[name],resolveMany2oneValue:context.many2oneValue,
     normalizeDateInputValue:context.toDateInputValue,normalizeDatetimeInputValue:context.toDatetimeInputValue,
     resolveTextInputValue:context.inputFieldValue,resolveInputPlaceholder,
