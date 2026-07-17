@@ -13,7 +13,7 @@
       </div>
       <div class="header-actions">
         <span v-if="dirtyCount" class="dirty-count">{{ dirtyCount }} 项未保存</span>
-        <button
+        <ScButton
           v-for="action in pageGlobalActions"
           :key="action.key"
           type="button"
@@ -22,17 +22,17 @@
           @click="executeGlobalPageAction(action.key)"
         >
           {{ action.label }}
-        </button>
-        <button v-if="canReturnToBusinessConfig" type="button" class="ghost" @click="returnToBusinessConfig">
+        </ScButton>
+        <ScButton v-if="canReturnToBusinessConfig" type="button" class="ghost" @click="returnToBusinessConfig">
           返回配置工作台
-        </button>
-        <button type="button" class="ghost" :disabled="loading || saving" @click="loadPanel()">刷新菜单配置</button>
-        <button type="button" class="ghost" :disabled="loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('custom')">
+        </ScButton>
+        <ScButton type="button" class="ghost" :disabled="loading || saving" @click="loadPanel()">刷新菜单配置</ScButton>
+        <ScButton type="button" class="ghost" :disabled="loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('custom')">
           新增一级菜单
-        </button>
-        <button type="button" class="primary" :disabled="!dirtyCount || saving" @click="saveChanges">
+        </ScButton>
+        <ScButton type="button" class="primary" :disabled="!dirtyCount || saving" @click="requestSaveChanges">
           {{ saving ? '保存中...' : '保存菜单配置' }}
-        </button>
+        </ScButton>
       </div>
     </header>
 
@@ -128,9 +128,9 @@
           目标版本包含 {{ selectedRollbackVersion.summary.policy_count }} 项配置，
           隐藏 {{ selectedRollbackVersion.summary.hidden_count }}，移动 {{ selectedRollbackVersion.summary.moved_count }}。
         </span>
-        <button type="button" class="danger" :disabled="rollbackButtonDisabled" @click="rollbackSelectedMenuConfiguration">
+        <ScButton type="button" class="danger" :disabled="rollbackButtonDisabled" @click="requestRollbackMenuConfiguration">
           {{ rollingBack ? '回滚中...' : rollbackButtonText }}
-        </button>
+        </ScButton>
       </div>
       <div v-else class="version-empty">
         保存菜单配置后会自动生成已发布版本；没有历史版本时，当前菜单配置不能回滚。
@@ -140,10 +140,10 @@
       <div class="create-panel-header">
         <strong>新增菜单入口</strong>
         <div class="create-shortcuts">
-          <button type="button" class="link-button" :disabled="!selectedMenu" @click="openCreateMenu('sibling')">新增同级菜单</button>
-          <button type="button" class="link-button" :disabled="!selectedMenu" @click="openCreateMenu('child')">新增下级菜单</button>
-          <button type="button" class="link-button" :disabled="!selectedMenu" @click="openCreateMenu('copy')">复制当前菜单入口</button>
-          <button type="button" class="link-button" @click="createPanelOpen = false">收起新增入口</button>
+          <ScButton type="button" class="link-button" :disabled="!selectedMenu" @click="openCreateMenu('sibling')">新增同级菜单</ScButton>
+          <ScButton type="button" class="link-button" :disabled="!selectedMenu" @click="openCreateMenu('child')">新增下级菜单</ScButton>
+          <ScButton type="button" class="link-button" :disabled="!selectedMenu" @click="openCreateMenu('copy')">复制当前菜单入口</ScButton>
+          <ScButton type="button" class="link-button" @click="createPanelOpen = false">收起新增入口</ScButton>
         </div>
       </div>
       <div class="create-form">
@@ -184,9 +184,9 @@
       </div>
       <div class="create-panel-footer">
         <span>复制入口会沿用已有菜单打开的页面；长期固定入口需沉淀到用户模块。</span>
-        <button type="button" class="primary" :disabled="creatingMenu || !createForm.name.trim()" @click="createMenuEntry">
+        <ScButton type="button" class="primary" :disabled="creatingMenu || !createForm.name.trim()" @click="createMenuEntry">
           {{ creatingMenu ? '创建中...' : '创建菜单' }}
-        </button>
+        </ScButton>
       </div>
     </section>
 
@@ -206,18 +206,18 @@
           <input v-model="searchText" type="search" placeholder="搜索菜单名称或路径" />
           <div class="tree-search-summary">
             <span>{{ treeSearchSummary }}</span>
-            <button
+            <ScButton
               type="button"
               class="link-button tree-clear-filter"
               :disabled="!treeViewFiltered"
               @click="clearTreeFilter"
             >
               清空筛选
-            </button>
+            </ScButton>
           </div>
         </div>
         <div class="tree-state-tabs" aria-label="菜单状态筛选">
-          <button
+          <ScButton
             v-for="option in menuStateFilterOptions"
             :key="option.value"
             type="button"
@@ -226,17 +226,17 @@
           >
             <span>{{ option.label }}</span>
             <b>{{ option.count }}</b>
-          </button>
+          </ScButton>
         </div>
         <div class="tree-shortcuts">
-          <button
+          <ScButton
             type="button"
             class="tree-node all"
             :class="{ active: selectedMenuId === 0 }"
             @click="selectMenu(0)"
           >
             全部菜单
-          </button>
+          </ScButton>
         </div>
         <div class="tree-scroll">
           <MenuConfigTree
@@ -360,7 +360,7 @@
                 :title="roleGroupName(groupId)"
               >
                 {{ roleGroupName(groupId) }}
-                <button type="button" title="移除业务角色" @click="removeRoleGroup(selectedMenu.id, groupId)">移除</button>
+                <ScButton type="button" title="移除业务角色" @click="removeRoleGroup(selectedMenu.id, groupId)">移除</ScButton>
               </span>
             </div>
             <select
@@ -389,30 +389,30 @@
             </div>
             <div class="group-scope-actions">
               <span class="group-scope-count">{{ scopedRoleGroupSelectionText(selectedMenu.id) }}</span>
-              <button
+              <ScButton
                 type="button"
                 class="link-button"
                 :disabled="!scopedUnselectedRoleGroupCount(selectedMenu.id)"
                 @click="selectScopedRoleGroups(selectedMenu.id)"
               >
                 勾选当前分组
-              </button>
-              <button
+              </ScButton>
+              <ScButton
                 type="button"
                 class="link-button"
                 :disabled="!scopedSelectedRoleGroupCount(selectedMenu.id)"
                 @click="clearScopedRoleGroups(selectedMenu.id)"
               >
                 清空当前分组
-              </button>
-              <button
+              </ScButton>
+              <ScButton
                 v-if="selectedDraft.role_group_ids.length"
                 type="button"
                 class="link-button"
                 @click="clearRoleGroups(selectedMenu.id)"
               >
                 恢复所有角色可见
-              </button>
+              </ScButton>
             </div>
           </div>
         </section>
@@ -447,10 +447,10 @@
           </div>
           <div class="menu-side-section menu-side-action-group">
             <span class="menu-side-section-title">新增入口</span>
-            <button type="button" class="ghost" :disabled="!selectedMenu || loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('sibling')">新增同级菜单</button>
-            <button type="button" class="ghost" :disabled="!selectedMenu || loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('child')">新增下级菜单</button>
-            <button type="button" class="ghost" :disabled="!selectedMenu || loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('copy')">复制当前菜单入口</button>
-            <button
+            <ScButton type="button" class="ghost" :disabled="!selectedMenu || loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('sibling')">新增同级菜单</ScButton>
+            <ScButton type="button" class="ghost" :disabled="!selectedMenu || loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('child')">新增下级菜单</ScButton>
+            <ScButton type="button" class="ghost" :disabled="!selectedMenu || loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('copy')">复制当前菜单入口</ScButton>
+            <ScButton
               type="button"
               class="ghost danger-ghost"
               :disabled="!canDeleteSelectedMenu || loading || saving || creatingMenu || deletingMenu"
@@ -458,27 +458,27 @@
               @click="deleteSelectedMenu"
             >
               {{ deletingMenu ? '删除中...' : '删除新增菜单' }}
-            </button>
+            </ScButton>
             <p class="action-hint">{{ selectedMenuDeleteHint }}</p>
           </div>
           <div class="menu-side-section menu-side-action-group">
             <span class="menu-side-section-title">批量维护</span>
             <p>用于连续维护多条菜单；日常配置优先使用当前菜单面板。</p>
-            <button type="button" class="ghost" @click="bulkPanelOpen = !bulkPanelOpen">
+            <ScButton type="button" class="ghost" @click="bulkPanelOpen = !bulkPanelOpen">
               {{ bulkPanelOpen ? '收起批量维护表格' : '展开批量维护表格' }}
-            </button>
+            </ScButton>
           </div>
           <div class="menu-side-section menu-side-action-group menu-utility-section">
             <span class="menu-side-section-title">检查发布</span>
-            <button type="button" class="ghost" @click="showGuide = !showGuide">
+            <ScButton type="button" class="ghost" @click="showGuide = !showGuide">
               {{ showGuide ? '收起菜单配置说明' : '查看菜单配置说明' }}
-            </button>
-            <button type="button" class="ghost" :disabled="loading || auditing || saving" @click="auditMenuConfiguration">
+            </ScButton>
+            <ScButton type="button" class="ghost" :disabled="loading || auditing || saving" @click="auditMenuConfiguration">
               {{ auditing ? '检查中...' : '检查菜单生效' }}
-            </button>
-            <button type="button" class="ghost" :disabled="loading || versionLoading || saving" @click="toggleVersionPanel">
+            </ScButton>
+            <ScButton type="button" class="ghost" :disabled="loading || versionLoading || saving" @click="toggleVersionPanel">
               {{ versionPanelOpen ? '收起菜单版本与回滚' : (versionLoading ? '加载中...' : '查看菜单版本与回滚') }}
-            </button>
+            </ScButton>
           </div>
         </aside>
 
@@ -495,16 +495,16 @@
                 <input v-model="onlyConfigured" type="checkbox" />
                 只看已配置
               </label>
-              <button type="button" class="ghost" @click="bulkPanelOpen = !bulkPanelOpen">
+              <ScButton type="button" class="ghost" @click="bulkPanelOpen = !bulkPanelOpen">
                 {{ bulkPanelOpen ? '收起批量维护表格' : '展开批量维护表格' }}
-              </button>
+              </ScButton>
             </div>
           </div>
 
           <div v-if="loading" class="loading-state">正在加载菜单配置...</div>
           <div v-else-if="!bulkPanelOpen" class="bulk-collapsed-state">
             <span>批量维护已收起，日常调整建议使用当前菜单主编辑区。</span>
-            <button type="button" class="link-button" @click="bulkPanelOpen = true">展开批量维护表格</button>
+            <ScButton type="button" class="link-button" @click="bulkPanelOpen = true">展开批量维护表格</ScButton>
           </div>
           <div v-else class="table-wrap">
             <table>
@@ -605,7 +605,7 @@
                         :title="roleGroupName(groupId)"
                       >
                         {{ roleGroupName(groupId) }}
-                        <button type="button" title="移除业务角色" @click="removeRoleGroup(row.menu.id, groupId)">移除</button>
+                        <ScButton type="button" title="移除业务角色" @click="removeRoleGroup(row.menu.id, groupId)">移除</ScButton>
                       </span>
                     </div>
                     <select
@@ -634,31 +634,31 @@
                     </div>
                     <div class="group-scope-actions">
                       <span class="group-scope-count">{{ scopedRoleGroupSelectionText(row.menu.id) }}</span>
-                      <button
+                      <ScButton
                         type="button"
                         class="link-button"
                         :disabled="!scopedUnselectedRoleGroupCount(row.menu.id)"
                         @click="selectScopedRoleGroups(row.menu.id)"
                       >
                         勾选当前分组
-                      </button>
-                      <button
+                      </ScButton>
+                      <ScButton
                         type="button"
                         class="link-button"
                         :disabled="!scopedSelectedRoleGroupCount(row.menu.id)"
                         @click="clearScopedRoleGroups(row.menu.id)"
                       >
                         清空当前分组
-                      </button>
+                      </ScButton>
                     </div>
-                    <button
+                    <ScButton
                       v-if="draftFor(row.menu.id).role_group_ids.length"
                       type="button"
                       class="link-button group-clear"
                       @click="clearRoleGroups(row.menu.id)"
                     >
                       恢复所有角色可见
-                    </button>
+                    </ScButton>
                     <small>{{ roleScopeSummary(row.menu.id) }}</small>
                   </div>
                 </td>
@@ -677,6 +677,18 @@
         </section>
       </main>
     </div>
+    <BusinessConfigImpactDialog
+      v-if="impactDialog.open"
+      :open="true"
+      page-label="菜单配置"
+      :role-label="'当前管理员角色'"
+      :company-label="companyLabel"
+      :summary="impactDialog.summary"
+      :immediate="true"
+      :rollback-text="impactDialog.rollbackText"
+      @confirm="resolveImpactDialog(true)"
+      @cancel="resolveImpactDialog(false)"
+    />
   </section>
 </template>
 
@@ -684,6 +696,8 @@
 import { computed, defineComponent, h, onMounted, reactive, ref, type PropType } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import type { NavNode } from '@sc/schema';
+import ScButton from '../components/design-system/ScButton.vue';
+import BusinessConfigImpactDialog from './businessConfigSurface/BusinessConfigImpactDialog.vue';
 import {
   loadMenuConfigurationAudit,
   loadMenuConfigurationPanel,
@@ -828,6 +842,15 @@ const roleGroupDomainSelections = reactive<Record<number, string>>({});
 const session = useSessionStore();
 const route = useRoute();
 const router = useRouter();
+const impactDialog = reactive({ open: false, summary: '', rollbackText: '' });
+let impactDialogResolver: ((confirmed: boolean) => void) | null = null;
+function confirmImpact(summary: string, rollbackText: string) {
+  impactDialog.open = true; impactDialog.summary = summary; impactDialog.rollbackText = rollbackText;
+  return new Promise<boolean>((resolve) => { impactDialogResolver = resolve; });
+}
+function resolveImpactDialog(confirmed: boolean) {
+  impactDialog.open = false; impactDialogResolver?.(confirmed); impactDialogResolver = null;
+}
 const canReturnToBusinessConfig = computed(() => String(route.query[BUSINESS_CONFIG_ROUTE_FLAGS.returnToBusinessConfig] || '').trim() === '1');
 const createForm = reactive({
   name: '',
@@ -1733,7 +1756,7 @@ async function deleteSelectedMenu() {
     return;
   }
   const menuName = menu.name || menu.display_name || '当前菜单';
-  const confirmed = window.confirm(`确认删除新增菜单“${menuName}”？删除后会同步刷新导航配置。`);
+  const confirmed = await confirmImpact(`删除新增菜单“${menuName}”并同步刷新导航`, '删除后不能通过未保存草稿恢复；如已有已发布版本，可从版本记录回滚。');
   if (!confirmed) return;
 
   const fallbackMenuId = Number(menu.parent_id || 0);
@@ -2364,6 +2387,12 @@ async function rollbackSelectedMenuConfiguration() {
   }
 }
 
+async function requestRollbackMenuConfiguration() {
+  if (!selectedRollbackVersion.value) return;
+  const confirmed = await confirmImpact(`将菜单配置恢复到版本 ${selectedRollbackVersion.value.version_no}`, '回滚会立即刷新导航；操作后仍可选择其他已发布版本恢复。');
+  if (confirmed) await rollbackSelectedMenuConfiguration();
+}
+
 async function saveChanges() {
   const rows: MenuConfigSaveRow[] = Object.keys(drafts)
     .map(Number)
@@ -2408,6 +2437,11 @@ async function saveChanges() {
   } finally {
     saving.value = false;
   }
+}
+
+async function requestSaveChanges() {
+  const confirmed = await confirmImpact(`保存 ${dirtyCount.value} 项菜单显示、名称、位置或角色范围修改`, '保存会生成已发布版本，可从菜单版本记录恢复。');
+  if (confirmed) await saveChanges();
 }
 
 function clearCreateMenuRouteFlag() {

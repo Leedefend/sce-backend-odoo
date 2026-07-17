@@ -6,7 +6,7 @@
       <input :value="pageSearch" type="search" placeholder="输入页面名称" @input="$emit('update:pageSearch', ($event.target as HTMLInputElement).value)" />
     </label>
     <div class="page-type-tabs" role="group" aria-label="页面类型筛选">
-      <button
+      <ScButton
         v-for="option in pageTypeOptions"
         :key="option.key"
         type="button"
@@ -14,24 +14,29 @@
         @click="$emit('update:pageTypeFilter', option.key)"
       >
         {{ option.label }}
-      </button>
+      </ScButton>
     </div>
+    <label class="config-status-filter">
+      <span>配置状态</span>
+      <ScSelect :model-value="configStatusFilter" @update:model-value="$emit('update:configStatusFilter', $event as ConfigStatusFilter)">
+        <option v-for="option in configStatusOptions" :key="option.key" :value="option.key">{{ option.label }}</option>
+      </ScSelect>
+    </label>
     <label v-if="advancedPanelOpen" class="scan-toggle">
       <input :checked="showOnlyIssues" type="checkbox" @change="$emit('update:showOnlyIssues', ($event.target as HTMLInputElement).checked)" />
       <span>只看需处理</span>
     </label>
-    <button v-if="advancedPanelOpen" type="button" class="ghost small" @click="$emit('copyCoverageSummary')">
+    <ScButton v-if="advancedPanelOpen" variant="ghost" @click="$emit('copyCoverageSummary')">
       复制配置摘要
-    </button>
-    <button
+    </ScButton>
+    <ScButton
       v-if="advancedPanelOpen"
-      type="button"
-      class="ghost small"
+      variant="secondary"
       :disabled="scanLoading || listSearchSaving || !coverageBatchBootstrapRows.length"
       @click="$emit('bootstrapCoverageMissing')"
     >
       {{ listSearchSaving ? '生成中...' : '批量补齐配置' }}
-    </button>
+    </ScButton>
   </div>
   <div class="scan-summary">
     <span>业务页面 {{ coverageScan.summary.action_count }}</span>
@@ -55,15 +60,19 @@
       </div>
       <div v-if="visibleCoverageRows.length" class="scan-list">
         <div
-          v-for="row in visibleCoverageRows"
+          v-for="(row, rowIndex) in visibleCoverageRows"
           :key="coverageRowKey(row)"
           class="scan-row"
           :class="{ 'scan-row--selected': coverageRowMatchesScope(row), 'scan-row--clickable': !coverageRowMatchesScope(row) }"
-          role="button"
+          role="group"
+          :aria-label="`${row.name || row.model}页面`"
           tabindex="0"
+          :aria-current="coverageRowMatchesScope(row) ? 'page' : undefined"
           @click="$emit('focusScanRow', row)"
           @keydown.enter.prevent="$emit('focusScanRow', row)"
           @keydown.space.prevent="$emit('focusScanRow', row)"
+          @keydown.up.prevent="movePageSelection(rowIndex, -1, $event)"
+          @keydown.down.prevent="movePageSelection(rowIndex, 1, $event)"
         >
           <div class="scan-row-main">
             <strong :title="row.name || row.model">{{ row.name || row.model }}</strong>
@@ -84,18 +93,17 @@
             <span v-if="row.runtime_missing_view_types.length">办理页未生效 {{ row.runtime_missing_view_types.map(viewTypeLabel).join('、') }}</span>
           </div>
           <div class="scan-row-actions">
-            <button
+            <ScButton
               v-for="action in advancedPanelOpen ? visibleRowRemediationActions(row) : []"
               :key="`row-remediation-${coverageRowKey(row)}-${action.code}`"
-              type="button"
-              class="ghost small"
+              variant="ghost"
               :disabled="listSearchSaving || versionsLoading"
               @click.stop="$emit('runRemediationAction', row, action)"
             >
               {{ action.label }}
-            </button>
-            <span v-if="coverageRowMatchesScope(row)" class="scan-row-current">当前配置</span>
-            <button v-else type="button" class="ghost small" @click.stop="$emit('focusScanRow', row)">选择</button>
+            </ScButton>
+            <ScStatusBadge v-if="coverageRowMatchesScope(row)" class="scan-row-current" label="当前配置" semantic="info" />
+            <ScButton v-else variant="ghost" @click.stop="$emit('focusScanRow', row)">选择</ScButton>
           </div>
         </div>
       </div>
@@ -114,103 +122,109 @@
             <span v-if="selectedCoverageRow">{{ rowCoverageProgressText(selectedCoverageRow) }}</span>
             <span v-if="selectedCoverageRow">{{ pageDesignStatus(selectedCoverageRow) }}</span>
           </div>
-          <button
-            type="button"
-            class="ghost small"
-            :disabled="!previewRouteTarget.path"
-            @click="$emit('previewSelectedRuntimeRoute')"
+          <ScButton
+            variant="secondary"
+            :disabled="!runtimeRouteTarget.path"
+            @click="$emit('openCurrentEffectivePage')"
           >
-            预览页面
-          </button>
+            打开当前生效页面
+          </ScButton>
         </div>
       </div>
-      <div class="section-grid" data-lowcode-config-task-grid="v1">
-        <article v-for="section in visibleConfigSections" :key="section.key" class="config-card" data-lowcode-config-task-card="v1">
+      <div class="config-type-tabs" role="tablist" aria-label="配置类型">
+        <ScButton
+          v-for="section in visibleConfigSections"
+          :key="`tab-${section.key}`"
+          :variant="activeSectionKey === section.key ? 'primary' : 'ghost'"
+          role="tab"
+          :aria-selected="activeSectionKey === section.key"
+          @click="$emit('update:activeSectionKey', section.key)"
+        >
+          {{ sectionDisplayLabel(section.key, section.label) }}
+        </ScButton>
+      </div>
+      <div v-if="activeSection" class="section-grid section-grid--active" data-lowcode-config-task-grid="v1">
+        <article :key="activeSection.key" class="config-card" data-lowcode-config-task-card="v1">
           <div class="config-card-head">
             <div>
-              <span>{{ sectionTaskKindLabel(section.key) }}</span>
-              <h2>{{ sectionDisplayLabel(section.key, section.label) }}</h2>
+              <span>{{ sectionTaskKindLabel(activeSection.key) }}</span>
+              <h2>{{ sectionDisplayLabel(activeSection.key, activeSection.label) }}</h2>
             </div>
-            <strong class="config-status-badge" :class="{ 'config-status--empty': !section.contract_count }">{{ sectionStatusLabel(section.key, section.contract_count) }}</strong>
+            <ScStatusBadge
+              :label="sectionStatusLabel(activeSection.key, activeSection.contract_count)"
+              :semantic="activeSection.contract_count ? 'success' : 'warning'"
+            />
           </div>
           <div class="config-task-impact">
-            <span>{{ sectionPrimaryCopy(section.key) }}</span>
-            <em>{{ sectionImpactText(section.key) }}</em>
+            <span>{{ sectionPrimaryCopy(activeSection.key) }}</span>
+            <em>{{ sectionImpactText(activeSection.key) }}</em>
           </div>
           <div class="config-card-meta" data-lowcode-config-task-meta="v1">
-            <span>{{ advancedPanelOpen ? boundaryLabel(section.boundary) : sectionHelpLabel(section.key) }}</span>
-            <span>{{ sectionTaskCoverageText(section.key, section.contract_count) }}</span>
+            <span>{{ advancedPanelOpen ? boundaryLabel(activeSection.boundary) : sectionHelpLabel(activeSection.key) }}</span>
+            <span>{{ sectionTaskCoverageText(activeSection.key, activeSection.contract_count) }}</span>
           </div>
           <div class="config-card-actions">
-            <button
-              v-if="section.key === 'form' || section.key === 'list_search' || section.key === 'analysis'"
-              type="button"
-              class="ghost small"
+            <ScButton
+              v-if="activeSection.key === 'form' || activeSection.key === 'list_search' || activeSection.key === 'analysis'"
+              variant="ghost"
               :disabled="!currentModel || versionsLoading"
-              @click="$emit('loadVersions', section.key)"
+              @click="$emit('loadVersions', activeSection.key)"
             >
               {{ versionsLoading ? '读取中...' : '版本记录' }}
-            </button>
-            <button
-              v-if="section.key === 'list_search'"
-              type="button"
-              class="ghost small"
+            </ScButton>
+            <ScButton
+              v-if="activeSection.key === 'list_search'"
+              variant="primary"
               :disabled="!currentModel || listSearchBusy"
               @click="$emit('loadListSearchConfig')"
             >
-              {{ listSearchBusy ? '读取中...' : sectionPrimaryActionLabel(section.key) }}
-            </button>
-            <button
-              v-else-if="section.key === 'form'"
-              type="button"
-              class="ghost small primary"
+              {{ listSearchBusy ? '读取中...' : sectionPrimaryActionLabel(activeSection.key) }}
+            </ScButton>
+            <ScButton
+              v-else-if="activeSection.key === 'form'"
+              variant="primary"
               :disabled="!canOpenDesigner"
               @click="$emit('openFormConfig')"
             >
-              {{ sectionPrimaryActionLabel(section.key) }}
-            </button>
-            <button
-              v-else-if="section.key === 'menu'"
-              type="button"
-              class="ghost small"
+              {{ sectionPrimaryActionLabel(activeSection.key) }}
+            </ScButton>
+            <ScButton
+              v-else-if="activeSection.key === 'menu'"
+              variant="primary"
               @click="$emit('openMenuConfig')"
             >
-              {{ sectionPrimaryActionLabel(section.key) }}
-            </button>
-            <button
-              v-if="section.key === 'menu'"
-              type="button"
-              class="ghost small"
+              {{ sectionPrimaryActionLabel(activeSection.key) }}
+            </ScButton>
+            <ScButton
+              v-if="activeSection.key === 'menu'"
+              variant="ghost"
               @click="$emit('openCreateMenuConfig')"
             >
               新增菜单
-            </button>
-            <button
-              v-else-if="section.key === 'analysis'"
-              type="button"
-              class="ghost small"
+            </ScButton>
+            <ScButton
+              v-else-if="activeSection.key === 'analysis'"
+              variant="primary"
               :disabled="!currentModel || listSearchBusy"
               @click="$emit('loadAnalysisConfig')"
             >
-              {{ listSearchBusy ? '读取中...' : sectionPrimaryActionLabel(section.key) }}
-            </button>
-            <button
-              v-else-if="section.key === 'approval'"
-              type="button"
-              class="ghost small primary"
+              {{ listSearchBusy ? '读取中...' : sectionPrimaryActionLabel(activeSection.key) }}
+            </ScButton>
+            <ScButton
+              v-else-if="activeSection.key === 'approval'"
+              variant="primary"
               :disabled="!currentModel || approvalLoading"
               @click="$emit('loadApprovalConfig')"
             >
-              {{ approvalLoading ? '读取中...' : sectionPrimaryActionLabel(section.key) }}
-            </button>
-            <button
-              v-if="section.key === 'approval' && section.route?.path"
-              type="button"
-              class="ghost small"
-              @click="$emit('openApprovalConfig', section)"
+              {{ approvalLoading ? '读取中...' : sectionPrimaryActionLabel(activeSection.key) }}
+            </ScButton>
+            <ScButton
+              v-if="activeSection.key === 'approval' && activeSection.route?.path"
+              variant="ghost"
+              @click="$emit('openApprovalConfig', activeSection)"
             >
               打开完整规则
-            </button>
+            </ScButton>
           </div>
         </article>
       </div>
@@ -224,7 +238,7 @@
         <em>{{ visibleDeliveryReadinessProgressText }}</em>
       </div>
       <div class="delivery-readiness-grid delivery-readiness-grid--rail">
-        <button
+        <ScButton
           v-for="item in visibleDeliveryReadinessItems"
           :key="`rail-${item.id}`"
           type="button"
@@ -235,7 +249,7 @@
           <span>{{ item.label }}</span>
           <strong>{{ deliveryReadinessItemStatusText(item) }}</strong>
           <em>{{ deliveryReadinessItemMetaText(item) }}</em>
-        </button>
+        </ScButton>
       </div>
       <div v-if="!visibleDeliveryReadinessItems.length" class="workbench-status-empty">状态读取中</div>
       <div v-if="advancedPanelOpen && snapshotSummary" class="workbench-status-snapshot">
@@ -249,6 +263,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed, nextTick } from 'vue';
 import type {
   BusinessConfigCoverageScanItem,
   BusinessConfigCoverageScanPayload,
@@ -256,17 +271,24 @@ import type {
   BusinessConfigSnapshotSummaryPayload,
   BusinessConfigSurfacePayload,
 } from '../../api/businessConfig';
+import ScButton from '../../components/design-system/ScButton.vue';
+import ScStatusBadge from '../../components/design-system/ScStatusBadge.vue';
+import ScSelect from '../../components/design-system/ScSelect.vue';
 
 type SurfaceSection = BusinessConfigSurfacePayload['sections'][number];
 type DeliveryItem = NonNullable<BusinessConfigSurfacePayload['delivery_readiness']>['items'][number];
 type PageTypeFilter = 'all' | 'form' | 'list' | 'analysis';
+type ConfigStatusFilter = 'all' | 'unconfigured' | 'partial' | 'configured';
 type PageTypeOption = { key: PageTypeFilter; label: string };
 
-defineProps<{
+const props = defineProps<{
   coverageScan: BusinessConfigCoverageScanPayload;
   pageSearch: string;
   pageTypeFilter: PageTypeFilter;
   pageTypeOptions: PageTypeOption[];
+  configStatusFilter: ConfigStatusFilter;
+  configStatusOptions: Array<{ key: ConfigStatusFilter; label: string }>;
+  activeSectionKey: string;
   showOnlyIssues: boolean;
   advancedPanelOpen: boolean;
   scanLoading: boolean;
@@ -283,7 +305,7 @@ defineProps<{
   coverageIssueRows: BusinessConfigCoverageScanItem[];
   coverageBatchBootstrapRows: BusinessConfigCoverageScanItem[];
   remediationSummaryItems: Array<{ code: string; count: number; label: string }>;
-  previewRouteTarget: { path: string; query: Record<string, string> };
+  runtimeRouteTarget: { path: string; query: Record<string, string> };
   canOpenDesigner: boolean;
   listSearchBusy: boolean;
   approvalLoading: boolean;
@@ -316,15 +338,23 @@ defineProps<{
   deliveryReadinessItemMetaText: (item: DeliveryItem) => string;
 }>();
 
-defineEmits<{
+const activeSection = computed(() => (
+  props.visibleConfigSections.find((section) => section.key === props.activeSectionKey)
+  || props.visibleConfigSections[0]
+  || null
+));
+
+const emit = defineEmits<{
   'update:pageSearch': [value: string];
   'update:pageTypeFilter': [value: PageTypeFilter];
+  'update:configStatusFilter': [value: ConfigStatusFilter];
+  'update:activeSectionKey': [value: string];
   'update:showOnlyIssues': [value: boolean];
   copyCoverageSummary: [];
   bootstrapCoverageMissing: [];
   focusScanRow: [row: BusinessConfigCoverageScanItem];
   runRemediationAction: [row: BusinessConfigCoverageScanItem, action: BusinessConfigRemediationAction];
-  previewSelectedRuntimeRoute: [];
+  openCurrentEffectivePage: [];
   loadVersions: [sectionKey: string];
   loadListSearchConfig: [];
   openFormConfig: [];
@@ -335,4 +365,14 @@ defineEmits<{
   openApprovalConfig: [section: SurfaceSection];
   runDeliveryReadinessAction: [item: DeliveryItem];
 }>();
+
+async function movePageSelection(index: number, offset: -1 | 1, event: KeyboardEvent) {
+  const targetIndex = Math.max(0, Math.min(props.visibleCoverageRows.length - 1, index + offset));
+  const row = props.visibleCoverageRows[targetIndex];
+  if (!row) return;
+  emit('focusScanRow', row);
+  await nextTick();
+  const list = (event.currentTarget as HTMLElement | null)?.closest('.scan-list');
+  list?.querySelectorAll<HTMLElement>('.scan-row')[targetIndex]?.focus();
+}
 </script>

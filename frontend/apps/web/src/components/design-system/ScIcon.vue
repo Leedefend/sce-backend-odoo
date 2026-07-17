@@ -21,7 +21,7 @@ import { computed } from 'vue';
 
 const props = withDefaults(defineProps<{
   name: 'arrow-right' | 'chevron-right' | 'close' | 'menu' | 'star' | 'star-outline';
-  size?: 16 | 20 | 24;
+  size?: 14 | 16 | 18 | 20 | 24;
 }>(), { size: 20 });
 
 const paths = {

@@ -1,10 +1,11 @@
-.business-config-page {
+@scope (.business-config-page) {
+:scope {
   display: grid;
   gap: 12px;
   padding-bottom: 18px;
 }
 
-.business-config-page--editor-open {
+:scope.business-config-page--editor-open {
   padding-bottom: 56vh;
 }
 
@@ -747,6 +748,23 @@ h1 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 12px;
+}
+
+.config-type-tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--sc-product-space-1);
+  overflow-x: auto;
+  padding-bottom: var(--sc-product-space-1);
+}
+
+.config-type-tabs .sc-btn {
+  flex: none;
+  white-space: nowrap;
+}
+
+.section-grid--active {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .section-grid--start {
@@ -1724,4 +1742,5 @@ h1 {
     flex-wrap: wrap;
     white-space: normal;
   }
+}
 }

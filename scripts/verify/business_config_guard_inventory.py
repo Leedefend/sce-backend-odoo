@@ -9,9 +9,10 @@ import sys
 import json
 from pathlib import Path
 
+from make_source_inventory import combined_make_source
+
 
 ROOT = Path(__file__).resolve().parents[2]
-MAKEFILE = ROOT / "Makefile"
 CAPABILITY_MATRIX = ROOT / "docs/architecture/low_code_business_config_capability_matrix_v1.json"
 BACKEND_BOUNDARY_FILE = ROOT / "addons/smart_core/utils/backend_contract_boundaries.py"
 FRONTEND_BOUNDARY_FILE = ROOT / "frontend/apps/web/src/app/businessConfigBoundaries.ts"
@@ -102,6 +103,9 @@ FULL_ACCEPTANCE_TARGETS = {
     "verify.product.navigation_boundary",
     "verify.business_config.low_code_acceptance",
     "verify.business_config.config_workbench_operation_acceptance",
+    "verify.business_config.safe_open_acceptance",
+    "verify.business_config.workbench_product_acceptance",
+    "verify.business_config.workbench_fault_acceptance",
     "verify.business_config.low_code_runtime_consistency",
     "verify.business_config.low_code_group_matrix",
     "verify.business_config.low_code_layout_runtime",
@@ -119,6 +123,9 @@ FULL_ACCEPTANCE_TARGETS_WITHOUT_CAPABILITY_OWNER = {
 }
 
 TARGET_SCRIPT_REQUIREMENTS = {
+    "verify.business_config.product_guard": (
+        "scripts/verify/low_code_workbench_product_guard.py",
+    ),
     "verify.business_config.unit": (
         "scripts/verify/business_config_user_language_guard.py",
         "scripts/verify/lowcode_config_boundary_guard.py",
@@ -153,6 +160,15 @@ TARGET_SCRIPT_REQUIREMENTS = {
     "verify.business_config.config_workbench_operation_acceptance": (
         "scripts/config_workbench_operation_acceptance.mjs|frontend/apps/web/scripts/config_workbench_operation_acceptance.mjs",
     ),
+    "verify.business_config.safe_open_acceptance": (
+        "scripts/low_code_safe_open_acceptance.mjs|frontend/apps/web/scripts/low_code_safe_open_acceptance.mjs",
+    ),
+    "verify.business_config.workbench_product_acceptance": (
+        "scripts/low_code_workbench_product_acceptance.mjs|frontend/apps/web/scripts/low_code_workbench_product_acceptance.mjs",
+    ),
+    "verify.business_config.workbench_fault_acceptance": (
+        "scripts/low_code_workbench_fault_acceptance.mjs|frontend/apps/web/scripts/low_code_workbench_fault_acceptance.mjs",
+    ),
     "verify.business_config.low_code_runtime_consistency": (
         "scripts/low_code_form_runtime_consistency_acceptance.mjs|frontend/apps/web/scripts/low_code_form_runtime_consistency_acceptance.mjs",
     ),
@@ -176,6 +192,7 @@ TARGET_SCRIPT_REQUIREMENTS = {
 TARGET_DEPENDENCY_REQUIREMENTS = {
     "verify.business_config.unit": (
         "verify.frontend.product_language.guard",
+        "verify.business_config.product_guard",
     ),
     "verify.business_config.config_workbench_operation_quick": (
         "verify.frontend.product_language.guard",
@@ -268,6 +285,8 @@ OBSERVABILITY_SOURCE_MARKER_REQUIREMENTS = {
         "frontend/apps/web/src/pages/ContractFormPage.vue": (
             "formConfigOperationLog",
             "formatFormConfigOperationSummary",
+        ),
+        "frontend/apps/web/src/pages/contractForm/useFormConfigSaveRuntime.ts": (
             "lowCodePrecheckWarnings",
             "saveResult?.precheck?.warnings",
         ),
@@ -310,15 +329,22 @@ OBSERVABILITY_SOURCE_MARKER_REQUIREMENTS = {
             "BusinessConfigDeliveryReadinessPayload",
             "delivery_readiness?: BusinessConfigDeliveryReadinessPayload",
         ),
-        "frontend/apps/web/src/views/BusinessConfigSurfaceView.vue": (
+        "frontend/apps/web/src/views/businessConfigSurface/BusinessConfigStartPanel.vue": (
             "data-lowcode-delivery-readiness=\"low_code_delivery_readiness.v1\"",
             "data-lowcode-workbench-ia=\"start\"",
+            "data-lowcode-config-task-grid=\"v1\"",
+            "data-lowcode-config-task-card=\"v1\"",
+            "data-lowcode-config-task-meta=\"v1\"",
+            "deliveryReadinessStatusText",
+            "runDeliveryReadinessAction",
+        ),
+        "frontend/apps/web/src/views/businessConfigSurface/BusinessConfigCoverageWorkspace.vue": (
+            "data-lowcode-delivery-readiness=\"low_code_delivery_readiness.v1\"",
             "data-lowcode-workbench-ia=\"three-column\"",
             "data-lowcode-config-task-grid=\"v1\"",
             "data-lowcode-config-task-card=\"v1\"",
             "data-lowcode-config-task-meta=\"v1\"",
             "workbench-status-rail",
-            "deliveryReadinessStatusText",
             "runDeliveryReadinessAction",
         ),
         "addons/smart_core/tests/test_business_config_surface.py": (
@@ -468,8 +494,7 @@ def _validate_observability_source_markers(errors: list[str]) -> None:
                     )
 
 
-def main() -> int:
-    makefile = MAKEFILE.read_text(encoding="utf-8")
+def validate(makefile: str) -> list[str]:
     errors: list[str] = []
 
     full_deps = _deps(_target_line(makefile, "verify.business_config.full_acceptance"))
@@ -522,12 +547,38 @@ def main() -> int:
     _validate_boundary_constant_parity(errors)
     _validate_observability_source_markers(errors)
 
+    return errors
+
+
+def main() -> int:
+    makefile, make_sources = combined_make_source(ROOT)
+    errors = validate(makefile)
+    negative_errors = validate("verify.business_config.guard_inventory:\n\t@true\n")
+    if not negative_errors:
+        errors.append("negative self-test did not reject a deliberately incomplete Make inventory")
     if errors:
         print("[business_config_guard_inventory] FAIL")
         for error in errors:
             print("- " + error)
         return 1
-    print("[business_config_guard_inventory] PASS")
+    component_root = ROOT / "frontend/apps/web/src/views/businessConfigSurface"
+    component_count = len(list(component_root.glob("*.vue"))) + 1
+    scanned_files = len(make_sources) + sum(
+        1 for artifacts in OBSERVABILITY_SOURCE_MARKER_REQUIREMENTS.values() for _ in artifacts
+    ) + sum(1 for artifacts in TARGET_SOURCE_MARKER_REQUIREMENTS.values() for _ in artifacts)
+    intent_count = len(set().union(*EXPECTED_CAPABILITY_AUTHORING_INTENTS.values()))
+    assertion_count = (
+        len(FULL_ACCEPTANCE_TARGETS)
+        + sum(len(items) for items in TARGET_SCRIPT_REQUIREMENTS.values())
+        + sum(len(items) for items in TARGET_DEPENDENCY_REQUIREMENTS.values())
+        + sum(len(markers) for artifacts in TARGET_SOURCE_MARKER_REQUIREMENTS.values() for markers in artifacts.values())
+        + sum(len(markers) for artifacts in OBSERVABILITY_SOURCE_MARKER_REQUIREMENTS.values() for markers in artifacts.values())
+    )
+    print(
+        "[business_config_guard_inventory] PASS "
+        f"make_sources={len(make_sources)} scanned_files={scanned_files} "
+        f"components={component_count} intents={intent_count} assertions={assertion_count} negative_self_test=PASS"
+    )
     return 0
 
 

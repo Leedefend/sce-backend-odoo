@@ -25,7 +25,7 @@
       "carrier": ["ui.business.config.contract:view_orchestration.views.form", "ui.form.field.policy:compatibility_bridge"],
       "authoring_intents": ["ui.form_field_policy.set", "ui.form_custom_field.create", "ui.form_field_order.set", "ui.form_field_config.batch_set", "ui.business_config.lowcode.apply", "ui.business_config.contract.save", "ui.business_config.contract.get", "ui.business_config.contract.publish", "ui.business_config.contract.versions", "ui.business_config.contract.rollback"],
       "runtime_consumers": ["unified_page_contract_v2_assembler", "ContractFormPage runtime renderer"],
-      "preview": "保存并预览 opens current configured form with return_to_business_config",
+      "preview": "打开当前生效页面只读运行态；未发布修改仅做本地摘要和校验，不执行保存、发布或版本创建",
       "publish_versioning": "ui.business.config.contract action_publish",
       "rollback": "ui.business_config.contract.rollback",
       "audit": "frontend operation log with user-label guard + contract snapshot/audit + multi-model layout runtime samples",
@@ -40,7 +40,7 @@
       "carrier": ["ui.business.config.contract:view_orchestration.views.tree", "ui.business.config.contract:view_orchestration.views.search", "sc.user.view.preference:personal_only"],
       "authoring_intents": ["ui.business_config.list_search.audit", "ui.business_config.list_search.set", "ui.business_config.list_search.bootstrap", "ui.business_config.contract.save"],
       "runtime_consumers": ["page_assembler tree/search injection", "unified_page_contract_v2_assembler"],
-      "preview": "business config preview route",
+      "preview": "打开当前生效页面只读运行态；未发布列表与搜索修改仅做本地摘要和校验",
       "publish_versioning": "ui.business.config.contract action_publish",
       "rollback": "ui.business_config.contract.rollback",
       "audit": "business config snapshot + coverage scan + list/search audit boundary",
@@ -74,7 +74,7 @@
       "publish_versioning": "contract version_no + published status",
       "rollback": "ui.business_config.contract.rollback",
       "audit": "business-language version panel + business_config_contract_snapshot.py",
-      "acceptance": ["verify.business_config.snapshot", "verify.business_config.low_code_acceptance"],
+      "acceptance": ["verify.business_config.snapshot", "verify.business_config.safe_open_acceptance", "verify.business_config.low_code_acceptance"],
       "status": "ready",
       "release_blockers": []
     },
@@ -89,7 +89,7 @@
       "publish_versioning": "not applicable; boundary is a guardrail",
       "rollback": "not applicable; boundary violations are rejected",
       "audit": "business_config_coverage_gate.py + backend_contract_boundary_guard.py + low_code_boundary_parity + guard_inventory matrix coverage",
-      "acceptance": ["verify.business_config.guard_inventory", "verify.business_config.coverage", "verify.business_config.unit"],
+      "acceptance": ["verify.business_config.guard_inventory", "verify.business_config.coverage", "verify.business_config.config_workbench_operation_acceptance", "verify.business_config.workbench_product_acceptance", "verify.business_config.workbench_fault_acceptance", "verify.business_config.unit"],
       "status": "ready",
       "release_blockers": []
     }

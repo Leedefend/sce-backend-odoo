@@ -7,30 +7,32 @@
     :data-contract-sections="pageSectionsFingerprint"
     data-product-page-mode="admin"
   >
-    <header class="business-config-header sc-product-page-header">
-      <div>
-        <p class="eyebrow">低代码页面设计器</p>
-        <h1>{{ designerTitle }}</h1>
-      </div>
-      <div class="header-actions">
-        <button
+    <BusinessConfigContextBar
+      :page-label="selectedPageLabel"
+      :company-label="workbenchCompanyLabel"
+      :role-label="workbenchRoleLabel"
+      :version-label="currentEffectiveVersionLabel"
+      :dirty="hasWorkbenchDraftChanges"
+      :can-open-current-page="Boolean(runtimeRouteTarget.path)"
+      :developer-tools-open="advancedPanelOpen"
+      @open-current-effective-page="openCurrentEffectivePage"
+      @toggle-developer-tools="advancedPanelOpen = !advancedPanelOpen"
+    >
+      <template #actions>
+        <ScButton
           v-for="action in pageGlobalActions"
           :key="action.key"
-          type="button"
-          class="ghost"
+          variant="ghost"
           :disabled="action.disabled"
           @click="executeGlobalPageAction(action.key)"
         >
           {{ action.label }}
-        </button>
-        <button type="button" class="ghost" :disabled="scanLoading" @click="scanSystemRootCoverage">
+        </ScButton>
+        <ScButton variant="secondary" :disabled="scanLoading" @click="scanSystemRootCoverage">
           {{ scanLoading ? '读取中...' : '选择业务页面' }}
-        </button>
-        <button type="button" class="ghost" :disabled="loading" @click="advancedPanelOpen = !advancedPanelOpen">
-          高级设置
-        </button>
-      </div>
-    </header>
+        </ScButton>
+      </template>
+    </BusinessConfigContextBar>
 
     <div v-if="error" class="status error">{{ error }}</div>
     <div v-else-if="message.text" class="status ok">
@@ -44,7 +46,7 @@
       :current-model="currentModel"
       :start-scope-summary="startScopeSummary"
       :scan-loading="scanLoading"
-      :preview-route-path="previewRouteTarget.path"
+      :runtime-route-path="runtimeRouteTarget.path"
       :sections="visibleConfigSections"
       :advanced-panel-open="advancedPanelOpen"
       :versions-loading="versionsLoading"
@@ -67,7 +69,7 @@
       :delivery-readiness-item-status-text="deliveryReadinessItemStatusText"
       :delivery-readiness-item-meta-text="deliveryReadinessItemMetaText"
       @scan-system-root-coverage="scanSystemRootCoverage"
-      @preview-selected-runtime-route="previewSelectedRuntimeRoute"
+      @open-current-effective-page="openCurrentEffectivePage"
       @load-versions="loadVersions"
       @load-list-search-config="loadListSearchConfig"
       @open-form-config="openFormConfig"
@@ -95,7 +97,7 @@
         <span>角色编码</span>
         <input v-model="scopeRoleKey" type="text" placeholder="可选：按角色范围读取" />
       </label>
-      <button type="button" class="ghost small" :disabled="loading" @click="applyScopeAndLoad">读取配置对象</button>
+      <ScButton type="button" class="ghost small" :disabled="loading" @click="applyScopeAndLoad">读取配置对象</ScButton>
     </section>
 
     <section v-if="loading" class="loading-state">正在读取配置能力...</section>
@@ -103,9 +105,12 @@
       v-if="coverageScan"
       v-model:page-search="pageSearch"
       v-model:page-type-filter="pageTypeFilter"
+      v-model:config-status-filter="configStatusFilter"
+      v-model:active-section-key="activeConfigSectionKey"
       v-model:show-only-issues="showOnlyIssues"
       :coverage-scan="coverageScan"
       :page-type-options="pageTypeOptions"
+      :config-status-options="configStatusOptions"
       :advanced-panel-open="advancedPanelOpen"
       :scan-loading="scanLoading"
       :list-search-saving="listSearchSaving"
@@ -121,7 +126,7 @@
       :coverage-issue-rows="coverageIssueRows"
       :coverage-batch-bootstrap-rows="coverageBatchBootstrapRows"
       :remediation-summary-items="remediationSummaryItems"
-      :preview-route-target="previewRouteTarget"
+      :runtime-route-target="runtimeRouteTarget"
       :can-open-designer="canOpenDesigner"
       :list-search-busy="listSearchBusy"
       :approval-loading="approvalLoading"
@@ -156,7 +161,7 @@
       @bootstrap-coverage-missing="bootstrapCoverageMissing"
       @focus-scan-row="focusScanRow"
       @run-remediation-action="runRemediationAction"
-      @preview-selected-runtime-route="previewSelectedRuntimeRoute"
+      @open-current-effective-page="openCurrentEffectivePage"
       @load-versions="loadVersions"
       @load-list-search-config="loadListSearchConfig"
       @open-form-config="openFormConfig"
@@ -227,7 +232,7 @@
       @set-step-drop-index="approvalStepDropIndex = $event"
       @drop-step="dropApprovalStep"
       @clear-step-drag="clearApprovalStepDrag"
-      @save="saveApprovalConfig"
+      @save="confirmAndSaveApprovalConfig"
       @reset="resetApprovalDraft"
       @open-full-rule="approvalSection && openApprovalConfig(approvalSection)"
     />
@@ -258,7 +263,7 @@
       :analysis-panel-open="analysisPanelOpen"
       :list-search-panel-open="listSearchPanelOpen"
       :list-search-saving="listSearchSaving"
-      :preview-route-target="previewRouteTarget"
+      :runtime-route-target="runtimeRouteTarget"
       :has-analysis-draft-changes="hasAnalysisDraftChanges"
       :has-list-search-draft-changes="hasListSearchDraftChanges"
       :analysis-editor-tabs="analysisEditorTabs"
@@ -301,7 +306,8 @@
       :is-list-search-chip-drop-target="isListSearchChipDropTarget"
       :boundary-label="boundaryLabel"
       :view-type-label="viewTypeLabel"
-      @preview-analysis-config="previewAnalysisConfig"
+      @inspect-analysis-draft="inspectAnalysisDraft"
+      @open-current-effective-page="openCurrentEffectivePage"
       @save-analysis-config="saveAnalysisConfig"
       @reset-analysis-draft="resetAnalysisDraft"
       @set-active-analysis-editor="setActiveAnalysisEditor"
@@ -317,7 +323,7 @@
       @drop-analysis-chip="dropAnalysisChip"
       @clear-chip-drag="clearChipDrag"
       @close-list-search="listSearchPanelOpen = false"
-      @preview-list-search-config="previewListSearchConfig"
+      @inspect-list-search-draft="inspectListSearchDraft"
       @save-list-search-config="saveListSearchConfig"
       @reset-list-search-draft="resetListSearchDraft"
       @set-active-list-search-editor="setActiveListSearchEditor"
@@ -332,18 +338,33 @@
       @drop-list-search-chip="dropListSearchChip"
     />
 
+    <BusinessConfigImpactDialog
+      :open="impactDialog.open"
+      :page-label="selectedPageLabel"
+      :role-label="workbenchRoleLabel"
+      :company-label="workbenchCompanyLabel"
+      :summary="impactDialog.summary"
+      :immediate="impactDialog.immediate"
+      :rollback-text="impactDialog.rollbackText"
+      @confirm="resolveImpactDialog(true)"
+      @cancel="resolveImpactDialog(false)"
+    />
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { ApiError } from '../api/client';
 import BusinessConfigAdvancedAuditPanels from './businessConfigSurface/BusinessConfigAdvancedAuditPanels.vue';
 import BusinessConfigApprovalPanel from './businessConfigSurface/BusinessConfigApprovalPanel.vue';
+import BusinessConfigContextBar from './businessConfigSurface/BusinessConfigContextBar.vue';
 import BusinessConfigCoverageWorkspace from './businessConfigSurface/BusinessConfigCoverageWorkspace.vue';
 import BusinessConfigEditorPanels from './businessConfigSurface/BusinessConfigEditorPanels.vue';
+import BusinessConfigImpactDialog from './businessConfigSurface/BusinessConfigImpactDialog.vue';
 import BusinessConfigStartPanel from './businessConfigSurface/BusinessConfigStartPanel.vue';
 import BusinessConfigVersionPanel from './businessConfigSurface/BusinessConfigVersionPanel.vue';
+import ScButton from '../components/design-system/ScButton.vue';
 import {
   auditBusinessAnalysisConfig,
   auditBusinessListSearchConfig,
@@ -364,8 +385,6 @@ import {
 } from '../api/businessConfig';
 import {
   BUSINESS_CONFIG_INTENTS,
-  BUSINESS_CONFIG_MODES,
-  BUSINESS_CONFIG_MODELS,
   BUSINESS_CONFIG_ROUTE_FLAGS,
   isBusinessConfigRuntimeModel,
 } from '../app/businessConfigBoundaries';
@@ -399,15 +418,16 @@ import {
   versionStatusLabel, viewTypeLabel,
   visibleRowRemediationActions,
 } from './businessConfigSurface/formatters';
-import { findMenuConfigNavigationEntry } from './businessConfigSurface/navigation';
 import { useBusinessConfigApprovalEditor } from './businessConfigSurface/useBusinessConfigApprovalEditor';
 import { useBusinessConfigCoverage } from './businessConfigSurface/useBusinessConfigCoverage';
 import { useBusinessConfigFieldEditors } from './businessConfigSurface/useBusinessConfigFieldEditors';
 import { useBusinessConfigSnapshots } from './businessConfigSurface/useBusinessConfigSnapshots';
 import { useBusinessConfigVersions } from './businessConfigSurface/useBusinessConfigVersions';
 import { useBusinessConfigWorkbenchMeta } from './businessConfigSurface/useBusinessConfigWorkbenchMeta';
+import { useBusinessConfigProductExperience } from './businessConfigSurface/useBusinessConfigProductExperience';
+import { useBusinessConfigNavigation } from './businessConfigSurface/useBusinessConfigNavigation';
+import { useBusinessConfigImpactDialog } from './businessConfigSurface/useBusinessConfigImpactDialog';
 import { clearConsumedOpenIntent, replaceWorkbenchQuerySilently, withSurfaceLoadTimeout } from './businessConfigSurface/workbenchUtils';
-
 const SURFACE_LOAD_TIMEOUT_MS = 20000;
 const ACTIVE_EDITOR_SCROLL_OPTIONS = { block: 'start', behavior: 'auto' } as const;
 const ACTIVE_EDITOR_VIEWPORT_TOP = 96;
@@ -462,7 +482,6 @@ const pageSectionsFingerprint = computed(() => JSON.stringify([
   pageSectionStyle('coverage'),
   pageSectionStyle('designer'),
 ]));
-
 async function executeGlobalPageAction(actionKey: string) {
   await executePageContractAction({
     actionKey,
@@ -473,18 +492,13 @@ async function executeGlobalPageAction(actionKey: string) {
     onRefresh: loadSurface,
   });
 }
-
 const loading = ref(false);
 const scanLoading = ref(false);
 const listSearchBusy = ref(false);
 const listSearchSaving = ref(false);
 const error = ref('');
 const message = ref({ text: '', detail: '' });
-const rollbackConfirm = {
-  async open(options: { message: string }) {
-    return window.confirm(options.message);
-  },
-};
+const { impactDialog, openImpactDialog, resolveImpactDialog, rollbackConfirm } = useBusinessConfigImpactDialog();
 const surface = ref<BusinessConfigSurfacePayload | null>(null);
 const coverageScan = ref<BusinessConfigCoverageScanPayload | null>(null);
 const listSearchAudit = ref<BusinessConfigListSearchAuditPayload | null>(null);
@@ -504,12 +518,6 @@ const shouldOpenPageList = computed(() => String(route.query[BUSINESS_CONFIG_ROU
 const shouldOpenListSearch = computed(() => String(route.query.open_list_search || '').trim() === '1');
 const shouldOpenAnalysis = computed(() => String(route.query.open_analysis || '').trim() === '1');
 const shouldOpenFormConfig = computed(() => String(route.query.open_form_config || '').trim() === '1');
-const designerTitle = computed(() => {
-  const model = currentModel.value || scopeModel.value.trim();
-  const pageLabel = selectedPageLabel.value.trim();
-  if (pageLabel) return `正在配置：${pageLabel}`;
-  return model ? `正在配置：${model}` : '选择一个业务页面开始配置';
-});
 
 const sections = computed(() => surface.value?.sections || []);
 const visibleSections = computed(() => sections.value.filter((section) => {
@@ -612,10 +620,10 @@ const {
   selectedPageLabel,
   advancedPanelOpen,
   scanSystemRootCoverage,
-  openMenuConfig,
+  openMenuConfig: () => openMenuConfig(),
   loadApprovalConfig,
   loadListSearchConfig,
-  openFormConfig,
+  openFormConfig: () => openFormConfig(),
 });
 const canOpenDesigner = computed(() => Boolean(currentModel.value && scopeAction.value && !currentModelIsRuntimeConfig.value));
 const startScopeSummary = computed(() => {
@@ -628,6 +636,8 @@ const {
   pageSearch,
   pageTypeFilter,
   pageTypeOptions,
+  configStatusFilter,
+  configStatusOptions,
   coverageIssueRows,
   coverageBatchBootstrapRows,
   coverageScopeLabel,
@@ -639,6 +649,14 @@ const {
   advancedPanelOpen,
   setMessage,
 });
+const activeConfigSectionKey = ref(String(route.query.workbench_section || 'form'));
+pageSearch.value = String(route.query.workbench_search || '').trim();
+const initialPageType = String(route.query.workbench_page_type || '').trim();
+if (pageTypeOptions.some((option) => option.key === initialPageType)) {
+  pageTypeFilter.value = initialPageType as typeof pageTypeFilter.value;
+}
+const initialConfigStatus = String(route.query.workbench_config_status || '').trim();
+if (configStatusOptions.some((option) => option.key === initialConfigStatus)) configStatusFilter.value = initialConfigStatus as typeof configStatusFilter.value;
 const {
   snapshotCompareText,
   snapshotCompareLoading,
@@ -759,7 +777,7 @@ const {
   setMessage,
   clearMessage,
 });
-const previewRouteTarget = computed(() => {
+const runtimeRouteTarget = computed(() => {
   const runtimeRoute = selectedRuntimeRoute.value || {};
   const runtimePath = String(runtimeRoute.path || '').trim();
   if (runtimePath) return { path: runtimePath, query: runtimeRoute.query || {} };
@@ -787,6 +805,33 @@ const scopeView = computed(() => {
 });
 
 const scopeRole = computed(() => String(scopeRoleKey.value || '').trim() || undefined);
+const {
+  buildRuntimeReturnQuery,
+  openCurrentEffectivePage,
+  openMenuConfig,
+  openCreateMenuConfig,
+  openApprovalConfig,
+  openFormConfig,
+} = useBusinessConfigNavigation({
+  route,
+  router,
+  session,
+  runtimeRouteTarget,
+  currentModel,
+  selectedPageLabel,
+  scopeAction,
+  scopeView,
+  scopeRole,
+  pageSearch,
+  pageTypeFilter,
+  configStatusFilter,
+  activeConfigSectionKey,
+  listSearchPanelOpen,
+  analysisPanelOpen,
+  activeListSearchEditor,
+  activeAnalysisEditor,
+  canOpenDesigner,
+});
 
 const {
   versionsLoading,
@@ -821,6 +866,38 @@ const {
   loadSurface,
   rescanCoverageAfterBootstrap,
   rollbackConfirm,
+});
+const {
+  workbenchCompanyLabel,
+  workbenchRoleLabel,
+  hasWorkbenchDraftChanges,
+  currentEffectiveVersionLabel,
+  inspectListSearchDraft,
+  inspectAnalysisDraft,
+} = useBusinessConfigProductExperience({
+  session,
+  versionContracts,
+  listSearchAudit,
+  analysisAudit,
+  snapshotSummary,
+  hasListSearchDraftChanges,
+  hasAnalysisDraftChanges,
+  hasApprovalDraftChanges,
+  listColumnsText,
+  searchFiltersText,
+  searchGroupByText,
+  listSearchBase,
+  listSearchPanelOpen,
+  analysisPanelOpen,
+  approvalPanelOpen,
+  versionsPanelOpen,
+  resetListSearchDraft,
+  resetAnalysisDraft,
+  resetApprovalDraft,
+  loadSurface,
+  scanSystemRootCoverage,
+  setMessage,
+  openImpactDialog,
 });
 
 function coverageRowKey(row: Pick<BusinessConfigCoverageScanItem, 'model' | 'action_id' | 'view_id'>) {
@@ -875,6 +952,8 @@ async function loadSurface() {
     surface.value = nextSurface;
   } catch (err) {
     if (seq !== surfaceLoadSeq) return;
+    if (err instanceof ApiError && err.status === 401) { await session.logout(); await router.replace({ path: '/login', query: { next: route.fullPath } }); return; }
+    if (err instanceof ApiError && err.status === 403) { await router.replace({ path: '/access-denied', query: { from: route.fullPath, reason: err.reasonCode || 'PERMISSION_DENIED' } }); return; }
     error.value = err instanceof Error ? err.message : '业务配置工作台加载失败';
   } finally {
     if (seq === surfaceLoadSeq) {
@@ -905,6 +984,7 @@ async function scanCoverage() {
 }
 
 async function scanSystemRootCoverage() {
+  if (!surface.value && currentModel.value) { await loadSurface(); if (!surface.value) return; }
   scanLoading.value = true;
   error.value = '';
   clearMessage();
@@ -1022,43 +1102,12 @@ async function openRuntimeRoute(row: BusinessConfigCoverageScanItem) {
   if (!path) return;
   await router.push({
     path,
-    query: buildPreviewRuntimeQuery(runtimeRoute.query || {}, {
+    query: buildRuntimeReturnQuery(runtimeRoute.query || {}, {
       model: row.model,
       actionId: row.action_id,
       viewId: row.view_id,
       pageLabel: row.name || row.model,
     }),
-  });
-}
-
-function buildPreviewRuntimeQuery(
-  baseQuery: Record<string, string> = {},
-  options: { model?: string; actionId?: number; viewId?: number; pageLabel?: string; preserveEditorContext?: boolean } = {},
-) {
-  const preserveEditorContext = Boolean(options.preserveEditorContext);
-  return {
-    ...baseQuery,
-    root_menu_xmlid: route.query.root_menu_xmlid || undefined,
-    page_label: options.pageLabel || selectedPageLabel.value || undefined,
-    [BUSINESS_CONFIG_ROUTE_FLAGS.returnToBusinessConfig]: '1',
-    [BUSINESS_CONFIG_ROUTE_FLAGS.openPages]: '1',
-    model: options.model || currentModel.value || undefined,
-    action_id: options.actionId ? String(options.actionId) : (scopeAction.value ? String(scopeAction.value) : undefined),
-    view_id: options.viewId ? String(options.viewId) : (scopeView.value ? String(scopeView.value) : undefined),
-    list_search_tab: preserveEditorContext && listSearchPanelOpen.value && activeListSearchEditor.value !== 'list' ? activeListSearchEditor.value : undefined,
-    open_list_search: preserveEditorContext && listSearchPanelOpen.value ? '1' : undefined,
-    analysis_tab: preserveEditorContext && analysisPanelOpen.value && activeAnalysisEditor.value !== 'pivotMeasure' ? activeAnalysisEditor.value : undefined,
-    open_analysis: preserveEditorContext && analysisPanelOpen.value ? '1' : undefined,
-  };
-}
-
-async function previewSelectedRuntimeRoute() {
-  const target = previewRouteTarget.value;
-  const path = String(target.path || '').trim();
-  if (!path) return;
-  await router.push({
-    path,
-    query: buildPreviewRuntimeQuery(target.query || {}, { preserveEditorContext: true }),
   });
 }
 
@@ -1174,6 +1223,11 @@ async function bootstrapMissingContracts(row: BusinessConfigCoverageScanItem) {
 
 async function bootstrapCoverageMissing() {
   if (!coverageBatchBootstrapRows.value.length) return;
+  const confirmed = await openImpactDialog({
+    summary: `批量补齐 ${coverageBatchBootstrapRows.value.length} 个页面的缺失配置`,
+    rollbackText: '每个已发布配置均保留版本，可按页面恢复。',
+  });
+  if (!confirmed) return;
   listSearchSaving.value = true;
   error.value = '';
   clearMessage();
@@ -1205,6 +1259,15 @@ async function bootstrapCoverageMissing() {
   } finally {
     listSearchSaving.value = false;
   }
+}
+
+async function confirmAndSaveApprovalConfig() {
+  const confirmed = await openImpactDialog({
+    summary: approvalImpactSummaryText.value || '调整当前页面的审批规则',
+    rollbackText: '审批规则会立即被运行态消费；请使用可复位配置恢复原状态。',
+  });
+  if (!confirmed) return;
+  await saveApprovalConfig();
 }
 
 async function loadListSearchConfig() {
@@ -1371,87 +1434,6 @@ async function saveAnalysisConfig() {
   }
 }
 
-async function previewListSearchConfig() {
-  if (hasListSearchDraftChanges.value) {
-    const saved = await saveListSearchConfig();
-    if (!saved) return;
-  }
-  await previewSelectedRuntimeRoute();
-}
-
-async function previewAnalysisConfig() {
-  if (hasAnalysisDraftChanges.value) {
-    const saved = await saveAnalysisConfig();
-    if (!saved) return;
-  }
-  await previewSelectedRuntimeRoute();
-}
-
-function menuConfigWorkbenchReturnQuery() {
-  const menuEntry = findMenuConfigNavigationEntry(session.menuTree || [], BUSINESS_CONFIG_MODELS.menuConfigPolicy);
-  return {
-    menu_id: menuEntry?.menuId ? String(menuEntry.menuId) : undefined,
-    action_id: menuEntry?.actionId ? String(menuEntry.actionId) : undefined,
-    root_menu_xmlid: route.query.root_menu_xmlid || undefined,
-    [BUSINESS_CONFIG_ROUTE_FLAGS.returnToBusinessConfig]: '1',
-    [BUSINESS_CONFIG_ROUTE_FLAGS.openPages]: route.query[BUSINESS_CONFIG_ROUTE_FLAGS.openPages] || '1',
-    [BUSINESS_CONFIG_ROUTE_FLAGS.returnModel]: currentModel.value || undefined,
-    [BUSINESS_CONFIG_ROUTE_FLAGS.returnActionId]: scopeAction.value ? String(scopeAction.value) : undefined,
-    [BUSINESS_CONFIG_ROUTE_FLAGS.returnMenuId]: route.query.menu_id || undefined,
-    [BUSINESS_CONFIG_ROUTE_FLAGS.returnPageLabel]: selectedPageLabel.value || undefined,
-    [BUSINESS_CONFIG_ROUTE_FLAGS.returnViewId]: scopeView.value ? String(scopeView.value) : undefined,
-    [BUSINESS_CONFIG_ROUTE_FLAGS.returnRoleKey]: scopeRole.value || undefined,
-  };
-}
-
-function openMenuConfig() {
-  router.push({
-    path: '/admin/menu-config',
-    query: menuConfigWorkbenchReturnQuery(),
-  });
-}
-
-function openCreateMenuConfig() {
-  router.push({
-    path: '/admin/menu-config',
-    query: {
-      ...menuConfigWorkbenchReturnQuery(),
-      create_menu: '1',
-    },
-  });
-}
-
-function openApprovalConfig(section: BusinessConfigSurfacePayload['sections'][number]) {
-  const path = String(section.route?.path || '').trim();
-  if (!path) return;
-  router.push({
-    path,
-    query: {
-      ...(section.route?.query || {}),
-      [BUSINESS_CONFIG_ROUTE_FLAGS.returnToBusinessConfig]: '1',
-      root_menu_xmlid: route.query.root_menu_xmlid || undefined,
-      page_label: selectedPageLabel.value || undefined,
-    },
-  });
-}
-
-function openFormConfig() {
-  if (!canOpenDesigner.value) return;
-  router.push({
-    path: `/f/${encodeURIComponent(currentModel.value)}/new`,
-    query: {
-      action_id: scopeAction.value ? String(scopeAction.value) : undefined,
-      menu_id: route.query.menu_id || undefined,
-      root_menu_xmlid: route.query.root_menu_xmlid || undefined,
-      view_id: scopeView.value ? String(scopeView.value) : undefined,
-      role_key: scopeRole.value || undefined,
-      page_label: selectedPageLabel.value || undefined,
-      config_mode: BUSINESS_CONFIG_MODES.lowCode,
-      [BUSINESS_CONFIG_ROUTE_FLAGS.returnToBusinessConfig]: '1',
-    },
-  });
-}
-
 onMounted(() => {
   void (async () => {
     const openPageListOnMount = shouldOpenPageList.value;
@@ -1459,7 +1441,8 @@ onMounted(() => {
     const openListSearchOnMount = shouldOpenListSearch.value;
     const openAnalysisOnMount = shouldOpenAnalysis.value;
     await loadSurface();
-    if (openPageListOnMount) {
+    if (!surface.value && error.value) return;
+    if (openPageListOnMount || !coverageScan.value) {
       await scanSystemRootCoverage();
     }
     if (openFormConfigOnMount && currentModel.value && scopeAction.value) {
@@ -1479,8 +1462,13 @@ onMounted(() => {
       await clearConsumedOpenIntent(['open_analysis']);
       await loadAnalysisConfig();
     }
+    const returnScroll = Number(route.query.workbench_scroll || 0);
+    if (Number.isFinite(returnScroll) && returnScroll > 0) {
+      await nextTick();
+      window.scrollTo({ top: returnScroll, behavior: 'auto' });
+    }
   })();
 });
 </script>
 
-<style scoped src="./businessConfigSurface/style.css"></style>
+<style src="./businessConfigSurface/style.css"></style>

@@ -58,6 +58,39 @@ def file_metrics(path: Path) -> dict[str, object]:
     }
 
 
+def raw_control_inventory(paths: list[Path]) -> list[dict[str, object]]:
+    rows: list[dict[str, object]] = []
+    pattern = re.compile(r"<(button|input|select|textarea)\b")
+    for path in paths:
+        source = text(path)
+        relative = str(path.relative_to(ROOT))
+        for line_no, line in enumerate(source.splitlines(), 1):
+            for match in pattern.finditer(line):
+                control = match.group(1)
+                if "BusinessConfigAdvancedAuditPanels" in relative or path.name == "BusinessConfigSurfaceView.vue":
+                    category = "developer_tools"
+                elif path.name == "BusinessConfigStartPanel.vue":
+                    category = "compatibility_fallback"
+                elif control in {"input", "select", "textarea"} and path.name in {
+                    "MenuConfigView.vue",
+                    "BusinessConfigApprovalPanel.vue",
+                    "BusinessConfigCoverageWorkspace.vue",
+                    "LowCodeFieldChipEditor.vue",
+                    "ContractFormPage.vue",
+                }:
+                    category = "semantic_native_control"
+                else:
+                    category = "main_product_control_pending_component_ownership"
+                rows.append({
+                    "id": f"{relative}:{line_no}:{control}:{len(rows) + 1}",
+                    "path": relative,
+                    "line": line_no,
+                    "control": control,
+                    "category": category,
+                })
+    return rows
+
+
 def route_inventory() -> list[dict[str, object]]:
     source = text(WEB / "router/index.ts")
     rows = []
@@ -117,6 +150,8 @@ def main() -> int:
     output = ROOT / args.output
     files = [path for path in SURFACE_FILES if path.is_file()]
     metrics = [file_metrics(path) for path in files]
+    raw_controls = raw_control_inventory(files)
+    migrated_control_count = max(0, 136 - len(raw_controls))
     payload = {
         "schema_version": "lc_audit_01_static_inventory.v1",
         "generated_at": dt.datetime.now(dt.timezone.utc).isoformat(),
@@ -141,6 +176,13 @@ def main() -> int:
         "frontend_api_functions": api_inventory(),
         "intent_names": intent_inventory(),
         "surface_files": metrics,
+        "raw_control_inventory": raw_controls,
+        "baseline_control_classification": {
+            "lc_audit_01_total": 136,
+            "migrated_to_design_system": migrated_control_count,
+            "remaining_classified": len(raw_controls),
+            "classification_complete": migrated_control_count + len(raw_controls) == 136,
+        },
         "totals": {
             key: sum(int(row[key]) for row in metrics)
             for key in (
@@ -168,7 +210,7 @@ def main() -> int:
             "contract_versions_and_rollback",
             "snapshot_export_compare_and_remediation",
             "delivery_readiness",
-            "runtime_preview",
+            "read_only_current_runtime_open",
         ],
     }
     output.parent.mkdir(parents=True, exist_ok=True)

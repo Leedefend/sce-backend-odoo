@@ -20,6 +20,7 @@ SCAN_PATHS = [
     ROOT / "frontend/apps/web/src/views/ActionView.vue",
     ROOT / "frontend/apps/web/src/views/HomeView.vue",
     ROOT / "frontend/apps/web/src/pages/ContractFormPage.vue",
+    ROOT / "frontend/apps/web/src/pages/contractForm",
     ROOT / "frontend/apps/web/src/app",
     ROOT / "addons/smart_core/handlers",
     ROOT / "addons/smart_core/delivery",
@@ -85,15 +86,18 @@ def main() -> int:
             print(f" - {file_path}:{line_no}: banned phrase {phrase!r}: {line}")
         return 1
 
-    contract_form = ROOT / "frontend/apps/web/src/pages/ContractFormPage.vue"
-    contract_form_text = contract_form.read_text(encoding="utf-8")
+    contract_form_sources = [
+        ROOT / "frontend/apps/web/src/pages/ContractFormPage.vue",
+        ROOT / "frontend/apps/web/src/pages/contractForm/formConfigHelpers.ts",
+    ]
+    contract_form_text = "\n".join(path.read_text(encoding="utf-8") for path in contract_form_sources)
     snippet_violations = []
     for snippet in REQUIRED_CONTRACT_FORM_SNIPPETS:
         if snippet not in contract_form_text:
-            snippet_violations.append(f"missing required ContractFormPage snippet: {snippet}")
+            snippet_violations.append(f"missing required contract form snippet: {snippet}")
     for snippet in FORBIDDEN_CONTRACT_FORM_SNIPPETS:
         if snippet in contract_form_text:
-            snippet_violations.append(f"forbidden ContractFormPage snippet: {snippet}")
+            snippet_violations.append(f"forbidden contract form snippet: {snippet}")
     if snippet_violations:
         print("[business_config_user_language_guard] FAIL")
         for violation in snippet_violations:

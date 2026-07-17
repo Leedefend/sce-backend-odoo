@@ -14,6 +14,7 @@ import {
 } from './formatters';
 
 type PageTypeFilter = 'all' | 'form' | 'list' | 'analysis';
+type ConfigStatusFilter = 'all' | 'unconfigured' | 'partial' | 'configured';
 
 type UseBusinessConfigCoverageOptions = {
   coverageScan: Ref<BusinessConfigCoverageScanPayload | null>;
@@ -25,11 +26,18 @@ export function useBusinessConfigCoverage(options: UseBusinessConfigCoverageOpti
   const showOnlyIssues = ref(false);
   const pageSearch = ref('');
   const pageTypeFilter = ref<PageTypeFilter>('all');
+  const configStatusFilter = ref<ConfigStatusFilter>('all');
   const pageTypeOptions = [
     { key: 'all' as const, label: '全部页面' },
     { key: 'form' as const, label: '表单页面' },
     { key: 'list' as const, label: '列表页面' },
     { key: 'analysis' as const, label: '分析页面' },
+  ];
+  const configStatusOptions = [
+    { key: 'all' as const, label: '全部状态' },
+    { key: 'unconfigured' as const, label: '未配置' },
+    { key: 'partial' as const, label: '部分配置' },
+    { key: 'configured' as const, label: '已配置' },
   ];
 
   const coverageIssueRows = computed(() => (
@@ -59,6 +67,11 @@ export function useBusinessConfigCoverage(options: UseBusinessConfigCoverageOpti
         if (pageTypeFilter.value === 'list') return rowHasListSearchConfig(row);
         if (pageTypeFilter.value === 'analysis') return rowHasAnalysisConfig(row);
         return true;
+      })
+      .filter((row) => {
+        const configuredCount = Object.values(row.coverage || {}).reduce((sum, count) => sum + Number(count || 0), 0);
+        const status = configuredCount === 0 ? 'unconfigured' : (row.is_complete && row.is_runtime_complete ? 'configured' : 'partial');
+        return configStatusFilter.value === 'all' || configStatusFilter.value === status;
       })
       .filter((row) => {
         if (!keyword) return true;
@@ -125,6 +138,8 @@ export function useBusinessConfigCoverage(options: UseBusinessConfigCoverageOpti
     pageSearch,
     pageTypeFilter,
     pageTypeOptions,
+    configStatusFilter,
+    configStatusOptions,
     coverageIssueRows,
     coverageBatchBootstrapRows,
     coverageScopeLabel,
