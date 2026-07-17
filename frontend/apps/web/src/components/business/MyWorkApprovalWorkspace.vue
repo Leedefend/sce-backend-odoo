@@ -91,7 +91,7 @@
         <p v-if="dialogError" class="feedback error" role="alert">{{ dialogError }}</p>
         <ScActionBar class="dialog-actions" label="确认操作">
           <ScButton variant="ghost" :disabled="busy" @click="closeDialog">取消</ScButton>
-          <ScButton variant="primary" :disabled="busy" :loading="busy" @click="confirmAction">
+          <ScButton variant="primary" :disabled="busy" :loading="busy" autofocus @click="confirmAction">
             {{ busy ? '提交中…' : `确认${pendingAction?.label || ''}` }}
           </ScButton>
         </ScActionBar>
