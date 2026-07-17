@@ -1,6 +1,5 @@
 <template>
   <ScPage class="page">
-    <ScPageHeader :title="pageIdentity.title.value" />
     <ScErrorState
       :title="pageIdentity.title.value"
       :description="pageText('message', '当前角色无权访问此业务入口。请返回已授权的工作区。')"
@@ -15,7 +14,6 @@ import { useRouter } from 'vue-router';
 import ScButton from '../components/design-system/ScButton.vue';
 import ScErrorState from '../components/design-system/ScErrorState.vue';
 import ScPage from '../components/design-system/ScPage.vue';
-import ScPageHeader from '../components/design-system/ScPageHeader.vue';
 import { usePageContract } from '../app/pageContract';
 import { usePageIdentityRuntime } from '../app/pageIdentityRuntime';
 
