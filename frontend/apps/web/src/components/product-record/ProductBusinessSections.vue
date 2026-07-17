@@ -4,8 +4,8 @@
     <section v-for="section in sections" :key="section.key">
       <h3>{{ section.label }}</h3>
       <p v-if="!section.rows.length" class="product-sections__empty">{{ section.empty_text }}</p>
-      <div v-else class="product-sections__table" tabindex="0" :aria-label="`${section.label}，可横向滚动查看`">
-        <ScDataTable>
+      <div v-else class="product-sections__table">
+        <ScDataTable :label="`${section.label}，可横向滚动查看`">
           <thead><tr><th v-for="cell in section.rows[0]?.cells || []" :key="cell.key" scope="col">{{ cell.label }}</th></tr></thead>
           <tbody><tr v-for="row in section.rows" :key="row.key"><td v-for="cell in row.cells" :key="cell.key">{{ cellText(cell) }}</td></tr></tbody>
         </ScDataTable>

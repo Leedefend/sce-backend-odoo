@@ -169,6 +169,7 @@ async function pageMetrics(page, startedAt) {
       id: row.id,
       impact: row.impact,
       nodes: row.nodes.length,
+      targets: row.nodes.map((node) => node.target),
     })),
   };
 }
