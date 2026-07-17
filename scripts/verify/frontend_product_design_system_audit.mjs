@@ -159,12 +159,20 @@ async function prepareCase(page, entry) {
 
 async function visualMetrics(page, runDetailedScan) {
   if (!runDetailedScan) {
-    const compact = await page.evaluate(() => ({
-      title: document.querySelector('h1')?.textContent?.trim() || '',
-      h1_count: document.querySelectorAll('h1').length,
-      main_count: document.querySelectorAll('main').length,
-      horizontal_overflow: Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth),
-    }));
+    const compact = await page.evaluate(() => {
+      const visible = (node) => {
+        const style = window.getComputedStyle(node);
+        const rect = node.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden';
+      };
+      return {
+        title: document.querySelector('h1')?.textContent?.trim() || '',
+        h1_count: document.querySelectorAll('h1').length,
+        main_count: document.querySelectorAll('main').length,
+        desktop_record_table_visible: [...document.querySelectorAll('.desktop-record-table')].filter(visible).length,
+        horizontal_overflow: Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth),
+      };
+    });
     return {
       ...compact,
       technical_term_hits: [],
@@ -226,6 +234,7 @@ async function visualMetrics(page, runDetailedScan) {
         return box.top >= 0 && box.top < window.innerHeight;
       }).length,
       visible_element_count: nodes.length,
+      desktop_record_table_visible: [...document.querySelectorAll('.desktop-record-table')].filter(visible).length,
       horizontal_overflow: Math.max(0, document.documentElement.scrollWidth - document.documentElement.clientWidth),
     };
   });
@@ -360,6 +369,7 @@ async function main() {
       check(pages.filter((row) => row.theme === 'dark').length === DARK_CASES.size, 'dark visual sample incomplete');
       check(!pages.some((row) => row.h1_count !== 1 || row.main_count !== 1), 'page landmark hierarchy failed');
       check(!pages.some((row) => row.font_level_count > 4), 'page typography hierarchy exceeds four visible levels');
+      check(!pages.some((row) => row.viewport === '390x844' && row.desktop_record_table_visible > 0), 'desktop record table leaked into mobile layout');
       check(!pages.some((row) => row.horizontal_overflow > 1 || row.axe_critical_serious.length), 'responsive/accessibility visual guard failed');
       check(!pages.some((row) => row.technical_term_hits.length), 'technical product wording found');
       check(!runtime.some((row) => row.console.length || row.pageerror.length || row.http.length), 'unexpected runtime errors found');
