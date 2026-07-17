@@ -49,3 +49,18 @@
 - 金额 required 探针：`artifacts/frontend-professional/fe-pro-03/final-report.json`
 
 视觉报告记录 route、role、company、viewport、theme、组件契约版本、git SHA、截图 hash、console/pageerror、axe 和横向溢出。动态文本不以整图字节相等作为唯一判定。
+
+## 验收结论
+
+- required 金额探针：付款申请 create 从 `NOT_APPLICABLE` 收敛为真实 `PASS`，覆盖 required、invalid、describedby、错误摘要聚焦、0/null。
+- 正式设计契约：语义色彩、字体、4/8 像素间距、圆角/阴影/边框和单一 SVG 图标来源由 design-system token 与 style guard 冻结。
+- 正式组件目录：规定的 22 个 `Sc*` 产品组件均存在并有正式页面消费者，另有 `ScIcon` 作为受控图标入口；组件不读取角色码、模型名或 XML-ID。
+- 视觉矩阵：18 个代表页面覆盖 1440、1280、768、390 四种尺寸和 light；dark 采样覆盖首页、My Work、列表、详情、表单、dialog、错误状态。
+- 页面质量：一个 H1、一个 main、技术词、横向溢出、console/pageerror 与 axe critical/serious 均作为阻断字段记录。
+- 回归旅程：J02–J13 全部通过；70/70 导航保持 finance 42、project member 9、PM 14、owner 5；action 876/menu 606 继续拒绝。
+
+分支最终 CI、双远端同步、PR quality gate 和 merge SHA 属于交付态事实，在合并完成后由 PR 与最终交付报告记录，不在合并前预写占位值。
+
+## 已知存量债务
+
+超过 600/1000 行的 Vue 文件数量仍为 16/10，`ActionView.vue` 仍为 3684 行，model-specific CSS 与重复金额格式化实现仅做到不增长。它们是明确登记的存量债务，不影响本分支的强制前置项关闭，也不得用薄代理文件宣称已经消失。

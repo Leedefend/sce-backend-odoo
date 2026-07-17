@@ -21,10 +21,10 @@ Each entry must include:
 - layer_target: `P0 frontend product runtime + P4 acceptance evidence`
 - module: `frontend/apps/web design-system consumers + ContractFormRoute + visual/complexity guards + FE-PRO-04 productization records`
 - reason: `初版 FE-PRO-04 已合并但 required 金额证据仍沿用 NOT_APPLICABLE、15 个设计组件缺少正式消费、深色主题依赖宽范围类名枚举、视觉基线/结构比较缺失，且 17 行路由边界不能替代 1779 行核心页面的真实计量。本批只修复通用渲染、可访问性、视觉和证据闭环，不修改 ACL、record rule、70 叶导航、金额公式、状态机、业务字段或 fixture 授权。`
-- completed_step: `required 金额浏览器探针已真实 PASS；List/Record/Form/My Work/403/404 正式接入共享组件；建立受控 SVG ScIcon 并清除 Unicode 图标混用；删除深色主题类名枚举；增加正式消费、图标、CSS、复杂度和视觉结构门禁；/r 与 /f 通过 ContractFormRoute 生成路由实例身份但 ContractFormPage 继续按 1779 行独立报告；FE-PRO-03 基线 86f9b29eb 的 18 页面视觉基线正在隔离采集。`
-- verification: `strict typecheck PASS；frontend lint PASS；production build PASS（605 modules）；style/legacy/complexity guards PASS；git diff --check PASS；required amount field=native_field_amount_1，aria-required/invalid/describedby/focus 全部 PASS；complexity: largest Vue 5587→3684，wide :is 21→6，raw button/status/dialog files 58→57/21→20/6→4，hardcoded color 0。pending: final visual matrix、J02-J13、70/70、ci.local.quick、single make ci、dual remote PR quality gate。`
-- active_commit: `pending`
-- next_step: `完成 86f9b29eb 基线后提交当前实现，并在该提交上运行 18×4 light、7 dark 的最终视觉矩阵。`
+- completed_step: `required 金额浏览器探针已真实 PASS；List/Record/Form/My Work/403/404 正式接入共享组件；建立受控 SVG ScIcon 并清除 Unicode 图标混用；删除深色主题类名枚举；增加正式消费、图标、CSS、复杂度和视觉结构门禁；/r 与 /f 通过 ContractFormRoute 生成路由实例身份但 ContractFormPage 继续按 1779 行独立报告；已从 FE-PRO-03 完成点 86f9b29eb 采集 18 页面基线；J13 从已删除的私有 CSS 类定位迁移到 role=alert 正式可访问性契约。`
+- verification: `strict typecheck PASS；frontend lint PASS；production build PASS（605 modules）；style/legacy/complexity guards PASS；git diff --check PASS；required amount field=native_field_amount_1，aria-required/invalid/describedby/focus 全部 PASS；J02-J13 PASS；70/70 PASS（finance 42、project member 9、PM 14、owner 5）；complexity: largest Vue 5587→3684，wide :is 21→6，raw button/status/dialog files 58→57/21→20/6→4，hardcoded color 0。收口门禁将在本条所在最终 HEAD 上重新生成 required/visual 证据，再运行 ci.local.quick 与唯一一次 make ci。`
+- active_commit: `current HEAD containing this entry`
+- next_step: `在最终 HEAD 上重跑 required 金额探针与 18×4 light、7 dark 视觉矩阵。`
 
 ### 2026-07-14T16:36:26+08:00
 - blocker_key: `pr_push_dual_remote_ci_mirror`

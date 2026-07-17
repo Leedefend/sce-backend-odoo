@@ -123,7 +123,9 @@ async function j13(page) {
   await amount.waitFor({ timeout: 30000 });
   await amount.fill('');
   await page.getByRole('button', { name: '保存草稿', exact: true }).click();
-  const summary = page.locator('.product-form-errors');
+  const summary = page
+    .getByRole('alert')
+    .filter({ has: page.getByRole('heading', { name: '请检查以下内容', exact: true }) });
   await summary.waitFor({ timeout: 15000 });
   const firstError = summary.locator('button').first();
   await firstError.click();
