@@ -125,9 +125,9 @@
             <input v-model="step.amount_max" type="number" min="0" step="0.01" placeholder="不限制" :disabled="!form.approval_required" :aria-label="`第${index + 1}步金额上限`" />
           </div>
           <div class="approval-step-actions">
-            <button type="button" title="上移" :aria-label="`上移第${index + 1}步`" :disabled="loading || !form.approval_required || index === 0" @click="$emit('moveStep', index, -1)">↑</button>
-            <button type="button" title="下移" :aria-label="`下移第${index + 1}步`" :disabled="loading || !form.approval_required || index === steps.length - 1" @click="$emit('moveStep', index, 1)">↓</button>
-            <button type="button" title="移除" :aria-label="`移除第${index + 1}步`" :disabled="loading || !form.approval_required" @click="$emit('removeStep', index)">×</button>
+            <button type="button" title="上移" :aria-label="`上移第${index + 1}步`" :disabled="loading || !form.approval_required || index === 0" @click="$emit('moveStep', index, -1)">上移</button>
+            <button type="button" title="下移" :aria-label="`下移第${index + 1}步`" :disabled="loading || !form.approval_required || index === steps.length - 1" @click="$emit('moveStep', index, 1)">下移</button>
+            <button type="button" title="移除" :aria-label="`移除第${index + 1}步`" :disabled="loading || !form.approval_required" @click="$emit('removeStep', index)">移除</button>
           </div>
         </div>
       </div>

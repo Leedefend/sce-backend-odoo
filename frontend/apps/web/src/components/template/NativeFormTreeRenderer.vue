@@ -106,7 +106,7 @@
               :disabled="titleFieldForNode(node)?.favoriteToggle?.readonly"
               @click="emitTitleFavoriteToggle(titleFieldForNode(node))"
             >
-              <span aria-hidden="true">{{ titleFieldForNode(node)?.favoriteToggle?.active ? '★' : '☆' }}</span>
+              <ScIcon :name="titleFieldForNode(node)?.favoriteToggle?.active ? 'star' : 'star-outline'" :size="18" />
             </button>
             <input
               v-if="!titleFieldForNode(node)?.readonly"
@@ -347,6 +347,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import FormSection from './FormSection.vue';
+import ScIcon from '../design-system/ScIcon.vue';
 import type {
   FormSectionFieldAction,
   FormSectionFieldActionPayload,

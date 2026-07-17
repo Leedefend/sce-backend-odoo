@@ -12,9 +12,12 @@
 | `ListPage.vue` | 3222 | ≤2300 | 2083 |
 | `ActionView.vue` | 3684 | 不增长 | 3684 |
 | `ContractFormPage.vue` | 5587 | ≤1800 | 1779（含稳定装配与样式引用） |
-| `MyWorkApprovalWorkspace.vue` | 311 | 不增长 | 311 |
+| `ContractFormRoute.vue` | 不存在 | ≤800 | 18（只生成路由实例标识并装配正式页面） |
+| `MyWorkApprovalWorkspace.vue` | 311 | 稳定组件迁移 | 323 |
 
-`ContractFormPage` 的下降来自真实责任拆分：协同展示、契约语义、字段 schema、布局、表单状态、设计器状态/展示/持久化、关系字段/搜索/导航、操作 presentation、权威加载生命周期、保存与冲突动作分别进入独立模块。`RecordView` 和 `ModelFormPage` 两个无调用方代理已删除；正式 `/r` 与 `/f` 路由均直接进入同一页面实现。
+`ContractFormPage` 的下降来自真实责任拆分：协同展示、契约语义、字段 schema、布局、表单状态、设计器状态/展示/持久化、关系字段/搜索/导航、操作 presentation、权威加载生命周期、保存与冲突动作分别进入独立模块。`RecordView` 和 `ModelFormPage` 两个无调用方代理已删除；正式 `/r` 与 `/f` 路由先进入只负责路由实例身份的 `ContractFormRoute`，随后装配同一个 1779 行正式页面。复杂度报告始终单独记录 `ContractFormPage`，不以 17 行路由组件代替核心实现规模。
+
+整体机器指标以 FE-PRO-03 完成点 `86f9b29eb` 为基线：最大 Vue 文件 5587→3684；超过 600/1000 行 Vue 文件仍为 16/10，未伪报关闭；设计系统组件 0→23（22 个规定组件加正式 SVG 图标组件）；宽范围 `:is` 21→6；包含 raw button/status/dialog 实现的文件分别 58→57、21→20、6→4；硬编码颜色 0→0，页面 inline style literal 0→0，model-specific CSS 138→138，金额格式化实现文件 3→3。后四项只证明未增长，仍是后续按真实修改热点处理的存量债务。
 
 ## Legacy 路径裁决
 
@@ -25,7 +28,12 @@
 | `RecordView.vue` | 无 | REMOVE | router 已直接指向 `ContractFormPage` |
 | `ModelFormPage.vue` | 无 | REMOVE | router 已直接指向 `ContractFormPage` |
 | `PageRenderer` | 合法声明式页面 | KEEP_COMPATIBILITY | 仍有正式页面调用，安全 fallback 只显示产品化错误 |
+| `/a/:actionId` 与 `ModelListPage` | 70 个正式叶节点 | KEEP_COMPATIBILITY | 正式 action/list 入口仍依赖，缺少 action_id 时只进入产品化错误状态 |
+| `/f/:model/:id` 与 `/r/:model/:id` | J12/J13 与正式 deep link | KEEP_COMPATIBILITY | 两条 URL 统一装配 `ContractFormRoute`/`ContractFormPage`，不再切换旧 renderer |
+| query 参数切换旧 Home/My Work/Record/Form | 无 | REMOVE | 正式 router 不存在 legacy renderer query switch，守卫禁止回流 |
+| `/workbench` | 诊断人员显式直达 | KEEP_INTERNAL_ONLY | 不在四正式角色导航与 70 叶节点中出现，保留诊断用途 |
 | 管理员诊断入口 | 显式管理员开关 | KEEP_INTERNAL_ONLY | 普通角色默认不加载原始诊断数据 |
+| 旧按钮、状态、dialog、empty state | 分散正式调用方 | KEEP_COMPATIBILITY | 本分支迁移稳定高频路径；剩余 raw 实现按机器指标登记，不在缺少逐页视觉证据时批量删除 |
 
 ## 自定义金额字段
 
@@ -36,6 +44,8 @@
 - 静态边界：`scripts/verify/frontend_style_system_guard.py`
 - Legacy 守卫：`scripts/verify/frontend_page_legacy_renderer_residue_guard.py`
 - 视觉矩阵：`artifacts/frontend-professional/fe-pro-04/final-report.json`
+- 视觉结构比较：`artifacts/frontend-professional/fe-pro-04/visual-regression-report.json`
+- 复杂度与重复实现：`artifacts/frontend-professional/fe-pro-04/complexity-report.json`
 - 金额 required 探针：`artifacts/frontend-professional/fe-pro-03/final-report.json`
 
 视觉报告记录 route、role、company、viewport、theme、组件契约版本、git SHA、截图 hash、console/pageerror、axe 和横向溢出。动态文本不以整图字节相等作为唯一判定。

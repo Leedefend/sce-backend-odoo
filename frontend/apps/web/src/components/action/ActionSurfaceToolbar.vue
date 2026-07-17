@@ -335,8 +335,8 @@ const favoriteName = ref('');
 const favoriteUseByDefault = ref(false);
 const favoriteShared = ref(false);
 const toolbarRoot = ref<HTMLElement | null>(null);
-const selectedSymbol = '✓';
-const clearSymbol = '×';
+const selectedSymbol = '已选';
+const clearSymbol = '清除';
 
 function uiLabel(key: string, fallback: string) {
   return String(props.uiLabels?.[key] || fallback).trim() || fallback;

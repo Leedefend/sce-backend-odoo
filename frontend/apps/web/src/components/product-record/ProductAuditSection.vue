@@ -2,11 +2,12 @@
   <details v-if="facts.length" class="product-audit">
     <summary>{{ title }}</summary>
     <p>{{ eyebrow }}</p>
-    <dl><div v-for="fact in facts" :key="fact.key"><dt>{{ fact.label }}</dt><dd>{{ factText(fact) }}</dd></div></dl>
+    <ScAuditTrail :label="title"><div v-for="fact in facts" :key="fact.key"><dt>{{ fact.label }}</dt><dd>{{ factText(fact) }}</dd></div></ScAuditTrail>
   </details>
 </template>
 
 <script setup lang="ts">
+import ScAuditTrail from '../design-system/ScAuditTrail.vue';
 import { formatWorkspaceMoney, type WorkspaceFact } from '../../app/financialWorkspaceContract';
 defineProps<{ facts: WorkspaceFact[]; eyebrow: string; title: string }>();
 function factText(fact: WorkspaceFact): string {

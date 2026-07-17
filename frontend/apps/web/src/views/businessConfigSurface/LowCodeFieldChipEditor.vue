@@ -35,11 +35,11 @@
           :aria-label="`拖动${fieldDisplayLabel(name)}调整顺序`"
           @dragstart.stop="$emit('startDrag', name, $event)"
           @dragend.stop="$emit('clearDrag')"
-        >⋮⋮</span>
+        >拖动</span>
         {{ fieldDisplayLabel(name) }}
-        <button type="button" title="上移" :aria-label="`上移${fieldDisplayLabel(name)}`" :disabled="index === 0" @click="$emit('moveName', name, -1)">↑</button>
-        <button type="button" title="下移" :aria-label="`下移${fieldDisplayLabel(name)}`" :disabled="index === names.length - 1" @click="$emit('moveName', name, 1)">↓</button>
-        <button type="button" title="移除" :aria-label="`移除${fieldDisplayLabel(name)}`" @click="$emit('removeName', name)">×</button>
+        <button type="button" title="上移" :aria-label="`上移${fieldDisplayLabel(name)}`" :disabled="index === 0" @click="$emit('moveName', name, -1)">上移</button>
+        <button type="button" title="下移" :aria-label="`下移${fieldDisplayLabel(name)}`" :disabled="index === names.length - 1" @click="$emit('moveName', name, 1)">下移</button>
+        <button type="button" title="移除" :aria-label="`移除${fieldDisplayLabel(name)}`" @click="$emit('removeName', name)">移除</button>
       </span>
     </div>
     <form v-if="advancedPanelOpen" class="field-chip-add" @submit.prevent="$emit('addName')">

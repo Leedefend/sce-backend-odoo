@@ -4,9 +4,9 @@
       <h2>{{ title }}</h2>
       <p v-if="subtitle">{{ subtitle }}</p>
     </div>
-    <div class="product-list-header__tools">
+    <ScActionBar class="product-list-header__tools" label="列表操作">
       <slot />
-    </div>
+    </ScActionBar>
     <form v-if="showSearch" class="product-list-header__search" role="search" @submit.prevent="$emit('search-submit')">
       <label>
         <span class="sc-visually-hidden">{{ searchLabel }}</span>
@@ -20,13 +20,16 @@
           @input="$emit('search-input', $event)"
         />
       </label>
-      <button type="submit" class="pagination-btn" :disabled="loading">{{ searchLabel }}</button>
-      <button v-if="searchValue" type="button" class="pagination-btn ghost" :disabled="loading" @click="$emit('search-clear')">清除</button>
+      <ScButton type="submit" :disabled="loading">{{ searchLabel }}</ScButton>
+      <ScButton v-if="searchValue" variant="ghost" :disabled="loading" @click="$emit('search-clear')">清除</ScButton>
     </form>
   </header>
 </template>
 
 <script setup lang="ts">
+import ScActionBar from '../design-system/ScActionBar.vue';
+import ScButton from '../design-system/ScButton.vue';
+
 defineProps<{
   title: string;
   subtitle?: string;

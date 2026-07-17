@@ -76,7 +76,7 @@
               :disabled="field.favoriteToggle.readonly"
               @click="emitFavoriteToggle(field)"
             >
-              <span aria-hidden="true">{{ field.favoriteToggle.active ? '★' : '☆' }}</span>
+              <ScIcon :name="field.favoriteToggle.active ? 'star' : 'star-outline'" :size="16" />
             </button>
             <div class="field-control-main">
               <div
@@ -125,37 +125,35 @@
                   type="checkbox"
                   @change="emitFieldChange(field, ($event.target as HTMLInputElement).checked)"
                 />
-                <select
+                <ScSelect
                   v-else-if="field.type === 'selection'"
                   :id="fieldControlId(field)"
-                  :value="String(field.inputValue ?? '')"
+                  :model-value="String(field.inputValue ?? '')"
                   class="input"
-                  :aria-required="field.required || undefined"
-                  :aria-invalid="field.invalid || undefined"
-                  :aria-describedby="fieldDescribedBy(field)"
-                  @change="emitFieldChange(field, ($event.target as HTMLSelectElement).value)"
+                  :required="field.required"
+                  :invalid="field.invalid"
+                  :described-by="fieldDescribedBy(field)"
+                  @update:model-value="emitFieldChange(field, $event)"
                 >
                   <option v-if="!field.required" value="">{{ selectPlaceholderText(field) }}</option>
                   <option v-for="option in field.selectionOptions || []" :key="`${field.name}-${option.value}`" :value="option.value">
                     {{ option.label }}
                   </option>
-                </select>
+                </ScSelect>
                 <div v-else-if="field.type === 'many2one'" :class="['many2one-widget-shell', { 'many2one-widget-shell--avatar': isAvatarMany2oneWidget(field) }]">
                   <span v-if="isAvatarMany2oneWidget(field)" class="many2one-avatar" aria-hidden="true">
                     {{ avatarText(many2oneTextValue(field)) }}
                   </span>
                   <div class="many2one-combobox">
-                    <input
+                    <ScRelationField
                       :id="fieldControlId(field)"
                       class="input"
-                      :aria-required="field.required || undefined"
-                      :aria-invalid="field.invalid || undefined"
-                      :aria-describedby="fieldDescribedBy(field)"
-                      type="text"
-                      :value="many2oneTextValue(field)"
+                      :required="field.required"
+                      :invalid="field.invalid"
+                      :described-by="fieldDescribedBy(field)"
+                      :model-value="many2oneTextValue(field)"
                       :placeholder="selectPlaceholderText(field)"
-                      autocomplete="off"
-                      @input="emitMany2oneQuery(field, ($event.target as HTMLInputElement).value)"
+                      @update:model-value="emitMany2oneQuery(field, $event)"
                       @focus="emitMany2oneQuery(field, many2oneTextValue(field))"
                       @change="emitMany2oneCommit(field, ($event.target as HTMLInputElement).value)"
                       @keydown.enter.prevent="emitMany2oneCommit(field, ($event.target as HTMLInputElement).value)"
@@ -216,29 +214,39 @@
                   </div>
                 </div>
                 <div v-else-if="isDateRangeWidget(field)" class="native-date-range">
-                  <input
+                  <ScDateField
                     :id="fieldControlId(field)"
-                    :value="String(field.inputValue ?? '')"
+                    :model-value="String(field.inputValue ?? '')"
                     class="input"
                     :aria-label="field.label"
-                    :aria-required="field.required || undefined"
-                    :aria-invalid="field.invalid || undefined"
-                    :aria-describedby="fieldDescribedBy(field)"
-                    type="date"
+                    :required="field.required"
+                    :invalid="field.invalid"
+                    :described-by="fieldDescribedBy(field)"
                     :placeholder="field.inputPlaceholder || inputPlaceholderText(field)"
-                    @input="emitFieldChange(field, ($event.target as HTMLInputElement).value)"
+                    @update:model-value="emitFieldChange(field, $event)"
                   />
-                  <span v-if="field.dateRangeEndField" class="native-date-range-separator" aria-hidden="true">→</span>
-                  <input
+                  <ScIcon v-if="field.dateRangeEndField" class="native-date-range-separator" name="arrow-right" :size="16" />
+                  <ScDateField
                     v-if="field.dateRangeEndField"
-                    :value="String(field.dateRangeEndInputValue ?? '')"
+                    :model-value="String(field.dateRangeEndInputValue ?? '')"
                     class="input"
-                    type="date"
                     :aria-label="`${field.label}结束日期`"
                     :placeholder="field.inputPlaceholder || inputPlaceholderText(field)"
-                    @input="emitDateRangeEndChange(field, ($event.target as HTMLInputElement).value)"
+                    @update:model-value="emitDateRangeEndChange(field, $event)"
                   />
                 </div>
+                <ScDateField
+                  v-else-if="field.type === 'date' || field.type === 'datetime'"
+                  :id="fieldControlId(field)"
+                  :model-value="String(field.inputValue ?? '')"
+                  class="input"
+                  :with-time="field.type === 'datetime'"
+                  :required="field.required"
+                  :invalid="field.invalid"
+                  :described-by="fieldDescribedBy(field)"
+                  :placeholder="field.inputPlaceholder || inputPlaceholderText(field)"
+                  @update:model-value="emitFieldChange(field, $event)"
+                />
                 <textarea
                   v-else-if="isMultilineField(field.type)"
                   :id="fieldControlId(field)"
@@ -290,6 +298,10 @@
 
 <script setup lang="ts">
 import { computed, useSlots } from 'vue';
+import ScDateField from '../design-system/ScDateField.vue';
+import ScIcon from '../design-system/ScIcon.vue';
+import ScRelationField from '../design-system/ScRelationField.vue';
+import ScSelect from '../design-system/ScSelect.vue';
 import X2ManyRelationRenderer from './X2ManyRelationRenderer.vue';
 import { formatDisplayValue } from '../../utils/display';
 import type {

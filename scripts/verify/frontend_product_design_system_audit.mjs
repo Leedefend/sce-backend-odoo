@@ -2,6 +2,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
 import { launchChromium } from './playwright_runtime.mjs';
 
@@ -33,7 +34,7 @@ function recordRoute(target) { return `/r/${target.model}/${target.record_id}?ac
 function formRoute(target, id = target.record_id) { return `/f/${target.model}/${id}?action_id=${target.action_id}&menu_id=${target.menu_id}`; }
 function listRoute(target) { return `/a/${target.action_id}?menu_id=${target.menu_id}`; }
 
-const CASES = [
+const ALL_CASES = [
   { key: 'finance_home', role: 'demo_role_finance', route: '/' },
   { key: 'project_member_home', role: 'demo_role_project_a_member', route: '/' },
   { key: 'my_work', role: 'demo_role_finance', route: '/my-work' },
@@ -53,6 +54,9 @@ const CASES = [
   { key: 'empty_list', role: 'demo_role_finance', mode: 'empty', route: () => listRoute(TARGETS.payment_request) },
   { key: 'network_error', role: 'demo_role_finance', mode: 'network', route: () => recordRoute(TARGETS.payment_request) },
 ];
+const CASE_FILTER = String(process.env.FE_PRO_04_CASE || '').trim();
+const CASES = CASE_FILTER ? ALL_CASES.filter((entry) => entry.key === CASE_FILTER) : ALL_CASES;
+check(CASES.length > 0, `unknown FE_PRO_04_CASE=${CASE_FILTER}`);
 const DARK_ONLY_CASES = [
   { key: 'approval_dialog', role: 'demo_role_finance', mode: 'dialog', route: () => recordRoute(TARGETS.journey_request) },
 ];
@@ -131,7 +135,7 @@ async function prepareCase(page, entry) {
     await search.waitFor({ state: 'visible', timeout: 45000 });
     await search.fill('__FE_PRO_04_NO_MATCH__');
     await search.press('Enter');
-    await page.locator('main .sc-empty').first().waitFor({ state: 'visible', timeout: 45000 });
+    await page.locator('main .sc-empty, main .list-empty-state').first().waitFor({ state: 'visible', timeout: 45000 });
   } else if (entry.mode === 'dialog') {
     await page.locator('.financial-workspace[data-workspace-kind="payment_request"]').waitFor({ timeout: 45000 });
     await page.locator('.template-page-header-actions button.sc-btn-primary').filter({ hasText: /^提交$/ }).first().click();
@@ -176,6 +180,13 @@ async function visualMetrics(page, runDetailedScan) {
     const main = document.querySelector('main');
     const nodes = main ? [...main.querySelectorAll('*')].filter(visible) : [];
     const fontSizes = [...new Set(nodes.map((node) => window.getComputedStyle(node).fontSize))];
+    const fontLevels = [...new Set(fontSizes.map((value) => {
+      const size = Number.parseFloat(value);
+      if (size <= 12.5) return 'supporting';
+      if (size <= 15) return 'body';
+      if (size <= 20) return 'section';
+      return 'page';
+    }))];
     const buttons = [...document.querySelectorAll('button, [role="button"]')].filter(visible);
     const buttonStyles = [...new Set(buttons.map((node) => {
       const style = window.getComputedStyle(node);
@@ -200,6 +211,8 @@ async function visualMetrics(page, runDetailedScan) {
       main_count: [...document.querySelectorAll('main')].filter(visible).length,
       font_size_count: fontSizes.length,
       font_sizes: fontSizes,
+      font_level_count: fontLevels.length,
+      font_levels: fontLevels,
       panel_card_count: panels,
       button_style_count: buttonStyles.length,
       status_style_count: badgeStyles.length,
@@ -235,18 +248,21 @@ async function captureEntry(browser, entry, theme = 'light') {
   console.log(`[fe-pro-04] ${entry.key}:${theme}:open`);
   await prepareCase(page, entry);
   if (theme === 'dark') await page.evaluate(() => document.documentElement.setAttribute('data-sc-theme', 'dark'));
+  const company = await page.getByLabel('当前公司').inputValue({ timeout: 2000 }).catch(() => '');
   const rows = [];
   const viewports = theme === 'dark' ? [{ width: 1440, height: 900 }] : VIEWPORTS;
   for (const viewport of viewports) {
     console.log(`[fe-pro-04] ${entry.key}:${theme}:${viewport.width}x${viewport.height}`);
+    const viewportStarted = Date.now();
     await page.setViewportSize(viewport);
     await page.waitForTimeout(120);
     const screenshot = path.join(OUTPUT, `${entry.key}-${theme}-${viewport.width}x${viewport.height}.png`);
-    await page.screenshot({ path: screenshot, fullPage: false, animations: 'disabled' });
+    await page.screenshot({ path: screenshot, fullPage: false, timeout: 5000 });
+    console.log(`[fe-pro-04] ${entry.key}:${theme}:${viewport.width}x${viewport.height}:captured_ms=${Date.now() - viewportStarted}`);
     rows.push({
       surface: entry.key,
       role: entry.role,
-      company: await page.getByLabel('当前公司').inputValue().catch(() => ''),
+      company,
       viewport: `${viewport.width}x${viewport.height}`,
       theme,
       route: new URL(page.url()).pathname,
@@ -293,7 +309,7 @@ async function main() {
       }
     }
     for (const row of pages) {
-      const digest = await import('node:crypto').then(({ createHash }) => createHash('sha256').update(fs.readFileSync(row.screenshot)).digest('hex'));
+      const digest = createHash('sha256').update(fs.readFileSync(row.screenshot)).digest('hex');
       row.screenshot_sha256 = digest;
     }
     const report = {
@@ -315,9 +331,35 @@ async function main() {
     };
     fs.writeFileSync(REPORT, `${JSON.stringify(report, null, 2)}\n`);
     if (PHASE === 'final') {
+      const baselinePath = path.join(ROOT, 'baseline-report.json');
+      check(fs.existsSync(baselinePath), `missing baseline report: ${baselinePath}`);
+      const baseline = JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
+      const comparison = {
+        schema_version: 'frontend_product_design_system_visual_regression.v1',
+        baseline_sha: baseline.git_sha,
+        final_sha: report.git_sha,
+        component_contract_version: 'sc-product-design-system.v1',
+        surfaces: report.pages.filter((row) => row.theme === 'light').map((row) => {
+          const before = baseline.pages.find((item) => item.surface === row.surface && item.theme === row.theme && item.viewport === row.viewport) || null;
+          return {
+            surface: row.surface,
+            viewport: row.viewport,
+            theme: row.theme,
+            route: row.route,
+            baseline_screenshot_sha256: before?.screenshot_sha256 || null,
+            final_screenshot_sha256: row.screenshot_sha256,
+            structural_metrics: {
+              before: before ? { h1_count: before.h1_count, main_count: before.main_count, panel_card_count: before.panel_card_count, first_screen_actions: before.first_screen_actions, horizontal_overflow: before.horizontal_overflow } : null,
+              after: { h1_count: row.h1_count, main_count: row.main_count, panel_card_count: row.panel_card_count, first_screen_actions: row.first_screen_actions, horizontal_overflow: row.horizontal_overflow },
+            },
+          };
+        }),
+      };
+      fs.writeFileSync(path.join(ROOT, 'visual-regression-report.json'), `${JSON.stringify(comparison, null, 2)}\n`);
       check(pages.filter((row) => row.theme === 'light').length === CASES.length * VIEWPORTS.length, 'light visual matrix incomplete');
       check(pages.filter((row) => row.theme === 'dark').length === DARK_CASES.size, 'dark visual sample incomplete');
       check(!pages.some((row) => row.h1_count !== 1 || row.main_count !== 1), 'page landmark hierarchy failed');
+      check(!pages.some((row) => row.font_level_count > 4), 'page typography hierarchy exceeds four visible levels');
       check(!pages.some((row) => row.horizontal_overflow > 1 || row.axe_critical_serious.length), 'responsive/accessibility visual guard failed');
       check(!pages.some((row) => row.technical_term_hits.length), 'technical product wording found');
       check(!runtime.some((row) => row.console.length || row.pageerror.length || row.http.length), 'unexpected runtime errors found');

@@ -15,12 +15,33 @@ DESIGN_COMPONENTS = WEB_SRC / "components/design-system"
 FORM_SECTION = WEB_SRC / "components/template/FormSection.vue"
 
 REQUIRED_PRODUCT_COMPONENTS = {
-    "ScPage.vue", "ScPageHeader.vue", "ScSection.vue", "ScPanel.vue",
+    "ScPage.vue", "ScPageHeader.vue", "ScSection.vue", "ScPanel.vue", "ScIcon.vue",
     "ScButton.vue", "ScIconButton.vue", "ScStatusBadge.vue", "ScMoney.vue",
     "ScField.vue", "ScSelect.vue", "ScRelationField.vue", "ScDateField.vue",
     "ScErrorSummary.vue", "ScEmptyState.vue", "ScErrorState.vue", "ScDialog.vue",
     "ScDrawer.vue", "ScActionBar.vue", "ScDataTable.vue", "ScMobileRecordCard.vue",
     "ScRelationshipFlow.vue", "ScAuditTrail.vue",
+}
+
+REQUIRED_PRODUCT_CONSUMERS = {
+    "ScActionBar": "components/business/MyWorkApprovalWorkspace.vue",
+    "ScAuditTrail": "components/product-record/ProductAuditSection.vue",
+    "ScDataTable": "pages/ListPage.vue",
+    "ScDateField": "components/template/FormSection.vue",
+    "ScDialog": "pages/contractForm/RelationSearchDialog.vue",
+    "ScEmptyState": "pages/ListPage.vue",
+    "ScErrorState": "views/NotFoundView.vue",
+    "ScField": "components/business/MyWorkApprovalWorkspace.vue",
+    "ScIcon": "components/template/FormSection.vue",
+    "ScMoney": "components/product-record/ProductFactGrid.vue",
+    "ScPage": "pages/ListPage.vue",
+    "ScPageHeader": "pages/ListPage.vue",
+    "ScPanel": "components/product-record/ProductBusinessSections.vue",
+    "ScRelationField": "components/template/FormSection.vue",
+    "ScRelationshipFlow": "components/product-record/ProductRelationshipFlow.vue",
+    "ScSection": "components/business/MyWorkApprovalWorkspace.vue",
+    "ScSelect": "components/template/FormSection.vue",
+    "ScStatusBadge": "components/product-record/ProductRecordStatus.vue",
 }
 
 GENERIC_BOUNDARY_RE = re.compile(
@@ -33,10 +54,13 @@ SIZE_LIMITS = {
     WEB_SRC / "layouts/AppShell.vue": 1600,
     WEB_SRC / "pages/ListPage.vue": 2300,
     WEB_SRC / "pages/ContractFormPage.vue": 1800,
+    WEB_SRC / "pages/ContractFormRoute.vue": 800,
     WEB_SRC / "views/ActionView.vue": 3684,
 }
 
 HARDCODE_COLOR_RE = re.compile(r"#[0-9a-fA-F]{3,8}\b|rgba?\(")
+DARK_CLASS_ENUMERATION_RE = re.compile(r"data-sc-theme\s*=\s*['\"]dark['\"][^{]*:is\(", re.IGNORECASE)
+MIXED_ICON_GLYPH_RE = re.compile(r"[×→★☆↑↓✓⋮]")
 MAX_EXISTING_HARDCODE_COLOR_REFS = 0
 
 
@@ -168,6 +192,20 @@ def _check_product_component_boundary(errors: list[str]) -> None:
         if match:
             errors.append(f"{_rel(path)} crosses generic component boundary: {match.group(0)}")
 
+    for component, relative_consumer in REQUIRED_PRODUCT_CONSUMERS.items():
+        consumer = WEB_SRC / relative_consumer
+        text = _check_required_file(consumer, errors)
+        if f"<{component}" not in text:
+            errors.append(f"{_rel(consumer)} does not consume required product component: {component}")
+
+    for path in sorted(WEB_SRC.rglob("*")):
+        if path.suffix not in {".vue", ".css"}:
+            continue
+        if DARK_CLASS_ENUMERATION_RE.search(_read(path)):
+            errors.append(f"{_rel(path)} restores broad dark-theme class enumeration")
+        if path.suffix == ".vue" and MIXED_ICON_GLYPH_RE.search(_read(path)):
+            errors.append(f"{_rel(path)} mixes Unicode icon glyphs with the formal SVG icon system")
+
 
 def _check_complexity_and_accessibility(errors: list[str]) -> None:
     for path, limit in SIZE_LIMITS.items():
@@ -190,6 +228,10 @@ def _check_complexity_and_accessibility(errors: list[str]) -> None:
     for retired in [WEB_SRC / "views/RecordView.vue", WEB_SRC / "pages/ModelFormPage.vue"]:
         if retired.exists():
             errors.append(f"retired compatibility delegate still exists: {_rel(retired)}")
+
+    router_text = _read(WEB_SRC / "router/index.ts")
+    if router_text.count("import('../pages/ContractFormRoute.vue')") != 2:
+        errors.append("record and form routes must converge on ContractFormRoute.vue")
 
 
 def main() -> int:

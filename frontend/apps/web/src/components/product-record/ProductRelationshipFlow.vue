@@ -1,18 +1,19 @@
 <template>
-  <section class="product-relations" aria-labelledby="product-relations-title">
+  <ScSection class="product-relations" :label="title">
     <header>
       <p>{{ eyebrow }}</p>
       <h2 id="product-relations-title">{{ title }}</h2>
     </header>
-    <div class="product-relations__flow">
-      <section v-for="relation in relationships" :key="relation.key" :data-relation-key="relation.key" data-product-relationship>
+    <ScRelationshipFlow class="product-relations__flow" :label="title">
+      <li v-for="relation in relationships" :key="relation.key">
+      <ScPanel as="section" tone="subtle" :data-relation-key="relation.key" data-product-relationship>
         <div class="product-relations__heading"><h3>{{ relation.label }}</h3><span>{{ relation.records.length }} 条</span></div>
         <p v-if="!relation.records.length" class="product-relations__empty">{{ relation.empty_text }}</p>
         <ul v-else>
           <li v-for="item in relation.records" :key="`${item.model}-${item.id}`">
             <button v-if="item.route" type="button" @click="$emit('open', item)">
               <span><small>{{ item.object_label || relation.label }}</small><strong>{{ item.label }}</strong></span>
-              <span class="product-relations__meta"><span v-if="item.status?.label">{{ item.status.label }}</span><span aria-hidden="true">→</span></span>
+              <span class="product-relations__meta"><span v-if="item.status?.label">{{ item.status.label }}</span><ScIcon name="arrow-right" :size="16" /></span>
             </button>
             <div v-else class="product-relations__result">
               <small>{{ item.object_label || relation.label }}</small><strong>{{ item.label }}</strong>
@@ -22,12 +23,17 @@
             </div>
           </li>
         </ul>
-      </section>
-    </div>
-  </section>
+      </ScPanel>
+      </li>
+    </ScRelationshipFlow>
+  </ScSection>
 </template>
 
 <script setup lang="ts">
+import ScIcon from '../design-system/ScIcon.vue';
+import ScPanel from '../design-system/ScPanel.vue';
+import ScRelationshipFlow from '../design-system/ScRelationshipFlow.vue';
+import ScSection from '../design-system/ScSection.vue';
 import { formatWorkspaceMoney, type WorkspaceRelationship, type WorkspaceRelatedRecord } from '../../app/financialWorkspaceContract';
 defineProps<{ relationships: WorkspaceRelationship[]; eyebrow: string; title: string }>();
 defineEmits<{ open: [item: WorkspaceRelatedRecord] }>();
@@ -44,7 +50,8 @@ function formatDateTime(value: unknown): string {
 .product-relations h2, .product-relations h3 { margin: 0; }
 .product-relations h2 { font-size: 18px; }
 .product-relations__flow { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--sc-product-space-2); }
-.product-relations__flow > section { min-width: 0; padding: var(--sc-product-space-2); border: 1px solid var(--sc-app-border); border-radius: var(--sc-component-panel-radius); }
+.product-relations__flow > li { min-width: 0; }
+.product-relations__flow > li > section { min-width: 0; }
 .product-relations__heading { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
 .product-relations__heading h3 { font-size: 16px; }
 .product-relations ul { display: grid; gap: 8px; padding: 0; margin: 0; list-style: none; }

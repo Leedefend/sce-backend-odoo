@@ -14,7 +14,7 @@
             @click="toggleRelationId(field.name, option.id, false)"
           >
             {{ option.label }}
-            <span aria-hidden="true">×</span>
+            <ScIcon name="close" :size="14" />
           </button>
         </div>
         <input
@@ -184,6 +184,7 @@
 
 <script setup lang="ts">
 import type { FormSectionFieldSchema } from './formSection.types';
+import ScIcon from '../design-system/ScIcon.vue';
 import type { X2ManyRelationRendererProps } from './relationField.types';
 
 const props = defineProps<X2ManyRelationRendererProps>();
