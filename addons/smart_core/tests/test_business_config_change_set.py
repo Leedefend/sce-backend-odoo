@@ -18,6 +18,10 @@ from odoo.addons.smart_core.handlers.business_config_change_set import (
     BusinessConfigChangeSetValidateHandler,
     BusinessConfigMutationAuditSnapshotHandler,
 )
+from odoo.addons.smart_core.handlers.form_field_configuration import (
+    BusinessConfigAnalysisAuditHandler,
+    BusinessConfigListSearchAuditHandler,
+)
 from odoo.addons.smart_core.app_config_engine.services.assemblers.page_assembler import PageAssembler
 from odoo.addons.smart_core.model.ui_business_config_change_set import stable_payload_hash
 from odoo.addons.smart_core.model.ui_business_config_contract import ViewOrchestrationContractProjection
@@ -63,6 +67,11 @@ class TestBusinessConfigChangeSet(TransactionCase):
         }})
         self.assertTrue(result["ok"], result)
         return result["data"]
+
+    def _audit(self, handler_class, env, **params):
+        handler = handler_class(env)
+        handler.params = params
+        return handler.handle()["data"]
 
     def test_owner_role_and_ordinary_user_isolation(self):
         env, change_set = self._open()
@@ -238,6 +247,42 @@ class TestBusinessConfigChangeSet(TransactionCase):
         self.assertFalse(result["ok"])
         self.assertEqual(result["error"]["reason_code"], "CHANGE_SET_VERSION_CONFLICT")
 
+    def test_concurrent_empty_publish_rejects_stale_base_hash(self):
+        env_a, change_set_a = self._open()
+        env_b = self._env(self.other_admin)
+        opened_b = BusinessConfigChangeSetOpenHandler(env_b).handle(payload={"params": {"role_key": "config_admin"}})
+        self.assertTrue(opened_b["ok"], opened_b)
+        change_set_b = opened_b["data"]
+        original = {"view_orchestration": {"views": {"tree": {"columns": [{"name": "name"}]}}}}
+        contract = self.env["ui.business.config.contract"].sudo().create({
+            "name": "test.change.set.concurrent.empty", "model": "res.partner", "view_type": "tree",
+            "role_key": "config_admin", "company_id": self.env.company.id,
+            "contract_json": original, "status": "published",
+        })
+        empty = {"view_orchestration": {"views": {"tree": {"columns": []}}}}
+        for target_env, change_set in ((env_a, change_set_a), (env_b, change_set_b)):
+            staged = BusinessConfigChangeSetStageHandler(target_env).handle(payload={"params": {
+                "change_set_token": change_set["token"], "role_key": "config_admin", "config_type": "list",
+                "target_key": contract.name, "model": "res.partner", "view_type": "tree",
+                "current_contract_id": contract.id, "current_payload_hash": stable_payload_hash(original),
+                "draft_payload": empty,
+            }})
+            self.assertTrue(staged["ok"], staged)
+            validated = BusinessConfigChangeSetValidateHandler(target_env).handle(payload={"params": {
+                "change_set_token": change_set["token"], "role_key": "config_admin",
+            }})
+            self.assertEqual(validated["data"]["state"], "ready", validated)
+        published = BusinessConfigChangeSetPublishHandler(env_a).handle(payload={"params": {
+            "change_set_token": change_set_a["token"], "role_key": "config_admin", "request_id": "empty-concurrent-a",
+        }})
+        self.assertTrue(published["ok"], published)
+        stale = BusinessConfigChangeSetPublishHandler(env_b).handle(payload={"params": {
+            "change_set_token": change_set_b["token"], "role_key": "config_admin", "request_id": "empty-concurrent-b",
+        }})
+        self.assertFalse(stale["ok"], stale)
+        self.assertEqual(stale["code"], 409)
+        self.assertEqual(stale["error"]["reason_code"], "CHANGE_SET_VERSION_CONFLICT")
+
     def test_publish_is_idempotent_and_batch_rollback_reverses_new_contracts(self):
         env, change_set = self._open()
         for suffix in ("one", "two"):
@@ -268,6 +313,12 @@ class TestBusinessConfigChangeSet(TransactionCase):
         original_search = {"view_orchestration": {"views": {"search": {
             "filters": [{"name": "name"}], "group_by": [{"name": "company_id"}],
         }}}}
+        original_pivot = {"view_orchestration": {"views": {"pivot": {
+            "measures": [{"name": "id"}], "dimensions": [{"name": "company_id"}],
+        }}}}
+        original_graph = {"view_orchestration": {"views": {"graph": {
+            "measures": [{"name": "id"}], "dimensions": [{"name": "company_id"}], "type": "bar",
+        }}}}
         list_contract = Contract.create({
             "name": "test.change.set.empty.list", "model": "res.partner", "view_type": "tree",
             "company_id": self.env.company.id, "contract_json": original_list, "status": "published",
@@ -276,9 +327,19 @@ class TestBusinessConfigChangeSet(TransactionCase):
             "name": "test.change.set.empty.search", "model": "res.partner", "view_type": "search",
             "company_id": self.env.company.id, "contract_json": original_search, "status": "published",
         })
+        pivot_contract = Contract.create({
+            "name": "test.change.set.empty.pivot", "model": "res.partner", "view_type": "pivot",
+            "company_id": self.env.company.id, "contract_json": original_pivot, "status": "published",
+        })
+        graph_contract = Contract.create({
+            "name": "test.change.set.empty.graph", "model": "res.partner", "view_type": "graph",
+            "company_id": self.env.company.id, "contract_json": original_graph, "status": "published",
+        })
         empty_payloads = (
             ("list", "tree", list_contract, {"view_orchestration": {"views": {"tree": {"columns": []}}}}),
             ("search", "search", search_contract, {"view_orchestration": {"views": {"search": {"filters": [], "group_by": []}}}}),
+            ("analysis", "pivot", pivot_contract, {"view_orchestration": {"views": {"pivot": {"measures": [], "dimensions": []}}}}),
+            ("analysis", "graph", graph_contract, {"view_orchestration": {"views": {"graph": {"measures": [], "dimensions": [], "type": "bar"}}}}),
         )
         for config_type, view_type, contract, draft_payload in empty_payloads:
             staged = BusinessConfigChangeSetStageHandler(env).handle(payload={"params": {
@@ -298,17 +359,92 @@ class TestBusinessConfigChangeSet(TransactionCase):
         self.assertTrue(published["data"]["publish_result"]["ok"])
         list_contract.invalidate_recordset(["contract_json"])
         search_contract.invalidate_recordset(["contract_json"])
+        pivot_contract.invalidate_recordset(["contract_json"])
+        graph_contract.invalidate_recordset(["contract_json"])
         self.assertEqual(list_contract.contract_json["view_orchestration"]["views"]["tree"]["columns"], [])
         self.assertEqual(search_contract.contract_json["view_orchestration"]["views"]["search"]["filters"], [])
         self.assertEqual(search_contract.contract_json["view_orchestration"]["views"]["search"]["group_by"], [])
+        self.assertEqual(pivot_contract.contract_json["view_orchestration"]["views"]["pivot"]["measures"], [])
+        self.assertEqual(pivot_contract.contract_json["view_orchestration"]["views"]["pivot"]["dimensions"], [])
+        self.assertEqual(graph_contract.contract_json["view_orchestration"]["views"]["graph"]["measures"], [])
+        self.assertEqual(graph_contract.contract_json["view_orchestration"]["views"]["graph"]["dimensions"], [])
+        version_count = self.env["ui.business.config.contract.version"].sudo().search_count([
+            ("contract_id", "in", [list_contract.id, search_contract.id, pivot_contract.id, graph_contract.id]),
+        ])
+        for _index in range(2):
+            list_audit = self._audit(
+                BusinessConfigListSearchAuditHandler, env, model="res.partner", role_key="config_admin",
+            )
+            analysis_audit = self._audit(
+                BusinessConfigAnalysisAuditHandler, env, model="res.partner", role_key="config_admin",
+            )
+            self.assertTrue(list_audit["has_business_list_config"])
+            self.assertTrue(list_audit["has_business_search_config"])
+            self.assertEqual(list_audit["business_config_list_columns"], [])
+            self.assertEqual(list_audit["business_config_search_filters"], [])
+            self.assertEqual(list_audit["business_config_search_group_by"], [])
+            self.assertTrue(analysis_audit["has_business_pivot_config"])
+            self.assertTrue(analysis_audit["has_business_graph_config"])
+            self.assertEqual(analysis_audit["pivot_measures"], [])
+            self.assertEqual(analysis_audit["pivot_dimensions"], [])
+            self.assertEqual(analysis_audit["graph_measures"], [])
+            self.assertEqual(analysis_audit["graph_dimensions"], [])
+        self.assertEqual(version_count, self.env["ui.business.config.contract.version"].sudo().search_count([
+            ("contract_id", "in", [list_contract.id, search_contract.id, pivot_contract.id, graph_contract.id]),
+        ]))
         rolled_back = BusinessConfigChangeSetRollbackHandler(env).handle(payload={"params": {
             "change_set_token": change_set["token"], "role_key": "config_admin", "request_id": "empty-config-rollback",
         }})
         self.assertTrue(rolled_back["ok"], rolled_back)
         list_contract.invalidate_recordset(["contract_json"])
         search_contract.invalidate_recordset(["contract_json"])
+        pivot_contract.invalidate_recordset(["contract_json"])
+        graph_contract.invalidate_recordset(["contract_json"])
         self.assertEqual(list_contract.contract_json, original_list)
         self.assertEqual(search_contract.contract_json, original_search)
+        self.assertEqual(pivot_contract.contract_json, original_pivot)
+        self.assertEqual(graph_contract.contract_json, original_graph)
+
+    def test_empty_contract_audit_scope_and_lifecycle_isolation(self):
+        action = self.env["ir.actions.act_window"].sudo().create({
+            "name": "Empty Contract Audit Scope", "res_model": "res.currency", "view_mode": "tree",
+        })
+        other_action = self.env["ir.actions.act_window"].sudo().create({
+            "name": "Empty Contract Audit Other Scope", "res_model": "res.currency", "view_mode": "tree",
+        })
+        Contract = self.env["ui.business.config.contract"].sudo()
+        empty = {"view_orchestration": {"views": {"tree": {"columns": []}}}}
+        Contract.create({
+            "name": "test.empty.audit.scope.published", "model": "res.currency", "view_type": "tree",
+            "action_id": action.id, "role_key": "config_admin", "company_id": self.env.company.id,
+            "contract_json": empty, "status": "published",
+        })
+        Contract.create({
+            "name": "test.empty.audit.scope.draft", "model": "res.currency", "view_type": "tree",
+            "action_id": other_action.id, "role_key": "config_admin", "company_id": self.env.company.id,
+            "contract_json": empty, "status": "draft",
+        })
+        Contract.create({
+            "name": "test.empty.audit.scope.inactive", "model": "res.currency", "view_type": "tree",
+            "action_id": other_action.id, "role_key": "config_admin", "company_id": self.env.company.id,
+            "contract_json": empty, "status": "published", "active": False,
+        })
+        matching = self._audit(
+            BusinessConfigListSearchAuditHandler, self._env(self.admin),
+            model="res.currency", action_id=action.id, role_key="config_admin",
+        )
+        wrong_action = self._audit(
+            BusinessConfigListSearchAuditHandler, self._env(self.admin),
+            model="res.currency", action_id=other_action.id, role_key="config_admin",
+        )
+        wrong_role = self._audit(
+            BusinessConfigListSearchAuditHandler, self._env(self.admin),
+            model="res.currency", action_id=action.id, role_key="platform_admin",
+        )
+        self.assertTrue(matching["has_business_list_config"])
+        self.assertEqual(matching["business_config_list_columns"], [])
+        self.assertFalse(wrong_action["has_business_list_config"])
+        self.assertFalse(wrong_role["has_business_list_config"])
 
     def test_expired_published_batch_remains_rollback_capable_and_idempotent(self):
         env, change_set = self._open()

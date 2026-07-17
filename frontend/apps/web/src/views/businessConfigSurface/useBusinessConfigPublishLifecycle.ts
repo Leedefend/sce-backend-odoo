@@ -17,12 +17,14 @@ export function useBusinessConfigPublishLifecycle(deps: Record<string, any>) {
       const configuredListColumns = result.business_config_list_columns || [];
       const configuredSearchFilters = result.business_config_search_filters || [];
       const configuredSearchGroupBy = result.business_config_search_group_by || [];
-      const suggestedListColumns = configuredListColumns.length ? [] : result.suggested_list_columns || [];
-      const suggestedSearchFilters = (configuredSearchFilters.length || configuredSearchGroupBy.length) ? [] : result.suggested_search_filters || [];
-      const suggestedSearchGroupBy = (configuredSearchFilters.length || configuredSearchGroupBy.length) ? [] : result.suggested_search_group_by || [];
-      listColumnsText.value = namesToText(listSearchAudit.value?.has_business_list_config ? configuredListColumns : suggestedListColumns);
-      searchFiltersText.value = namesToText(listSearchAudit.value?.has_business_search_config ? configuredSearchFilters : suggestedSearchFilters);
-      searchGroupByText.value = namesToText(listSearchAudit.value?.has_business_search_config ? configuredSearchGroupBy : suggestedSearchGroupBy);
+      const hasListConfig = result.has_business_list_config === true;
+      const hasSearchConfig = result.has_business_search_config === true;
+      const suggestedListColumns = hasListConfig ? [] : result.suggested_list_columns || [];
+      const suggestedSearchFilters = hasSearchConfig ? [] : result.suggested_search_filters || [];
+      const suggestedSearchGroupBy = hasSearchConfig ? [] : result.suggested_search_group_by || [];
+      listColumnsText.value = namesToText(hasListConfig ? configuredListColumns : suggestedListColumns);
+      searchFiltersText.value = namesToText(hasSearchConfig ? configuredSearchFilters : suggestedSearchFilters);
+      searchGroupByText.value = namesToText(hasSearchConfig ? configuredSearchGroupBy : suggestedSearchGroupBy);
       listSearchBase.value = {
         list: normalizeNamesText(namesToText(configuredListColumns)),
         filter: normalizeNamesText(namesToText(configuredSearchFilters)),
@@ -33,8 +35,8 @@ export function useBusinessConfigPublishLifecycle(deps: Record<string, any>) {
       approvalPanelOpen.value = false;
       listSearchPanelOpen.value = true;
       await focusActiveEditorPanel();
-      if (!configuredListColumns.length && suggestedListColumns.length) {
-        setMessage('已按当前页面生成列表草稿', '调整后点击保存列表与搜索，才会发布为正式业务配置');
+      if ((!hasListConfig && suggestedListColumns.length) || (!hasSearchConfig && (suggestedSearchFilters.length || suggestedSearchGroupBy.length))) {
+        setMessage('建议配置，尚未保存', '采用或调整建议后点击保存，才会加入待发布变更');
       }
     } catch (err) {
       error.value = err instanceof Error ? err.message : '列表与搜索设置读取失败';
@@ -60,15 +62,17 @@ export function useBusinessConfigPublishLifecycle(deps: Record<string, any>) {
       const configuredPivotDimensions = result.pivot_dimensions || [];
       const configuredGraphMeasures = result.graph_measures || [];
       const configuredGraphDimensions = result.graph_dimensions || [];
-      const suggestedPivotMeasures = (configuredPivotMeasures.length || configuredPivotDimensions.length) ? [] : result.suggested_pivot_measures || [];
-      const suggestedPivotDimensions = (configuredPivotMeasures.length || configuredPivotDimensions.length) ? [] : result.suggested_pivot_dimensions || [];
-      const suggestedGraphMeasures = (configuredGraphMeasures.length || configuredGraphDimensions.length) ? [] : result.suggested_graph_measures || [];
-      const suggestedGraphDimensions = (configuredGraphMeasures.length || configuredGraphDimensions.length) ? [] : result.suggested_graph_dimensions || [];
-      const configuredGraphType = (configuredGraphMeasures.length || configuredGraphDimensions.length) ? result.graph_type || 'bar' : '';
-      pivotMeasuresText.value = namesToText(configuredPivotMeasures.length ? configuredPivotMeasures : suggestedPivotMeasures);
-      pivotDimensionsText.value = namesToText(configuredPivotDimensions.length ? configuredPivotDimensions : suggestedPivotDimensions);
-      graphMeasuresText.value = namesToText(configuredGraphMeasures.length ? configuredGraphMeasures : suggestedGraphMeasures);
-      graphDimensionsText.value = namesToText(configuredGraphDimensions.length ? configuredGraphDimensions : suggestedGraphDimensions);
+      const hasPivotConfig = result.has_business_pivot_config === true;
+      const hasGraphConfig = result.has_business_graph_config === true;
+      const suggestedPivotMeasures = hasPivotConfig ? [] : result.suggested_pivot_measures || [];
+      const suggestedPivotDimensions = hasPivotConfig ? [] : result.suggested_pivot_dimensions || [];
+      const suggestedGraphMeasures = hasGraphConfig ? [] : result.suggested_graph_measures || [];
+      const suggestedGraphDimensions = hasGraphConfig ? [] : result.suggested_graph_dimensions || [];
+      const configuredGraphType = hasGraphConfig ? result.graph_type || 'bar' : '';
+      pivotMeasuresText.value = namesToText(hasPivotConfig ? configuredPivotMeasures : suggestedPivotMeasures);
+      pivotDimensionsText.value = namesToText(hasPivotConfig ? configuredPivotDimensions : suggestedPivotDimensions);
+      graphMeasuresText.value = namesToText(hasGraphConfig ? configuredGraphMeasures : suggestedGraphMeasures);
+      graphDimensionsText.value = namesToText(hasGraphConfig ? configuredGraphDimensions : suggestedGraphDimensions);
       graphType.value = configuredGraphType || result.suggested_graph_type || result.graph_type || 'bar';
       analysisBase.value = {
         pivotMeasures: normalizeNamesText(namesToText(configuredPivotMeasures)),
@@ -83,10 +87,10 @@ export function useBusinessConfigPublishLifecycle(deps: Record<string, any>) {
       activeAnalysisEditor.value = requestedAnalysisTab.value;
       await focusActiveEditorPanel();
       if (
-        (!configuredPivotMeasures.length && !configuredPivotDimensions.length && (suggestedPivotMeasures.length || suggestedPivotDimensions.length))
-        || (!configuredGraphMeasures.length && !configuredGraphDimensions.length && (suggestedGraphMeasures.length || suggestedGraphDimensions.length))
+        (!hasPivotConfig && (suggestedPivotMeasures.length || suggestedPivotDimensions.length))
+        || (!hasGraphConfig && (suggestedGraphMeasures.length || suggestedGraphDimensions.length))
       ) {
-        setMessage('已按当前页面生成分析草稿', '调整后点击保存分析视图，才会发布为正式业务配置');
+        setMessage('建议配置，尚未保存', '采用或调整建议后点击保存，才会加入待发布变更');
       }
     } catch (err) {
       error.value = err instanceof Error ? err.message : '分析视图设置读取失败';
