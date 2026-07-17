@@ -174,8 +174,10 @@ async function pageMetrics(page, startedAt) {
 }
 
 async function validationProbe(page) {
-  const required = page.locator('[data-product-page-mode="form"]:visible input[required]:visible, [data-product-page-mode="form"]:visible textarea[required]:visible, [data-product-page-mode="form"]:visible select[required]:visible, [data-product-page-mode="form"]:visible [aria-required="true"]:visible').first();
-  if (!(await required.isVisible().catch(() => false))) return { status: 'NOT_APPLICABLE', elapsed_ms: null };
+  const required = page.locator('[data-product-page-mode="form"]:visible [data-field-key] input[type="number"][aria-required="true"]:visible').first();
+  if (!(await required.isVisible().catch(() => false))) return { status: 'FAIL', reason: 'required money control not discoverable', elapsed_ms: null };
+  const fieldKey = await required.locator('xpath=ancestor::*[@data-field-key][1]').getAttribute('data-field-key');
+  const describedByBefore = await required.getAttribute('aria-describedby');
   const original = await required.inputValue().catch(() => '');
   await required.fill('').catch(() => {});
   const started = Date.now();
@@ -185,8 +187,23 @@ async function validationProbe(page) {
   const error = page.locator('[role="alert"], .validation-error, [aria-invalid="true"]').first();
   await error.waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
   const visible = await error.isVisible().catch(() => false);
+  const invalid = await required.getAttribute('aria-invalid');
+  const describedBy = await required.getAttribute('aria-describedby');
+  const describedNodes = describedBy ? await page.locator(describedBy.split(/\s+/).map((id) => `#${id}`).join(',')).count() : 0;
+  const focused = await required.evaluate((node) => document.activeElement === node).catch(() => false);
   if (original) await required.fill(original).catch(() => {});
-  return { status: visible ? 'PASS' : 'NOT_OBSERVED', elapsed_ms: visible ? Date.now() - started : null };
+  const passed = visible && invalid === 'true' && describedNodes > 0 && focused;
+  return {
+    status: passed ? 'PASS' : 'FAIL',
+    field_key: fieldKey,
+    aria_required: await required.getAttribute('aria-required'),
+    aria_invalid: invalid,
+    aria_describedby_before: describedByBefore,
+    aria_describedby_after: describedBy,
+    described_nodes: describedNodes,
+    focused,
+    elapsed_ms: visible ? Date.now() - started : null,
+  };
 }
 
 async function captureCase(browser, entry) {
@@ -238,7 +255,7 @@ async function main() {
       pages,
       validation,
       source_size: {
-        record_view: fs.readFileSync('frontend/apps/web/src/views/RecordView.vue', 'utf8').split('\n').length - 1,
+        record_view: fs.existsSync('frontend/apps/web/src/views/RecordView.vue') ? fs.readFileSync('frontend/apps/web/src/views/RecordView.vue', 'utf8').split('\n').length - 1 : 0,
         contract_form_page: fs.readFileSync('frontend/apps/web/src/pages/ContractFormPage.vue', 'utf8').split('\n').length - 1,
         financial_relationship_workspace: fs.readFileSync('frontend/apps/web/src/components/business/FinancialRelationshipWorkspace.vue', 'utf8').split('\n').length - 1,
       },

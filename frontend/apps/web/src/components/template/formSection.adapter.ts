@@ -15,6 +15,8 @@ export type CreateFormSectionFieldSchemaBuilderContext = {
   normalizeDatetimeInputValue: (value: unknown) => string;
   resolveTextInputValue: (fieldName: string) => string;
   resolveInputPlaceholder: (fieldLabel: string) => string;
+  resolveHelpText?: (field: FormSectionMapperFieldNode) => string;
+  resolveErrorText?: (field: FormSectionMapperFieldNode) => string;
   resolveSelectionOptions: (descriptor?: FieldDescriptor) => Array<{ value: string; label: string }>;
   resolveRelationOptions: (fieldName: string) => Array<{ value: string; label: string }>;
   resolveRelationCreateMode: (fieldName: string, descriptor?: FieldDescriptor) => 'none' | 'quick' | 'page';
@@ -46,6 +48,8 @@ export function createFormSectionFieldSchemaBuilder(context: CreateFormSectionFi
       resolveTextInputValue: context.resolveTextInputValue,
     }),
     resolveInputPlaceholder: context.resolveInputPlaceholder,
+    resolveHelpText: context.resolveHelpText,
+    resolveErrorText: context.resolveErrorText,
     resolveSelectionOptions: context.resolveSelectionOptions,
     resolveRelationOptions: context.resolveRelationOptions,
     resolveRelationCreateMode: context.resolveRelationCreateMode,

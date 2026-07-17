@@ -20,8 +20,8 @@ Reason: lock the product route/runtime boundary before contract v2 frontend clea
 
 | Runtime | Current Status | Required Boundary |
 | --- | --- | --- |
-| `RecordView.vue` | source remains, router no longer uses it for `/r/:model/:id` | diagnostics-only or removal; product routes must not import it |
-| `ModelFormPage.vue` | wrapper around `ContractFormPage` | no product default route should point to it |
+| `RecordView.vue` | removed after `/r/:model/:id` converged on `ContractFormPage` | retired delegate must not return |
+| `ModelFormPage.vue` | removed after `/f/:model/:id` converged on `ContractFormPage` | retired wrapper must not return |
 | `ModelListPage.vue` | legacy redirect shell | remove after route migration or keep diagnostics-only |
 | `unifiedPageContractLitePilot.ts` | transitional lite pilot | formal version harness only, not product default |
 | `unifiedPageContractLite.ts` with `legacy_default` | transitional compatibility fallback | retire or isolate under explicit compat mode |

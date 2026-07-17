@@ -1,7 +1,7 @@
 # Frontend Product Contract Consumption Report
 
 - ok: `True`
-- checked_files: `14`
+- checked_files: `13`
 - error_count: `0`
 
 ## Contract Signals
@@ -10,7 +10,6 @@
 - ext_facts.product.bundle: `consumed`
 - home_product_surface: `rendered`
 - action_section_governance: `rendered`
-- record_section_governance: `rendered`
 - scene_section_governance: `rendered`
 - workbench_section_governance: `rendered`
 - usage_analytics_section_governance: `rendered`

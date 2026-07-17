@@ -51,11 +51,6 @@
       "owner": "Frontend owner",
       "reason": "My Work surface is a split-plan file and should delegate task/query composition."
     },
-    "frontend/apps/web/src/views/RecordView.vue": {
-      "max_lines": 1525,
-      "owner": "Frontend owner",
-      "reason": "RecordView is a split-plan compatibility surface and must not become a parallel product runtime."
-    },
     "frontend/apps/web/src/views/SceneView.vue": {
       "max_lines": 1741,
       "owner": "Frontend owner",

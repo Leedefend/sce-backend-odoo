@@ -1,0 +1,2 @@
+<template><span :class="['sc-badge', `sc-badge-${semantic}`]" :data-status="value"><span class="sc-visually-hidden">{{ statusPrefix }}</span>{{ label }}</span></template>
+<script setup lang="ts">withDefaults(defineProps<{ value?: string; label: string; semantic?: 'default'|'info'|'success'|'warning'|'danger'; statusPrefix?: string }>(), { value: '', semantic: 'default', statusPrefix: '状态：' });</script>

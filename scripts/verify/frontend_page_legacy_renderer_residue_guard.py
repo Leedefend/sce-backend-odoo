@@ -4,6 +4,10 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 HOME = ROOT / "frontend/apps/web/src/views/HomeView.vue"
+RETIRED_DELEGATES = [
+    ROOT / "frontend/apps/web/src/views/RecordView.vue",
+    ROOT / "frontend/apps/web/src/pages/ModelFormPage.vue",
+]
 
 
 def main() -> int:
@@ -16,6 +20,9 @@ def main() -> int:
             errors.append(f"HomeView contains legacy residue: {token}")
     if len(text.splitlines()) > 40:
         errors.append("HomeView must remain a thin route entry")
+    for path in RETIRED_DELEGATES:
+        if path.exists():
+            errors.append(f"retired compatibility delegate still exists: {path.relative_to(ROOT)}")
     if errors:
         print("[frontend_page_legacy_renderer_residue_guard] FAIL")
         for error in errors:

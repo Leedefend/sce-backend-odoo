@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 HELPER = ROOT / "frontend/apps/web/src/pages/contractForm/onchangeNormalization.ts"
-PAGE = ROOT / "frontend/apps/web/src/pages/ContractFormPage.vue"
+RUNTIME = ROOT / "frontend/apps/web/src/pages/contractForm/useRecordFormState.ts"
 CI = ROOT / "make/ci.mk"
 
 
@@ -38,12 +39,12 @@ def _function_body(source: str, name: str) -> str:
 def main() -> int:
     errors: list[str] = []
     helper = _read(HELPER)
-    page = _read(PAGE)
+    runtime = _read(RUNTIME)
     ci = _read(CI)
     if not helper:
         errors.append(f"missing helper: {HELPER.relative_to(ROOT)}")
-    if not page:
-        errors.append(f"missing page: {PAGE.relative_to(ROOT)}")
+    if not runtime:
+        errors.append(f"missing runtime: {RUNTIME.relative_to(ROOT)}")
 
     required_helper_tokens = [
         "export type OnchangeRequestPayloadBuildInput",
@@ -87,18 +88,19 @@ def main() -> int:
             if token in body:
                 errors.append(f"{name} must stay pure; forbidden token: {token}")
 
-    required_page_tokens = [
+    compact_runtime = re.sub(r"\s+", "", runtime)
+    required_runtime_tokens = [
         "buildOnchangeRequestPayload({",
         "normalizeOnchangeResponse(response)",
         "normalizeOnchangeFieldPatch({",
-        "const response = await triggerOnchange({",
-        "onchangeWarnings.value = warnings;",
-        "onchangeLinePatches.value = linePatches;",
-        "applyOnchangeLinePatches(linePatches);",
+        "constresponse=awaittriggerOnchange({",
+        "context.onchangeWarnings.value=warnings;",
+        "context.onchangeLinePatches.value=linePatches;",
+        "context.applyOnchangeLinePatches(linePatches);",
     ]
-    for token in required_page_tokens:
-        if token not in page:
-            errors.append(f"ContractFormPage.vue missing token: {token}")
+    for token in required_runtime_tokens:
+        if token not in compact_runtime:
+            errors.append(f"useRecordFormState.ts missing token: {token}")
 
     stale_page_tokens = [
         "Object.keys(contract.value?.fields || {}).forEach((name) => {",
@@ -110,8 +112,8 @@ def main() -> int:
         "const ids = normalizeRelationIds(value);",
     ]
     for token in stale_page_tokens:
-        if token in page:
-            errors.append(f"ContractFormPage.vue still owns onchange normalization token: {token}")
+        if token in runtime:
+            errors.append(f"useRecordFormState.ts still owns onchange normalization token: {token}")
 
     ci_token = "python3 scripts/verify/contract_form_onchange_normalization_guard.py"
     if ci_token not in ci:

@@ -1,0 +1,2 @@
+<template><button :type="type" :class="['sc-btn',`sc-btn-${variant}`]" :disabled="disabled || loading" :aria-busy="loading || undefined"><span v-if="loading" class="sc-visually-hidden">{{ loadingLabel }}</span><slot /></button></template>
+<script setup lang="ts">withDefaults(defineProps<{ type?: 'button'|'submit'|'reset'; variant?: 'primary'|'secondary'|'ghost'|'danger'; disabled?: boolean; loading?: boolean; loadingLabel?: string }>(), { type: 'button', variant: 'secondary', loadingLabel: '处理中' });</script>

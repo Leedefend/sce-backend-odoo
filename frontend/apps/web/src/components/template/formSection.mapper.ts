@@ -29,6 +29,8 @@ export type BuildFormSectionFieldSchemasOptions = {
   resolveInputValue: (fieldName: string, fieldType: string) => string | number | boolean | null;
   resolveRawValue: (fieldName: string) => unknown;
   resolveInputPlaceholder: (fieldLabel: string) => string;
+  resolveHelpText?: (field: FormSectionMapperFieldNode) => string;
+  resolveErrorText?: (field: FormSectionMapperFieldNode) => string;
   resolveSelectionOptions: (descriptor?: FieldDescriptor) => TemplateSelectOption[];
   resolveRelationOptions: (fieldName: string) => TemplateSelectOption[];
   resolveRelationCreateMode: (fieldName: string, descriptor?: FieldDescriptor) => 'none' | 'quick' | 'page';
@@ -58,6 +60,8 @@ export function buildFormSectionFieldSchemas(
     const dateRangeEndField = widget === 'daterange' && String(semantics.kind || '').trim() === 'date_range'
       ? String(semantics.end_field || '').trim()
       : '';
+    const helpText = options.resolveHelpText?.(field) || '';
+    const errorText = options.resolveErrorText?.(field) || '';
     return {
       key: field.key,
       name: field.name,
@@ -67,6 +71,9 @@ export function buildFormSectionFieldSchemas(
       widgetSemantics: semantics,
       required: options.resolveRequired(field),
       readonly: field.readonly,
+      invalid: Boolean(errorText),
+      helpText: helpText || undefined,
+      errorText: errorText || undefined,
       spanClass: options.resolveSpanClass(field),
       value: options.resolveRawValue(field.name),
       inputValue: options.resolveInputValue(field.name, type),

@@ -7,7 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 HELPER = ROOT / "frontend/apps/web/src/pages/contractForm/saveRecordHelpers.ts"
-PAGE = ROOT / "frontend/apps/web/src/pages/ContractFormPage.vue"
+SAVE_RUNTIME = ROOT / "frontend/apps/web/src/pages/contractForm/useRecordFormActions.ts"
 
 
 def _read(path: Path) -> str:
@@ -36,11 +36,11 @@ def _function_body(source: str, name: str) -> str:
 def main() -> int:
     errors: list[str] = []
     helper = _read(HELPER)
-    page = _read(PAGE)
+    save_runtime = _read(SAVE_RUNTIME)
     if not helper:
         errors.append(f"missing helper: {HELPER.relative_to(ROOT)}")
-    if not page:
-        errors.append(f"missing page: {PAGE.relative_to(ROOT)}")
+    if not save_runtime:
+        errors.append(f"missing save runtime: {SAVE_RUNTIME.relative_to(ROOT)}")
 
     required_tokens = [
         "export type SaveRecordPayloadBuildInput",
@@ -80,18 +80,18 @@ def main() -> int:
         if "params.comparableFieldValue(key, params.formData[key])" not in builder_body:
             errors.append("buildSaveRecordPayload must compare current formData against originalValues")
 
-    page_required = [
+    runtime_required = [
         "buildSaveRecordPayload({",
         "comparableFieldValue: (name, value) => comparableFieldValue(name, value)",
         "editableMap",
         "dirtyFieldSet",
         "originalValues: originalValues.value",
     ]
-    for token in page_required:
-        if token not in page:
-            errors.append(f"ContractFormPage.vue missing token: {token}")
-    if "collectRecordSaveValues({" in page:
-        errors.append("ContractFormPage.vue should call buildSaveRecordPayload directly")
+    for token in runtime_required:
+        if token not in save_runtime:
+            errors.append(f"useRecordFormActions.ts missing token: {token}")
+    if "collectRecordSaveValues({" in save_runtime:
+        errors.append("useRecordFormActions.ts should call buildSaveRecordPayload directly")
 
     if errors:
         print("[contract_form_save_payload_builder_guard] FAIL")

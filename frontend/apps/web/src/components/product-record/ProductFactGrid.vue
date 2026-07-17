@@ -7,7 +7,10 @@
     <dl>
       <div v-for="fact in facts" :key="fact.key" :data-fact-key="fact.key" :data-product-money-fact="fact.kind === 'money' || undefined">
         <dt>{{ fact.label }}</dt>
-        <dd :class="{ 'product-facts__money': fact.kind === 'money' }">{{ formatFact(fact) }}</dd>
+        <dd :class="{ 'product-facts__money': fact.kind === 'money' }">
+          <ScMoney v-if="fact.kind === 'money'" :display="formatFact(fact)" :label="fact.label" />
+          <template v-else>{{ formatFact(fact) }}</template>
+        </dd>
       </div>
     </dl>
   </section>
@@ -16,6 +19,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { formatWorkspaceMoney, type WorkspaceFact } from '../../app/financialWorkspaceContract';
+import ScMoney from '../design-system/ScMoney.vue';
 
 const props = defineProps<{ facts: WorkspaceFact[]; group: 'business' | 'money'; eyebrow: string; title: string }>();
 const titleId = computed(() => `product-${props.group}-facts-title`);

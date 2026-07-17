@@ -122,16 +122,6 @@ DEBT_RULES: tuple[DebtRule, ...] = (
         regex=True,
     ),
     DebtRule(
-        key="record_view_direct_data_imports",
-        severity="P1",
-        path="views/RecordView.vue",
-        pattern=r"from '../api/data'",
-        max_count=0,
-        rationale="RecordView keeps a parallel raw record runtime.",
-        next_action="Remove or diagnostics-isolate RecordView after product routes converge.",
-        regex=True,
-    ),
-    DebtRule(
         key="relation_renderer_direct_data_imports",
         severity="P1",
         path="components/view/ViewRelationalRenderer.vue",
@@ -158,15 +148,6 @@ DEBT_RULES: tuple[DebtRule, ...] = (
         max_count=0,
         rationale="ActionView still passes user groups into action runtime.",
         next_action="Remove group input from product runtime; backend must emit action availability.",
-    ),
-    DebtRule(
-        key="record_view_groups_usage",
-        severity="P1",
-        path="views/RecordView.vue",
-        pattern="groups_xmlids",
-        max_count=0,
-        rationale="RecordView still reads groups in its parallel runtime.",
-        next_action="Remove or diagnostics-isolate RecordView.",
     ),
     DebtRule(
         key="form_lifecycle_label_mapping",
@@ -228,7 +209,7 @@ REQUIRED_ROUTE_MATRIX_TOKENS: tuple[str, ...] = (
     "ActionViewShell",
     "ContractFormPage",
     "RecordView.vue",
-    "diagnostics-only",
+    "retired delegate must not return",
 )
 
 REQUIRED_V2_BOUNDARY_FILES: dict[str, tuple[str, ...]] = {
@@ -286,8 +267,11 @@ REQUIRED_FORM_SHADOW_TOKENS: tuple[str, ...] = (
     "decodeContractV2Snapshot",
     "createContractV2Store",
     "v2ContractStore",
-    "syncContractV2ShadowStore(response.data)",
     "data-v2-shadow-store",
+)
+
+REQUIRED_FORM_SHADOW_RUNTIME_TOKENS: tuple[tuple[str, str], ...] = (
+    ("pages/contractForm/useRecordPageLifecycle.ts", "syncContractV2ShadowStore(response.data)"),
 )
 
 REQUIRED_FORM_STORE_SELECTOR_TOKENS: tuple[str, ...] = (
@@ -329,7 +313,7 @@ REQUIRED_WORKFLOW_STATUSBAR_CONTRACT_TOKENS: tuple[tuple[Path, str], ...] = (
     (WEB_ROOT / "pages/contractForm/workflowContract.ts", "function normalizeNativeFormStatusbar"),
     (WEB_ROOT / "pages/contractForm/workflowContract.ts", "const statusbar = dictOrEmpty(workflow.statusbar)"),
     (WEB_ROOT / "pages/contractForm/workflowContract.ts", "if (!input.recordId)"),
-    (WEB_ROOT / "pages/ContractFormPage.vue", "fallback: normalizeWorkflowPhaseStatusbar(currentWorkflowContract())"),
+    (WEB_ROOT / "pages/contractForm/useRecordFormLayout.ts", "fallback:normalizeWorkflowPhaseStatusbar(context.currentWorkflowContract())"),
     (WEB_ROOT / "pages/ContractFormPage.vue", "recordId: recordId.value"),
     (ROOT / "docs/ops/audit/workflow_state_unification_plan.md", "New-record forms must not render workflow statusbar"),
     (ROOT / "make/ci.mk", "verify.workflow_contract.browser.create_statusbar.host"),
@@ -421,6 +405,9 @@ def validate_form_shadow_host() -> list[str]:
     for token in REQUIRED_FORM_SHADOW_TOKENS:
         if token not in text:
             errors.append(f"ContractFormPage v2 shadow host missing token: {token}")
+    for relative_path, token in REQUIRED_FORM_SHADOW_RUNTIME_TOKENS:
+        if token not in read(WEB_ROOT / relative_path):
+            errors.append(f"form shadow runtime {relative_path} missing token: {token}")
     return errors
 
 

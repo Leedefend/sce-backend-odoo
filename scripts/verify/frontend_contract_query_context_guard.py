@@ -7,7 +7,6 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 TARGETS = [
     ROOT / "frontend/apps/web/src/views/ActionView.vue",
-    ROOT / "frontend/apps/web/src/views/RecordView.vue",
     ROOT / "frontend/apps/web/src/views/MenuView.vue",
     ROOT / "frontend/apps/web/src/pages/ContractFormPage.vue",
     ROOT / "frontend/apps/web/src/components/view/ViewRelationalRenderer.vue",

@@ -52,7 +52,6 @@ def main() -> int:
         "ProjectsIntakeView.vue",
         "PlaceholderView.vue",
         "ProjectManagementDashboardView.vue",
-        "RecordView.vue",
         "ReleaseOperatorView.vue",
         "SceneContractBlockGridView.vue",
         "SceneHealthView.vue",
@@ -111,7 +110,6 @@ def main() -> int:
         "ActionViewShell.vue",
         "ProjectsIntakeView.vue",
         "MyWorkView.vue",
-        "RecordView.vue",
     }
 
     for view in view_files:
@@ -176,11 +174,6 @@ def main() -> int:
             "useActionViewLoadFacadeRuntime({",
             "useActionViewSectionRuntime({",
             "useActionViewSurfaceIntentRuntime({",
-        ],
-        "RecordView.vue": [
-            "ContractFormPage",
-            "data-record-view-compatibility-delegate",
-            "single authoritative page path",
         ],
         "MyWorkView.vue": [
             "fetchMyWorkSummary",
@@ -270,17 +263,6 @@ def main() -> int:
             "pick(['amount_total', 'contract_amount', '金额', '合同额'])",
             "pick(['cost', '执行率', 'rate'])",
             "pick(['title', 'name', '项目'])",
-        ],
-        "RecordView.vue": [
-            ">Back<",
-            ">Edit<",
-            ">Save<",
-            ">Cancel<",
-            ">Reload<",
-            ">Download<",
-            "|| 'Ribbon'",
-            "title=\"Record Context\"",
-            "status.value === 'editing' ? 'Editing contract fields' : 'Record details'",
         ],
     }
     for name, tokens in per_view_required.items():

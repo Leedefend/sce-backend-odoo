@@ -5,4 +5,3 @@
 
 ## Checked Files
 - `frontend/apps/web/src/views/SceneView.vue`
-- `frontend/apps/web/src/views/RecordView.vue`

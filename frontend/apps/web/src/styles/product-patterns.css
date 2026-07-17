@@ -257,6 +257,18 @@
   background: var(--sc-semantic-surface-interactive-hover);
 }
 
+.sc-btn-secondary {
+  border-color: var(--sc-app-border-strong);
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
+}
+
+.sc-btn-danger {
+  border-color: var(--sc-app-danger-border);
+  background: var(--sc-app-danger-bg);
+  color: var(--sc-app-danger-text);
+}
+
 .sc-btn-ghost {
   background: transparent;
   color: var(--sc-app-text-secondary);
@@ -323,6 +335,18 @@
   border-color: var(--sc-app-danger-border);
   background: var(--sc-app-danger-bg);
   color: var(--sc-app-danger-text);
+}
+
+.sc-badge-success {
+  border-color: var(--sc-app-success-border);
+  background: var(--sc-app-success-bg);
+  color: var(--sc-app-success-text);
+}
+
+.sc-badge-warning {
+  border-color: var(--sc-app-warning-border);
+  background: var(--sc-app-warning-bg);
+  color: var(--sc-app-warning-text);
 }
 
 .sc-alert {
