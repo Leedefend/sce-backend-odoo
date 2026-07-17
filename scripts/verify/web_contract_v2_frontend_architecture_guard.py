@@ -183,9 +183,14 @@ REQUIRED_ROUTE_TOKENS: tuple[str, ...] = (
     "path: '/a/:actionId'",
     "import('../views/ActionViewShell.vue')",
     "path: '/f/:model/:id'",
-    "import('../pages/ContractFormPage.vue')",
+    "import('../pages/ContractFormRoute.vue')",
     "path: '/r/:model/:id'",
     "name: 'record'",
+)
+
+REQUIRED_CONTRACT_FORM_ROUTE_TOKENS: tuple[str, ...] = (
+    "import ContractFormPage from './ContractFormPage.vue'",
+    '<ContractFormPage :key="routeIdentity" />',
 )
 
 FORBIDDEN_ROUTE_TOKENS: tuple[str, ...] = (
@@ -357,6 +362,7 @@ def scan_debt(strict: bool) -> tuple[list[dict[str, object]], list[str]]:
 
 def validate_router() -> list[str]:
     router = read(WEB_ROOT / "router/index.ts")
+    contract_form_route = read(WEB_ROOT / "pages/ContractFormRoute.vue")
     errors: list[str] = []
     for token in REQUIRED_ROUTE_TOKENS:
         if token not in router:
@@ -364,6 +370,9 @@ def validate_router() -> list[str]:
     for token in FORBIDDEN_ROUTE_TOKENS:
         if token in router:
             errors.append(f"router imports forbidden legacy product component: {token}")
+    for token in REQUIRED_CONTRACT_FORM_ROUTE_TOKENS:
+        if token not in contract_form_route:
+            errors.append(f"ContractFormRoute missing formal page assembly token: {token}")
     return errors
 
 

@@ -10,6 +10,7 @@ VIEWS_DIR = ROOT / "frontend/apps/web/src/views"
 APP_SHELL = ROOT / "frontend/apps/web/src/layouts/AppShell.vue"
 MENU_TREE = ROOT / "frontend/apps/web/src/components/MenuTree.vue"
 ROUTER = ROOT / "frontend/apps/web/src/router/index.ts"
+CONTRACT_FORM_ROUTE = ROOT / "frontend/apps/web/src/pages/ContractFormRoute.vue"
 
 REPORT_JSON = ROOT / "artifacts/backend/frontend_page_contract_boundary_report.json"
 REPORT_MD = ROOT / "docs/ops/audit/frontend_page_contract_boundary_report.md"
@@ -78,7 +79,7 @@ def main() -> int:
                 "component: () => import('../views/HomeView.vue')",
                 "component: () => import('../views/SceneView.vue')",
                 "component: () => import('../views/ActionViewShell.vue')",
-                "component: () => import('../pages/ContractFormPage.vue')",
+                "component: () => import('../pages/ContractFormRoute.vue')",
             ],
             "router/index.ts",
             errors,
@@ -90,6 +91,15 @@ def main() -> int:
                 "component: ModelListPage",
             ],
             "router/index.ts",
+            errors,
+        )
+        _check_required(
+            _read(CONTRACT_FORM_ROUTE),
+            [
+                "import ContractFormPage from './ContractFormPage.vue'",
+                '<ContractFormPage :key="routeIdentity" />',
+            ],
+            "pages/ContractFormRoute.vue",
             errors,
         )
 
