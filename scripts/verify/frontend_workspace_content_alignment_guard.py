@@ -53,6 +53,10 @@ for mode in ("data-grid", "record-grid", "form-grid", "focused-form", "reading")
     require(contract, f"'{mode}'", "content layout modes")
 require(contract, "contractContentLayout", "formal contract priority")
 require(contract, "PAGE_KIND_CONTENT_LAYOUT", "page-kind fallback")
+require(contract, "content_layout_mode", "new content-layout contract field")
+require(contract, "width_mode", "legacy width contract field")
+require(contract, "legacy_width_mode", "legacy compatibility source")
+require(contract, "mapped !== 'page-kind'", "legacy standard page-kind interpretation")
 for forbidden in ("PageWidthMode", "resolvePageWidthMode", "contractPageWidthMode", "pageWidthModeClass"):
     if forbidden in contract:
         fail(f"retired outer-frame mode remains: {forbidden}")
