@@ -14,6 +14,8 @@ export { default as ScIcon } from './ScIcon.vue';
 export { default as ScMobileRecordCard } from './ScMobileRecordCard.vue';
 export { default as ScMoney } from './ScMoney.vue';
 export { default as ScPage } from './ScPage.vue';
+export type { PageKind, PageWidthMode } from './pageWidth';
+export { contractPageWidthMode, normalizePageWidthMode, resolvePageWidthMode } from './pageWidth';
 export { default as ScPageHeader } from './ScPageHeader.vue';
 export { default as ScPanel } from './ScPanel.vue';
 export { default as ScRelationField } from './ScRelationField.vue';

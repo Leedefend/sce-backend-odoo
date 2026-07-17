@@ -11,11 +11,11 @@
 | `AppShell.vue` | 2140 | ≤1600 | 1293 |
 | `ListPage.vue` | 3222 | ≤2300 | 2086 |
 | `ActionView.vue` | 3684 | 不增长 | 3684 |
-| `ContractFormPage.vue` | 5587 | ≤1800 | 1779（含稳定装配与样式引用） |
+| `ContractFormPage.vue` | 5587 | ≤1800 | 1778（含稳定装配与样式引用） |
 | `ContractFormRoute.vue` | 不存在 | ≤800 | 18（只生成路由实例标识并装配正式页面） |
 | `MyWorkApprovalWorkspace.vue` | 311 | 稳定组件迁移 | 323 |
 
-`ContractFormPage` 的下降来自真实责任拆分：协同展示、契约语义、字段 schema、布局、表单状态、设计器状态/展示/持久化、关系字段/搜索/导航、操作 presentation、权威加载生命周期、保存与冲突动作分别进入独立模块。`RecordView` 和 `ModelFormPage` 两个无调用方代理已删除；正式 `/r` 与 `/f` 路由先进入只负责路由实例身份的 `ContractFormRoute`，随后装配同一个 1779 行正式页面。复杂度报告始终单独记录 `ContractFormPage`，不以 17 行路由组件代替核心实现规模。
+`ContractFormPage` 的下降来自真实责任拆分：协同展示、契约语义、字段 schema、布局、表单状态、设计器状态/展示/持久化、关系字段/搜索/导航、操作 presentation、权威加载生命周期、保存与冲突动作分别进入独立模块。`RecordView` 和 `ModelFormPage` 两个无调用方代理已删除；正式 `/r` 与 `/f` 路由先进入只负责路由实例身份的 `ContractFormRoute`，随后装配同一个 1778 行正式页面。复杂度报告始终单独记录 `ContractFormPage`，不以 17 行路由组件代替核心实现规模。
 
 整体机器指标以 FE-PRO-03 完成点 `86f9b29eb` 为基线：最大 Vue 文件 5587→3684；超过 600/1000 行 Vue 文件仍为 16/10，未伪报关闭；设计系统组件 0→23（22 个规定组件加正式 SVG 图标组件）；宽范围 `:is` 21→6；包含 raw button/status/dialog 实现的文件分别 58→57、21→20、6→4；硬编码颜色 0→0，页面 inline style literal 0→0，model-specific CSS 138→138，金额格式化实现文件 3→3。后四项只证明未增长，仍是后续按真实修改热点处理的存量债务。
 

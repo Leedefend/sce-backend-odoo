@@ -42,18 +42,21 @@
   overflow-x: clip;
 }
 
+.sc-page-frame,
 .sc-product-page-frame {
-  width: min(100%, var(--sc-product-page-max-width));
-  margin: 0 auto;
-  padding: var(--sc-product-page-gutter);
-}
-
-.sc-product-workspace-stack {
-  width: min(100%, var(--sc-product-page-max-width));
-  margin: 0 auto;
-  padding: var(--sc-product-page-gutter);
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  margin-inline: auto;
+  padding: var(--sc-page-padding);
   color: var(--sc-app-text-primary);
 }
+
+.sc-page-frame--data { max-width: min(100%, var(--sc-page-width-data)); }
+.sc-page-frame--standard,
+.sc-product-page-frame { max-width: min(100%, var(--sc-page-width-standard)); }
+.sc-page-frame--focused { max-width: min(100%, var(--sc-page-width-focused)); }
+.sc-page-frame--fluid { max-width: none; }
 
 .topbar-context {
   display: inline-flex;
@@ -99,12 +102,7 @@
   font-size: var(--sc-product-text-body);
 }
 
-@media (max-width: 1280px) {
-  .sc-product-workspace-stack { padding: var(--sc-product-page-gutter); }
-}
-
 @media (max-width: 768px) {
-  .sc-product-workspace-stack { padding: var(--sc-product-page-gutter); overflow-x: clip; }
   .sc-product-table-wrap,
   .table-scroll,
   .native-list-scroll { max-width: 100%; overflow-x: auto; overscroll-behavior-inline: contain; }

@@ -106,8 +106,6 @@ function onZoneAction(payload: PageBlockActionEvent) {
   display: grid;
   gap: 14px;
   width: 100%;
-  max-width: min(1380px, 100%);
-  margin: 0 auto;
   min-width: 0;
 }
 .page-renderer-header {
