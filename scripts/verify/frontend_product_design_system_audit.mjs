@@ -13,13 +13,18 @@ const AxeBuilder = axeModule.default || axeModule;
 const BASE_URL = process.env.FRONTEND_URL || 'http://127.0.0.1:5175';
 const DB_NAME = process.env.DB_NAME || 'sc_frontend_acceptance';
 const PASSWORD = process.env.ROLE_SMOKE_PASSWORD || 'demo';
-const WORKSPACE_AUDIT = Boolean(process.env.FE_PRO_04WR_PHASE);
+const WORKSPACE_COMPAT_AUDIT = Boolean(process.env.FE_PRO_04WR1_PHASE);
+const WORKSPACE_AUDIT = WORKSPACE_COMPAT_AUDIT || Boolean(process.env.FE_PRO_04WR_PHASE);
 const WIDTH_AUDIT = Boolean(process.env.FE_PRO_04W_PHASE);
-const PHASE_SOURCE = WORKSPACE_AUDIT
+const PHASE_SOURCE = WORKSPACE_COMPAT_AUDIT
+  ? process.env.FE_PRO_04WR1_PHASE
+  : WORKSPACE_AUDIT
   ? process.env.FE_PRO_04WR_PHASE
   : (WIDTH_AUDIT ? process.env.FE_PRO_04W_PHASE : process.env.FE_PRO_04_PHASE);
 const PHASE = PHASE_SOURCE === 'final' ? 'final' : 'baseline';
-const ROOT = WORKSPACE_AUDIT
+const ROOT = WORKSPACE_COMPAT_AUDIT
+  ? (process.env.FE_PRO_04WR1_ARTIFACT_ROOT || 'artifacts/frontend-professional/fe-pro-04wr1')
+  : WORKSPACE_AUDIT
   ? (process.env.FE_PRO_04WR_ARTIFACT_ROOT || 'artifacts/frontend-professional/fe-pro-04wr')
   : (WIDTH_AUDIT
       ? (process.env.FE_PRO_04W_ARTIFACT_ROOT || 'artifacts/frontend-professional/fe-pro-04w')
@@ -27,7 +32,12 @@ const ROOT = WORKSPACE_AUDIT
 const OUTPUT = path.join(ROOT, PHASE);
 const REPORT = path.join(ROOT, `${PHASE}-report.json`);
 const TARGETS = JSON.parse(process.env.FRONTEND_DELIVERY_HARDENING_TARGETS_JSON || '{}');
-const VIEWPORTS = WORKSPACE_AUDIT
+const VIEWPORTS = WORKSPACE_COMPAT_AUDIT
+  ? [
+      { width: 1920, height: 1080 },
+      { width: 390, height: 844 },
+    ]
+  : WORKSPACE_AUDIT
   ? (PHASE === 'final'
       ? [
           { width: 1440, height: 900 },
@@ -49,7 +59,9 @@ const VIEWPORTS = WORKSPACE_AUDIT
       { width: 768, height: 1024 },
       { width: 390, height: 844 },
     ];
-const DARK_CASES = new Set(WORKSPACE_AUDIT
+const DARK_CASES = new Set(WORKSPACE_COMPAT_AUDIT
+  ? []
+  : WORKSPACE_AUDIT
   ? ['contract_list', 'contract_detail', 'contract_form', 'payment_request_create', 'permission_denied']
   : (WIDTH_AUDIT
       ? ['my_work', 'contract_list', 'contract_detail', 'payment_request_create']
@@ -86,8 +98,11 @@ const ALL_CASES = [
 ];
 const WIDTH_CASE_KEYS = new Set(['project_list', 'contract_list', 'payment_request_list', 'payment_execution_list', 'contract_detail', 'settlement_detail', 'payment_request_detail', 'contract_form', 'payment_request_create', 'my_work']);
 const WORKSPACE_CASE_KEYS = new Set(['payment_request_list', 'contract_list', 'payment_execution_list', 'contract_detail', 'settlement_detail', 'payment_request_detail', 'contract_form', 'payment_request_create']);
+const WORKSPACE_COMPAT_CASE_KEYS = new Set(['payment_request_list', 'contract_detail', 'contract_form', 'payment_request_create']);
 const CASE_FILTER = String(process.env.FE_PRO_04_CASE || process.env.FE_PRO_04W_CASE || process.env.FE_PRO_04WR_CASE || '').trim();
-const PROFILE_CASES = WORKSPACE_AUDIT
+const PROFILE_CASES = WORKSPACE_COMPAT_AUDIT
+  ? ALL_CASES.filter((entry) => WORKSPACE_COMPAT_CASE_KEYS.has(entry.key))
+  : WORKSPACE_AUDIT
   ? ALL_CASES.filter((entry) => WORKSPACE_CASE_KEYS.has(entry.key))
   : (WIDTH_AUDIT ? ALL_CASES.filter((entry) => WIDTH_CASE_KEYS.has(entry.key)) : ALL_CASES);
 const CASES = CASE_FILTER ? PROFILE_CASES.filter((entry) => entry.key === CASE_FILTER) : PROFILE_CASES;
@@ -440,9 +455,11 @@ async function captureEntry(browser, entry, theme = 'light') {
                 ? [{ width: 1920, height: 1080 }, { width: 390, height: 844 }]
                 : [{ width: 1920, height: 1080 }])
             : [{ width: 1440, height: 900 }]))
-    : VIEWPORTS;
+    : (WORKSPACE_COMPAT_AUDIT && ['contract_detail', 'contract_form'].includes(entry.key)
+        ? VIEWPORTS.filter((viewport) => viewport.width === 1920)
+        : VIEWPORTS);
   const scenarios = viewports.map((viewport) => ({ viewport, sidebarState: 'expanded' }));
-  if (WORKSPACE_AUDIT && PHASE === 'final' && theme === 'light') {
+  if (WORKSPACE_AUDIT && !WORKSPACE_COMPAT_AUDIT && PHASE === 'final' && theme === 'light') {
     scenarios.push({ viewport: { width: 1920, height: 1080 }, sidebarState: 'collapsed' });
   }
   let sidebarState = 'expanded';
@@ -508,7 +525,7 @@ async function main() {
         pages.push(...dark.rows); runtime.push({ surface: entry.key, theme: 'dark', ...dark.runtime });
       }
     }
-    if (PHASE === 'final' && (WORKSPACE_AUDIT || !WIDTH_AUDIT)) {
+    if (PHASE === 'final' && !WORKSPACE_COMPAT_AUDIT && (WORKSPACE_AUDIT || !WIDTH_AUDIT)) {
       for (const entry of DARK_ONLY_CASES) {
         const dark = await captureEntryWithRetry(browser, entry, 'dark');
         pages.push(...dark.rows); runtime.push({ surface: entry.key, theme: 'dark', ...dark.runtime });
@@ -519,7 +536,9 @@ async function main() {
       row.screenshot_sha256 = digest;
     }
     const report = {
-      schema_version: WORKSPACE_AUDIT
+      schema_version: WORKSPACE_COMPAT_AUDIT
+        ? 'frontend_workspace_layout_contract_compatibility_audit.v1'
+        : WORKSPACE_AUDIT
         ? 'frontend_workspace_content_alignment_audit.v1'
         : (WIDTH_AUDIT ? 'frontend_page_width_audit.v1' : 'frontend_product_design_system_audit.v1'),
       phase: PHASE,
@@ -567,11 +586,13 @@ async function main() {
         }),
       };
       fs.writeFileSync(path.join(ROOT, 'visual-regression-report.json'), `${JSON.stringify(comparison, null, 2)}\n`);
-      const expectedLightRows = WORKSPACE_AUDIT
+      const expectedLightRows = WORKSPACE_COMPAT_AUDIT
+        ? 6
+        : WORKSPACE_AUDIT
         ? CASES.length * (VIEWPORTS.length + 1)
         : CASES.length * VIEWPORTS.length;
       check(pages.filter((row) => row.theme === 'light').length === expectedLightRows, 'light visual matrix incomplete');
-      check(pages.filter((row) => row.theme === 'dark').length === ((WORKSPACE_AUDIT || WIDTH_AUDIT) ? 5 : DARK_CASES.size), 'dark visual sample incomplete');
+      check(pages.filter((row) => row.theme === 'dark').length === (WORKSPACE_COMPAT_AUDIT ? 0 : ((WORKSPACE_AUDIT || WIDTH_AUDIT) ? 5 : DARK_CASES.size)), 'dark visual sample incomplete');
       check(!pages.some((row) => row.h1_count !== 1 || row.main_count !== 1), 'page landmark hierarchy failed');
       check(!pages.some((row) => row.font_level_count > 4), 'page typography hierarchy exceeds four visible levels');
       check(!pages.some((row) => row.viewport === '390x844' && row.desktop_record_table_visible > 0), 'desktop record table leaked into mobile layout');

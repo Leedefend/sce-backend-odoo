@@ -36,9 +36,15 @@ verify.frontend.typecheck.strict: guard.prod.forbid
 verify.frontend.lint.src: guard.prod.forbid
 	@scripts/dev/pnpm_exec.sh -C frontend/apps/web lint:src
 
-.PHONY: verify.frontend.workspace_content_alignment.guard
-verify.frontend.workspace_content_alignment.guard: guard.prod.forbid
+.PHONY: verify.frontend.page_width_contract.guard verify.frontend.workspace_content_alignment.guard verify.frontend.workspace_layout_contract.unit
+verify.frontend.workspace_layout_contract.unit: guard.prod.forbid
+	@node --experimental-strip-types scripts/verify/frontend_workspace_layout_contract_compatibility_test.ts
+
+verify.frontend.workspace_content_alignment.guard: guard.prod.forbid verify.frontend.workspace_layout_contract.unit
 	@python3 scripts/verify/frontend_workspace_content_alignment_guard.py
+
+verify.frontend.page_width_contract.guard: verify.frontend.workspace_content_alignment.guard
+	@echo "[verify.frontend.page_width_contract.guard] compatibility alias PASS"
 
 .PHONY: verify.frontend.page_identity
 verify.frontend.page_identity: guard.prod.forbid
