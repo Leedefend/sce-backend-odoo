@@ -139,6 +139,15 @@ def _load_handler():
 
     _install_module("odoo.addons.smart_core.handlers.ui_contract", UiContractHandler=_UiContractHandler)
 
+    class _PreviewAccessDenied(Exception):
+        pass
+
+    _install_module(
+        "odoo.addons.smart_core.handlers.ui_contract_preview",
+        PreviewAccessDenied=_PreviewAccessDenied,
+        build_projection_environments=lambda env, su_env, params, projection_context: (env, su_env),
+    )
+
     module_name = "odoo.addons.smart_core.handlers.ui_contract_v2"
     sys.modules.pop(module_name, None)
     spec = importlib.util.spec_from_file_location(module_name, root / "handlers" / "ui_contract_v2.py")
@@ -1645,6 +1654,7 @@ class TestUiContractV2Boundaries(unittest.TestCase):
                     "views": {
                         "form": {
                             "fields": [
+                                {"name": "name", "sequence": 10, "visible": False},
                                 {"name": "line_ids", "sequence": 30, "visible": False},
                             ]
                         }
@@ -1685,7 +1695,7 @@ class TestUiContractV2Boundaries(unittest.TestCase):
         )
 
         structure = source_contract["form_structure_contract"]
-        self.assertIn("name", structure["fieldRoles"])
+        self.assertNotIn("name", structure["fieldRoles"])
         self.assertIn("amount", structure["fieldRoles"])
         self.assertNotIn("line_ids", structure["fieldRoles"])
 
@@ -1785,7 +1795,6 @@ class TestUiContractV2Boundaries(unittest.TestCase):
         self.assertEqual(governance["group_columns"], {"基础信息": 2, "税务信息": 1})
         self.assertEqual(governance["group_visibility"], {"基础信息": True, "税务信息": False})
         self.assertEqual(governance["hidden_field_names"], ["tax_note"])
-
         structure = source_contract["form_structure_contract"]
         self.assertEqual(structure["columns"], 3)
         groups = structure["slots"][0]["groups"]
@@ -1794,6 +1803,45 @@ class TestUiContractV2Boundaries(unittest.TestCase):
         self.assertIn("name", structure["fieldRoles"])
         self.assertIn("amount", structure["fieldRoles"])
         self.assertNotIn("tax_note", structure["fieldRoles"])
+
+    def test_final_v2_layout_prunes_hidden_priority_fields_without_configured_groups(self):
+        handler = self.module.UiContractV2Handler(env=object())
+        contract = {
+            "pageInfo": {"viewType": "form"},
+            "layoutContract": {"containerTree": [{
+                "type": "group",
+                "children": [
+                    {"type": "field", "name": "subject"},
+                    {"type": "field", "name": "amount"},
+                ],
+                "widgetList": [
+                    {"widgetId": "field.subject", "fieldCode": "subject"},
+                    {"widgetId": "field.amount", "fieldCode": "amount"},
+                ],
+            }]},
+            "formStructureContract": {
+                "fieldRoles": {
+                    "subject": {"role": "business_fact"},
+                    "amount": {"role": "business_fact"},
+                },
+            },
+        }
+        source_contract = {
+            "business_operation_profile": {
+                "form_structure_governance": {
+                    "hidden_field_names": ["subject"],
+                    "field_groups": {},
+                },
+            },
+        }
+
+        handler._apply_business_config_form_groups_to_v2(contract, source_contract=source_contract)
+
+        fields = contract["layoutContract"]["containerTree"][0]["children"]
+        self.assertEqual([row["name"] for row in fields], ["amount"])
+        widgets = contract["layoutContract"]["containerTree"][0]["widgetList"]
+        self.assertEqual([row["fieldCode"] for row in widgets], ["amount"])
+        self.assertNotIn("subject", contract["formStructureContract"]["fieldRoles"])
 
     def test_tree_projection_does_not_import_form_structure_fields_into_list_profile(self):
         class _Field:

@@ -259,8 +259,10 @@ def classify_view_orchestration_contract(name: Any, payload: Any = None) -> dict
 def view_orchestration_apply_order_key(contract: Any) -> tuple:
     payload = getattr(contract, "contract_json", {}) or {}
     boundary = classify_view_orchestration_contract(getattr(contract, "name", ""), payload)
-    action_specific = 1 if int(getattr(getattr(contract, "action_id", None), "id", 0) or 0) else 0
-    view_specific = 1 if int(getattr(getattr(contract, "view_id", None), "id", 0) or 0) else 0
+    action_value = getattr(contract, "action_id", 0)
+    view_value = getattr(contract, "view_id", 0)
+    action_specific = 1 if int(getattr(action_value, "id", action_value) or 0) else 0
+    view_specific = 1 if int(getattr(view_value, "id", view_value) or 0) else 0
     role_specific = 1 if str(getattr(contract, "role_key", "") or "").strip() else 0
     return (
         int(boundary["layer"]),

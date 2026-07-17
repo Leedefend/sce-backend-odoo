@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 from unittest.mock import patch
 
+from datetime import timedelta
+from dataclasses import fields as dataclass_fields
+
+from odoo import fields
 from odoo.exceptions import AccessError, ValidationError
 from odoo.tests.common import TransactionCase, tagged
 
@@ -14,7 +18,9 @@ from odoo.addons.smart_core.handlers.business_config_change_set import (
     BusinessConfigChangeSetValidateHandler,
     BusinessConfigMutationAuditSnapshotHandler,
 )
+from odoo.addons.smart_core.app_config_engine.services.assemblers.page_assembler import PageAssembler
 from odoo.addons.smart_core.model.ui_business_config_change_set import stable_payload_hash
+from odoo.addons.smart_core.model.ui_business_config_contract import ViewOrchestrationContractProjection
 
 
 @tagged("post_install", "-at_install", "smart_core", "business_config_change_set")
@@ -88,7 +94,20 @@ class TestBusinessConfigChangeSet(TransactionCase):
 
     def test_preview_has_zero_formal_contract_or_version_writes(self):
         env, change_set = self._open()
-        self._stage(env, change_set, "test.change.set.preview")
+        staged = self._stage(env, change_set, "test.change.set.preview")
+        staged_context = staged["items"][0]["draft_payload"]["view_orchestration"]["context"]
+        self.assertEqual(staged_context["source"], "smart_core.lowcode.business_config")
+        self.assertEqual(staged_context["source_status"], "tenant_runtime")
+        preview_item = env["ui.business.config.change.set.item"].sudo().search([
+            ("change_set_id", "=", change_set["id"]),
+        ])
+        preview_item.write({
+            "role_key": False,
+            "draft_payload": {"view_orchestration": {
+                "context": {"source": "smart_core.lowcode.business_config", "source_status": "tenant_runtime"},
+                "views": {"form": {"fields": [{"name": "email", "visible": False}]}},
+            }},
+        })
         Contract = self.env["ui.business.config.contract"].sudo().with_context(active_test=False)
         Version = self.env["ui.business.config.contract.version"].sudo()
         before = (Contract.search_count([]), Version.search_count([]))
@@ -113,10 +132,80 @@ class TestBusinessConfigChangeSet(TransactionCase):
         projected = preview_env["ui.business.config.contract"]._effective_view_orchestration_contracts(
             "res.partner", view_type="form", role_key="config_admin",
         )
-        self.assertTrue(any(str(row.name).startswith("preview:") for row in projected))
+        preview_projection = next(row for row in projected if str(row.name).startswith("preview:"))
+        self.assertEqual(preview_projection.status, "preview")
+        self.assertEqual(preview_projection.action_id, 0)
+        self.assertEqual(preview_projection.view_id, 0)
+        self.assertEqual(preview_projection.source_kind, "change_set_preview")
+        data, _versions = PageAssembler(
+            preview_env,
+            preview_env["ir.model"].sudo().env,
+        ).assemble_page_contract({"model": "res.partner", "view_types": ["form"]})
+        applied = (((((data.get("governance") or {}).get("view_orchestration") or {}).get("views") or {}).get("form") or {}).get("business_config_contracts") or [])
+        self.assertTrue(
+            any(str(row.get("name") or "").startswith("preview:") for row in applied),
+            applied,
+        )
+        summary = PageAssembler(preview_env, preview_env["ir.model"].sudo().env)._current_view_orchestration_config_summary(
+            model="res.partner", view_type="form", action_id=0, view_id=0,
+        )
+        self.assertEqual(summary["items"][0]["status"], "preview")
         snapshot = BusinessConfigMutationAuditSnapshotHandler(env).handle()
         self.assertTrue(snapshot["ok"])
         self.assertIn("ui.business.config.contract", snapshot["data"]["formal_models"])
+
+    def test_preview_projection_replaces_existing_contract_and_enforces_scope(self):
+        expected_fields = {
+            "id", "name", "contract_json", "view_type", "action_id", "view_id", "role_key",
+            "priority", "version_no", "status", "source_kind",
+        }
+        self.assertEqual({field.name for field in dataclass_fields(ViewOrchestrationContractProjection)}, expected_fields)
+        env, change_set = self._open()
+        action = self.env["ir.actions.act_window"].sudo().create({
+            "name": "Preview Projection Scope", "res_model": "res.partner", "view_mode": "form",
+        })
+        view = self.env["ir.ui.view"].sudo().search([("model", "=", "res.partner"), ("type", "=", "form")], limit=1)
+        contract = self.env["ui.business.config.contract"].sudo().create({
+            "name": "test.change.set.preview.existing", "model": "res.partner", "view_type": "form",
+            "action_id": action.id, "view_id": view.id, "role_key": "config_admin",
+            "company_id": self.env.company.id, "contract_json": self._payload("name"), "status": "published",
+        })
+        staged = BusinessConfigChangeSetStageHandler(env).handle(payload={"params": {
+            "change_set_token": change_set["token"], "role_key": "config_admin", "config_type": "form",
+            "target_key": contract.name, "model": "res.partner", "view_type": "form",
+            "action_id": action.id, "view_id": view.id, "current_contract_id": contract.id,
+            "draft_payload": self._payload("email"),
+        }})
+        self.assertTrue(staged["ok"], staged)
+        preview = BusinessConfigChangeSetPreviewHandler(env).handle(payload={"params": {
+            "change_set_token": change_set["token"], "role_key": "config_admin",
+        }})
+        self.assertTrue(preview["ok"], preview)
+
+        def projections(target_env, *, action_value=action.id, view_value=view.id, role_value="config_admin"):
+            return target_env["ui.business.config.contract"]._effective_view_orchestration_contracts(
+                "res.partner", view_type="form", action_id=action_value, view_id=view_value, role_key=role_value,
+            )
+
+        context = {
+            **env.context,
+            "business_config_preview_token": preview["data"]["preview"]["token"],
+            "business_config_preview_user_id": self.admin.id,
+            "business_config_preview_role_key": "config_admin",
+        }
+        preview_env = env(context=context)
+        matching = projections(preview_env)
+        self.assertEqual(len([row for row in matching if row.source_kind == "change_set_preview"]), 1)
+        self.assertFalse(any(row.id == contract.id for row in matching))
+        self.assertFalse(any(row.source_kind == "change_set_preview" for row in projections(preview_env, action_value=action.id + 1)))
+        wrong_role_env = env(context={
+            **context, "business_config_preview_role_key": "platform_admin",
+        })
+        self.assertFalse(any(row.source_kind == "change_set_preview" for row in projections(wrong_role_env, role_value="platform_admin")))
+        other_user_env = self._env(self.other_admin)(context={
+            **context, "business_config_preview_user_id": self.other_admin.id,
+        })
+        self.assertFalse(any(row.source_kind == "change_set_preview" for row in projections(other_user_env)))
 
     def test_high_risk_operation_is_rejected_from_batch(self):
         env, change_set = self._open()
@@ -171,6 +260,126 @@ class TestBusinessConfigChangeSet(TransactionCase):
         self.assertTrue(rolled_back["ok"], rolled_back)
         self.assertNotEqual(rolled_back["data"]["id"], published["data"]["id"])
         self.assertFalse(contracts.exists().filtered("active"))
+
+    def test_explicit_empty_list_search_payloads_publish_and_rollback(self):
+        env, change_set = self._open()
+        Contract = self.env["ui.business.config.contract"].sudo()
+        original_list = {"view_orchestration": {"views": {"tree": {"columns": [{"name": "name"}]}}}}
+        original_search = {"view_orchestration": {"views": {"search": {
+            "filters": [{"name": "name"}], "group_by": [{"name": "company_id"}],
+        }}}}
+        list_contract = Contract.create({
+            "name": "test.change.set.empty.list", "model": "res.partner", "view_type": "tree",
+            "company_id": self.env.company.id, "contract_json": original_list, "status": "published",
+        })
+        search_contract = Contract.create({
+            "name": "test.change.set.empty.search", "model": "res.partner", "view_type": "search",
+            "company_id": self.env.company.id, "contract_json": original_search, "status": "published",
+        })
+        empty_payloads = (
+            ("list", "tree", list_contract, {"view_orchestration": {"views": {"tree": {"columns": []}}}}),
+            ("search", "search", search_contract, {"view_orchestration": {"views": {"search": {"filters": [], "group_by": []}}}}),
+        )
+        for config_type, view_type, contract, draft_payload in empty_payloads:
+            staged = BusinessConfigChangeSetStageHandler(env).handle(payload={"params": {
+                "change_set_token": change_set["token"], "role_key": "config_admin",
+                "config_type": config_type, "target_key": contract.name, "model": "res.partner",
+                "view_type": view_type, "current_contract_id": contract.id, "draft_payload": draft_payload,
+            }})
+            self.assertTrue(staged["ok"], staged)
+        validated = BusinessConfigChangeSetValidateHandler(env).handle(payload={"params": {
+            "change_set_token": change_set["token"], "role_key": "config_admin",
+        }})
+        self.assertEqual(validated["data"]["state"], "ready", validated)
+        published = BusinessConfigChangeSetPublishHandler(env).handle(payload={"params": {
+            "change_set_token": change_set["token"], "role_key": "config_admin", "request_id": "empty-config-publish",
+        }})
+        self.assertTrue(published["ok"], published)
+        self.assertTrue(published["data"]["publish_result"]["ok"])
+        list_contract.invalidate_recordset(["contract_json"])
+        search_contract.invalidate_recordset(["contract_json"])
+        self.assertEqual(list_contract.contract_json["view_orchestration"]["views"]["tree"]["columns"], [])
+        self.assertEqual(search_contract.contract_json["view_orchestration"]["views"]["search"]["filters"], [])
+        self.assertEqual(search_contract.contract_json["view_orchestration"]["views"]["search"]["group_by"], [])
+        rolled_back = BusinessConfigChangeSetRollbackHandler(env).handle(payload={"params": {
+            "change_set_token": change_set["token"], "role_key": "config_admin", "request_id": "empty-config-rollback",
+        }})
+        self.assertTrue(rolled_back["ok"], rolled_back)
+        list_contract.invalidate_recordset(["contract_json"])
+        search_contract.invalidate_recordset(["contract_json"])
+        self.assertEqual(list_contract.contract_json, original_list)
+        self.assertEqual(search_contract.contract_json, original_search)
+
+    def test_expired_published_batch_remains_rollback_capable_and_idempotent(self):
+        env, change_set = self._open()
+        self._stage(env, change_set, "test.change.set.long.term.rollback")
+        validated = BusinessConfigChangeSetValidateHandler(env).handle(payload={"params": {
+            "change_set_token": change_set["token"], "role_key": "config_admin",
+        }})
+        self.assertEqual(validated["data"]["state"], "ready")
+        published = BusinessConfigChangeSetPublishHandler(env).handle(payload={"params": {
+            "change_set_token": change_set["token"], "role_key": "config_admin", "request_id": "long-term-publish",
+        }})
+        self.assertTrue(published["ok"], published)
+        record = env["ui.business.config.change.set"].browse(change_set["id"])
+        record.write({"expires_at": fields.Datetime.now() - timedelta(hours=1)})
+        get_result = BusinessConfigChangeSetGetHandler(env).handle(payload={"params": {
+            "change_set_token": change_set["token"], "role_key": "config_admin",
+        }})
+        self.assertEqual(get_result["data"]["state"], "published")
+        other_user_result = BusinessConfigChangeSetRollbackHandler(self._env(self.other_admin)).handle(payload={"params": {
+            "change_set_token": change_set["token"], "role_key": "config_admin", "request_id": "other-user-rollback",
+        }})
+        self.assertEqual(other_user_result["code"], 404)
+        with self.assertRaises(ValidationError):
+            BusinessConfigChangeSetRollbackHandler(env).handle(payload={"params": {
+                "change_set_token": change_set["token"], "role_key": "platform_admin", "request_id": "other-role-rollback",
+            }})
+        other_company = self.env["res.company"].sudo().create({"name": "Change Set Isolation Company"})
+        self.admin.sudo().write({"company_ids": [(4, other_company.id)]})
+        other_company_env = self._env(self.admin)["res.users"].with_company(other_company).env
+        other_company_result = BusinessConfigChangeSetRollbackHandler(other_company_env).handle(payload={"params": {
+            "change_set_token": change_set["token"], "role_key": "config_admin", "request_id": "other-company-rollback",
+        }})
+        self.assertEqual(other_company_result["code"], 404)
+        record.write({"database_name": "other_database"})
+        database_result = BusinessConfigChangeSetRollbackHandler(env).handle(payload={"params": {
+            "change_set_token": change_set["token"], "role_key": "config_admin", "request_id": "other-database-rollback",
+        }})
+        self.assertEqual(database_result["code"], 404)
+        record.write({"database_name": self.env.cr.dbname})
+        params = {"change_set_token": change_set["token"], "role_key": "config_admin", "request_id": "long-term-rollback"}
+        first = BusinessConfigChangeSetRollbackHandler(env).handle(payload={"params": params})
+        second = BusinessConfigChangeSetRollbackHandler(env).handle(payload={"params": params})
+        self.assertTrue(first["ok"], first)
+        self.assertEqual(second["data"]["id"], first["data"]["id"])
+        self.assertEqual(self.env["ui.business.config.change.set"].sudo().search_count([
+            ("publish_request_id", "=", "long-term-rollback"),
+        ]), 1)
+
+    def test_expired_draft_and_preview_are_rejected(self):
+        env, change_set = self._open()
+        self._stage(env, change_set, "test.change.set.expired.preview")
+        record = env["ui.business.config.change.set"].browse(change_set["id"])
+        record.write({"expires_at": fields.Datetime.now() - timedelta(minutes=1)})
+        with self.assertRaises(ValidationError):
+            record.assert_owner_scope(role_key="config_admin")
+        record.write({"expires_at": fields.Datetime.now() + timedelta(hours=1)})
+        preview = BusinessConfigChangeSetPreviewHandler(env).handle(payload={"params": {
+            "change_set_token": change_set["token"], "role_key": "config_admin",
+        }})
+        self.assertTrue(preview["ok"], preview)
+        record.write({"preview_expires_at": fields.Datetime.now() - timedelta(minutes=1)})
+        preview_env = env(context={
+            **env.context,
+            "business_config_preview_token": preview["data"]["preview"]["token"],
+            "business_config_preview_user_id": self.admin.id,
+            "business_config_preview_role_key": "config_admin",
+        })
+        projected = preview_env["ui.business.config.contract"]._effective_view_orchestration_contracts(
+            "res.partner", view_type="form", role_key="config_admin",
+        )
+        self.assertFalse(any(row.source_kind == "change_set_preview" for row in projected))
 
     def test_publish_failure_rolls_back_all_contract_items(self):
         env, change_set_data = self._open()

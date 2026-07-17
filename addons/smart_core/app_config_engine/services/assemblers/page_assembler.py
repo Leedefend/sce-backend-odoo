@@ -1710,8 +1710,8 @@ class PageAssembler:
                 "status": str(rec.status or ""),
                 "version_no": int(rec.version_no or 1),
                 "view_type": str(rec.view_type or ""),
-                "action_id": int(rec.action_id.id or 0),
-                "view_id": int(rec.view_id.id or 0),
+                "action_id": int(rec.action_id or 0),
+                "view_id": int(rec.view_id or 0),
                 "role_key": str(rec.role_key or ""),
             })
         return {
