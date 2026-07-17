@@ -8,10 +8,10 @@
           <em>{{ startScopeSummary }}</em>
         </div>
         <div class="workbench-start-actions">
-          <button type="button" class="ghost primary" :disabled="scanLoading" @click="$emit('scanSystemRootCoverage')">
+          <ScButton type="button" class="ghost primary" :disabled="scanLoading" @click="$emit('scanSystemRootCoverage')">
             {{ scanLoading ? '读取中...' : '选择业务页面' }}
-          </button>
-          <button type="button" class="ghost" :disabled="!previewRoutePath" @click="$emit('previewSelectedRuntimeRoute')">预览页面</button>
+          </ScButton>
+          <ScButton type="button" class="ghost" :disabled="!runtimeRoutePath" @click="$emit('openCurrentEffectivePage')">打开当前生效页面</ScButton>
         </div>
       </div>
       <div v-if="currentModel && sections.length" class="workbench-start-config">
@@ -45,7 +45,7 @@
               <span>{{ sectionTaskCoverageText(section.key, section.contract_count) }}</span>
             </div>
             <div class="config-card-actions">
-              <button
+              <ScButton
                 v-if="section.key === 'form' || section.key === 'list_search' || section.key === 'analysis'"
                 type="button"
                 class="ghost small"
@@ -53,8 +53,8 @@
                 @click="$emit('loadVersions', section.key)"
               >
                 {{ versionsLoading ? '读取中...' : '版本记录' }}
-              </button>
-              <button
+              </ScButton>
+              <ScButton
                 v-if="section.key === 'list_search'"
                 type="button"
                 class="ghost small"
@@ -62,8 +62,8 @@
                 @click="$emit('loadListSearchConfig')"
               >
                 {{ listSearchBusy ? '读取中...' : sectionPrimaryActionLabel(section.key) }}
-              </button>
-              <button
+              </ScButton>
+              <ScButton
                 v-else-if="section.key === 'form'"
                 type="button"
                 class="ghost small primary"
@@ -71,24 +71,24 @@
                 @click="$emit('openFormConfig')"
               >
                 {{ sectionPrimaryActionLabel(section.key) }}
-              </button>
-              <button
+              </ScButton>
+              <ScButton
                 v-else-if="section.key === 'menu'"
                 type="button"
                 class="ghost small"
                 @click="$emit('openMenuConfig')"
               >
                 {{ sectionPrimaryActionLabel(section.key) }}
-              </button>
-              <button
+              </ScButton>
+              <ScButton
                 v-if="section.key === 'menu'"
                 type="button"
                 class="ghost small"
                 @click="$emit('openCreateMenuConfig')"
               >
                 新增菜单
-              </button>
-              <button
+              </ScButton>
+              <ScButton
                 v-else-if="section.key === 'analysis'"
                 type="button"
                 class="ghost small"
@@ -96,8 +96,8 @@
                 @click="$emit('loadAnalysisConfig')"
               >
                 {{ listSearchBusy ? '读取中...' : sectionPrimaryActionLabel(section.key) }}
-              </button>
-              <button
+              </ScButton>
+              <ScButton
                 v-else-if="section.key === 'approval'"
                 type="button"
                 class="ghost small primary"
@@ -105,7 +105,7 @@
                 @click="$emit('loadApprovalConfig')"
               >
                 {{ approvalLoading ? '读取中...' : sectionPrimaryActionLabel(section.key) }}
-              </button>
+              </ScButton>
             </div>
           </article>
         </div>
@@ -120,7 +120,7 @@
         <em>{{ visibleDeliveryReadinessProgressText }}</em>
       </div>
       <div class="delivery-readiness-grid delivery-readiness-grid--compact">
-        <button
+        <ScButton
           v-for="item in visibleDeliveryReadinessItems"
           :key="item.id"
           type="button"
@@ -131,7 +131,7 @@
           <span>{{ item.label }}</span>
           <strong>{{ deliveryReadinessItemStatusText(item) }}</strong>
           <em>{{ deliveryReadinessItemMetaText(item) }}</em>
-        </button>
+        </ScButton>
       </div>
       <div v-if="!visibleDeliveryReadinessItems.length" class="workbench-status-empty">状态读取中</div>
     </aside>
@@ -140,6 +140,7 @@
 
 <script setup lang="ts">
 import type { BusinessConfigSurfacePayload } from '../../api/businessConfig';
+import ScButton from '../../components/design-system/ScButton.vue';
 
 type SurfaceSection = BusinessConfigSurfacePayload['sections'][number];
 type DeliveryItem = NonNullable<BusinessConfigSurfacePayload['delivery_readiness']>['items'][number];
@@ -149,7 +150,7 @@ defineProps<{
   currentModel: string;
   startScopeSummary: string;
   scanLoading: boolean;
-  previewRoutePath: string;
+  runtimeRoutePath: string;
   sections: SurfaceSection[];
   advancedPanelOpen: boolean;
   versionsLoading: boolean;
@@ -175,7 +176,7 @@ defineProps<{
 
 defineEmits<{
   scanSystemRootCoverage: [];
-  previewSelectedRuntimeRoute: [];
+  openCurrentEffectivePage: [];
   loadVersions: [sectionKey: string];
   loadListSearchConfig: [];
   openFormConfig: [];

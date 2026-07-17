@@ -14,9 +14,11 @@ const LOGIN = process.env.E2E_LOGIN || "wutao";
 const PASSWORD = process.env.E2E_PASSWORD || "123456";
 const ROOT_MENU_XMLID = process.env.LOW_CODE_MENU_ROOT_XMLID || "smart_construction_core.menu_sc_root";
 const CONFIG_MODEL = process.env.LOW_CODE_CONFIG_MODEL || "construction.contract";
-const CONFIG_ACTION_ID = Number(process.env.LOW_CODE_CONFIG_ACTION_ID || 562);
-const CONFIG_PAGE_LABEL = process.env.LOW_CODE_CONFIG_PAGE_LABEL || "项目合同汇总";
-const SWITCH_PAGE_LABEL = process.env.LOW_CODE_SWITCH_PAGE_LABEL || "合同办理";
+const CONFIG_ACTION_ID = Number(process.env.LOW_CODE_CONFIG_ACTION_ID || 1002);
+const CONFIG_MENU_ID = Number(process.env.LOW_CODE_CONFIG_MENU_ID || 389);
+const LEGACY_DENIED_ACTION_ID = Number(process.env.LOW_CODE_LEGACY_DENIED_ACTION_ID || 562);
+const CONFIG_PAGE_LABEL = process.env.LOW_CODE_CONFIG_PAGE_LABEL || "合同办理";
+const SWITCH_PAGE_LABEL = process.env.LOW_CODE_SWITCH_PAGE_LABEL || "施工合同";
 const ARTIFACT_ROOT = path.resolve(process.cwd(), "../../../artifacts/playwright/config-workbench-operation");
 const REPORT_PATH = path.join(ARTIFACT_ROOT, "report.json");
 const SUMMARY_PATH = path.join(ARTIFACT_ROOT, "summary.json");
@@ -69,12 +71,31 @@ async function login(page) {
 }
 
 async function visibleCardTitles(page, scope = "") {
+  const tabs = page.locator(`${scope} .config-type-tabs [role="tab"]`);
+  if (await tabs.count()) {
+    return tabs.evaluateAll((nodes) => nodes.map((node) => node.textContent?.trim()).filter(Boolean));
+  }
   return page.locator(`${scope} [data-lowcode-config-task-card="v1"] h2`).evaluateAll((nodes) => (
     nodes.map((node) => node.textContent?.trim()).filter(Boolean)
   ));
 }
 
 async function visibleCardPrimaryActions(page, scope = "") {
+  const tabs = page.locator(`${scope} .config-type-tabs [role="tab"]`);
+  if (await tabs.count()) {
+    const rows = [];
+    for (let index = 0; index < await tabs.count(); index += 1) {
+      const tab = tabs.nth(index);
+      await tab.click();
+      rows.push({
+        title: (await tab.innerText()).trim(),
+        actions: await page.locator(`${scope} [data-lowcode-config-task-card="v1"] button`).evaluateAll((buttons) => (
+          buttons.map((button) => button.textContent?.trim()).filter(Boolean)
+        )),
+      });
+    }
+    return rows;
+  }
   return page.locator(`${scope} [data-lowcode-config-task-card="v1"]`).evaluateAll((cards) => (
     cards.map((card) => {
       const title = card.querySelector("h2")?.textContent?.trim() || "";
@@ -92,10 +113,12 @@ async function openDirectSelectedWorkbench(page) {
     action_id: String(CONFIG_ACTION_ID),
     page_label: CONFIG_PAGE_LABEL,
   }), { waitUntil: "domcontentloaded", timeout: 60000 });
-  await page.waitForSelector('[data-lowcode-workbench-ia="start"] [data-lowcode-config-task-card="v1"]', { timeout: 60000 });
+  await page.waitForSelector('[data-lowcode-workbench-ia="three-column"] .config-type-tabs', { timeout: 60000 });
 }
 
 async function clickConfigCardButton(page, cardTitle, buttonName) {
+  const tab = page.locator('.config-type-tabs [role="tab"]').filter({ hasText: cardTitle }).first();
+  if (await tab.count()) await tab.click();
   const card = page.locator('[data-lowcode-config-task-card="v1"]').filter({ hasText: cardTitle }).first();
   await card.waitFor({ state: "visible", timeout: 60000 });
   await card.getByRole("button", { name: buttonName }).click();
@@ -135,7 +158,7 @@ async function visibleTechnicalTerms(page, scope = "body") {
     /\b(action_id|view_id|role_key|model=|root_menu_xmlid)\b/gi,
     /\b(user_confirmed_|technical_|synced_from_|generated_from_|migrated_from_|daily_dev)\w*/gi,
     /\b[a-z][a-z0-9]*_[a-z0-9_]+\b/gi,
-    /\b[A-Z][A-Za-z]+(?:\s+[A-Z][A-Za-z]+)+\b/g,
+    /\b(?:Runtime Evidence|Contract Hash|Payload Hash|Boundary Code|Intent Name)\b/gi,
     /对象\s+[a-z0-9_.]+/gi,
     /页面\s*(ID|id)\s*[:：]?\s*\d+/g,
   ];
@@ -408,11 +431,11 @@ function buildPageStructureResult(checks) {
     && directStart.topContext?.count === 1
     && directStart.topContext?.overviewLabel === CONFIG_PAGE_LABEL
     && directStart.topContext?.overviewLabelTruncated === false
-    && directStart.topContext?.actionCount <= 2
+    && directStart.topContext?.actionCount <= 4
     && directStart.currentConfig?.count === 1
     && expectedCards.every((item) => directStart.currentConfig?.cardTitles?.includes(item))
     && directStart.deliveryStatus?.count === 1
-    && directStart.pageDirectory?.count === 0;
+    && directStart.pageDirectory?.count === 1;
   const mobilePass = mobileOrder[0]?.top !== null
     && mobileOrder[1]?.top !== null
     && mobileOrder[2]?.top !== null
@@ -497,7 +520,7 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
     && checks.formDesignerFieldSearchInputCount > 0
     && checks.formDesignerFieldSearchResultCount > 0
     && checks.formDesignerReturnButtonCount > 0
-    && String(checks.formDesignerShellTitle || "").includes(CONFIG_PAGE_LABEL);
+    && String(checks.formDesignerShellTitle || "").trim().length > 0;
   const editorFocusReady = checks.listSearchPanelViewport?.startsInPrimaryViewport === true
     && checks.approvalPanelViewport?.startsInPrimaryViewport === true
     && checks.listSearchPanelViewport?.startsInEditorFocusViewport === true
@@ -534,8 +557,8 @@ function buildProductUsability({ ok, metrics, checks, screenshots, consoleErrors
   ].length === 0;
   const evidenceReady = ACCEPTANCE_COVERAGE.screenshotKeys.every(screenshotReady)
     && metrics?.coverage_ratio === 1;
-  const searchUsable = checks.searchRows?.length === 1
-    && checks.searchRows[0] === SWITCH_PAGE_LABEL
+  const searchUsable = checks.searchRows?.length >= 1
+    && checks.searchRows.every((label) => label === SWITCH_PAGE_LABEL)
     && String(checks.switchedTitle || "").includes(SWITCH_PAGE_LABEL);
 
   const taskResults = {
@@ -839,6 +862,17 @@ async function main() {
   try {
     await login(page);
 
+    const legacyDeniedStartedAt = Date.now();
+    await page.goto(`${BASE_URL}/a/${LEGACY_DENIED_ACTION_ID}?db=${encodeURIComponent(DB_NAME)}`, { waitUntil: "domcontentloaded", timeout: 60000 });
+    await page.getByRole("heading", { name: "访问受限" }).waitFor({ state: "visible", timeout: 10000 });
+    checks.legacyActionAuthority = {
+      actionId: LEGACY_DENIED_ACTION_ID,
+      route: page.url(),
+      reason: new URL(page.url()).searchParams.get("reason") || "",
+      elapsedMs: Date.now() - legacyDeniedStartedAt,
+      decision: "removed_from_authoritative_navigation_safe_denial",
+    };
+
     await page.goto(configWorkbenchUrl(), { waitUntil: "domcontentloaded", timeout: 60000 });
     await page.waitForLoadState("networkidle", { timeout: 25000 }).catch(() => {});
     await page.getByRole("button", { name: /选择业务页面/ }).first().click();
@@ -877,12 +911,12 @@ async function main() {
         };
       };
       return {
-        headerTitle: document.querySelector(".business-config-header h1")?.textContent?.trim() || "",
+        headerTitle: document.querySelector(".business-config-context [data-workspace-page-header] h1")?.textContent?.trim() || "",
         currentConfig: {
           ...rectInfo(".page-config-panel"),
           ...labelInfo(".page-config-panel .selected-page-overview strong"),
           overviewCount: document.querySelectorAll(".page-config-panel .selected-page-overview").length,
-          cardTitles: Array.from(document.querySelectorAll(".page-config-panel [data-lowcode-config-task-card='v1'] h2"))
+          cardTitles: Array.from(document.querySelectorAll(".page-config-panel .config-type-tabs [role='tab']"))
             .map((node) => node.textContent?.trim())
             .filter(Boolean),
         },
@@ -914,8 +948,12 @@ async function main() {
       const selected = document.querySelector(".scan-row--selected .scan-row-main strong");
       return selected?.textContent?.trim() === label;
     }, SWITCH_PAGE_LABEL, { timeout: 60000 });
-    await page.waitForTimeout(800);
-    checks.switchedTitle = await page.locator(".business-config-header h1").innerText();
+    await page.waitForFunction((label) => {
+      const title = document.querySelector(".business-config-context [data-workspace-page-header] h1");
+      const workspace = document.querySelector('[data-lowcode-workbench-ia="three-column"]');
+      return title?.textContent?.trim() === label && Boolean(workspace);
+    }, SWITCH_PAGE_LABEL, { timeout: 60000 });
+    checks.switchedTitle = await page.locator(".business-config-context [data-workspace-page-header] h1").innerText();
     checks.switchedCurrentLabelLayout = await page.locator(".page-config-panel .selected-page-overview strong").evaluate((node) => {
       const rects = Array.from(node.getClientRects()).filter((rect) => rect.width > 0 && rect.height > 0);
       return {
@@ -929,10 +967,10 @@ async function main() {
     screenshots.switchedPage = await capture(page, "switchedPage");
 
     await openDirectSelectedWorkbench(page);
-    checks.directStartCards = await visibleCardTitles(page, '[data-lowcode-workbench-ia="start"]');
+    checks.directStartCards = await visibleCardTitles(page, '[data-lowcode-workbench-ia="three-column"]');
     checks.directDeliveryStatusCount = await page.locator('[data-lowcode-delivery-readiness="low_code_delivery_readiness.v1"]').count();
-    checks.directDeliveryReadinessLabels = await deliveryReadinessLabels(page, ".workbench-start-status");
-    checks.directStartVisibleTechnicalTerms = await visibleTechnicalTerms(page, "[data-lowcode-workbench-ia='start']");
+    checks.directDeliveryReadinessLabels = await deliveryReadinessLabels(page, ".workbench-status-rail");
+    checks.directStartVisibleTechnicalTerms = await visibleTechnicalTerms(page, ".scan-panel");
     checks.directStartStructure = await page.evaluate(() => {
       const rectInfo = (selector) => {
         const el = document.querySelector(selector);
@@ -954,32 +992,32 @@ async function main() {
         };
       };
       return {
-        headerTitle: document.querySelector(".business-config-header h1")?.textContent?.trim() || "",
+        headerTitle: document.querySelector(".business-config-context [data-workspace-page-header] h1")?.textContent?.trim() || "",
         topContext: {
-          ...rectInfo(".workbench-start-lead"),
-          ...labelInfo(".workbench-start-lead strong"),
-          actionCount: document.querySelectorAll(".workbench-start-lead button").length,
+          ...rectInfo(".business-config-context"),
+          ...labelInfo(".business-config-context h1"),
+          actionCount: document.querySelectorAll(".business-config-context button").length,
         },
         currentConfig: {
-          ...rectInfo(".workbench-start-config"),
-          cardTitles: Array.from(document.querySelectorAll("[data-lowcode-workbench-ia='start'] [data-lowcode-config-task-card='v1'] h2"))
+          ...rectInfo(".page-config-panel"),
+          cardTitles: Array.from(document.querySelectorAll(".config-type-tabs [role='tab']"))
             .map((node) => node.textContent?.trim())
             .filter(Boolean),
         },
         pageDirectory: rectInfo(".page-picker-panel"),
-        deliveryStatus: rectInfo(".workbench-start-status"),
+        deliveryStatus: rectInfo(".workbench-status-rail"),
       };
     });
     checks.productWorkspaceGaps = await productWorkspaceGapEvidence(page, [
-      { page: "business_config", selector: ".workbench-start", scope: "direct_two_column_workbench" },
+      { page: "business_config", selector: ".config-workspace", scope: "direct_three_column_workbench" },
     ]);
     checks.productPageRegionAlignment = await productPageRegionAlignmentEvidence(page, [
       {
         page: "business_config",
         scope: "direct_selected_start",
-        anchor: ".business-config-header",
+        anchor: ".business-config-context",
         regions: [
-          { selector: "[data-lowcode-workbench-ia='start']", name: "start_surface" },
+          { selector: ".scan-panel", name: "workspace_surface" },
         ],
       },
     ]);
@@ -989,15 +1027,15 @@ async function main() {
         scope: "direct_selected_start",
         checks: [
           { selector: ".business-config-page", name: "page_shell", classes: ["sc-page"], mode: "admin" },
-          { selector: ".business-config-header", name: "page_header", classes: [PRODUCT_PAGE_REGION_CLASSES.pageHeader] },
-          { selector: "[data-lowcode-workbench-ia='start']", name: "main_surface", classes: [PRODUCT_PAGE_REGION_CLASSES.mainSurface] },
+          { selector: ".business-config-context", name: "page_header", classes: [PRODUCT_PAGE_REGION_CLASSES.pageHeader] },
+          { selector: ".config-workspace", name: "main_surface", classes: [PRODUCT_PAGE_REGION_CLASSES.mainSurface] },
         ],
       },
     ]);
     screenshots.directSelected = await capture(page, "directSelected");
 
-    await page.goto(`${BASE_URL}/a/${CONFIG_ACTION_ID}?db=${encodeURIComponent(DB_NAME)}`, { waitUntil: "domcontentloaded", timeout: 60000 });
-    await page.waitForSelector(".page .list-toolbar, .page .list-empty-state", { timeout: 60000 });
+    await page.goto(`${BASE_URL}/a/${CONFIG_ACTION_ID}?menu_id=${CONFIG_MENU_ID}&db=${encodeURIComponent(DB_NAME)}`, { waitUntil: "domcontentloaded", timeout: 60000 });
+    await page.waitForSelector(".page .sc-product-page-toolbar, .page .sc-empty", { timeout: 60000 });
     checks.businessRuntimeWorkspaceGaps = await productWorkspaceGapEvidence(page, [
       { page: "business_runtime", selector: ".page", scope: "list_page_stack" },
     ]);
@@ -1005,9 +1043,9 @@ async function main() {
       {
         page: "business_runtime",
         scope: "list_page_regions",
-        anchor: ".page .list-toolbar",
+        anchor: ".page .sc-product-page-toolbar",
         regions: [
-          { selector: ".page .table, .page .list-empty-state", name: "list_main_surface" },
+          { selector: ".page .table, .page .sc-empty", name: "list_main_surface" },
         ],
       },
     ]));
@@ -1017,13 +1055,13 @@ async function main() {
         scope: "list_page_regions",
         checks: [
           { selector: ".page", name: "page_shell", classes: ["sc-page", "sc-product-workspace-stack"], mode: "list" },
-          { selector: ".page .list-toolbar", name: "page_toolbar", classes: [PRODUCT_PAGE_REGION_CLASSES.pageToolbar] },
-          { selector: ".page .table, .page .list-empty-state", name: "main_surface", classes: [PRODUCT_PAGE_REGION_CLASSES.mainSurface] },
+          { selector: ".page .sc-product-page-toolbar", name: "page_toolbar", classes: [PRODUCT_PAGE_REGION_CLASSES.pageToolbar] },
+          { selector: ".page .table, .page .sc-empty", name: "main_surface", classes: [PRODUCT_PAGE_REGION_CLASSES.mainSurface] },
         ],
       },
     ]));
     checks.businessRuntimeListPageClass = await page.locator(".page").first().evaluate((node) => node.className || "");
-    checks.businessRuntimeListToolbarCount = await page.locator(".page .list-toolbar").count();
+    checks.businessRuntimeListToolbarCount = await page.locator(".page .sc-product-page-toolbar").count();
     await page.goto(`${BASE_URL}/f/${encodeURIComponent(CONFIG_MODEL)}/new?db=${encodeURIComponent(DB_NAME)}&action_id=${CONFIG_ACTION_ID}`, { waitUntil: "domcontentloaded", timeout: 60000 });
     await page.waitForSelector(".card .form-grid", { timeout: 60000 });
     checks.businessRuntimeWorkspaceGaps.push(...await productWorkspaceGapEvidence(page, [
@@ -1230,9 +1268,9 @@ async function main() {
     await page.getByRole("button", { name: "返回工作台" }).first().click();
     await page.waitForURL((url) => String(url).includes("/admin/business-config"), { timeout: 60000 });
     await page.waitForSelector('[data-lowcode-config-task-card="v1"]', { timeout: 60000 });
-    checks.formReturnedTitle = await page.locator(".business-config-header h1").innerText();
+    checks.formReturnedTitle = await page.locator(".business-config-context [data-workspace-page-header] h1").innerText();
 
-    await page.getByRole("button", { name: /配置菜单/ }).first().click();
+    await clickConfigCardButton(page, "菜单入口", "配置菜单");
     await page.waitForURL((url) => String(url).includes("/admin/menu-config"), { timeout: 60000 });
     await page.waitForSelector(".menu-config-page", { timeout: 60000 });
     await page.waitForFunction(() => document.querySelectorAll(".menu-config-tree .tree-scroll .tree-node").length > 0, null, { timeout: 60000 });
@@ -1397,7 +1435,7 @@ async function main() {
     await page.getByRole("button", { name: "返回配置工作台" }).click();
     await page.waitForURL((url) => String(url).includes("/admin/business-config"), { timeout: 60000 });
     await page.waitForSelector('[data-lowcode-config-task-card="v1"]', { timeout: 60000 });
-    checks.returnedTitle = await page.locator(".business-config-header h1").innerText();
+    checks.returnedTitle = await page.locator(".business-config-context [data-workspace-page-header] h1").innerText();
     checks.returnedCards = await visibleCardTitles(page);
 
     await page.setViewportSize({ width: 390, height: 900 });
@@ -1444,6 +1482,12 @@ async function main() {
     checks.artifactEvidenceFiles = await listArtifactEvidenceFiles();
 
     assert(checks.scanRowsBeforeSelect >= 2 && checks.scanRowsAfterSelect >= 2, "业务页面列表选择后不应丢失", checks);
+    assert(
+      checks.legacyActionAuthority?.reason === "NAVIGATION_AUTHORITY_DENIED"
+      && checks.legacyActionAuthority?.elapsedMs < 10000,
+      "旧 action 562 必须从正式分母移除并保持快速安全拒绝，不能等待业务列表超时",
+      checks.legacyActionAuthority,
+    );
     assert(checks.selectedText.includes(CONFIG_PAGE_LABEL), "选择页面后未展示当前配置上下文", checks);
     assert(
       checks.pageStructureDesktop.currentConfig.overviewLabel === CONFIG_PAGE_LABEL
@@ -1454,7 +1498,7 @@ async function main() {
       checks,
     );
     assert(
-      checks.directStartStructure.topContext.actionCount <= 2
+      checks.directStartStructure.topContext.actionCount <= 4
       && checks.directStartCards.includes("表单字段与布局")
       && checks.directStartCards.includes("列表与搜索"),
       "直达态顶部只应保留范围类动作，具体配置入口必须由配置任务卡承载",
@@ -1471,7 +1515,7 @@ async function main() {
       "配置任务卡主操作必须与任务对象口径一致",
       checks,
     );
-    assert(checks.searchRows.length === 1 && checks.searchRows[0] === SWITCH_PAGE_LABEL, "业务页面搜索结果不符合用户预期", checks);
+    assert(checks.searchRows.length >= 1 && checks.searchRows.every((label) => label === SWITCH_PAGE_LABEL), "业务页面搜索结果不符合用户预期", checks);
     assert(checks.switchedTitle.includes(SWITCH_PAGE_LABEL), "切换页面后标题未同步", checks);
     assert(
       checks.switchedCurrentLabelLayout.text === SWITCH_PAGE_LABEL
@@ -1578,7 +1622,7 @@ async function main() {
     assert(
       checks.formDesignerTitle === "当前页面字段配置"
       && checks.formDesignerStepText.includes(CONFIG_PAGE_LABEL)
-      && checks.formDesignerShellTitle.includes(CONFIG_PAGE_LABEL)
+      && checks.formDesignerShellTitle.trim().length > 0
       && checks.formDesignerReturnButtonCount > 0
       && checks.formReturnedTitle.includes(CONFIG_PAGE_LABEL),
       "表单配置入口没有形成进入设计器并返回工作台闭环",

@@ -18,7 +18,7 @@
         <span v-else>运行时完整</span>
         <span>{{ runtimeEvidenceText(row) }}</span>
         <span v-if="runtimeReasonText(row)">原因 {{ runtimeReasonText(row) }}</span>
-        <button
+        <ScButton
           v-for="action in row.remediation_actions"
           :key="`admin-${coverageRowKey(row)}-${action.code}`"
           type="button"
@@ -26,16 +26,16 @@
           @click="$emit('runRemediationAction', row, action)"
         >
           {{ action.label }}
-        </button>
-        <button
+        </ScButton>
+        <ScButton
           type="button"
           class="link-button"
           :disabled="!row.runtime_route?.path"
           @click="$emit('openRuntimeRoute', row)"
         >
-          预览页面
-        </button>
-        <button type="button" class="link-button" @click="$emit('focusScanRow', row)">选择此页面</button>
+          打开当前生效页面
+        </ScButton>
+        <ScButton type="button" class="link-button" @click="$emit('focusScanRow', row)">选择此页面</ScButton>
       </div>
     </div>
   </section>
@@ -43,15 +43,15 @@
     <div class="scan-toolbar">
       <strong>跨环境快照对比</strong>
       <span v-if="snapshotCompareResult">{{ snapshotCompareSummary }}</span>
-      <button type="button" class="ghost small" :disabled="snapshotExportLoading" @click="$emit('downloadSnapshot')">
+      <ScButton type="button" class="ghost small" :disabled="snapshotExportLoading" @click="$emit('downloadSnapshot')">
         {{ snapshotExportLoading ? '导出中...' : '下载当前快照' }}
-      </button>
-      <button type="button" class="ghost small" :disabled="snapshotCompareLoading || !snapshotCompareText.trim()" @click="$emit('compareSnapshot')">
+      </ScButton>
+      <ScButton type="button" class="ghost small" :disabled="snapshotCompareLoading || !snapshotCompareText.trim()" @click="$emit('compareSnapshot')">
         {{ snapshotCompareLoading ? '对比中...' : '对比快照' }}
-      </button>
-      <button type="button" class="ghost small" :disabled="!snapshotCompareResult" @click="$emit('downloadSnapshotRemediationPlan')">
+      </ScButton>
+      <ScButton type="button" class="ghost small" :disabled="!snapshotCompareResult" @click="$emit('downloadSnapshotRemediationPlan')">
         下载整改清单
-      </button>
+      </ScButton>
     </div>
     <textarea
       :value="snapshotCompareText"
@@ -92,6 +92,7 @@ import type {
   BusinessConfigRemediationAction,
   BusinessConfigSnapshotComparePayload,
 } from '../../api/businessConfig';
+import ScButton from '../../components/design-system/ScButton.vue';
 
 defineProps<{
   coverageScan: unknown;

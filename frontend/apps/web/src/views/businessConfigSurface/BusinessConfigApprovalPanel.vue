@@ -5,9 +5,9 @@
         <h2>审批规则</h2>
         <p>{{ policyLabel }}</p>
       </div>
-      <button type="button" class="ghost small" :disabled="loading" @click="$emit('close')">
+      <ScButton type="button" class="ghost small" :disabled="loading" @click="$emit('close')">
         返回工作台
-      </button>
+      </ScButton>
     </div>
     <aside class="approval-rule-panel" aria-label="审批规则设置">
       <div class="approval-guide">
@@ -76,9 +76,9 @@
           <span>{{ form.approval_required ? `${activeStepCount} 个启用步骤，拖动整行调整顺序` : '启用审批后配置办理节点' }}</span>
           <em v-if="form.approval_required" class="approval-step-action-hint">也可以用上移、下移精确调整步骤顺序。</em>
         </div>
-        <button type="button" class="ghost small" :disabled="loading || !form.approval_required" @click="$emit('addStep')">
+        <ScButton type="button" class="ghost small" :disabled="loading || !form.approval_required" @click="$emit('addStep')">
           添加步骤
-        </button>
+        </ScButton>
       </header>
       <div v-if="steps.length" class="approval-step-table" role="table" aria-label="审批步骤">
         <div class="approval-step-table-head" role="row">
@@ -125,33 +125,35 @@
             <input v-model="step.amount_max" type="number" min="0" step="0.01" placeholder="不限制" :disabled="!form.approval_required" :aria-label="`第${index + 1}步金额上限`" />
           </div>
           <div class="approval-step-actions">
-            <button type="button" title="上移" :aria-label="`上移第${index + 1}步`" :disabled="loading || !form.approval_required || index === 0" @click="$emit('moveStep', index, -1)">上移</button>
-            <button type="button" title="下移" :aria-label="`下移第${index + 1}步`" :disabled="loading || !form.approval_required || index === steps.length - 1" @click="$emit('moveStep', index, 1)">下移</button>
-            <button type="button" title="移除" :aria-label="`移除第${index + 1}步`" :disabled="loading || !form.approval_required" @click="$emit('removeStep', index)">移除</button>
+            <ScButton type="button" title="上移" :aria-label="`上移第${index + 1}步`" :disabled="loading || !form.approval_required || index === 0" @click="$emit('moveStep', index, -1)">上移</ScButton>
+            <ScButton type="button" title="下移" :aria-label="`下移第${index + 1}步`" :disabled="loading || !form.approval_required || index === steps.length - 1" @click="$emit('moveStep', index, 1)">下移</ScButton>
+            <ScButton type="button" title="移除" :aria-label="`移除第${index + 1}步`" :disabled="loading || !form.approval_required" @click="$emit('removeStep', index)">移除</ScButton>
           </div>
         </div>
       </div>
       <div v-else class="approval-step-empty">
         当前没有审批步骤，启用审批后可添加办理节点。
-        <button type="button" class="ghost small" :disabled="loading" @click="$emit('enableWithDefaultStep')">启用并添加步骤</button>
+        <ScButton type="button" class="ghost small" :disabled="loading" @click="$emit('enableWithDefaultStep')">启用并添加步骤</ScButton>
       </div>
       <div v-if="validationMessage" class="approval-validation">{{ validationMessage }}</div>
     </section>
     <div class="edit-panel-actions">
-      <button type="button" class="ghost small primary" :disabled="loading || !canSaveDraft" @click="$emit('save')">
+      <ScButton type="button" class="ghost small primary" :disabled="loading || !canSaveDraft" @click="$emit('save')">
         {{ loading ? '保存中...' : '保存审批设置' }}
-      </button>
-      <button type="button" class="ghost small" :disabled="loading || !hasDraftChanges" @click="$emit('reset')">
+      </ScButton>
+      <ScButton type="button" class="ghost small" :disabled="loading || !hasDraftChanges" @click="$emit('reset')">
         放弃调整
-      </button>
-      <button type="button" class="ghost small" :disabled="!canOpenFullRule" @click="$emit('openFullRule')">
+      </ScButton>
+      <ScButton type="button" class="ghost small" :disabled="!canOpenFullRule" @click="$emit('openFullRule')">
         打开完整规则
-      </button>
+      </ScButton>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
+import ScButton from '../../components/design-system/ScButton.vue';
+
 type ApprovalForm = {
   approval_required: boolean;
   mode: string;

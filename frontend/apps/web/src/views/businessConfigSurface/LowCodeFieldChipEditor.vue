@@ -37,9 +37,9 @@
           @dragend.stop="$emit('clearDrag')"
         >拖动</span>
         {{ fieldDisplayLabel(name) }}
-        <button type="button" title="上移" :aria-label="`上移${fieldDisplayLabel(name)}`" :disabled="index === 0" @click="$emit('moveName', name, -1)">上移</button>
-        <button type="button" title="下移" :aria-label="`下移${fieldDisplayLabel(name)}`" :disabled="index === names.length - 1" @click="$emit('moveName', name, 1)">下移</button>
-        <button type="button" title="移除" :aria-label="`移除${fieldDisplayLabel(name)}`" @click="$emit('removeName', name)">移除</button>
+        <ScButton type="button" title="上移" :aria-label="`上移${fieldDisplayLabel(name)}`" :disabled="index === 0" @click="$emit('moveName', name, -1)">上移</ScButton>
+        <ScButton type="button" title="下移" :aria-label="`下移${fieldDisplayLabel(name)}`" :disabled="index === names.length - 1" @click="$emit('moveName', name, 1)">下移</ScButton>
+        <ScButton type="button" title="移除" :aria-label="`移除${fieldDisplayLabel(name)}`" @click="$emit('removeName', name)">移除</ScButton>
       </span>
     </div>
     <form v-if="advancedPanelOpen" class="field-chip-add" @submit.prevent="$emit('addName')">
@@ -49,7 +49,7 @@
         placeholder="输入字段名"
         @input="$emit('update:draftValue', ($event.target as HTMLInputElement).value)"
       />
-      <button type="submit" class="ghost small">添加</button>
+      <ScButton type="submit" class="ghost small">添加</ScButton>
     </form>
     <input
       v-if="fieldOptions.length || searchValue"
@@ -61,17 +61,17 @@
     />
     <div class="field-option-summary">
       <span>可添加字段 {{ fieldOptionTotal }}，当前显示 {{ fieldOptions.length }}</span>
-      <button
+      <ScButton
         type="button"
         class="link-button"
         :disabled="!fieldOptions.length"
         @click="$emit('addVisibleOptions')"
       >
         添加当前显示字段
-      </button>
+      </ScButton>
     </div>
     <div v-if="fieldOptions.length" class="field-option-pool">
-      <button
+      <ScButton
         v-for="field in fieldOptions"
         :key="`${optionKeyPrefix}-${field.name}`"
         type="button"
@@ -79,12 +79,14 @@
         @click="$emit('addName', field.name)"
       >
         {{ fieldOptionLabel(field) }}
-      </button>
+      </ScButton>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
+import ScButton from '../../components/design-system/ScButton.vue';
+
 type FieldOption = {
   name: string;
   label: string;

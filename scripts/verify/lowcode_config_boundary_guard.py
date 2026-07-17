@@ -6,6 +6,8 @@ import importlib.util
 import json
 from pathlib import Path
 
+from make_source_inventory import combined_make_source, make_logical_lines
+
 
 ROOT = Path(__file__).resolve().parents[2]
 BOUNDARY_MODULE_PATH = ROOT / "addons" / "smart_core" / "utils" / "backend_contract_boundaries.py"
@@ -145,9 +147,13 @@ LOWCODE_CAPABILITY_REQUIREMENTS = {
                 "BUSINESS_CONFIG_SNAPSHOT_PATH",
                 "snapshot",
             ),
-            "frontend/apps/web/src/views/BusinessConfigSurfaceView.vue": (
+            "frontend/apps/web/src/views/businessConfigSurface/snapshotRemediation.ts": (
                 "business_config_snapshot_remediation_plan.v1",
+            ),
+            "frontend/apps/web/src/views/businessConfigSurface/useBusinessConfigSnapshots.ts": (
                 "downloadSnapshotRemediationPlan",
+            ),
+            "frontend/apps/web/src/views/businessConfigSurface/BusinessConfigAdvancedAuditPanels.vue": (
                 "下载整改清单",
             ),
         },
@@ -206,7 +212,7 @@ def _read(path: Path) -> str:
 
 def _target_deps(makefile_text: str, target: str) -> set[str]:
     prefix = f"{target}:"
-    for line in makefile_text.splitlines():
+    for line in make_logical_lines(makefile_text):
         if line.startswith(prefix):
             return {item.strip() for item in line[len(prefix):].split() if item.strip()}
     return set()
@@ -247,7 +253,7 @@ def _validate_lowcode_capability_matrix(errors: list[dict]) -> list[str]:
 
 def _validate_lowcode_capability_boundaries(errors: list[dict]) -> list[str]:
     capability_ids = _validate_lowcode_capability_matrix(errors)
-    makefile_text = _read(ROOT / "Makefile")
+    makefile_text, _ = combined_make_source(ROOT)
     full_acceptance_deps = _target_deps(makefile_text, "verify.business_config.full_acceptance")
     unit_body = makefile_text
     doc_text = _read(LOWCODE_BOUNDARY_DOC) if LOWCODE_BOUNDARY_DOC.is_file() else ""
@@ -307,7 +313,7 @@ def _validate_lowcode_capability_boundaries(errors: list[dict]) -> list[str]:
 
 
 def _validate_lowcode_release_verification_docs(errors: list[dict]) -> None:
-    makefile_text = _read(ROOT / "Makefile")
+    makefile_text, _ = combined_make_source(ROOT)
     product_surface_deps = _target_deps(makefile_text, "verify.product.surface.clean")
     verify_index_text = _read(VERIFY_INDEX_DOC)
     production_standard_text = _read(PRODUCTION_UPGRADE_STANDARD_DOC)
@@ -991,7 +997,10 @@ def build_report() -> dict:
             "message": "custom module upgrades must backfill explicit low-code source_status",
         })
 
-    construction_extension_text = _read(ROOT / "addons" / "smart_construction_core" / "core_extension.py")
+    construction_extension_text = "\n".join((
+        _read(ROOT / "addons" / "smart_construction_core" / "core_extension.py"),
+        _read(ROOT / "addons" / "smart_construction_core" / "core_extension_hook_facts.py"),
+    ))
     construction_init_text = _read(ROOT / "addons" / "smart_construction_core" / "__init__.py")
     for token in (
         "def smart_core_lowcode_system_config_menu_xmlids",
@@ -1017,7 +1026,7 @@ def build_report() -> dict:
             "message": "industry module must export the low-code recovery parent menu hook",
         })
 
-    makefile_text = _read(ROOT / "Makefile")
+    makefile_text, _ = combined_make_source(ROOT)
     if "LOWCODE_CONFIG_RUNTIME_SOURCE_STATUS_STRICT=1" not in makefile_text:
         errors.append({
             "category": "runtime_source_status_strict_gate",
@@ -1101,11 +1110,23 @@ def build_report() -> dict:
 
 def main() -> int:
     report = build_report()
+    negative_deps = _target_deps(
+        "verify.business_config.full_acceptance: verify.business_config.unit",
+        "verify.business_config.full_acceptance",
+    )
+    negative_self_test_passed = "verify.business_config.low_code_acceptance" not in negative_deps
+    report["negative_self_test"] = "pass" if negative_self_test_passed else "fail"
+    if not negative_self_test_passed:
+        report["errors"].append({
+            "category": "negative_self_test",
+            "message": "deliberately incomplete acceptance aggregate was not detected",
+        })
+        report["error_count"] = len(report["errors"])
     print(json.dumps(report, ensure_ascii=False, sort_keys=True))
     if report["error_count"]:
         print("[lowcode_config_boundary_guard] FAIL")
         return 1
-    print("[lowcode_config_boundary_guard] PASS")
+    print("[lowcode_config_boundary_guard] PASS negative_self_test=PASS")
     return 0
 
 

@@ -6,19 +6,22 @@
       <p>选择这个页面默认用于统计分析的指标和维度。</p>
     </div>
     <div class="edit-panel-actions">
-      <button type="button" class="ghost small primary" :disabled="listSearchSaving || !previewRouteTarget.path" @click="$emit('previewAnalysisConfig')">
-        {{ hasAnalysisDraftChanges ? (listSearchSaving ? '保存中...' : '保存并预览') : '预览页面' }}
-      </button>
-      <button type="button" class="ghost small" :disabled="listSearchSaving || !hasAnalysisDraftChanges" @click="$emit('saveAnalysisConfig')">
+      <ScButton v-if="hasAnalysisDraftChanges" variant="primary" :disabled="listSearchSaving" @click="$emit('inspectAnalysisDraft')">
+        检查当前修改
+      </ScButton>
+      <ScButton variant="secondary" :disabled="listSearchSaving || !runtimeRouteTarget.path" @click="$emit('openCurrentEffectivePage')">
+        打开当前生效页面
+      </ScButton>
+      <ScButton variant="secondary" :disabled="listSearchSaving || !hasAnalysisDraftChanges" @click="$emit('saveAnalysisConfig')">
         {{ listSearchSaving ? '保存中...' : '保存分析视图' }}
-      </button>
-      <button type="button" class="ghost small" :disabled="listSearchSaving || !hasAnalysisDraftChanges" @click="$emit('resetAnalysisDraft')">
+      </ScButton>
+      <ScButton variant="ghost" :disabled="listSearchSaving || !hasAnalysisDraftChanges" @click="$emit('resetAnalysisDraft')">
         放弃调整
-      </button>
+      </ScButton>
     </div>
   </div>
   <div class="list-search-tabs" role="group" aria-label="分析视图配置类型">
-    <button
+    <ScButton
       v-for="tab in analysisEditorTabs"
       :key="tab.key"
       type="button"
@@ -27,7 +30,7 @@
     >
       <span>{{ tab.label }}</span>
       <em>{{ analysisEditorCount(tab.key) }}</em>
-    </button>
+    </ScButton>
   </div>
   <div class="edit-grid edit-grid--single">
     <LowCodeFieldChipEditor
@@ -62,7 +65,7 @@
     />
   </div>
   <div class="edit-meta">
-    <span v-if="hasAnalysisDraftChanges" class="edit-dirty">配置已调整，可保存并预览效果</span>
+    <span v-if="hasAnalysisDraftChanges" class="edit-dirty">配置已调整；可先检查修改，保存后才会发布生效</span>
     <span v-if="advancedPanelOpen">生效来源：{{ boundaryLabel(analysisAudit?.business_config_boundary || 'business_contract') }}</span>
   </div>
 </section>
@@ -74,22 +77,25 @@
       <p>{{ listSearchPanelDescription }}</p>
     </div>
     <div class="edit-panel-actions">
-      <button type="button" class="ghost small" :disabled="listSearchSaving" @click="$emit('closeListSearch')">
+      <ScButton variant="ghost" :disabled="listSearchSaving" @click="$emit('closeListSearch')">
         返回工作台
-      </button>
-      <button type="button" class="ghost small primary" :disabled="listSearchSaving || !previewRouteTarget.path" @click="$emit('previewListSearchConfig')">
-        {{ hasListSearchDraftChanges ? (listSearchSaving ? '保存中...' : '保存并预览') : '预览页面' }}
-      </button>
-      <button type="button" class="ghost small" :disabled="listSearchSaving || !hasListSearchDraftChanges" @click="$emit('saveListSearchConfig')">
+      </ScButton>
+      <ScButton v-if="hasListSearchDraftChanges" variant="primary" :disabled="listSearchSaving" @click="$emit('inspectListSearchDraft')">
+        检查当前修改
+      </ScButton>
+      <ScButton variant="secondary" :disabled="listSearchSaving || !runtimeRouteTarget.path" @click="$emit('openCurrentEffectivePage')">
+        打开当前生效页面
+      </ScButton>
+      <ScButton variant="secondary" :disabled="listSearchSaving || !hasListSearchDraftChanges" @click="$emit('saveListSearchConfig')">
         {{ listSearchSaving ? '保存中...' : '保存列表与搜索' }}
-      </button>
-      <button type="button" class="ghost small" :disabled="listSearchSaving || !hasListSearchDraftChanges" @click="$emit('resetListSearchDraft')">
+      </ScButton>
+      <ScButton variant="ghost" :disabled="listSearchSaving || !hasListSearchDraftChanges" @click="$emit('resetListSearchDraft')">
         放弃调整
-      </button>
+      </ScButton>
     </div>
   </div>
   <div class="list-search-tabs" role="group" aria-label="列表搜索配置类型">
-    <button
+    <ScButton
       v-for="tab in listSearchEditorTabs"
       :key="tab.key"
       type="button"
@@ -98,7 +104,7 @@
     >
       <span>{{ tab.label }}</span>
       <em>{{ listSearchEditorCount(tab.key) }}</em>
-    </button>
+    </ScButton>
   </div>
   <div class="edit-grid edit-grid--single">
     <LowCodeFieldChipEditor
@@ -187,7 +193,7 @@
     />
   </div>
   <div class="edit-meta">
-    <span v-if="hasListSearchDraftChanges" class="edit-dirty">配置已调整，可保存并预览效果</span>
+    <span v-if="hasListSearchDraftChanges" class="edit-dirty">配置已调整；可先检查修改，保存后才会发布生效</span>
     <span v-if="advancedPanelOpen">个人设置记录：{{ listSearchAudit?.user_preference_count ?? 0 }}</span>
     <span v-if="advancedPanelOpen">生效来源：{{ boundaryLabel(listSearchAudit?.user_preference_boundary || 'ui_only') }}</span>
   </div>
@@ -204,6 +210,7 @@
 
 <script setup lang="ts">
 import LowCodeFieldChipEditor from './LowCodeFieldChipEditor.vue';
+import ScButton from '../../components/design-system/ScButton.vue';
 
 type ListSearchEditorKind = 'list' | 'filter' | 'group';
 type AnalysisEditorKind = 'pivotMeasure' | 'pivotDimension' | 'graphMeasure' | 'graphDimension';
@@ -213,7 +220,7 @@ defineProps<{
   analysisPanelOpen: boolean;
   listSearchPanelOpen: boolean;
   listSearchSaving: boolean;
-  previewRouteTarget: { path: string; query: Record<string, string> };
+  runtimeRouteTarget: { path: string; query: Record<string, string> };
   hasAnalysisDraftChanges: boolean;
   hasListSearchDraftChanges: boolean;
   analysisEditorTabs: Array<{ key: AnalysisEditorKind; label: string }>;
@@ -259,7 +266,8 @@ defineProps<{
 }>();
 
 defineEmits<{
-  previewAnalysisConfig: [];
+  inspectAnalysisDraft: [];
+  openCurrentEffectivePage: [];
   saveAnalysisConfig: [];
   resetAnalysisDraft: [];
   setActiveAnalysisEditor: [kind: AnalysisEditorKind];
@@ -275,7 +283,7 @@ defineEmits<{
   dropAnalysisChip: [kind: AnalysisEditorKind, name: string];
   clearChipDrag: [];
   closeListSearch: [];
-  previewListSearchConfig: [];
+  inspectListSearchDraft: [];
   saveListSearchConfig: [];
   resetListSearchDraft: [];
   setActiveListSearchEditor: [kind: ListSearchEditorKind];

@@ -5,9 +5,9 @@
         <h2>{{ title }}</h2>
         <p>{{ description }}</p>
       </div>
-      <button type="button" class="ghost small" :disabled="loading" @click="$emit('close')">
+      <ScButton type="button" class="ghost small" :disabled="loading" @click="$emit('close')">
         收起版本记录
-      </button>
+      </ScButton>
     </div>
     <div class="version-guide">
       <strong>{{ guide.title }}</strong>
@@ -24,14 +24,14 @@
           </div>
           <div class="version-card-actions">
             <span class="version-current-badge">当前生效 v{{ contract.version_no }}</span>
-            <button
+            <ScButton
               type="button"
               class="ghost small"
               :disabled="loading || saving || contract.versions.length < 2"
               @click="$emit('rollback', contract)"
             >
               {{ rollbackButtonLabel(contract) }}
-            </button>
+            </ScButton>
           </div>
         </div>
         <div class="version-summary">
@@ -59,14 +59,14 @@
             <span>保存人 {{ version.created_by || '-' }}</span>
             <span>{{ versionSummaryText(version.summary) }}</span>
             <span class="version-row-delta">{{ versionDeltaText(contract.summary, version.summary, version.version_no === contract.version_no) }}</span>
-            <button
+            <ScButton
               type="button"
               class="link-button"
               :disabled="loading || saving || version.version_no === contract.version_no"
               @click="$emit('rollback', contract, version.version_no)"
             >
               {{ version.version_no === contract.version_no ? '当前生效版本' : '恢复到此版本配置' }}
-            </button>
+            </ScButton>
           </div>
         </div>
       </article>
@@ -76,6 +76,7 @@
 
 <script setup lang="ts">
 import type { BusinessConfigContractVersionsPayload } from '../../api/businessConfig';
+import ScButton from '../../components/design-system/ScButton.vue';
 
 type Contract = BusinessConfigContractVersionsPayload['contracts'][number];
 type Summary = Contract['summary'];
