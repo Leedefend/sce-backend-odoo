@@ -169,6 +169,7 @@ async function pageMetrics(page, startedAt) {
       id: row.id,
       impact: row.impact,
       nodes: row.nodes.length,
+      targets: row.nodes.map((node) => node.target),
     })),
   };
 }
@@ -281,6 +282,8 @@ async function main() {
       check(!pages.some((row) => row.first_screen_actions > 3), 'first-screen action hierarchy guard failed');
       check(!pages.some((row) => row.horizontal_overflow > 1 || row.axe_critical_serious.length), 'responsive/accessibility guard failed');
       check(!pages.some((row) => row.runtime.console.length || row.runtime.pageerror.length || row.runtime.http.length), 'runtime error guard failed');
+      const paymentCreateValidation = validation.find((row) => row.page === 'payment_request_create');
+      check(paymentCreateValidation?.status === 'PASS', `payment request required amount probe failed: ${paymentCreateValidation?.status || 'MISSING'}`);
     }
     console.log(JSON.stringify({ report: REPORT, phase: PHASE, pages: pages.length, validation }, null, 2));
   } finally {

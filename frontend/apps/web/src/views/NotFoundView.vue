@@ -1,19 +1,21 @@
 <template>
-  <section class="page sc-page">
-    <StatusPanel
+  <ScPage class="page">
+    <ScPageHeader :title="pageIdentity.title.value" />
+    <ScErrorState
       :title="pageIdentity.title.value"
-      hide-title
-      :message="pageText('message', '该页面或记录不存在，可能已被删除或链接已经失效。')"
-      variant="error"
-      :on-retry="returnSafely"
-      retry-label="返回安全页面"
-    />
-  </section>
+      :description="pageText('message', '该页面或记录不存在，可能已被删除或链接已经失效。')"
+    >
+      <template #actions><ScButton @click="returnSafely">返回安全页面</ScButton></template>
+    </ScErrorState>
+  </ScPage>
 </template>
 
 <script setup lang="ts">
 import { useRouter } from 'vue-router';
-import StatusPanel from '../components/StatusPanel.vue';
+import ScButton from '../components/design-system/ScButton.vue';
+import ScErrorState from '../components/design-system/ScErrorState.vue';
+import ScPage from '../components/design-system/ScPage.vue';
+import ScPageHeader from '../components/design-system/ScPageHeader.vue';
 import { usePageContract } from '../app/pageContract';
 import { usePageIdentityRuntime } from '../app/pageIdentityRuntime';
 

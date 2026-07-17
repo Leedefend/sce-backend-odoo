@@ -271,8 +271,8 @@ const router = createRouter({
     { path: '/admin/menu-config', name: 'menu-config', component: () => import('../views/MenuConfigView.vue'), meta: { layout: 'shell' } },
     { path: '/admin/form-field-config', name: 'form-field-config', component: () => import('../views/ActionViewShell.vue'), meta: { layout: 'shell' } },
     { path: '/a/:actionId', name: 'action', component: () => import('../views/ActionViewShell.vue'), meta: { layout: 'shell' } },
-    { path: '/f/:model/:id', name: 'model-form', component: () => import('../pages/ContractFormPage.vue'), meta: { layout: 'shell' } },
-    { path: '/r/:model/:id', name: 'record', component: () => import('../pages/ContractFormPage.vue'), meta: { layout: 'shell' } },
+    { path: '/f/:model/:id', name: 'model-form', component: () => import('../pages/ContractFormRoute.vue'), meta: { layout: 'shell' } },
+    { path: '/r/:model/:id', name: 'record', component: () => import('../pages/ContractFormRoute.vue'), meta: { layout: 'shell' } },
     { path: '/:pathMatch(.*)*', name: 'not-found', component: () => import('../views/NotFoundView.vue'), meta: { layout: 'shell' } },
   ],
 });

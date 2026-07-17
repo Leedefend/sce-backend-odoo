@@ -44,7 +44,7 @@
             :aria-label="clearRecordContextTitle"
             @click.stop="clearProjectSelection"
           >
-            ×
+            <ScIcon name="close" :size="16" />
           </button>
         </div>
         <div v-if="companyOptions.length || operationOptions.length" class="business-scope-controls">
@@ -274,6 +274,7 @@ import ActivityPageTabs from '../components/product-shell/ActivityPageTabs.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import DevContextPanel from '../components/DevContextPanel.vue';
 import GlobalMessagePanel from '../components/GlobalMessagePanel.vue';
+import ScIcon from '../components/design-system/ScIcon.vue';
 import { useSessionStore, type ActivityPage } from '../stores/session';
 import { intentRequest } from '../api/intents';
 import { getSceneByKey, getSceneRegistryDiagnostics, resolveSceneLayout } from '../app/resolvers/sceneRegistry';

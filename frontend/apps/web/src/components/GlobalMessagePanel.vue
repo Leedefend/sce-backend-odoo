@@ -19,7 +19,7 @@
         </div>
         <div class="global-message__header-actions">
           <button class="sc-btn sc-btn-primary sc-btn-sm" type="button" @click="startNewConversation">新建</button>
-          <button class="global-message__icon sc-btn sc-btn-sm sc-btn-ghost" type="button" aria-label="关闭消息" @click="close">×</button>
+          <button class="global-message__icon sc-btn sc-btn-sm sc-btn-ghost" type="button" aria-label="关闭消息" @click="close"><ScIcon name="close" :size="16" /></button>
         </div>
       </header>
 
@@ -78,7 +78,7 @@
                 type="button"
                 @click="removeUser(user.id)"
               >
-                {{ user.name }} ×
+                {{ user.name }} <ScIcon name="close" :size="14" />
               </button>
             </div>
             <div v-if="userOptions.length" class="global-message__options sc-list">
@@ -139,6 +139,7 @@
 
 <script setup lang="ts">
 import { computed, nextTick, onUnmounted, ref, watch } from 'vue';
+import ScIcon from './design-system/ScIcon.vue';
 import { searchCollaborationUsers, type CollaborationUserOption } from '../api/chatter';
 import {
   fetchGlobalConversations,

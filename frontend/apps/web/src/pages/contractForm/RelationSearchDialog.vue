@@ -1,24 +1,11 @@
 <template>
-  <div
-    v-if="dialog.open"
-    class="relation-dialog-backdrop"
-    role="dialog"
-    aria-modal="true"
-    @keydown.esc="$emit('close')"
+  <ScDialog
+    :open="dialog.open"
+    :title="dialog.title"
+    :close-label="dialog.labels.close || '关闭'"
+    panel-class="relation-dialog"
+    @close="$emit('close')"
   >
-    <section class="relation-dialog">
-      <header class="relation-dialog-head">
-        <h3>{{ dialog.title }}</h3>
-        <button
-          class="relation-dialog-close"
-          type="button"
-          :disabled="busy"
-          :aria-label="dialog.labels.close || '关闭'"
-          @click="$emit('close')"
-        >
-          x
-        </button>
-      </header>
       <div class="relation-dialog-search">
         <input
           ref="searchInputRef"
@@ -29,13 +16,13 @@
           @input="$emit('keyword-change', inputValue($event))"
           @keydown.enter.prevent="$emit('search')"
         />
-        <button class="chip-btn" type="button" :disabled="dialog.loading" @click="$emit('search')">
+        <ScButton :disabled="dialog.loading" @click="$emit('search')">
           {{ dialog.labels.search || '搜索' }}
-        </button>
+        </ScButton>
       </div>
       <p v-if="dialog.error" class="validation-error">{{ dialog.error }}</p>
       <div class="relation-dialog-table-wrap">
-        <table class="relation-dialog-table">
+        <ScDataTable class="relation-dialog-table">
           <thead>
             <tr>
               <th class="relation-dialog-select-col"></th>
@@ -65,41 +52,40 @@
               </td>
             </tr>
           </tbody>
-        </table>
-        <p v-if="!dialog.loading && !dialog.rows.length" class="relation-dialog-empty">
-          {{ dialog.labels.empty || '未找到匹配记录' }}
-        </p>
+        </ScDataTable>
+        <ScEmptyState v-if="!dialog.loading && !dialog.rows.length" :title="dialog.labels.empty || '未找到匹配记录'" />
       </div>
       <footer class="relation-dialog-footer">
         <span class="relation-dialog-count">{{ recordCountLabel }}</span>
         <span class="relation-dialog-footer-spacer"></span>
-        <button
-          class="primary"
-          type="button"
+        <ScButton
+          variant="primary"
           :disabled="busy || dialog.loading || !dialog.selectedId"
           @click="$emit('confirm')"
         >
           {{ dialog.labels.select || '选择' }}
-        </button>
-        <button
+        </ScButton>
+        <ScButton
           v-if="dialog.createMode !== 'none'"
-          class="ghost"
-          type="button"
+          variant="ghost"
           :disabled="busy || dialog.loading"
           @click="$emit('create')"
         >
           {{ dialog.labels.create || '新建' }}
-        </button>
-        <button class="ghost" type="button" :disabled="busy" @click="$emit('close')">
+        </ScButton>
+        <ScButton variant="ghost" :disabled="busy" @click="$emit('close')">
           {{ dialog.labels.cancel || '取消' }}
-        </button>
+        </ScButton>
       </footer>
-    </section>
-  </div>
+  </ScDialog>
 </template>
 
 <script setup lang="ts">
 import { nextTick, ref, watch } from 'vue';
+import ScButton from '../../components/design-system/ScButton.vue';
+import ScDataTable from '../../components/design-system/ScDataTable.vue';
+import ScDialog from '../../components/design-system/ScDialog.vue';
+import ScEmptyState from '../../components/design-system/ScEmptyState.vue';
 import type { RelationOption, RelationSearchColumn, RelationSearchRow, RelationUiLabels } from './types';
 
 export type RelationSearchDialogState = {

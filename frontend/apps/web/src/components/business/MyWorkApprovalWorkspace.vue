@@ -1,14 +1,16 @@
 <template>
-  <section class="product-work" aria-label="我的工作事项">
+  <ScSection class="product-work" label="我的工作事项">
     <header class="product-work__header">
       <p>{{ workspace.presentation.description }}</p>
-      <button type="button" class="secondary sc-btn sc-btn-ghost" :disabled="busy" @click="$emit('refresh')">刷新</button>
+      <ScButton variant="ghost" :disabled="busy" @click="$emit('refresh')">刷新</ScButton>
     </header>
 
     <div class="product-work__counts" aria-label="工作项汇总">
-      <button
+      <ScPanel
         v-for="section in workspace.sections"
         :key="section.key"
+        as="button"
+        tone="subtle"
         type="button"
         class="count-card"
         :data-section-key="section.key"
@@ -17,76 +19,69 @@
       >
         <span>{{ section.label }}</span>
         <strong>{{ section.count }}</strong>
-      </button>
+      </ScPanel>
     </div>
 
     <section class="product-work__filters" aria-label="筛选和排序工作事项">
-      <label>
-        <span>{{ workspace.presentation.search_label }}</span>
-        <input v-model.trim="searchText" type="search" :placeholder="workspace.presentation.search_placeholder" />
-      </label>
-      <label>
-        <span>排序方式</span>
-        <select v-model="sortMode">
+      <ScField v-slot="{ controlId, describedBy }" :label="workspace.presentation.search_label" field-key="my-work-search">
+        <input :id="controlId" v-model.trim="searchText" type="search" :aria-describedby="describedBy" :placeholder="workspace.presentation.search_placeholder" />
+      </ScField>
+      <ScField v-slot="{ controlId, describedBy }" label="排序方式" field-key="my-work-sort">
+        <ScSelect :id="controlId" v-model="sortMode" :described-by="describedBy">
           <option v-for="option in workspace.presentation.sort_options" :key="option.key" :value="option.key">{{ option.label }}</option>
-        </select>
-      </label>
-      <button v-if="searchText" type="button" class="secondary sc-btn sc-btn-ghost" @click="searchText = ''">清除查找</button>
+        </ScSelect>
+      </ScField>
+      <ScButton v-if="searchText" variant="ghost" @click="searchText = ''">清除查找</ScButton>
     </section>
 
     <p v-if="feedback" class="feedback" :class="{ error: feedbackError }" role="status">{{ feedback }}</p>
 
-    <section v-for="section in visibleSections" :key="section.key" class="work-section" :data-section-key="section.key">
-      <h2>{{ section.label }} <span>{{ section.count }}</span></h2>
-      <p v-if="!section.items.length" class="empty">{{ searchText ? '没有符合当前查找条件的事项。' : `当前范围内没有${section.label}事项。` }}</p>
-      <article v-for="item in section.items" :key="item.key" class="work-card" :data-work-item-key="item.key">
+    <ScSection v-for="section in visibleSections" :key="section.key" class="work-section" :title="`${section.label} ${section.count}`" :data-section-key="section.key">
+      <ScEmptyState v-if="!section.items.length" :title="searchText ? '没有符合当前查找条件的事项。' : `当前范围内没有${section.label}事项。`" />
+      <ScPanel v-for="item in section.items" :key="item.key" as="article" class="work-card" :data-work-item-key="item.key">
         <div class="work-card__main">
           <div class="work-card__identity">
             <span class="business-type">{{ item.business_type }}</span>
-            <span class="status-badge">{{ item.state.label }}</span>
+            <ScStatusBadge :value="item.state.key" :label="item.state.label" :semantic="statusSemantic(item.state.key)" />
           </div>
           <h3>{{ item.record.label }}</h3>
           <dl>
-            <div v-for="fact in item.facts" :key="fact.key"><dt>{{ fact.label }}</dt><dd>{{ formatFact(fact) }}</dd></div>
+            <div v-for="fact in item.facts" :key="fact.key"><dt>{{ fact.label }}</dt><dd><ScMoney v-if="fact.display_role === 'money'" :display="formatFact(fact)" :label="fact.label" /><template v-else>{{ formatFact(fact) }}</template></dd></div>
           </dl>
         </div>
-        <div class="work-card__actions">
-          <button type="button" class="secondary sc-btn sc-btn-ghost" @click="openItem(item)">打开详情</button>
-          <button
+        <ScActionBar class="work-card__actions" :label="`${item.record.label}操作`">
+          <ScButton variant="ghost" @click="openItem(item)">打开详情</ScButton>
+          <ScButton
             v-if="primaryAction(item)"
-            type="button"
-            class="sc-btn sc-btn-primary"
+            variant="primary"
             :disabled="busy"
             @click="beginAction(item, primaryAction(item)!)"
           >
             {{ primaryAction(item)?.label }}
-          </button>
-          <button
+          </ScButton>
+          <ScButton
             v-for="action in secondaryActions(item)"
             :key="action.key"
-            type="button"
-            class="secondary sc-btn sc-btn-secondary"
+            variant="secondary"
             :disabled="busy"
             @click="beginAction(item, action)"
-          >{{ action.label }}</button>
+          >{{ action.label }}</ScButton>
           <details v-if="overflowActions(item).length" class="more-actions">
             <summary>更多操作</summary>
-            <button
+            <ScButton
               v-for="action in overflowActions(item)"
               :key="action.key"
-              type="button"
-              class="secondary sc-btn sc-btn-ghost"
+              variant="ghost"
               :disabled="busy"
               @click="beginAction(item, action)"
-            >{{ action.label }}</button>
+            >{{ action.label }}</ScButton>
           </details>
-        </div>
-      </article>
-    </section>
+        </ScActionBar>
+      </ScPanel>
+    </ScSection>
 
-    <dialog ref="dialogRef" class="intent-dialog" @close="restoreFocus">
+    <ScDialog :open="dialogOpen" :title="pendingAction?.label || '确认操作'" panel-class="intent-dialog" @close="closeDialog">
       <form method="dialog" @submit.prevent>
-        <h2>{{ pendingAction?.label || '确认操作' }}</h2>
         <p v-if="pendingItem">{{ confirmationSummary(pendingItem) }}</p>
         <label v-if="pendingAction?.requires_reason">
           {{ pendingAction.reason_label || '操作原因' }}
@@ -94,21 +89,31 @@
           <small id="reason-help">{{ pendingAction.reason_help || '请说明本次操作原因。' }}</small>
         </label>
         <p v-if="dialogError" class="feedback error" role="alert">{{ dialogError }}</p>
-        <div class="dialog-actions">
-          <button type="button" class="secondary sc-btn sc-btn-ghost" :disabled="busy" @click="closeDialog">取消</button>
-          <button type="button" class="sc-btn sc-btn-primary" :disabled="busy" @click="confirmAction">
+        <ScActionBar class="dialog-actions" label="确认操作">
+          <ScButton variant="ghost" :disabled="busy" @click="closeDialog">取消</ScButton>
+          <ScButton variant="primary" :disabled="busy" :loading="busy" autofocus @click="confirmAction">
             {{ busy ? '提交中…' : `确认${pendingAction?.label || ''}` }}
-          </button>
-        </div>
+          </ScButton>
+        </ScActionBar>
       </form>
-    </dialog>
-  </section>
+    </ScDialog>
+  </ScSection>
 </template>
 
 <script setup lang="ts">
 import { computed, nextTick, ref, watch } from 'vue';
 import { useRouter } from 'vue-router';
 import { executeProductMyWorkAction, type ProductMyWorkAction, type ProductMyWorkFact, type ProductMyWorkItem, type ProductMyWorkMoney, type ProductMyWorkWorkspace } from '../../api/myWork';
+import ScActionBar from '../design-system/ScActionBar.vue';
+import ScButton from '../design-system/ScButton.vue';
+import ScDialog from '../design-system/ScDialog.vue';
+import ScEmptyState from '../design-system/ScEmptyState.vue';
+import ScField from '../design-system/ScField.vue';
+import ScMoney from '../design-system/ScMoney.vue';
+import ScPanel from '../design-system/ScPanel.vue';
+import ScSection from '../design-system/ScSection.vue';
+import ScSelect from '../design-system/ScSelect.vue';
+import ScStatusBadge from '../design-system/ScStatusBadge.vue';
 
 const props = defineProps<{ workspace: ProductMyWorkWorkspace }>();
 const emit = defineEmits<{ refresh: [] }>();
@@ -123,7 +128,7 @@ const dialogError = ref('');
 const reason = ref('');
 const pendingItem = ref<ProductMyWorkItem | null>(null);
 const pendingAction = ref<ProductMyWorkAction | null>(null);
-const dialogRef = ref<HTMLDialogElement | null>(null);
+const dialogOpen = ref(false);
 const reasonRef = ref<HTMLTextAreaElement | null>(null);
 let actionTrigger: HTMLElement | null = null;
 
@@ -179,6 +184,12 @@ function formatFact(fact: ProductMyWorkFact) {
   return fact.value || '未填写';
 }
 
+function statusSemantic(value?: string) {
+  const semantic = String(value || '').toLowerCase();
+  if (semantic === 'success' || semantic === 'warning' || semantic === 'danger' || semantic === 'info') return semantic;
+  return 'default';
+}
+
 function confirmationSummary(item: ProductMyWorkItem) {
   const highlighted = item.facts.find((fact) => fact.display_role === 'money');
   return highlighted ? `${item.record.label} · ${formatFact(highlighted)}` : item.record.label;
@@ -211,14 +222,15 @@ async function beginAction(item: ProductMyWorkItem, action: ProductMyWorkAction)
   pendingAction.value = action;
   reason.value = '';
   dialogError.value = '';
-  dialogRef.value?.showModal();
+  dialogOpen.value = true;
   await nextTick();
   if (action.requires_reason) reasonRef.value?.focus();
-  else dialogRef.value?.querySelector<HTMLButtonElement>('.dialog-actions button:last-child')?.focus();
+  else document.querySelector<HTMLButtonElement>('.intent-dialog .dialog-actions button:last-child')?.focus();
 }
 
 function closeDialog() {
-  dialogRef.value?.close();
+  dialogOpen.value = false;
+  restoreFocus();
 }
 
 function restoreFocus() {

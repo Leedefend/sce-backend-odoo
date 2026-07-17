@@ -360,7 +360,7 @@
                 :title="roleGroupName(groupId)"
               >
                 {{ roleGroupName(groupId) }}
-                <button type="button" title="移除业务角色" @click="removeRoleGroup(selectedMenu.id, groupId)">×</button>
+                <button type="button" title="移除业务角色" @click="removeRoleGroup(selectedMenu.id, groupId)">移除</button>
               </span>
             </div>
             <select
@@ -605,7 +605,7 @@
                         :title="roleGroupName(groupId)"
                       >
                         {{ roleGroupName(groupId) }}
-                        <button type="button" title="移除业务角色" @click="removeRoleGroup(row.menu.id, groupId)">×</button>
+                        <button type="button" title="移除业务角色" @click="removeRoleGroup(row.menu.id, groupId)">移除</button>
                       </span>
                     </div>
                     <select

@@ -541,7 +541,7 @@
             <h3 id="business-category-picker-title">选择办理类型</h3>
             <p>{{ actionMetaName || vm.page.title || '新建业务' }}</p>
           </div>
-          <button class="business-category-picker-close" type="button" aria-label="关闭" @click="closeBusinessCategoryCreatePicker">×</button>
+          <button class="business-category-picker-close" type="button" aria-label="关闭" @click="closeBusinessCategoryCreatePicker"><ScIcon name="close" :size="18" /></button>
         </header>
         <div class="business-category-picker-list">
           <button
@@ -558,12 +558,12 @@
     </div>
   </section>
 </template>
-
 <script setup lang="ts">
 import { computed, inject, onActivated, onBeforeUnmount, onDeactivated, onErrorCaptured, onMounted, ref, watch, type Ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import type { ActionContract } from '@sc/schema';
 import { ApiError } from '../api/client';
+import ScIcon from '../components/design-system/ScIcon.vue';
 import { getUserViewPreference, setUserViewPreference } from '../api/preferences';
 import { executeButton } from '../api/executeButton';
 import { trackUsageEvent } from '../api/usage';

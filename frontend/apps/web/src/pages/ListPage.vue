@@ -1,9 +1,9 @@
 <template>
-  <section
+  <ScPage
     class="page sc-page"
     data-product-page-mode="list"
   >
-    <PageHeader
+    <ScPageHeader
       v-if="status !== 'ok' && status !== 'empty'"
       :title="title"
       :subtitle="subtitle"
@@ -42,18 +42,17 @@
       ><slot name="toolbar"></slot></ProductListHeader>
       <ScEmptyState :title="emptyStateTitle" :description="emptyStateMessage">
         <template #actions>
-          <button
+          <ScButton
             v-if="canCreateRecord"
-            type="button"
-            class="list-empty-primary"
+            variant="primary"
             :disabled="loading"
             @click="onCreate"
           >
             {{ createLabelText }}
-          </button>
-          <button type="button" class="list-empty-secondary" :disabled="loading" @click="onReload">
+          </ScButton>
+          <ScButton variant="secondary" :disabled="loading" @click="onReload">
             {{ uiLabel('empty_retry', '刷新') }}
-          </button>
+          </ScButton>
         </template>
       </ScEmptyState>
       <section class="pagination-footer pagination-footer--count-only">
@@ -220,7 +219,7 @@
               {{ uiLabel('group_view_all', '查看全部') }}
             </button>
           </header>
-          <table
+          <ScDataTable
             v-if="!isGroupCollapsed(group.key)"
             class="group-table"
             :class="{ 'has-selection-column': showSelectionColumn }"
@@ -327,7 +326,7 @@
                     :aria-label="favoriteTitle(col)"
                     @click.stop="toggleRecordFavorite(row, col)"
                   >
-                    <span class="favorite-star" aria-hidden="true">{{ isFavoriteValue(row[col]) ? '★' : '☆' }}</span>
+                    <ScIcon class="favorite-star" :name="isFavoriteValue(row[col]) ? 'star' : 'star-outline'" :size="16" />
                   </button>
                   <span
                     v-else-if="isStatusLikeColumn(col)"
@@ -388,7 +387,7 @@
                 </td>
               </tr>
             </tfoot>
-          </table>
+          </ScDataTable>
         </article>
       </section>
       <section v-if="!showGroupedRows" class="mobile-record-list" aria-label="移动端记录列表">
@@ -416,10 +415,10 @@
               <b>{{ semanticCell(col, row[col]).text }}</b>
             </span>
           </template>
-          <template #actions><span class="mobile-record-card__open">查看详情 <span aria-hidden="true">→</span></span></template>
+          <template #actions><span class="mobile-record-card__open">查看详情 <ScIcon name="arrow-right" :size="16" /></span></template>
         </ScMobileRecordCard>
       </section>
-      <table
+      <ScDataTable
         v-if="!showGroupedRows"
         class="flat-table desktop-record-table"
         :class="{ 'has-selection-column': showSelectionColumn }"
@@ -545,7 +544,7 @@
                 :aria-label="favoriteTitle(col)"
                 @click.stop="toggleRecordFavorite(row, col)"
               >
-                <span class="favorite-star" aria-hidden="true">{{ isFavoriteValue(row[col]) ? '★' : '☆' }}</span>
+                <ScIcon class="favorite-star" :name="isFavoriteValue(row[col]) ? 'star' : 'star-outline'" :size="16" />
               </button>
               <div v-else-if="isStatusLikeColumn(col)">
                 <span class="status-badge" :class="`tone-${semanticCell(col, row[col]).tone}`">
@@ -613,7 +612,7 @@
             <td v-if="columnChoices.length" class="cell-column-picker"></td>
           </tr>
         </tfoot>
-      </table>
+      </ScDataTable>
     </section>
 
       <section v-if="showGroupedWindowPagination" class="pagination-footer">
@@ -712,17 +711,21 @@
 
     </template>
     <AttachmentViewer ref="attachmentViewerRef" />
-  </section>
+  </ScPage>
 </template>
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import StatusPanel from '../components/StatusPanel.vue';
-import PageHeader from '../components/page/PageHeader.vue';
 import AttachmentViewer from '../components/attachment/AttachmentViewer.vue';
 import ProductListHeader from '../components/product-list/ProductListHeader.vue';
+import ScButton from '../components/design-system/ScButton.vue';
+import ScDataTable from '../components/design-system/ScDataTable.vue';
 import ScEmptyState from '../components/design-system/ScEmptyState.vue';
+import ScIcon from '../components/design-system/ScIcon.vue';
 import ScMobileRecordCard from '../components/design-system/ScMobileRecordCard.vue';
+import ScPage from '../components/design-system/ScPage.vue';
+import ScPageHeader from '../components/design-system/ScPageHeader.vue';
 import ScStatusBadge from '../components/design-system/ScStatusBadge.vue';
 import { resolveEmptyCopy, resolveErrorCopy, type StatusError } from '../composables/useStatus';
 import type { SceneListProfile } from '../app/resolvers/sceneRegistry';
