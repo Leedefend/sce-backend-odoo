@@ -42,6 +42,7 @@ verify.business_config.unit: guard.prod.forbid verify.frontend.product_language.
 	@python3 addons/smart_core/tests/test_backend_contract_boundaries.py
 	@python3 addons/smart_core/tests/test_backend_contract_boundary_guard.py
 	@python3 addons/smart_core/tests/test_business_config_contract_schema.py
+	@python3 addons/smart_core/tests/test_view_contract_presence.py
 	@python3 addons/smart_core/tests/test_api_data_write_id_boundaries.py
 	@python3 addons/smart_core/tests/test_form_field_configuration_params.py
 	@python3 addons/smart_core/tests/test_business_config_surface.py

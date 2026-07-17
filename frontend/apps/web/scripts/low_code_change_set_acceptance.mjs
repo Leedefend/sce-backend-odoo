@@ -215,6 +215,89 @@ try {
     { config_type: 'analysis', view_type: 'pivot' },
     { config_type: 'analysis', view_type: 'graph' },
   ];
+  const presenceSnapshotBeforeSetup = (await changeSetIntent(page, 'ui.business_config.mutation_audit.snapshot')).body.data;
+  const formOnlySet = (await changeSetIntent(page, 'ui.business_config.change_set.open', { name: `${emptyMarker}-form-only` })).body.data;
+  await changeSetIntent(page, 'ui.business_config.change_set.stage', {
+    change_set_token: formOnlySet.token,
+    config_type: 'form',
+    target_key: `${emptyMarker}.form-only`,
+    model: EMPTY_MODEL,
+    action_id: EMPTY_ACTION_ID,
+    draft_payload: { view_orchestration: { source: 'smart_core.lowcode.business_config', views: { form: { fields: [] } } } },
+    diff_summary: { summary: 'generic form-only presence contract' },
+  });
+  await changeSetIntent(page, 'ui.business_config.change_set.validate', { change_set_token: formOnlySet.token });
+  await changeSetIntent(page, 'ui.business_config.change_set.publish', { change_set_token: formOnlySet.token, request_id: `${emptyMarker}-form-only-publish` });
+  publishedTokens.push(formOnlySet.token);
+  const formOnlyVersionsBeforeOpen = (await changeSetIntent(page, 'ui.business_config.contract.versions', { model: EMPTY_MODEL, action_id: EMPTY_ACTION_ID, status: 'published' })).body.data;
+  const formOnlyListSearch = (await changeSetIntent(page, 'ui.business_config.list_search.audit', { model: EMPTY_MODEL, action_id: EMPTY_ACTION_ID })).body.data;
+  const formOnlyAnalysis = (await changeSetIntent(page, 'ui.business_config.analysis.audit', { model: EMPTY_MODEL, action_id: EMPTY_ACTION_ID })).body.data;
+  const presenceSnapshotBeforeOpen = (await changeSetIntent(page, 'ui.business_config.mutation_audit.snapshot')).body.data;
+  const editorUrl = (extra) => `${BASE_URL}/admin/business-config?db=${encodeURIComponent(DB_NAME)}&root_menu_xmlid=smart_construction_core.menu_sc_root&open_pages=1&model=${encodeURIComponent(EMPTY_MODEL)}&role_key=${encodeURIComponent(ROLE_KEY)}&page_label=${encodeURIComponent('视图类型存在性验收')}&${extra}`;
+  await page.goto(editorUrl('open_list_search=1'), { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await page.getByRole('heading', { name: '列表与搜索设置' }).waitFor({ timeout: 30000 });
+  const formOnlyPanel = page.locator('section.config-editor-panel').filter({ has: page.getByRole('heading', { name: '列表与搜索设置' }) });
+  const formOnlySuggested = (await page.locator('body').innerText()).includes('建议配置，尚未保存');
+  const formOnlyDirty = await formOnlyPanel.locator('.edit-dirty').count();
+  const formOnlyVersionsAfterOpen = (await changeSetIntent(page, 'ui.business_config.contract.versions', { model: EMPTY_MODEL, action_id: EMPTY_ACTION_ID, status: 'published' })).body.data;
+  const presenceSnapshotAfterOpen = (await changeSetIntent(page, 'ui.business_config.mutation_audit.snapshot')).body.data;
+  report.journeys['LC-F01'] = {
+    has_list: formOnlyListSearch.has_business_list_config,
+    has_search: formOnlyListSearch.has_business_search_config,
+    has_pivot: formOnlyAnalysis.has_business_pivot_config,
+    has_graph: formOnlyAnalysis.has_business_graph_config,
+    suggested: formOnlySuggested,
+    dirty_count: formOnlyDirty,
+    version_count_before_open: formOnlyVersionsBeforeOpen.version_count,
+    version_count_after_open: formOnlyVersionsAfterOpen.version_count,
+    mutation_count_before_setup: presenceSnapshotBeforeSetup.count,
+    mutation_count_before_open: presenceSnapshotBeforeOpen.count,
+    mutation_count_after_open: presenceSnapshotAfterOpen.count,
+  };
+  report.assertions.f01_form_only_does_not_hide_suggestions_or_write = formOnlyListSearch.has_business_list_config === false
+    && formOnlyListSearch.has_business_search_config === false
+    && formOnlyAnalysis.has_business_pivot_config === false
+    && formOnlyAnalysis.has_business_graph_config === false
+    && formOnlySuggested && formOnlyDirty === 0
+    && formOnlyVersionsBeforeOpen.version_count === formOnlyVersionsAfterOpen.version_count
+    && presenceSnapshotAfterOpen.count === presenceSnapshotBeforeOpen.count;
+
+  const verifyAnalysisIsolation = async (viewType, oppositeType) => {
+    const set = (await changeSetIntent(page, 'ui.business_config.change_set.open', { name: `${emptyMarker}-${viewType}-only` })).body.data;
+    await changeSetIntent(page, 'ui.business_config.change_set.stage', {
+      change_set_token: set.token,
+      config_type: 'analysis',
+      view_type: viewType,
+      target_key: `${emptyMarker}.${viewType}-only`,
+      model: EMPTY_MODEL,
+      action_id: EMPTY_ACTION_ID,
+      draft_payload: listSearchAnalysisPayload(viewType, true),
+      diff_summary: { summary: `${viewType} explicit empty isolation` },
+    });
+    await changeSetIntent(page, 'ui.business_config.change_set.validate', { change_set_token: set.token });
+    await changeSetIntent(page, 'ui.business_config.change_set.publish', { change_set_token: set.token, request_id: `${emptyMarker}-${viewType}-only-publish` });
+    publishedTokens.push(set.token);
+    const audit = (await changeSetIntent(page, 'ui.business_config.analysis.audit', { model: EMPTY_MODEL, action_id: EMPTY_ACTION_ID })).body.data;
+    const oppositeSuggestionCount = (audit[`suggested_${oppositeType}_measures`] || []).length
+      + (audit[`suggested_${oppositeType}_dimensions`] || []).length;
+    const ok = audit[`has_business_${viewType}_config`] === true
+      && audit[`has_business_${oppositeType}_config`] === false
+      && audit[`${viewType}_measures`].length === 0
+      && audit[`${viewType}_dimensions`].length === 0;
+    await changeSetIntent(page, 'ui.business_config.change_set.rollback', { change_set_token: set.token, request_id: `${emptyMarker}-${viewType}-only-rollback` });
+    publishedTokens.splice(publishedTokens.indexOf(set.token), 1);
+    return { audit, ok, oppositeSuggestionCount };
+  };
+  const pivotOnly = await verifyAnalysisIsolation('pivot', 'graph');
+  const graphOnly = await verifyAnalysisIsolation('graph', 'pivot');
+  report.journeys['LC-F03'] = {
+    pivot_only: { has_pivot: pivotOnly.audit.has_business_pivot_config, has_graph: pivotOnly.audit.has_business_graph_config, graph_suggestion_count: pivotOnly.oppositeSuggestionCount },
+    graph_only: { has_pivot: graphOnly.audit.has_business_pivot_config, has_graph: graphOnly.audit.has_business_graph_config, pivot_suggestion_count: graphOnly.oppositeSuggestionCount },
+    form_only_analysis: { has_pivot: formOnlyAnalysis.has_business_pivot_config, has_graph: formOnlyAnalysis.has_business_graph_config },
+  };
+  report.assertions.f03_pivot_graph_and_other_views_are_independent = pivotOnly.ok && graphOnly.ok
+    && formOnlyAnalysis.has_business_pivot_config === false && formOnlyAnalysis.has_business_graph_config === false;
+
   const baselineSet = (await changeSetIntent(page, 'ui.business_config.change_set.open', { name: `${emptyMarker}-baseline` })).body.data;
   for (const target of emptyTargets) {
     await changeSetIntent(page, 'ui.business_config.change_set.stage', {
@@ -262,7 +345,6 @@ try {
   const reopenedListSearch = (await changeSetIntent(page, 'ui.business_config.list_search.audit', { model: EMPTY_MODEL, action_id: EMPTY_ACTION_ID })).body.data;
   const reopenedAnalysis = (await changeSetIntent(page, 'ui.business_config.analysis.audit', { model: EMPTY_MODEL, action_id: EMPTY_ACTION_ID })).body.data;
 
-  const editorUrl = (extra) => `${BASE_URL}/admin/business-config?db=${encodeURIComponent(DB_NAME)}&root_menu_xmlid=smart_construction_core.menu_sc_root&open_pages=1&model=${encodeURIComponent(EMPTY_MODEL)}&role_key=${encodeURIComponent(ROLE_KEY)}&page_label=${encodeURIComponent('显式空合同验收')}&${extra}`;
   await page.goto(editorUrl('open_list_search=1'), { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.getByRole('heading', { name: '列表与搜索设置' }).waitFor({ timeout: 30000 });
   const listPanel = page.locator('section.config-editor-panel').filter({ has: page.getByRole('heading', { name: '列表与搜索设置' }) });
@@ -312,6 +394,9 @@ try {
   report.assertions.e01_e03_reopen_clean_and_read_only = listDirty === 0 && analysisDirty === 0
     && !listSuggested && !analysisSuggested
     && versionsBeforeOpen.version_count === versionsAfterOpen.version_count;
+  report.journeys['LC-F02'] = report.journeys['LC-E01-E03'];
+  report.assertions.f02_explicit_empty_views_remain_present_and_clean = report.assertions.e01_e03_empty_contracts_reopen_empty
+    && report.assertions.e01_e03_reopen_clean_and_read_only;
 
   const restored = (await changeSetIntent(page, 'ui.business_config.change_set.rollback', { change_set_token: emptySet.token, request_id: `${emptyMarker}-empty-rollback` })).body.data;
   publishedTokens.splice(publishedTokens.indexOf(emptySet.token), 1);
@@ -333,10 +418,14 @@ try {
     && restoredListSearch.business_config_search_group_by.length > 0
     && restoredAnalysis.pivot_measures.length > 0 && restoredAnalysis.pivot_dimensions.length > 0
     && restoredAnalysis.graph_measures.length > 0 && restoredAnalysis.graph_dimensions.length > 0;
+  report.journeys['LC-F04'] = report.journeys['LC-E04'];
+  report.assertions.f04_publish_reopen_and_rollback = report.assertions.e04_rollback_restores_nonempty;
   report.journeys['LC-E05-E06'] = { evidence: 'backend transaction tests cover stale hash 409 and company/action/role/lifecycle isolation' };
   report.assertions.e05_e06_backend_evidence_declared = true;
   await changeSetIntent(page, 'ui.business_config.change_set.rollback', { change_set_token: baselineSet.token, request_id: `${emptyMarker}-baseline-rollback` });
   publishedTokens.splice(publishedTokens.indexOf(baselineSet.token), 1);
+  await changeSetIntent(page, 'ui.business_config.change_set.rollback', { change_set_token: formOnlySet.token, request_id: `${emptyMarker}-form-only-rollback` });
+  publishedTokens.splice(publishedTokens.indexOf(formOnlySet.token), 1);
 
   await page.goto(`${BASE_URL}/admin/business-config?db=${encodeURIComponent(DB_NAME)}&root_menu_xmlid=smart_construction_core.menu_sc_root&open_pages=1&model=construction.contract&action_id=${ACTION_ID}&page_label=${encodeURIComponent('合同办理')}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.waitForTimeout(5000);

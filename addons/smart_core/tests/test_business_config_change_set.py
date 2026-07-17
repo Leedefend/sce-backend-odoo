@@ -446,6 +446,107 @@ class TestBusinessConfigChangeSet(TransactionCase):
         self.assertFalse(wrong_action["has_business_list_config"])
         self.assertFalse(wrong_role["has_business_list_config"])
 
+    def test_effective_contracts_require_actual_view_presence_and_keep_apply_order(self):
+        Contract = self.env["ui.business.config.contract"].sudo().with_context(active_test=False)
+
+        def create(name, *, view_type=False, views=None, role_key="presence_final", action_id=False, view_id=False,
+                   company_id=None, status="published", active=True, source="", priority=100):
+            context = {"source": source} if source else {"source_status": "product_release"}
+            return Contract.create({
+                "name": name,
+                "model": "res.partner",
+                "view_type": view_type,
+                "action_id": action_id,
+                "view_id": view_id,
+                "role_key": role_key,
+                "company_id": company_id or self.env.company.id,
+                "status": status,
+                "active": active,
+                "priority": priority,
+                "contract_json": {"view_orchestration": {"context": context, "views": views or {}}},
+            })
+
+        create("presence.form.tenant", views={"form": {"fields": []}}, source="smart_core.lowcode.business_config", priority=999)
+        create("presence.tree.product", views={"tree": {"columns": []}}, priority=999)
+        create("presence.tree.tenant", view_type="tree", views={"tree": {"columns": [{"name": "name"}]}},
+               source="smart_core.lowcode.business_config", priority=1)
+        create("presence.multi.product", views={"form": {}, "tree": {}, "search": {}})
+        create("presence.search.only", views={"search": {"filters": []}})
+        create("presence.pivot.only", views={"pivot": {"measures": []}})
+        create("presence.graph.only", views={"graph": {"dimensions": []}})
+        create("presence.draft.tree", view_type="tree", views={"tree": {}}, status="draft")
+        create("presence.inactive.tree", view_type="tree", views={"tree": {}}, active=False)
+        create("presence.wrong.role", view_type="tree", views={"tree": {}}, role_key="other_role")
+        wrong_action = self.env["ir.actions.act_window"].create({"name": "Presence wrong action", "res_model": "res.partner"})
+        create("presence.wrong.action", view_type="tree", views={"tree": {}}, action_id=wrong_action.id)
+        wrong_view = self.env["ir.ui.view"].create({
+            "name": "presence.wrong.view", "model": "res.partner", "type": "tree", "arch": "<tree><field name='name'/></tree>",
+        })
+        create("presence.wrong.view", view_type="tree", views={"tree": {}}, view_id=wrong_view.id)
+        other_company = self.env["res.company"].create({"name": "Presence Other Company"})
+        create("presence.wrong.company", view_type="tree", views={"tree": {}}, company_id=other_company.id)
+
+        def names(view_type):
+            return [item.name for item in Contract._effective_view_orchestration_contracts(
+                "res.partner", view_type=view_type, role_key="presence_final",
+            )]
+
+        tree_names = names("tree")
+        for excluded in (
+            "presence.form.tenant", "presence.draft.tree", "presence.inactive.tree",
+            "presence.wrong.role", "presence.wrong.action", "presence.wrong.view", "presence.wrong.company",
+        ):
+            self.assertNotIn(excluded, tree_names)
+        self.assertLess(tree_names.index("presence.tree.product"), tree_names.index("presence.tree.tenant"))
+        self.assertIn("presence.multi.product", tree_names)
+        self.assertIn("presence.multi.product", names("form"))
+        self.assertIn("presence.multi.product", names("search"))
+        self.assertNotIn("presence.tree.tenant", names("search"))
+        self.assertEqual([name for name in names("pivot") if name.startswith("presence.")], ["presence.pivot.only"])
+        self.assertEqual([name for name in names("graph") if name.startswith("presence.")], ["presence.graph.only"])
+
+    def test_form_only_generic_contract_does_not_hide_suggestions_or_write(self):
+        env = self._env(self.admin)
+        Contract = env["ui.business.config.contract"].sudo()
+        Contract.create({
+            "name": "presence.audit.form.only", "model": "res.country", "view_type": False,
+            "company_id": env.company.id, "role_key": "presence_audit",
+            "contract_json": {"view_orchestration": {"views": {"form": {"fields": []}}}},
+            "status": "published",
+        })
+        before = BusinessConfigMutationAuditSnapshotHandler(env).handle()["data"]["count"]
+        absent = self._audit(
+            BusinessConfigListSearchAuditHandler, env, model="res.country", role_key="presence_audit",
+        )
+        after = BusinessConfigMutationAuditSnapshotHandler(env).handle()["data"]["count"]
+        self.assertFalse(absent["has_business_list_config"])
+        self.assertFalse(absent["has_business_search_config"])
+        self.assertTrue(absent["suggested_list_columns"] or absent["suggested_search_filters"])
+        self.assertEqual(before, after)
+
+        Contract.create({
+            "name": "presence.audit.empty.tree", "model": "res.country", "view_type": "tree",
+            "company_id": env.company.id, "role_key": "presence_audit",
+            "contract_json": {"view_orchestration": {"views": {"tree": {"columns": []}}}},
+            "status": "published",
+        })
+        Contract.create({
+            "name": "presence.audit.empty.search", "model": "res.country", "view_type": "search",
+            "company_id": env.company.id, "role_key": "presence_audit",
+            "contract_json": {"view_orchestration": {"views": {"search": {"filters": [], "group_by": []}}}},
+            "status": "published",
+        })
+        explicit_empty = self._audit(
+            BusinessConfigListSearchAuditHandler, env, model="res.country", role_key="presence_audit",
+        )
+        self.assertTrue(explicit_empty["has_business_list_config"])
+        self.assertTrue(explicit_empty["has_business_search_config"])
+        self.assertEqual(explicit_empty["business_config_list_columns"], [])
+        self.assertEqual(explicit_empty["business_config_search_filters"], [])
+        self.assertEqual(explicit_empty["business_config_search_group_by"], [])
+        self.assertEqual(explicit_empty["suggested_list_columns"], [])
+        self.assertEqual(explicit_empty["suggested_search_filters"], [])
+
     def test_expired_published_batch_remains_rollback_capable_and_idempotent(self):
         env, change_set = self._open()
         self._stage(env, change_set, "test.change.set.long.term.rollback")

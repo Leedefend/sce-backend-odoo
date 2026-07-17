@@ -12,6 +12,7 @@ from odoo.exceptions import ValidationError
 
 from ..core.base_handler import BaseIntentHandler
 from ..core.request_params import parse_non_negative_int
+from ..core.view_contract_presence import contract_contributes_view
 from ..utils.backend_contract_boundaries import (
     BUSINESS_CONFIG_INTENTS,
     FORM_FIELD_CONFIG_INTENTS,
@@ -786,9 +787,10 @@ def _search_published_view_orchestration_contracts(env, *, model: str, view_type
         ("role_key", "in", [False, str(role_key or "").strip()]),
     ]
     try:
-        return Contract.search(domain, order="priority, version_no, id")
+        records = Contract.search(domain, order="priority, version_no, id")
     except TypeError:
-        return Contract.search(domain)
+        records = Contract.search(domain)
+    return [record for record in records if contract_contributes_view(record, view_type)]
 
 
 def _upsert_view_orchestration_field_rows(

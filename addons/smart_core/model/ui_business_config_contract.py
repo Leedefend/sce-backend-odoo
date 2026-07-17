@@ -11,6 +11,10 @@ from odoo.addons.smart_core.utils.backend_contract_boundaries import (
     view_orchestration_apply_order_key,
 )
 from odoo.addons.smart_core.utils.business_config_mutation_audit import record_business_config_mutation
+from odoo.addons.smart_core.core.view_contract_presence import (
+    contract_contributes_view,
+    normalize_contract_view_type,
+)
 
 FORMAL_LIST_ACTION_IDS = {
     506, 525, 529, 530, 531, 545, 549, 565, 566, 615,
@@ -130,8 +134,11 @@ class UIBusinessConfigContract(models.Model):
         return super().unlink()
 
     def _normalize_view_orchestration_view_type(self, view_type: str | None) -> str:
-        normalized = str(view_type or "").strip()
-        return "tree" if normalized == "list" else normalized
+        return normalize_contract_view_type(view_type)
+
+    @api.model
+    def contract_contributes_view(self, contract, requested_view_type: str | None) -> bool:
+        return contract_contributes_view(contract, requested_view_type)
 
     @staticmethod
     def _contains_test_placeholder(value) -> bool:
@@ -437,8 +444,7 @@ class UIBusinessConfigContract(models.Model):
         role_key = str(role_key or "").strip()
 
         def applies(contract) -> bool:
-            contract_view_type = self._normalize_view_orchestration_view_type(contract.view_type)
-            if contract_view_type and contract_view_type != normalized_view_type:
+            if normalized_view_type and not self.contract_contributes_view(contract, normalized_view_type):
                 return False
             contract_action = int(contract.action_id.id or 0)
             contract_view = int(contract.view_id.id or 0)
@@ -468,8 +474,10 @@ class UIBusinessConfigContract(models.Model):
                 requested_role = str(self.env.context.get("business_config_preview_role_key") or "").strip()
                 if requested_role == str(change_set.role_key or "").strip():
                     for item in change_set.item_ids.filtered(lambda row: row.config_type != "menu"):
-                        item_view_type = self._normalize_view_orchestration_view_type(item.view_type)
-                        if item.model != model_name or (item_view_type and item_view_type != normalized_view_type):
+                        preview_projection = ViewOrchestrationContractProjection.from_preview_item(item)
+                        if item.model != model_name or (
+                            normalized_view_type and not self.contract_contributes_view(preview_projection, normalized_view_type)
+                        ):
                             continue
                         if item.action_id and int(item.action_id) != int(action_id or 0):
                             continue
@@ -478,7 +486,7 @@ class UIBusinessConfigContract(models.Model):
                         if item.role_key and str(item.role_key or "").strip() != requested_role:
                             continue
                         effective = [contract for contract in effective if contract.id != item.target_contract_id.id]
-                        effective.append(ViewOrchestrationContractProjection.from_preview_item(item))
+                        effective.append(preview_projection)
 
         effective = sorted(effective, key=view_orchestration_apply_order_key)
         return effective

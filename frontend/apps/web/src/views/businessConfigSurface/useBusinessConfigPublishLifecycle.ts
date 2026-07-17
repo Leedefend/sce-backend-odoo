@@ -22,13 +22,16 @@ export function useBusinessConfigPublishLifecycle(deps: Record<string, any>) {
       const suggestedListColumns = hasListConfig ? [] : result.suggested_list_columns || [];
       const suggestedSearchFilters = hasSearchConfig ? [] : result.suggested_search_filters || [];
       const suggestedSearchGroupBy = hasSearchConfig ? [] : result.suggested_search_group_by || [];
-      listColumnsText.value = namesToText(hasListConfig ? configuredListColumns : suggestedListColumns);
-      searchFiltersText.value = namesToText(hasSearchConfig ? configuredSearchFilters : suggestedSearchFilters);
-      searchGroupByText.value = namesToText(hasSearchConfig ? configuredSearchGroupBy : suggestedSearchGroupBy);
+      const displayedListColumns = hasListConfig ? configuredListColumns : suggestedListColumns;
+      const displayedSearchFilters = hasSearchConfig ? configuredSearchFilters : suggestedSearchFilters;
+      const displayedSearchGroupBy = hasSearchConfig ? configuredSearchGroupBy : suggestedSearchGroupBy;
+      listColumnsText.value = namesToText(displayedListColumns);
+      searchFiltersText.value = namesToText(displayedSearchFilters);
+      searchGroupByText.value = namesToText(displayedSearchGroupBy);
       listSearchBase.value = {
-        list: normalizeNamesText(namesToText(configuredListColumns)),
-        filter: normalizeNamesText(namesToText(configuredSearchFilters)),
-        group: normalizeNamesText(namesToText(configuredSearchGroupBy)),
+        list: normalizeNamesText(namesToText(displayedListColumns)),
+        filter: normalizeNamesText(namesToText(displayedSearchFilters)),
+        group: normalizeNamesText(namesToText(displayedSearchGroupBy)),
       };
       activeListSearchEditor.value = requestedListSearchTab.value;
       analysisPanelOpen.value = false;
@@ -69,17 +72,22 @@ export function useBusinessConfigPublishLifecycle(deps: Record<string, any>) {
       const suggestedGraphMeasures = hasGraphConfig ? [] : result.suggested_graph_measures || [];
       const suggestedGraphDimensions = hasGraphConfig ? [] : result.suggested_graph_dimensions || [];
       const configuredGraphType = hasGraphConfig ? result.graph_type || 'bar' : '';
-      pivotMeasuresText.value = namesToText(hasPivotConfig ? configuredPivotMeasures : suggestedPivotMeasures);
-      pivotDimensionsText.value = namesToText(hasPivotConfig ? configuredPivotDimensions : suggestedPivotDimensions);
-      graphMeasuresText.value = namesToText(hasGraphConfig ? configuredGraphMeasures : suggestedGraphMeasures);
-      graphDimensionsText.value = namesToText(hasGraphConfig ? configuredGraphDimensions : suggestedGraphDimensions);
-      graphType.value = configuredGraphType || result.suggested_graph_type || result.graph_type || 'bar';
+      const displayedPivotMeasures = hasPivotConfig ? configuredPivotMeasures : suggestedPivotMeasures;
+      const displayedPivotDimensions = hasPivotConfig ? configuredPivotDimensions : suggestedPivotDimensions;
+      const displayedGraphMeasures = hasGraphConfig ? configuredGraphMeasures : suggestedGraphMeasures;
+      const displayedGraphDimensions = hasGraphConfig ? configuredGraphDimensions : suggestedGraphDimensions;
+      const displayedGraphType = configuredGraphType || result.suggested_graph_type || result.graph_type || 'bar';
+      pivotMeasuresText.value = namesToText(displayedPivotMeasures);
+      pivotDimensionsText.value = namesToText(displayedPivotDimensions);
+      graphMeasuresText.value = namesToText(displayedGraphMeasures);
+      graphDimensionsText.value = namesToText(displayedGraphDimensions);
+      graphType.value = displayedGraphType;
       analysisBase.value = {
-        pivotMeasures: normalizeNamesText(namesToText(configuredPivotMeasures)),
-        pivotDimensions: normalizeNamesText(namesToText(configuredPivotDimensions)),
-        graphMeasures: normalizeNamesText(namesToText(configuredGraphMeasures)),
-        graphDimensions: normalizeNamesText(namesToText(configuredGraphDimensions)),
-        graphType: configuredGraphType || 'bar',
+        pivotMeasures: normalizeNamesText(namesToText(displayedPivotMeasures)),
+        pivotDimensions: normalizeNamesText(namesToText(displayedPivotDimensions)),
+        graphMeasures: normalizeNamesText(namesToText(displayedGraphMeasures)),
+        graphDimensions: normalizeNamesText(namesToText(displayedGraphDimensions)),
+        graphType: displayedGraphType,
       };
       listSearchPanelOpen.value = false;
       approvalPanelOpen.value = false;
