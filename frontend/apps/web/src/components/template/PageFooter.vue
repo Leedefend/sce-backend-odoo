@@ -1,5 +1,5 @@
 <template>
-  <section class="template-page-footer" data-component="PageFooter">
+  <section class="template-page-footer" data-component="PageFooter" data-workspace-action-bar>
     <p v-if="hint" class="template-page-footer-hint">{{ hint }}</p>
     <div class="template-page-footer-actions">
       <slot />

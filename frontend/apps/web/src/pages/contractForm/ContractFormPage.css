@@ -308,6 +308,17 @@
   gap: 16px;
 }
 
+.contract-form-native-shell.sc-content-layout--focused-form :deep(.contract-form-canvas-shell) {
+  width: 100%;
+  max-width: var(--sc-form-field-content-max);
+}
+
+.form-grid > :deep([data-form-error-summary]) {
+  width: calc(100% + 36px);
+  margin-inline: -18px;
+  box-sizing: border-box;
+}
+
 .form-grid--designer-workspace {
   grid-template-columns: 240px minmax(0, 1fr) 360px;
   align-items: start;
@@ -319,6 +330,11 @@
   margin: 0;
   padding-top: 0;
   padding-bottom: 0;
+}
+
+.card--flow .form-grid > :deep([data-form-error-summary]) {
+  width: 100%;
+  margin-inline: 0;
 }
 
 .form-flow-guide {

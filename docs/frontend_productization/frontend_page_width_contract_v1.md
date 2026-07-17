@@ -1,5 +1,7 @@
 # FE-PRO-04W 页面宽度契约验收
 
+> 历史说明：本契约的外框 `data/standard/focused/fluid` 语义已被 FE-PRO-04WR 取代。当前正式规则见 `frontend_workspace_content_width_alignment_v1.md`：所有业务页面使用统一 Workspace Frame，原模式只迁移为内部 Content Layout 兼容语义。
+
 ## 结论
 
 列表、详情、表单和工作台原先由多个页面层分别决定宽度，导致相同主内容区的利用率不一致。FE-PRO-04W 将页面宽度收敛为设计系统能力：页面编排只能选择通用宽度模式，页面组件不再私有决定页面级 `max-width`。

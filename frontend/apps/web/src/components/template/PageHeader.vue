@@ -3,6 +3,7 @@
     class="template-page-header sc-product-page-header"
     :class="{ 'template-page-header--title-hidden': hideTitle }"
     data-component="PageHeader"
+    data-workspace-page-header
   >
     <div class="template-page-header-main">
       <h1 v-if="!hideTitle">{{ title }}</h1>
@@ -12,7 +13,7 @@
     <div v-if="$slots.status" class="template-page-header-status">
       <slot name="status" />
     </div>
-    <div v-if="$slots.actions" class="template-page-header-actions">
+    <div v-if="$slots.actions" class="template-page-header-actions" data-workspace-action-bar>
       <slot name="actions" />
     </div>
   </header>

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any */
 <template>
-  <ScPage class="page sc-product-workspace-stack" data-product-page-mode="list" :width-mode="actionPageWidthMode">
+  <ScPage class="page sc-product-workspace-stack" data-product-page-mode="list" :content-layout="actionContentLayoutMode">
     <!-- Page intent: 在列表场景中先判断状态，再给出下一步可执行动作。 -->
     <StatusPanel
       v-if="renderErrorMessage"
@@ -565,7 +565,7 @@ import type { ActionContract } from '@sc/schema';
 import { ApiError } from '../api/client';
 import ScIcon from '../components/design-system/ScIcon.vue';
 import ScPage from '../components/design-system/ScPage.vue';
-import { contractPageWidthMode, resolvePageWidthMode } from '../components/design-system/pageWidth';
+import { contractContentLayoutMode, resolveContentLayoutMode } from '../components/design-system/pageWidth';
 import { getUserViewPreference, setUserViewPreference } from '../api/preferences';
 import { executeButton } from '../api/executeButton';
 import { trackUsageEvent } from '../api/usage';
@@ -1265,7 +1265,7 @@ const contractReadAllowed = ref(true);
 const contractWarningCount = ref(0);
 const contractDegraded = ref(false);
 const actionContract = ref<ActionViewRuntimeContract | null>(null);
-const actionPageWidthMode = computed(() => resolvePageWidthMode({ contractWidthMode: contractPageWidthMode(actionContract.value), pageKind: 'list' }));
+const actionContentLayoutMode = computed(() => resolveContentLayoutMode({ contractContentLayout: contractContentLayoutMode(actionContract.value), pageKind: 'list' }));
 const resolvedModelRef = ref('');
 const activeGroupByField = ref('');
 const {

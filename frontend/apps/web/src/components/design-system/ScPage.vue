@@ -1,7 +1,8 @@
 <template>
   <section
-    :class="['sc-page', 'sc-page-frame', pageWidthModeClass(resolvedWidthMode)]"
-    :data-page-width-mode="resolvedWidthMode"
+    :class="['sc-page', 'sc-page-frame', contentLayoutModeClass(resolvedContentLayout)]"
+    data-workspace-frame="business"
+    :data-content-layout-mode="resolvedContentLayout"
   >
     <slot />
   </section>
@@ -10,16 +11,16 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import {
-  normalizePageWidthMode,
-  pageWidthModeClass,
-  type PageWidthMode,
+  contentLayoutModeClass,
+  normalizeContentLayoutMode,
+  type ContentLayoutMode,
 } from './pageWidth';
 
 const props = withDefaults(defineProps<{
-  widthMode?: PageWidthMode;
+  contentLayout?: ContentLayoutMode;
 }>(), {
-  widthMode: 'standard',
+  contentLayout: 'record-grid',
 });
 
-const resolvedWidthMode = computed(() => normalizePageWidthMode(props.widthMode));
+const resolvedContentLayout = computed(() => normalizeContentLayoutMode(props.contentLayout));
 </script>

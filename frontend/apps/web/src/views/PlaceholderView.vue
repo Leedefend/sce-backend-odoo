@@ -1,5 +1,5 @@
 <template>
-  <main class="page sc-page sc-page-frame sc-page-frame--standard sc-product-workspace-stack" data-product-page-mode="workspace" data-page-width-mode="standard">
+  <main class="page sc-page sc-page-frame sc-content-layout--record-grid sc-product-workspace-stack" data-product-page-mode="workspace" data-workspace-frame="business" data-content-layout-mode="record-grid">
     <section v-if="headerActions.length" class="page-actions">
       <button
         v-for="action in headerActions"

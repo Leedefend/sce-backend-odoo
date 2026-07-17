@@ -1,5 +1,5 @@
 <template>
-  <ScPage class="my-work-page" data-my-work-renderer="product-workspace" :width-mode="myWorkPageWidthMode">
+  <ScPage class="my-work-page" data-my-work-renderer="product-workspace" :content-layout="myWorkContentLayoutMode">
     <StatusPanel v-if="loading" title="正在加载工作事项" message="正在读取当前账号可处理的业务事项。" variant="info" busy />
     <StatusPanel
       v-else-if="errorMessage"
@@ -31,13 +31,13 @@ import { currentContextEpoch, isCurrentContextEpoch } from '../app/contextEpoch'
 import MyWorkApprovalWorkspace from '../components/business/MyWorkApprovalWorkspace.vue';
 import StatusPanel from '../components/StatusPanel.vue';
 import ScPage from '../components/design-system/ScPage.vue';
-import { contractPageWidthMode, resolvePageWidthMode } from '../components/design-system/pageWidth';
+import { contractContentLayoutMode, resolveContentLayoutMode } from '../components/design-system/pageWidth';
 import { useSessionStore } from '../stores/session';
 
 const session = useSessionStore();
 const workspace = ref<ProductMyWorkWorkspace | null>(null);
-const myWorkPageWidthMode = computed(() => resolvePageWidthMode({
-  contractWidthMode: contractPageWidthMode(workspace.value),
+const myWorkContentLayoutMode = computed(() => resolveContentLayoutMode({
+  contractContentLayout: contractContentLayoutMode(workspace.value),
   pageKind: 'workbench',
 }));
 const loading = ref(false);

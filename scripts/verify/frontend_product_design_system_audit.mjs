@@ -13,16 +13,30 @@ const AxeBuilder = axeModule.default || axeModule;
 const BASE_URL = process.env.FRONTEND_URL || 'http://127.0.0.1:5175';
 const DB_NAME = process.env.DB_NAME || 'sc_frontend_acceptance';
 const PASSWORD = process.env.ROLE_SMOKE_PASSWORD || 'demo';
+const WORKSPACE_AUDIT = Boolean(process.env.FE_PRO_04WR_PHASE);
 const WIDTH_AUDIT = Boolean(process.env.FE_PRO_04W_PHASE);
-const PHASE_SOURCE = WIDTH_AUDIT ? process.env.FE_PRO_04W_PHASE : process.env.FE_PRO_04_PHASE;
+const PHASE_SOURCE = WORKSPACE_AUDIT
+  ? process.env.FE_PRO_04WR_PHASE
+  : (WIDTH_AUDIT ? process.env.FE_PRO_04W_PHASE : process.env.FE_PRO_04_PHASE);
 const PHASE = PHASE_SOURCE === 'final' ? 'final' : 'baseline';
-const ROOT = WIDTH_AUDIT
-  ? (process.env.FE_PRO_04W_ARTIFACT_ROOT || 'artifacts/frontend-professional/fe-pro-04w')
-  : (process.env.FE_PRO_04_ARTIFACT_ROOT || 'artifacts/frontend-professional/fe-pro-04');
+const ROOT = WORKSPACE_AUDIT
+  ? (process.env.FE_PRO_04WR_ARTIFACT_ROOT || 'artifacts/frontend-professional/fe-pro-04wr')
+  : (WIDTH_AUDIT
+      ? (process.env.FE_PRO_04W_ARTIFACT_ROOT || 'artifacts/frontend-professional/fe-pro-04w')
+      : (process.env.FE_PRO_04_ARTIFACT_ROOT || 'artifacts/frontend-professional/fe-pro-04'));
 const OUTPUT = path.join(ROOT, PHASE);
 const REPORT = path.join(ROOT, `${PHASE}-report.json`);
 const TARGETS = JSON.parse(process.env.FRONTEND_DELIVERY_HARDENING_TARGETS_JSON || '{}');
-const VIEWPORTS = WIDTH_AUDIT
+const VIEWPORTS = WORKSPACE_AUDIT
+  ? (PHASE === 'final'
+      ? [
+          { width: 1440, height: 900 },
+          { width: 1920, height: 1080 },
+          { width: 2560, height: 1440 },
+          { width: 390, height: 844 },
+        ]
+      : [{ width: 1920, height: 1080 }])
+  : WIDTH_AUDIT
   ? [
       { width: 1440, height: 900 },
       { width: 1920, height: 1080 },
@@ -35,9 +49,11 @@ const VIEWPORTS = WIDTH_AUDIT
       { width: 768, height: 1024 },
       { width: 390, height: 844 },
     ];
-const DARK_CASES = new Set(WIDTH_AUDIT
-  ? ['my_work', 'contract_list', 'contract_detail', 'payment_request_create']
-  : ['finance_home', 'my_work', 'contract_list', 'contract_detail', 'payment_request_create', 'approval_dialog', 'network_error']);
+const DARK_CASES = new Set(WORKSPACE_AUDIT
+  ? ['contract_list', 'contract_detail', 'contract_form', 'payment_request_create', 'permission_denied']
+  : (WIDTH_AUDIT
+      ? ['my_work', 'contract_list', 'contract_detail', 'payment_request_create']
+      : ['finance_home', 'my_work', 'contract_list', 'contract_detail', 'payment_request_create', 'approval_dialog', 'network_error']));
 const TECHNICAL_TERMS = ['payload', 'bundle', 'fallback', 'HUD', 'trace', 'JSON', 'registry', 'projection', 'provider', 'debug', 'capability map', '配置缺口', '契约未命中'];
 
 fs.mkdirSync(OUTPUT, { recursive: true });
@@ -69,13 +85,16 @@ const ALL_CASES = [
   { key: 'network_error', role: 'demo_role_finance', mode: 'network', route: () => recordRoute(TARGETS.payment_request) },
 ];
 const WIDTH_CASE_KEYS = new Set(['project_list', 'contract_list', 'payment_request_list', 'payment_execution_list', 'contract_detail', 'settlement_detail', 'payment_request_detail', 'contract_form', 'payment_request_create', 'my_work']);
-const CASE_FILTER = String(process.env.FE_PRO_04_CASE || process.env.FE_PRO_04W_CASE || '').trim();
-const PROFILE_CASES = WIDTH_AUDIT ? ALL_CASES.filter((entry) => WIDTH_CASE_KEYS.has(entry.key)) : ALL_CASES;
+const WORKSPACE_CASE_KEYS = new Set(['payment_request_list', 'contract_list', 'payment_execution_list', 'contract_detail', 'settlement_detail', 'payment_request_detail', 'contract_form', 'payment_request_create']);
+const CASE_FILTER = String(process.env.FE_PRO_04_CASE || process.env.FE_PRO_04W_CASE || process.env.FE_PRO_04WR_CASE || '').trim();
+const PROFILE_CASES = WORKSPACE_AUDIT
+  ? ALL_CASES.filter((entry) => WORKSPACE_CASE_KEYS.has(entry.key))
+  : (WIDTH_AUDIT ? ALL_CASES.filter((entry) => WIDTH_CASE_KEYS.has(entry.key)) : ALL_CASES);
 const CASES = CASE_FILTER ? PROFILE_CASES.filter((entry) => entry.key === CASE_FILTER) : PROFILE_CASES;
 check(CASES.length > 0, `unknown FE_PRO_04_CASE=${CASE_FILTER}`);
-const DARK_ONLY_CASES = [
-  { key: 'approval_dialog', role: 'demo_role_finance', mode: 'dialog', route: () => recordRoute(TARGETS.journey_request) },
-];
+const DARK_ONLY_CASES = WORKSPACE_AUDIT
+  ? [{ key: 'permission_denied', role: 'demo_role_project_a_member', mode: 'denied', route: () => recordRoute(TARGETS.payment_request) }]
+  : [{ key: 'approval_dialog', role: 'demo_role_finance', mode: 'dialog', route: () => recordRoute(TARGETS.journey_request) }];
 
 function runtimeCapture(page) {
   const state = { console: [], pageerror: [], http: [], expected_http: [] };
@@ -306,6 +325,101 @@ async function pageWidthMetrics(page) {
   });
 }
 
+async function workspaceDomMetrics(page) {
+  return page.evaluate(() => {
+    const visible = (node) => {
+      if (!(node instanceof HTMLElement)) return false;
+      const style = window.getComputedStyle(node);
+      const rect = node.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0 && style.display !== 'none' && style.visibility !== 'hidden';
+    };
+    const firstVisible = (selectors, root = document) => {
+      for (const selector of selectors) {
+        const node = [...root.querySelectorAll(selector)].find(visible);
+        if (node) return node;
+      }
+      return null;
+    };
+    const measure = (node) => {
+      if (!node) return null;
+      const rect = node.getBoundingClientRect();
+      const style = window.getComputedStyle(node);
+      return {
+        selector: node.id ? `#${node.id}` : `.${[...node.classList].slice(0, 3).join('.')}`,
+        x: Number(rect.x.toFixed(2)),
+        right: Number(rect.right.toFixed(2)),
+        width: Number(rect.width.toFixed(2)),
+        max_width: style.maxWidth,
+        padding_left: style.paddingLeft,
+        padding_right: style.paddingRight,
+        margin_left: style.marginLeft,
+        margin_right: style.marginRight,
+        overflow_x: style.overflowX,
+        scroll_width: node.scrollWidth,
+        client_width: node.clientWidth,
+      };
+    };
+    const router = document.querySelector('#main-content.router-host, main.router-host');
+    const directFrame = router
+      ? [...router.children].find((node) => visible(node) && (node.hasAttribute('data-page-width-mode') || node.hasAttribute('data-workspace-frame') || node.hasAttribute('data-product-page-mode')))
+      : null;
+    const frame = directFrame || firstVisible(['[data-workspace-frame]', '[data-page-width-mode]', '[data-product-page-mode]'], router || document);
+    const elements = {
+      app_shell_main_region: router,
+      router_host: router,
+      outer_page_frame: frame,
+      page_header: firstVisible(['[data-workspace-page-header]', '.sc-page-header', '.product-record-header', '.list-header', '.record-header'], frame || router || document),
+      primary_action_bar: firstVisible(['[data-workspace-action-bar]', '.sc-action-bar', '.record-action-bar', '.header-actions', '.action-toolbar'], frame || router || document),
+      main_content_surface: firstVisible(['[data-workspace-primary-content]', '.list-page', '.contract-form-native-shell > .card', '.record-content', '.card'], frame || router || document),
+      list_toolbar: firstVisible(['.list-header-toolbar', '.action-toolbar', '.list-toolbar'], frame || router || document),
+      list_table_wrapper: firstVisible(['.table', '.sc-data-table__scroll', '.data-table'], frame || router || document),
+      actual_table: firstVisible(['.table table', '.sc-data-table__scroll table', 'table'], frame || router || document),
+      form_header: firstVisible(['.product-record-header', '.record-header', '.contract-header', '[data-workspace-page-header]'], frame || router || document),
+      form_error_summary: firstVisible(['.product-form-error-summary', '.sc-error-summary', '[role="alert"]'], frame || router || document),
+      form_canvas: firstVisible(['[data-form-canvas]', '.native-form-tree', '.form-canvas', '.card--flow', '.card'], frame || router || document),
+      form_section: firstVisible(['.native-container--group', '.form-section', '.sc-section'], frame || router || document),
+      sticky_action_bar: firstVisible(['.sticky-actions', '.sticky-action-bar', '.record-action-bar', '.sc-action-bar'], frame || router || document),
+    };
+    const routerRect = router?.getBoundingClientRect() || null;
+    const childOverflows = router && routerRect
+      ? [...router.querySelectorAll('*')]
+          .filter(visible)
+          .filter((node) => {
+            const scrollOwner = node.closest('.table, .sc-data-table__scroll, .data-table, .sc-table-shell');
+            if (!scrollOwner || scrollOwner === node) return true;
+            const overflow = window.getComputedStyle(scrollOwner).overflowX;
+            return overflow !== 'auto' && overflow !== 'scroll';
+          })
+          .map((node) => {
+            const rect = node.getBoundingClientRect();
+            return {
+              node,
+              left: Math.max(0, routerRect.left - rect.left),
+              right: Math.max(0, rect.right - routerRect.right),
+            };
+          })
+          .filter((row) => row.left > 1 || row.right > 1)
+          .map((row) => ({
+            selector: row.node.id ? `#${row.node.id}` : `.${[...row.node.classList].slice(0, 3).join('.')}`,
+            left: Number(row.left.toFixed(2)),
+            right: Number(row.right.toFixed(2)),
+          }))
+      : [];
+    const measured = Object.fromEntries(Object.entries(elements).map(([key, node]) => [key, measure(node)]));
+    const tableWrapper = measured.list_table_wrapper;
+    const actualTable = measured.actual_table;
+    return {
+      dom: measured,
+      router_child_overflow_count: childOverflows.length,
+      router_child_overflow_max: childOverflows.reduce((max, row) => Math.max(max, row.left, row.right), 0),
+      router_child_overflow_sample: childOverflows.slice(0, 20),
+      table_utilization_ratio: tableWrapper && actualTable && tableWrapper.client_width > 0
+        ? Number((actualTable.width / tableWrapper.client_width).toFixed(4))
+        : null,
+    };
+  });
+}
+
 async function captureEntry(browser, entry, theme = 'light') {
   console.log(`[fe-pro-04] ${entry.key}:${theme}:login`);
   const context = await browser.newContext({ viewport: VIEWPORTS[0], locale: 'zh-CN', colorScheme: theme });
@@ -319,18 +433,31 @@ async function captureEntry(browser, entry, theme = 'light') {
   const company = await page.getByLabel('当前公司').inputValue({ timeout: 2000 }).catch(() => '');
   const rows = [];
   const viewports = theme === 'dark'
-    ? (WIDTH_AUDIT
-        ? (entry.key === 'contract_list'
-            ? [{ width: 1920, height: 1080 }, { width: 390, height: 844 }]
-            : [{ width: 1920, height: 1080 }])
-        : [{ width: 1440, height: 900 }])
+    ? (WORKSPACE_AUDIT
+        ? [{ width: 1920, height: 1080 }]
+        : (WIDTH_AUDIT
+            ? (entry.key === 'contract_list'
+                ? [{ width: 1920, height: 1080 }, { width: 390, height: 844 }]
+                : [{ width: 1920, height: 1080 }])
+            : [{ width: 1440, height: 900 }]))
     : VIEWPORTS;
-  for (const viewport of viewports) {
-    console.log(`[fe-pro-04] ${entry.key}:${theme}:${viewport.width}x${viewport.height}`);
+  const scenarios = viewports.map((viewport) => ({ viewport, sidebarState: 'expanded' }));
+  if (WORKSPACE_AUDIT && PHASE === 'final' && theme === 'light') {
+    scenarios.push({ viewport: { width: 1920, height: 1080 }, sidebarState: 'collapsed' });
+  }
+  let sidebarState = 'expanded';
+  for (const scenario of scenarios) {
+    const { viewport } = scenario;
+    console.log(`[fe-pro-04] ${entry.key}:${theme}:${viewport.width}x${viewport.height}:${scenario.sidebarState}`);
     const viewportStarted = Date.now();
     await page.setViewportSize(viewport);
     await page.waitForTimeout(120);
-    const screenshot = path.join(OUTPUT, `${entry.key}-${theme}-${viewport.width}x${viewport.height}.png`);
+    if (scenario.sidebarState !== sidebarState && viewport.width > 900) {
+      await page.getByRole('button', { name: scenario.sidebarState === 'collapsed' ? '隐藏侧边栏' : '显示侧边栏' }).click();
+      await page.waitForTimeout(120);
+      sidebarState = scenario.sidebarState;
+    }
+    const screenshot = path.join(OUTPUT, `${entry.key}-${theme}-${viewport.width}x${viewport.height}-${scenario.sidebarState}.png`);
     await page.screenshot({ path: screenshot, fullPage: false, timeout: 5000 });
     console.log(`[fe-pro-04] ${entry.key}:${theme}:${viewport.width}x${viewport.height}:captured_ms=${Date.now() - viewportStarted}`);
     rows.push({
@@ -340,6 +467,7 @@ async function captureEntry(browser, entry, theme = 'light') {
       expected_width_mode: entry.expectedWidthMode || 'standard',
       company,
       viewport: `${viewport.width}x${viewport.height}`,
+      sidebar_state: scenario.sidebarState,
       theme,
       route: new URL(page.url()).pathname,
       component_contract_version: 'sc-product-design-system.v1',
@@ -348,6 +476,7 @@ async function captureEntry(browser, entry, theme = 'light') {
       accessibility_scanned: viewport.width === 1440,
       ...(await visualMetrics(page, viewport.width === 1440)),
       ...(await pageWidthMetrics(page)),
+      ...(WORKSPACE_AUDIT ? await workspaceDomMetrics(page) : {}),
     });
   }
   await context.close();
@@ -379,7 +508,7 @@ async function main() {
         pages.push(...dark.rows); runtime.push({ surface: entry.key, theme: 'dark', ...dark.runtime });
       }
     }
-    if (PHASE === 'final' && !WIDTH_AUDIT) {
+    if (PHASE === 'final' && (WORKSPACE_AUDIT || !WIDTH_AUDIT)) {
       for (const entry of DARK_ONLY_CASES) {
         const dark = await captureEntryWithRetry(browser, entry, 'dark');
         pages.push(...dark.rows); runtime.push({ surface: entry.key, theme: 'dark', ...dark.runtime });
@@ -390,7 +519,9 @@ async function main() {
       row.screenshot_sha256 = digest;
     }
     const report = {
-      schema_version: WIDTH_AUDIT ? 'frontend_page_width_audit.v1' : 'frontend_product_design_system_audit.v1',
+      schema_version: WORKSPACE_AUDIT
+        ? 'frontend_workspace_content_alignment_audit.v1'
+        : (WIDTH_AUDIT ? 'frontend_page_width_audit.v1' : 'frontend_product_design_system_audit.v1'),
       phase: PHASE,
       git_sha: process.env.GIT_SHA || '',
       database: DB_NAME,
@@ -407,6 +538,9 @@ async function main() {
       },
     };
     fs.writeFileSync(REPORT, `${JSON.stringify(report, null, 2)}\n`);
+    if (WORKSPACE_AUDIT && PHASE === 'baseline') {
+      fs.writeFileSync(path.join(ROOT, 'baseline-dom.json'), `${JSON.stringify(report, null, 2)}\n`);
+    }
     if (PHASE === 'final') {
       const baselinePath = path.join(ROOT, 'baseline-report.json');
       check(fs.existsSync(baselinePath), `missing baseline report: ${baselinePath}`);
@@ -433,15 +567,38 @@ async function main() {
         }),
       };
       fs.writeFileSync(path.join(ROOT, 'visual-regression-report.json'), `${JSON.stringify(comparison, null, 2)}\n`);
-      check(pages.filter((row) => row.theme === 'light').length === CASES.length * VIEWPORTS.length, 'light visual matrix incomplete');
-      check(pages.filter((row) => row.theme === 'dark').length === (WIDTH_AUDIT ? 5 : DARK_CASES.size), 'dark visual sample incomplete');
+      const expectedLightRows = WORKSPACE_AUDIT
+        ? CASES.length * (VIEWPORTS.length + 1)
+        : CASES.length * VIEWPORTS.length;
+      check(pages.filter((row) => row.theme === 'light').length === expectedLightRows, 'light visual matrix incomplete');
+      check(pages.filter((row) => row.theme === 'dark').length === ((WORKSPACE_AUDIT || WIDTH_AUDIT) ? 5 : DARK_CASES.size), 'dark visual sample incomplete');
       check(!pages.some((row) => row.h1_count !== 1 || row.main_count !== 1), 'page landmark hierarchy failed');
       check(!pages.some((row) => row.font_level_count > 4), 'page typography hierarchy exceeds four visible levels');
       check(!pages.some((row) => row.viewport === '390x844' && row.desktop_record_table_visible > 0), 'desktop record table leaked into mobile layout');
       check(!pages.some((row) => row.horizontal_overflow > 1 || row.axe_critical_serious.length), 'responsive/accessibility visual guard failed');
       check(!pages.some((row) => row.technical_term_hits.length), 'technical product wording found');
       check(!runtime.some((row) => row.console.length || row.pageerror.length || row.http.length), 'unexpected runtime errors found');
-      if (WIDTH_AUDIT) {
+      if (WORKSPACE_AUDIT) {
+        const lightRows = pages.filter((row) => row.theme === 'light');
+        const aligned = (rows, path) => {
+          const values = rows.map((row) => path.split('.').reduce((value, key) => value?.[key], row)).filter((value) => typeof value === 'number');
+          return values.length === rows.length && Math.max(...values) - Math.min(...values) <= 1;
+        };
+        const groups = new Map();
+        for (const row of lightRows) {
+          const key = `${row.viewport}:${row.sidebar_state}`;
+          groups.set(key, [...(groups.get(key) || []), row]);
+        }
+        for (const [key, rows] of groups) {
+          check(aligned(rows, 'dom.outer_page_frame.x') && aligned(rows, 'dom.outer_page_frame.right'), `workspace frame alignment failed: ${key}`);
+          check(aligned(rows, 'dom.page_header.x') && aligned(rows, 'dom.page_header.right'), `page header alignment failed: ${key}`);
+          check(aligned(rows, 'dom.main_content_surface.x') && aligned(rows, 'dom.main_content_surface.right'), `primary content alignment failed: ${key}`);
+        }
+        check(!lightRows.some((row) => row.viewport_width === 1920 && row.utilization_ratio < 0.98), '1920 workspace utilization below 98%');
+        check(!lightRows.some((row) => row.viewport_width === 2560 && row.frame_width > 1921), 'workspace frame exceeded 1920px');
+        check(!lightRows.some((row) => row.page_overflow > 1 || row.router_child_overflow_count > 0), 'document or router child overflow found');
+        check(!lightRows.some((row) => row.table_utilization_ratio !== null && row.table_utilization_ratio < 0.98), 'table utilization below 98%');
+      } else if (WIDTH_AUDIT) {
         const lightRows = pages.filter((row) => row.theme === 'light');
         check(!lightRows.some((row) => row.width_mode !== row.expected_width_mode), 'page width mode contract mismatch');
         check(!lightRows.some((row) => row.viewport_width === 1920 && row.width_mode === 'data' && row.utilization_ratio < 0.94), '1920 data-page utilization below 94%');

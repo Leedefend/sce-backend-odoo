@@ -1,5 +1,5 @@
 <template>
-  <header class="sc-design-page-header">
+  <header class="sc-design-page-header" data-workspace-page-header>
     <div><p v-if="eyebrow" class="sc-text-muted">{{ eyebrow }}</p><h1>{{ title }}</h1><p v-if="subtitle" class="sc-muted">{{ subtitle }}</p></div>
     <div v-if="$slots.actions" class="sc-action-group"><slot name="actions" /></div>
   </header>
