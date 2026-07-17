@@ -47,6 +47,12 @@ ALLOWED_DIRECT_CONTRACT_WRITERS = {
         "reason": "mirrors menu low-code edits into menu orchestration contracts",
         "expected_source": BOUNDARY_CONSTANTS["MENU_ORCHESTRATION_SOURCE_TENANT_LOWCODING"],
     },
+    "addons/smart_core/handlers/business_config_change_set.py": {
+        "layer": "L1/L4",
+        "boundary": "atomic_lowcode_change_set_publish",
+        "reason": "atomically publishes validated reversible low-code contract items and owns batch rollback",
+        "expected_source": "ui.business.config.change.set",
+    },
     "addons/smart_construction_custom/models/user_preferences.py": {
         "layer": "L3",
         "boundary": "user_preference_projection",
@@ -76,6 +82,13 @@ ALLOWED_APPROVAL_POLICY_RUNTIME_WRITERS = {
     },
 }
 ALLOWED_LOWCODING_POLICY_RUNTIME_WRITERS = {
+    "addons/smart_core/handlers/business_config_change_set.py": {
+        "layer": "L1/L4",
+        "boundary": "atomic_menu_change_set_publish",
+        "reason": "applies menu policy rows only inside the unified change-set transaction",
+        "expected_source": "ui.business.config.change.set",
+        "target_models": ["ui.menu.config.policy"],
+    },
     "addons/smart_core/handlers/form_field_configuration.py": {
         "layer": "L4",
         "boundary": "form_field_policy_runtime_configuration",

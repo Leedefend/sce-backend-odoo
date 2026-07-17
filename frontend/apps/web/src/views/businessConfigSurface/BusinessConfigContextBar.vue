@@ -6,14 +6,14 @@
       subtitle="在同一工作台完成配置、检查、保存和运行态验证"
     >
       <template #actions>
-        <ScButton
+        <ScLinkButton
+          :href="currentPageHref"
           variant="secondary"
           :disabled="!canOpenCurrentPage"
-          @click="$emit('openCurrentEffectivePage')"
         >
           打开当前生效页面
-        </ScButton>
-        <ScButton variant="ghost" @click="$emit('toggleDeveloperTools')">
+        </ScLinkButton>
+        <ScButton variant="ghost" @click="onToggleDeveloperTools">
           {{ developerToolsOpen ? '收起开发者工具' : '开发者工具' }}
         </ScButton>
       </template>
@@ -33,6 +33,7 @@
 
 <script setup lang="ts">
 import ScButton from '../../components/design-system/ScButton.vue';
+import ScLinkButton from '../../components/design-system/ScLinkButton.vue';
 import ScPageHeader from '../../components/design-system/ScPageHeader.vue';
 import ScStatusBadge from '../../components/design-system/ScStatusBadge.vue';
 
@@ -44,11 +45,8 @@ defineProps<{
   dirty: boolean;
   canOpenCurrentPage: boolean;
   developerToolsOpen: boolean;
-}>();
-
-defineEmits<{
-  openCurrentEffectivePage: [];
-  toggleDeveloperTools: [];
+  currentPageHref: string;
+  onToggleDeveloperTools: () => void;
 }>();
 </script>
 

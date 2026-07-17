@@ -2589,11 +2589,11 @@ const {
       {
         menuId: menuId.value || currentAction?.menu_id,
         viewType: String(route.query.view_mode || '').trim() || undefined,
+        previewToken: String(route.query.preview_token || '').trim() || undefined,
+        previewRoleKey: String(route.query.preview_role_key || '').trim() || undefined,
       },
     ),
-    setActionMeta: (meta: Record<string, unknown>) => {
-      session.setActionMeta(meta);
-    },
+    setActionMeta: (meta: Record<string, unknown>) => session.setActionMeta(meta),
     resolveContractViewMode,
     resolveActionViewType,
     resolvePreferredActionViewMode,

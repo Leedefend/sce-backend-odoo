@@ -87,24 +87,35 @@ page.on('request', (request) => {
 const report = { schema_version: 'low_code_safe_open_acceptance.v1', ok: false };
 try {
   await login(page);
-  const workbenchUrl = `${BASE_URL}/admin/business-config?db=${encodeURIComponent(DB_NAME)}&root_menu_xmlid=smart_construction_core.menu_sc_root&open_pages=1&model=construction.contract&action_id=1002&page_label=${encodeURIComponent('合同办理')}`;
+  const workbenchUrl = `${BASE_URL}/admin/business-config?db=${encodeURIComponent(DB_NAME)}&root_menu_xmlid=smart_construction_core.menu_sc_root&open_pages=1&model=construction.contract&action_id=1002&menu_id=389&page_label=${encodeURIComponent('合同办理')}`;
   await page.goto(workbenchUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.waitForSelector('[data-lowcode-workbench-ia="three-column"]', { timeout: 60000 });
+  await page.waitForFunction(() => document.querySelectorAll('.scan-row').length > 1, null, { timeout: 60000 });
+  await page.locator('.business-config-context').getByRole('link', { name: '打开当前生效页面' }).waitFor({ state: 'visible', timeout: 60000 });
   const beforePayload = await requestIntent(page, 'ui.business_config.snapshot.export');
+  const beforeMutationAudit = await requestIntent(page, 'ui.business_config.mutation_audit.snapshot');
   const beforeVersions = await requestIntent(page, 'ui.business_config.contract.versions', { model: 'construction.contract', action_id: 1002 });
-  const before = { ...collectState(beforePayload), versions: collectState(beforeVersions), versionCount: Number(beforeVersions?.version_count || 0) };
+  const before = { ...collectState(beforePayload), mutationAudit: beforeMutationAudit, versions: collectState(beforeVersions), versionCount: Number(beforeVersions?.version_count || 0) };
   const intentStart = observedIntents.length;
-  await page.locator('.business-config-context').getByRole('button', { name: '打开当前生效页面' }).click();
-  await page.waitForURL((url) => url.pathname === '/a/1002', { timeout: 60000 });
+  const openButton = page.locator('.business-config-context').getByRole('link', { name: '打开当前生效页面' });
+  const declaredRuntimeRoute = await page.locator('.business-config-page').getAttribute('data-runtime-route');
+  const openButtonEnabled = await openButton.isEnabled();
+  await openButton.click();
+  await page.waitForTimeout(3000);
+  if (new URL(page.url()).pathname === '/admin/business-config') {
+    throw new Error(`current effective page did not navigate: ${page.url()} declared=${declaredRuntimeRoute} enabled=${openButtonEnabled}`);
+  }
   await page.waitForSelector('main, [role="main"]', { timeout: 60000 });
   const openIntents = observedIntents.slice(intentStart);
   const runtimeUrl = page.url();
   await page.screenshot({ path: path.join(OUT, 'current-effective-page.png'), fullPage: true });
   await page.goto(workbenchUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.waitForSelector('[data-lowcode-workbench-ia="three-column"]', { timeout: 60000 });
+  await page.waitForFunction(() => document.querySelectorAll('.scan-row').length > 1, null, { timeout: 60000 });
   const afterPayload = await requestIntent(page, 'ui.business_config.snapshot.export');
+  const afterMutationAudit = await requestIntent(page, 'ui.business_config.mutation_audit.snapshot');
   const afterVersions = await requestIntent(page, 'ui.business_config.contract.versions', { model: 'construction.contract', action_id: 1002 });
-  const after = { ...collectState(afterPayload), versions: collectState(afterVersions), versionCount: Number(afterVersions?.version_count || 0) };
+  const after = { ...collectState(afterPayload), mutationAudit: afterMutationAudit, versions: collectState(afterVersions), versionCount: Number(afterVersions?.version_count || 0) };
   const forbidden = openIntents.filter((intent) => /(?:save|publish|set|create|write|rollback|bootstrap|apply)/i.test(intent));
   report.before = before;
   report.after = after;
@@ -119,6 +130,8 @@ try {
     version_payload_unchanged: before.versions.payloadHash === after.versions.payloadHash,
     published_state_unchanged: before.publishedCount === after.publishedCount,
     no_write_intent: forbidden.length === 0,
+    formal_mutation_count_unchanged: before.mutationAudit.count === after.mutationAudit.count,
+    formal_mutation_latest_id_unchanged: before.mutationAudit.latest_id === after.mutationAudit.latest_id,
   };
   report.ok = Object.values(report.assertions).every(Boolean);
 } catch (error) {

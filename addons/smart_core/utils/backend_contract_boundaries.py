@@ -10,6 +10,8 @@ BUSINESS_CONFIG_RUNTIME_MODELS = {
     "sc.approval.scope",
     "sc.approval.scope.user.wizard",
     "ui.business.config.contract",
+    "ui.business.config.change.set",
+    "ui.business.config.change.set.item",
     "ui.form.field.policy",
     "ui.form.custom.field.wizard",
     "ui.menu.config.policy",
@@ -58,6 +60,9 @@ BUSINESS_CONFIG_ACTION_KEY_CURRENT_FORM_FIELD_CONFIGURATION = BUSINESS_CONFIG_AC
 BUSINESS_CONFIG_AUTHORITIES = {
     "contract": "ui.business.config.contract",
     "contract_version": "ui.business.config.contract.version",
+    "change_set": "ui.business.config.change.set",
+    "change_set_item": "ui.business.config.change.set.item",
+    "mutation_audit": "ui.business.config.mutation.audit",
     "form_field_policy": "ui.form.field.policy",
     "custom_field_wizard": "ui.form.custom.field.wizard",
 }
@@ -65,6 +70,15 @@ BUSINESS_CONFIG_AUTHORITIES = {
 BUSINESS_CONFIG_OWNER_LAYER = "business_view_orchestration"
 
 BUSINESS_CONFIG_INTENTS = {
+    "change_set_open": "ui.business_config.change_set.open",
+    "change_set_get": "ui.business_config.change_set.get",
+    "change_set_stage": "ui.business_config.change_set.stage",
+    "change_set_validate": "ui.business_config.change_set.validate",
+    "change_set_preview": "ui.business_config.change_set.preview",
+    "change_set_publish": "ui.business_config.change_set.publish",
+    "change_set_rollback": "ui.business_config.change_set.rollback",
+    "change_set_discard": "ui.business_config.change_set.discard",
+    "mutation_audit_snapshot": "ui.business_config.mutation_audit.snapshot",
     "form_audit": "ui.business_config.form.audit",
     "lowcode_apply": "ui.business_config.lowcode.apply",
     "contract_list": "ui.business_config.contract.list",

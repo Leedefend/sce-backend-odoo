@@ -20,6 +20,8 @@ export function useBusinessConfigProductExperience(options: {
   hasListSearchDraftChanges: ComputedRef<boolean>;
   hasAnalysisDraftChanges: ComputedRef<boolean>;
   hasApprovalDraftChanges: ComputedRef<boolean>;
+  hasUnifiedDraft: ComputedRef<boolean>;
+  activeChangeSetToken: ComputedRef<string>;
   listColumnsText: Ref<string>;
   searchFiltersText: Ref<string>;
   searchGroupByText: Ref<string>;
@@ -31,6 +33,7 @@ export function useBusinessConfigProductExperience(options: {
   resetListSearchDraft: () => void;
   resetAnalysisDraft: () => void;
   resetApprovalDraft: () => void;
+  resetUnifiedDraftScope: () => void;
   loadSurface: () => Promise<void>;
   scanSystemRootCoverage: () => Promise<void>;
   setMessage: (text: string, detail?: string) => void;
@@ -46,6 +49,7 @@ export function useBusinessConfigProductExperience(options: {
     options.hasListSearchDraftChanges.value
     || options.hasAnalysisDraftChanges.value
     || options.hasApprovalDraftChanges.value
+    || options.hasUnifiedDraft.value
   ));
   const currentEffectiveVersionLabel = computed(() => {
     const versionNumbers = [
@@ -91,8 +95,10 @@ export function useBusinessConfigProductExperience(options: {
     event.preventDefault();
     event.returnValue = '';
   }
-  onBeforeRouteLeave(async () => {
+  onBeforeRouteLeave(async (to) => {
     if (!hasWorkbenchDraftChanges.value) return true;
+    const targetToken = String(to.query.change_set_token || '').trim();
+    if (targetToken && targetToken === options.activeChangeSetToken.value) return true;
     return options.openImpactDialog({
       summary: '离开工作台将放弃当前未保存修改',
       immediate: false,
@@ -106,6 +112,7 @@ export function useBusinessConfigProductExperience(options: {
       options.resetListSearchDraft();
       options.resetAnalysisDraft();
       options.resetApprovalDraft();
+      options.resetUnifiedDraftScope();
       options.listSearchPanelOpen.value = false;
       options.analysisPanelOpen.value = false;
       options.approvalPanelOpen.value = false;

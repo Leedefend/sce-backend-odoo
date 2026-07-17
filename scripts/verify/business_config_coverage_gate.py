@@ -139,21 +139,52 @@ def _route_samples(result, limit=20):
     return samples
 
 
+def _showcase_action_ids(env_obj):
+    rows = env_obj["ir.model.data"].sudo().search([
+        ("module", "=", "smart_construction_demo"),
+        ("model", "=", "ir.actions.act_window"),
+    ])
+    return {int(row.res_id or 0) for row in rows if int(row.res_id or 0)}
+
+
 def _scope_result(name, env_obj, params):
     result = _scan(env_obj, params)
     summary = _summary(result) or {}
+    data = result.get("data") if isinstance(result, dict) else {}
+    items = data.get("items") if isinstance(data, dict) else []
+    items = [row for row in items if isinstance(row, dict)]
+    showcase_ids = _showcase_action_ids(env_obj)
+    excluded = [row for row in items if int(row.get("action_id") or 0) in showcase_ids]
+    delivery_items = [row for row in items if int(row.get("action_id") or 0) not in showcase_ids]
+    runtime_missing = [row for row in delivery_items if not row.get("is_runtime_complete")]
+    missing_by_view = {
+        view_type: sum(view_type in (row.get("runtime_missing_view_types") or []) for row in runtime_missing)
+        for view_type in ("form", "tree", "search", "pivot", "graph", "calendar", "dashboard")
+    }
+    delivery_result = {**result, "data": {**(data or {}), "items": delivery_items}}
     return {
         "scope": name,
-        "overall_status": summary.get("overall_status"),
-        "action_count": int(summary.get("action_count") or 0),
-        "runtime_missing_count": int(summary.get("runtime_missing_count") or 0),
-        "runtime_missing_form_count": int(summary.get("runtime_missing_form_count") or 0),
-        "runtime_missing_list_count": int(summary.get("runtime_missing_list_count") or 0),
-        "runtime_missing_search_count": int(summary.get("runtime_missing_search_count") or 0),
-        "runtime_missing_analysis_count": int(summary.get("runtime_missing_analysis_count") or 0),
+        "overall_status": "pass" if not runtime_missing else "blocked",
+        "action_count": len(delivery_items),
+        "runtime_missing_count": len(runtime_missing),
+        "runtime_missing_form_count": missing_by_view["form"],
+        "runtime_missing_list_count": missing_by_view["tree"],
+        "runtime_missing_search_count": missing_by_view["search"],
+        "runtime_missing_analysis_count": sum(missing_by_view[key] for key in ("pivot", "graph", "calendar", "dashboard")),
         "severity_counts": summary.get("severity_counts") or {},
         "remediation_action_counts": summary.get("remediation_action_counts") or {},
-        "runtime_route_samples": _route_samples(result),
+        "runtime_route_samples": _route_samples(delivery_result),
+        "excluded_showcase_actions": [
+            {
+                "action_id": int(row.get("action_id") or 0),
+                "name": str(row.get("name") or ""),
+                "menu_ids": list(row.get("menu_ids") or []),
+                "runtime_missing_view_types": list(row.get("runtime_missing_view_types") or []),
+                "decision": "excluded_from_formal_delivery_denominator",
+                "authority": "ir.model.data.module=smart_construction_demo",
+            }
+            for row in excluded
+        ],
     }
 
 

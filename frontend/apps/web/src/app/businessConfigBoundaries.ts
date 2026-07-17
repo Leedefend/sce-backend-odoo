@@ -35,6 +35,15 @@ export const BUSINESS_CONFIG_ROUTE_FLAGS = {
 } as const;
 
 export const BUSINESS_CONFIG_INTENTS = {
+  changeSetOpen: 'ui.business_config.change_set.open',
+  changeSetGet: 'ui.business_config.change_set.get',
+  changeSetStage: 'ui.business_config.change_set.stage',
+  changeSetValidate: 'ui.business_config.change_set.validate',
+  changeSetPreview: 'ui.business_config.change_set.preview',
+  changeSetPublish: 'ui.business_config.change_set.publish',
+  changeSetRollback: 'ui.business_config.change_set.rollback',
+  changeSetDiscard: 'ui.business_config.change_set.discard',
+  mutationAuditSnapshot: 'ui.business_config.mutation_audit.snapshot',
   formAudit: 'ui.business_config.form.audit',
   lowCodeApply: 'ui.business_config.lowcode.apply',
   contractList: 'ui.business_config.contract.list',

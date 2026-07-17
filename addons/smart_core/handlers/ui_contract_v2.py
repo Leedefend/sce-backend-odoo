@@ -27,7 +27,7 @@ from ..utils.extension_hooks import call_extension_hook_first
 from . import ui_contract_v2_adapters as _adapters
 from . import ui_contract_v2_projection as _projection
 from .ui_contract import UiContractHandler
-
+from .ui_contract_preview import PreviewAccessDenied, build_projection_environments
 _logger = logging.getLogger(__name__)
 
 BUSINESS_OPERATION_FIELD_PRIORITY = (
@@ -484,17 +484,17 @@ class UiContractV2Handler(BaseIntentHandler):
         limit_params, limit_error = self._trim_limit_params(params)
         if limit_error:
             return self._err(400, f"{limit_error} 无效")
-
         ui_params = self._ui_contract_params(params)
         projection_context = dict(getattr(self.env, "context", {}) or {})
         projection_context["contract_projection_readonly"] = True
         try:
-            from odoo import api
-            projection_env = api.Environment(self.env.cr, self.env.uid, projection_context)
-            projection_su_env = api.Environment(self.su_env.cr, self.su_env.uid, projection_context)
-        except Exception:
-            projection_env = self.env
-            projection_su_env = self.su_env
+            projection_env, projection_su_env = build_projection_environments(self.env, self.su_env, params, projection_context)
+        except PreviewAccessDenied:
+            return self._err(403, "草稿预览仅对授权配置管理员开放")
+        # Keep the verified preview context on every downstream projection path,
+        # including entry-contract re-resolution and orchestration overlays.
+        self.env = projection_env
+        self.su_env = projection_su_env
         source_result = UiContractHandler(
             projection_env,
             su_env=projection_su_env,

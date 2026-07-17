@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 from pathlib import Path
 
 
@@ -23,9 +24,11 @@ REQUIRED_TOKENS = (
     "ScButton",
     "ScStatusBadge",
 )
+LAST_AST_REPORT: dict = {}
 
 
 def validate(sources: dict[Path, str]) -> list[str]:
+    global LAST_AST_REPORT
     errors: list[str] = []
     combined = "\n".join(sources.values())
     for phrase in FORBIDDEN_DEFAULT_LANGUAGE:
@@ -34,18 +37,20 @@ def validate(sources: dict[Path, str]) -> list[str]:
     for token in REQUIRED_TOKENS:
         if token not in combined:
             errors.append(f"workbench product contract missing token: {token}")
-    preview_publish = re.search(
-        r"(?:preview|预览)[A-Za-z0-9_\s\S]{0,1000}publish\s*:\s*true",
-        combined,
-        re.IGNORECASE,
+    ast_guard = subprocess.run(
+        ["node", str(ROOT / "scripts/verify/low_code_publish_boundary_guard.mjs")],
+        cwd=ROOT, text=True, capture_output=True, check=False,
     )
-    if preview_publish:
-        errors.append("preview path may publish configuration")
+    ast_report = json.loads((ast_guard.stdout or "{}").splitlines()[-1])
+    LAST_AST_REPORT = ast_report
+    errors.extend(str(item) for item in (ast_report.get("errors") or []))
+    if ast_guard.returncode:
+        errors.append("AST publish boundary guard failed")
     sc_usage = len(re.findall(r"<Sc[A-Z][A-Za-z0-9]*\b", combined))
     if sc_usage < 20:
         errors.append(f"design-system usage regressed below LC-PRO-01 floor: {sc_usage} < 20")
-    if ROOT_VIEW in sources and len(sources[ROOT_VIEW].splitlines()) > 1498:
-        errors.append("BusinessConfigSurfaceView.vue grew beyond accepted audit baseline (1498 lines)")
+    if ROOT_VIEW in sources and len(sources[ROOT_VIEW].splitlines()) > 600:
+        errors.append("BusinessConfigSurfaceView.vue exceeds route assembly limit (600 lines)")
     return errors
 
 
@@ -66,6 +71,7 @@ def main() -> int:
         "raw_controls": len(re.findall(r"<(?:button|input|select|textarea)\b", combined)),
         "assertions": len(FORBIDDEN_DEFAULT_LANGUAGE) + len(REQUIRED_TOKENS) + 3,
         "negative_self_test": "pass" if negative_self_test else "fail",
+        "publish_boundary": LAST_AST_REPORT,
         "errors": errors,
     }
     print(json.dumps(report, ensure_ascii=False, sort_keys=True))

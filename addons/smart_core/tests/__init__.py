@@ -14,3 +14,4 @@ from . import test_menu_delivery_convergence_service
 from . import test_odoo_native_alignment_boundaries
 from . import test_release_gate_category_options
 from . import test_usage_backend
+from . import test_business_config_change_set

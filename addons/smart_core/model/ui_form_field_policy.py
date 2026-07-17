@@ -7,6 +7,7 @@ from typing import Any
 
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
+from odoo.addons.smart_core.utils.business_config_mutation_audit import record_business_config_mutation
 
 
 class UIFormFieldPolicy(models.Model):
@@ -44,6 +45,21 @@ class UIFormFieldPolicy(models.Model):
     scope_summary = fields.Char(string="生效范围", compute="_compute_policy_summary")
     effect_summary = fields.Char(string="显示效果", compute="_compute_policy_summary")
     note = fields.Text(string="说明")
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        record_business_config_mutation(records, "create", vals_list)
+        return records
+
+    def write(self, vals):
+        result = super().write(vals)
+        record_business_config_mutation(self, "write", vals)
+        return result
+
+    def unlink(self):
+        record_business_config_mutation(self, "unlink")
+        return super().unlink()
 
     @api.depends("model", "field_name", "visible", "label")
     def _compute_name(self):

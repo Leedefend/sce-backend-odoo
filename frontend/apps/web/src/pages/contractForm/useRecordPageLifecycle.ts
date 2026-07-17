@@ -127,6 +127,8 @@ export function useRecordPageLifecycle(dependencies: LifecycleDependencies) {
           sourceMode: requestedSourceMode.value,
           context: contractContext,
           contextRaw,
+          previewToken: String(route.query.preview_token || '').trim() || undefined,
+          previewRoleKey: String(route.query.preview_role_key || '').trim() || undefined,
         });
         const actionReadiness = analyzeFormContractReadiness(response?.data, { requirePureFormViewType: true });
         const actionModel = contractModelName(response?.data);
@@ -147,6 +149,8 @@ export function useRecordPageLifecycle(dependencies: LifecycleDependencies) {
         sourceMode: requestedSourceMode.value,
         context: contractContext,
         contextRaw,
+        previewToken: String(route.query.preview_token || '').trim() || undefined,
+        previewRoleKey: String(route.query.preview_role_key || '').trim() || undefined,
       });
     }
     if (!response?.data || typeof response.data !== 'object') {

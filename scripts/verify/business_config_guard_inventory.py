@@ -103,6 +103,7 @@ FULL_ACCEPTANCE_TARGETS = {
     "verify.product.navigation_boundary",
     "verify.business_config.low_code_acceptance",
     "verify.business_config.config_workbench_operation_acceptance",
+    "verify.business_config.change_set_acceptance",
     "verify.business_config.safe_open_acceptance",
     "verify.business_config.workbench_product_acceptance",
     "verify.business_config.workbench_fault_acceptance",
@@ -125,6 +126,9 @@ FULL_ACCEPTANCE_TARGETS_WITHOUT_CAPABILITY_OWNER = {
 TARGET_SCRIPT_REQUIREMENTS = {
     "verify.business_config.product_guard": (
         "scripts/verify/low_code_workbench_product_guard.py",
+    ),
+    "verify.business_config.publish_boundary_guard": (
+        "scripts/verify/low_code_publish_boundary_guard.mjs",
     ),
     "verify.business_config.unit": (
         "scripts/verify/business_config_user_language_guard.py",
@@ -160,6 +164,9 @@ TARGET_SCRIPT_REQUIREMENTS = {
     "verify.business_config.config_workbench_operation_acceptance": (
         "scripts/config_workbench_operation_acceptance.mjs|frontend/apps/web/scripts/config_workbench_operation_acceptance.mjs",
     ),
+    "verify.business_config.change_set_acceptance": (
+        "scripts/low_code_change_set_acceptance.mjs|frontend/apps/web/scripts/low_code_change_set_acceptance.mjs",
+    ),
     "verify.business_config.safe_open_acceptance": (
         "scripts/low_code_safe_open_acceptance.mjs|frontend/apps/web/scripts/low_code_safe_open_acceptance.mjs",
     ),
@@ -193,6 +200,7 @@ TARGET_DEPENDENCY_REQUIREMENTS = {
     "verify.business_config.unit": (
         "verify.frontend.product_language.guard",
         "verify.business_config.product_guard",
+        "verify.business_config.publish_boundary_guard",
     ),
     "verify.business_config.config_workbench_operation_quick": (
         "verify.frontend.product_language.guard",
@@ -261,7 +269,7 @@ OBSERVABILITY_SOURCE_MARKER_REQUIREMENTS = {
             '"applicable_policy_count": len(applicable_rows)',
             '"scope_root_valid": bool(scope_root_menu_id)',
         ),
-        "frontend/apps/web/src/views/MenuConfigView.vue": (
+        "frontend/apps/web/src/views/menuConfig/template.html": (
             "auditSummary.configuredCount",
             "auditSummary.applicableCount",
             "auditSummary.runtimeSourceLabel",

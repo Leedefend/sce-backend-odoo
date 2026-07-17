@@ -765,12 +765,16 @@ def _validate_customer_config_baseline_manifest(errors: list[dict]) -> None:
 
 def _validate_menu_config_runtime_authority(errors: list[dict]) -> None:
     frontend_path = ROOT / "frontend" / "apps" / "web" / "src" / "views" / "MenuConfigView.vue"
+    frontend_module_path = frontend_path.parent / "menuConfig"
+    frontend_paths = [frontend_path, *sorted(frontend_module_path.rglob("*.ts")), *sorted(frontend_module_path.rglob("*.vue"))]
+    frontend_label = "frontend/apps/web/src/views/MenuConfigView.vue + views/menuConfig/*"
     handler_path = ROOT / "addons" / "smart_core" / "handlers" / "menu_configuration.py"
     runtime_path = ROOT / "addons" / "smart_core" / "model" / "ui_menu_config_policy.py"
     delivery_path = ROOT / "addons" / "smart_core" / "delivery" / "menu_service.py"
     defaults_path = ROOT / "addons" / "smart_core" / "core" / "delivery_menu_defaults.py"
 
-    frontend_text = _read(frontend_path)
+    frontend_text = "\n".join(_read(path) for path in frontend_paths)
+    tree_adapter_text = _read(frontend_module_path / "menuTreeAdapter.ts")
     handler_text = _read(handler_path)
     runtime_text = _read(runtime_path)
     delivery_text = _read(delivery_path)
@@ -790,7 +794,7 @@ def _validate_menu_config_runtime_authority(errors: list[dict]) -> None:
         if token in frontend_text:
             errors.append({
                 "category": "menu_config_frontend_runtime_authority",
-                "path": frontend_path.relative_to(ROOT).as_posix(),
+                "path": frontend_label,
                 "message": message,
                 "token": token,
             })
@@ -807,18 +811,18 @@ def _validate_menu_config_runtime_authority(errors: list[dict]) -> None:
         if token not in frontend_text:
             errors.append({
                 "category": "menu_config_frontend_runtime_authority",
-                "path": frontend_path.relative_to(ROOT).as_posix(),
+                "path": frontend_label,
                 "message": "menu config front-end must consume backend navigation/config/runtime facts directly",
                 "token": token,
             })
-    runtime_tree_function = frontend_text[
-        frontend_text.find("function runtimeNavigationTreeFromPayload"):
-        frontend_text.find("function collectNavigationMenuIds")
+    runtime_tree_function = tree_adapter_text[
+        tree_adapter_text.find("function runtimeNavigationTreeFromPayload"):
+        tree_adapter_text.find("function collectNavigationMenuIds")
     ]
     if "scopedNavigationTree()" in runtime_tree_function:
         errors.append({
             "category": "menu_config_frontend_runtime_authority",
-            "path": frontend_path.relative_to(ROOT).as_posix(),
+            "path": frontend_label,
             "message": "menu config display tree must fail closed when backend runtime.tree is missing, not fall back to session/AppShell navigation",
             "token": "scopedNavigationTree()",
         })

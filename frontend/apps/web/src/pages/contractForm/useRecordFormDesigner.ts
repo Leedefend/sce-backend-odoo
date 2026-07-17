@@ -315,6 +315,7 @@ export function useRecordFormDesigner(dependencies: DesignerDependencies) {
     lowCodePrecheckWarnings,
     markPendingOperations: markPendingFormConfigOperations,
     modelName: () => model.value,
+    changeSetToken: () => String(route.query.change_set_token || '').trim(),
     reload: () => reload(),
     status,
   });

@@ -381,6 +381,11 @@ class _PolicyModel(_RecordSet):
         result = _RecordSet(rows)
         return _RecordSet(result[:limit]) if limit else result
 
+    def _source_display(self, runtime_source):
+        if runtime_source == "ui.business.config.contract.menu_orchestration":
+            return {"source_kind": "published_contract", "source_label": "已发布配置"}
+        return {"source_kind": "legacy_policy_compatibility", "source_label": "历史兼容配置"}
+
     def create(self, vals):
         menu_value = vals.get("menu_id")
         target_value = vals.get("target_parent_menu_id")
@@ -605,6 +610,8 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertTrue(result["ok"])
         summary = result["data"]["summary"]
         self.assertEqual(summary["runtime_source"], "ui.menu.config.policy")
+        self.assertEqual(summary["source_kind"], "legacy_policy_compatibility")
+        self.assertEqual(summary["source_label"], "历史兼容配置")
         self.assertEqual(summary["configured_policy_count"], 3)
         self.assertEqual(summary["applicable_policy_count"], 2)
         self.assertEqual(summary["hidden_count"], 1)
@@ -651,6 +658,8 @@ class TestMenuConfigurationAudit(unittest.TestCase):
         self.assertTrue(result["ok"])
         summary = result["data"]["summary"]
         self.assertEqual(summary["runtime_source"], module.MENU_CONFIG_RUNTIME_SOURCE_CONTRACT)
+        self.assertEqual(summary["source_kind"], "published_contract")
+        self.assertEqual(summary["source_label"], "已发布配置")
         self.assertTrue(summary["contract_authoritative"])
         self.assertEqual(summary["policy_table_count"], 1)
         self.assertEqual(summary["runtime_policy_count"], 1)

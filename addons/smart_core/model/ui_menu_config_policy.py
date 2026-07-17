@@ -13,6 +13,7 @@ from odoo.addons.smart_core.utils.backend_contract_boundaries import (
     MENU_CONFIG_RUNTIME_SOURCE_POLICY,
 )
 from odoo.addons.smart_core.utils.extension_hooks import call_extension_hook_first
+from odoo.addons.smart_core.utils.business_config_mutation_audit import record_business_config_mutation
 
 _PROTECTED_NODE_EXCLUDED_FINGERPRINT_TOKENS: set[str] = set()
 LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS_PARAM = "smart_core.lowcode.system_config_menu_xmlids"
@@ -172,7 +173,9 @@ class UiMenuConfigPolicy(models.Model):
             menu = Menu.browse(vals.get("menu_id")) if vals.get("menu_id") else Menu
             target_parent = Menu.browse(vals.get("target_parent_menu_id")) if vals.get("target_parent_menu_id") else Menu
             vals.update(self._menu_preview_values(menu, target_parent))
-        return super().create(vals_list)
+        records = super().create(vals_list)
+        record_business_config_mutation(records, "create", vals_list)
+        return records
 
     def write(self, vals):
         result = super().write(vals)
@@ -181,7 +184,12 @@ class UiMenuConfigPolicy(models.Model):
                 super(UiMenuConfigPolicy, record).write(
                     record._menu_preview_values(record.menu_id, record.target_parent_menu_id)
                 )
+        record_business_config_mutation(self, "write", vals)
         return result
+
+    def unlink(self):
+        record_business_config_mutation(self, "unlink")
+        return super().unlink()
 
     @api.depends(
         "menu_id",
@@ -276,7 +284,14 @@ class UiMenuConfigPolicy(models.Model):
             "no_business_fact_authority": True,
             "runtime_carrier": "platform_menu_api.nav_fact",
             "runtime_source": runtime_source,
+            **self._source_display(runtime_source),
         }
+
+    @api.model
+    def _source_display(self, runtime_source: str) -> dict:
+        if runtime_source == MENU_CONFIG_RUNTIME_SOURCE_CONTRACT:
+            return {"source_kind": "published_contract", "source_label": "已发布配置"}
+        return {"source_kind": "legacy_policy_compatibility", "source_label": "历史兼容配置"}
 
     @api.model
     def _runtime_policies_for_user(self, user=None):
