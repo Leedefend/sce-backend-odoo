@@ -308,9 +308,10 @@
   gap: 16px;
 }
 
-.contract-form-native-shell.sc-content-layout--focused-form :deep(.contract-form-canvas-shell) {
+.contract-form-canvas-shell {
   width: 100%;
-  max-width: var(--sc-form-field-content-max);
+  max-width: none;
+  min-width: 0;
 }
 
 .form-grid > :deep([data-form-error-summary]) {

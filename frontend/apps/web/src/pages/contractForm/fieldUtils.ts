@@ -15,11 +15,12 @@ export function normalizeLowCodeColumnsOrNull(value: unknown): 1 | 2 | 3 | null 
 
 export function normalizeLowCodeFieldSize(value: unknown): LowCodeFieldSize {
   const normalized = String(value || '').trim().toLowerCase();
-  if (['wide', 'full', 'large'].includes(normalized)) return normalized as LowCodeFieldSize;
+  if (['compact', 'wide', 'full', 'large'].includes(normalized)) return normalized as LowCodeFieldSize;
   return 'normal';
 }
 
 export function lowCodeFieldSizeClass(size: LowCodeFieldSize) {
+  if (size === 'compact') return 'field--compact';
   if (size === 'wide') return 'field--wide';
   if (size === 'full') return 'field--full';
   if (size === 'large') return 'field--full field--large';

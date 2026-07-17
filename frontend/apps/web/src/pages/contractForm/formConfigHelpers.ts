@@ -271,6 +271,7 @@ export function readableFallbackFieldLabel(fieldKey: string) {
 }
 
 export function lowCodeFieldSizeLabel(size: LowCodeFieldSize) {
+  if (size === 'compact') return '紧凑';
   if (size === 'wide') return '加宽';
   if (size === 'full') return '整行';
   if (size === 'large') return '大输入框';
@@ -688,8 +689,9 @@ export function extractLowCodeLayoutDraftState(
       || row.fieldSize
       || row.size
       || (rawClass.includes('field--large') ? 'large'
-        : (rawClass.includes('field--full') ? 'full'
-          : (rawClass.includes('field--wide') ? 'wide' : 'normal'))),
+        : (rawClass.includes('field--compact') ? 'compact'
+          : (rawClass.includes('field--full') ? 'full'
+            : (rawClass.includes('field--wide') ? 'wide' : 'normal')))),
     );
   };
   const collectLayout = (nodes: unknown, activeGroup = '') => {

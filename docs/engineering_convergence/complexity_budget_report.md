@@ -4,7 +4,7 @@ Generated from repository source files. This report is informational during the 
 
 ## Summary
 
-- Scanned files: `4079`
+- Scanned files: `4081`
 - Files requiring split plan: `38`
 - Files above warning threshold: `64`
 
@@ -79,14 +79,14 @@ Generated from repository source files. This report is informational during the 
 | 1256 | Python source | `addons/smart_construction_scene/tests/test_action_only_scene_semantic_supply.py` |
 | 1252 | Python source | `addons/smart_construction_core/models/core/settlement_order.py` |
 | 1251 | Python source | `addons/smart_construction_core/models/core/expense_claim.py` |
-| 1225 | TypeScript source | `frontend/apps/web/src/pages/contractForm/nativeLayoutUtils.ts` |
-| 1178 | Vue source | `frontend/apps/web/src/components/template/FormSection.vue` |
+| 1226 | TypeScript source | `frontend/apps/web/src/pages/contractForm/nativeLayoutUtils.ts` |
+| 1187 | Vue source | `frontend/apps/web/src/components/template/FormSection.vue` |
 | 1153 | Python source | `addons/smart_construction_custom/models/user_formal_visible_fields.py` |
 | 1145 | Python source | `scripts/verify/visible_data_usability_matrix_probe.py` |
 | 1135 | Vue source | `frontend/apps/web/src/components/template/NativeFormTreeRenderer.vue` |
 | 1113 | Python source | `scripts/verify/lowcode_config_boundary_guard.py` |
 | 1093 | JavaScript source | `scripts/verify/list_search_group_usability_audit.js` |
-| 1090 | TypeScript source | `frontend/apps/web/src/pages/contractForm/formConfigHelpers.ts` |
+| 1092 | TypeScript source | `frontend/apps/web/src/pages/contractForm/formConfigHelpers.ts` |
 | 1058 | Python source | `addons/smart_core/tests/test_unified_page_contract_v2_mobile_compact.py` |
 | 1011 | Python source | `scripts/migration/fresh_db_legacy_payment_residual_replay_adapter.py` |
 | 1005 | Python source | `addons/smart_core/core/scene_dsl_compiler.py` |
@@ -184,15 +184,15 @@ Generated from repository source files. This report is informational during the 
 | 1256 | warning | Python source | `addons/smart_construction_scene/tests/test_action_only_scene_semantic_supply.py` |
 | 1252 | warning | Python source | `addons/smart_construction_core/models/core/settlement_order.py` |
 | 1251 | warning | Python source | `addons/smart_construction_core/models/core/expense_claim.py` |
-| 1225 | warning | TypeScript source | `frontend/apps/web/src/pages/contractForm/nativeLayoutUtils.ts` |
-| 1178 | warning | Vue source | `frontend/apps/web/src/components/template/FormSection.vue` |
+| 1226 | warning | TypeScript source | `frontend/apps/web/src/pages/contractForm/nativeLayoutUtils.ts` |
+| 1187 | warning | Vue source | `frontend/apps/web/src/components/template/FormSection.vue` |
 | 1153 | warning | Python source | `addons/smart_construction_custom/models/user_formal_visible_fields.py` |
 | 1145 | warning | Python source | `scripts/verify/visible_data_usability_matrix_probe.py` |
 | 1135 | warning | Vue source | `frontend/apps/web/src/components/template/NativeFormTreeRenderer.vue` |
 | 1125 | within_budget | XML data/view | `addons/smart_construction_core/views/support/p1_daily_business_visible_alias_views.xml` |
 | 1113 | warning | Python source | `scripts/verify/lowcode_config_boundary_guard.py` |
 | 1093 | warning | JavaScript source | `scripts/verify/list_search_group_usability_audit.js` |
-| 1090 | warning | TypeScript source | `frontend/apps/web/src/pages/contractForm/formConfigHelpers.ts` |
+| 1092 | warning | TypeScript source | `frontend/apps/web/src/pages/contractForm/formConfigHelpers.ts` |
 | 1058 | warning | Python source | `addons/smart_core/tests/test_unified_page_contract_v2_mobile_compact.py` |
 | 1011 | warning | Python source | `scripts/migration/fresh_db_legacy_payment_residual_replay_adapter.py` |
 | 1005 | warning | Python source | `addons/smart_core/core/scene_dsl_compiler.py` |

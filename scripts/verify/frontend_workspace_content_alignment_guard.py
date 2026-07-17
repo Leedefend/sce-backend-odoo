@@ -71,7 +71,8 @@ for source_key in ("page", "layout"):
         fail(f"{source_key} owns a second max-width")
 
 require(tokens, "--sc-workspace-frame-max: 1920px", "workspace token")
-require(tokens, "--sc-content-focused-form-max: 1080px", "focused content token")
+if "--sc-content-focused-form-max" in tokens:
+    fail("focused-form must not cap the business form canvas")
 require(patterns, "max-width: min(100%, var(--sc-workspace-frame-max))", "single workspace CSS authority")
 require(patterns, ".sc-content-layout--focused-form", "internal focused layout")
 if re.search(r"\.sc-page-frame--(?:data|standard|focused|fluid)", patterns):

@@ -84,7 +84,7 @@ export type LayoutNode = {
   descriptor?: FieldDescriptor;
 };
 
-export type LowCodeFieldSize = 'normal' | 'wide' | 'full' | 'large';
+export type LowCodeFieldSize = 'compact' | 'normal' | 'wide' | 'full' | 'large';
 
 export type RelationOption = {
   id: number;

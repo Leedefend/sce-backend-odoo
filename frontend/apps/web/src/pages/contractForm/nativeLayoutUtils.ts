@@ -628,9 +628,10 @@ export function nativeFieldPresentation(input: NativeFieldPresentationInput): Na
     : normalizeLowCodeFieldSize(
       (input.node as Record<string, unknown>).field_size
       || (input.node as Record<string, unknown>).fieldSize
-      || (nodeClass.includes('field--large') ? 'large'
-        : (nodeClass.includes('field--full') ? 'full'
-          : (nodeClass.includes('field--wide') ? 'wide' : 'normal'))),
+      || (nodeClass.includes('field--compact') ? 'compact'
+        : (nodeClass.includes('field--large') ? 'large'
+          : (nodeClass.includes('field--full') ? 'full'
+            : (nodeClass.includes('field--wide') ? 'wide' : 'normal')))),
     );
   return {
     label: nativeFieldLabel(input.node, input.descriptor, input.resolveFieldLabel),
