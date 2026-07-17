@@ -12,6 +12,8 @@ const ORDINARY = { login: process.env.ORDINARY_LOGIN || 'chenshuai', password: p
 const ACTION_ID = Number(process.env.CHANGE_SET_ACTION_ID || 1002);
 const MENU_ID = Number(process.env.CHANGE_SET_MENU_ID || 389);
 const ROLE_KEY = `lc_pro_02_acceptance_${process.pid}`;
+const EMPTY_MODEL = 'res.partner';
+const EMPTY_ACTION_ID = 0;
 
 async function login(page, account) {
   await page.goto(`${BASE_URL}/login`, { waitUntil: 'domcontentloaded', timeout: 60000 });
@@ -44,6 +46,16 @@ function changeSetIntent(page, name, params = {}, expectOk = true) {
 function orchestration(viewType, label, field = 'name', visible = true) {
   const key = viewType === 'tree' ? 'columns' : 'fields';
   return { view_orchestration: { source: 'smart_core.lowcode.business_config', views: { [viewType]: { [key]: [{ name: field, label, visible, sequence: 10 }] } } } };
+}
+
+function listSearchAnalysisPayload(viewType, empty = false) {
+  const items = empty ? [] : [{ name: viewType === 'tree' ? 'name' : 'company_id' }];
+  const view = viewType === 'tree'
+    ? { columns: items }
+    : viewType === 'search'
+      ? { filters: items, group_by: items }
+      : { measures: empty ? [] : [{ name: 'color' }], dimensions: items, ...(viewType === 'graph' ? { type: 'bar' } : {}) };
+  return { view_orchestration: { source: 'smart_core.lowcode.business_config', views: { [viewType]: view } } };
 }
 
 function countNamedNodes(value, name) {
@@ -91,7 +103,7 @@ const report = { schema_version: 'low_code_change_set_acceptance.v1', ok: false,
 report.runtime = { console: [], pageerror: [] };
 page.on('console', (message) => { if (message.type() === 'error') report.runtime.console.push(message.text()); });
 page.on('pageerror', (error) => report.runtime.pageerror.push(error.message));
-let publishedToken = '';
+const publishedTokens = [];
 try {
   await login(page, ADMIN);
   const marker = `LC-PRO-02-${Date.now()}`;
@@ -172,7 +184,7 @@ try {
 
   const validated = (await changeSetIntent(page, 'ui.business_config.change_set.validate', { change_set_token: token })).body.data;
   const published = (await changeSetIntent(page, 'ui.business_config.change_set.publish', { change_set_token: token, request_id: `${marker}-publish` })).body.data;
-  publishedToken = token;
+  publishedTokens.push(token);
   report.journeys['LC-J14'] = { state: published.state, item_count: published.item_count, runtime_verified: published.publish_result?.runtime_verified };
   report.assertions.j14_atomic_batch = validated.state === 'ready' && published.state === 'published' && published.item_count === 3 && published.publish_result?.runtime_verified === true;
 
@@ -186,7 +198,7 @@ try {
   report.journeys['LC-J16'] = { evidence: 'backend transaction test test_publish_detects_concurrent_contract_update', expected: 409 };
   report.assertions.j16_conflict_guard_declared = true;
   const rolledBack = (await changeSetIntent(page, 'ui.business_config.change_set.rollback', { change_set_token: token, request_id: `${marker}-rollback` })).body.data;
-  publishedToken = '';
+  publishedTokens.splice(publishedTokens.indexOf(token), 1);
   report.journeys['LC-J17'] = { rollback_batch_id: rolledBack.id, state: rolledBack.state, rollback_of: rolledBack.publish_result?.rollback_of_change_set_id };
   report.assertions.j17_batch_rollback = rolledBack.state === 'published' && rolledBack.publish_result?.rollback_of_change_set_id === published.id;
 
@@ -195,6 +207,136 @@ try {
   report.journeys['LC-J18'] = { reason: highRisk.body?.error?.reason_code };
   report.assertions.j18_high_risk_separate = highRisk.body?.error?.reason_code === 'HIGH_RISK_OPERATION_REQUIRED';
   await changeSetIntent(page, 'ui.business_config.change_set.discard', { change_set_token: riskSet.token });
+
+  const emptyMarker = `LC-PRO-02R1-${Date.now()}`;
+  const emptyTargets = [
+    { config_type: 'list', view_type: 'tree' },
+    { config_type: 'search', view_type: 'search' },
+    { config_type: 'analysis', view_type: 'pivot' },
+    { config_type: 'analysis', view_type: 'graph' },
+  ];
+  const baselineSet = (await changeSetIntent(page, 'ui.business_config.change_set.open', { name: `${emptyMarker}-baseline` })).body.data;
+  for (const target of emptyTargets) {
+    await changeSetIntent(page, 'ui.business_config.change_set.stage', {
+      change_set_token: baselineSet.token,
+      ...target,
+      target_key: `${emptyMarker}.${target.view_type}`,
+      model: EMPTY_MODEL,
+      action_id: EMPTY_ACTION_ID,
+      draft_payload: listSearchAnalysisPayload(target.view_type),
+      diff_summary: { summary: `${target.view_type} nonempty baseline` },
+    });
+  }
+  await changeSetIntent(page, 'ui.business_config.change_set.validate', { change_set_token: baselineSet.token });
+  await changeSetIntent(page, 'ui.business_config.change_set.publish', { change_set_token: baselineSet.token, request_id: `${emptyMarker}-baseline-publish` });
+  publishedTokens.push(baselineSet.token);
+
+  const baselineListSearch = (await changeSetIntent(page, 'ui.business_config.list_search.audit', { model: EMPTY_MODEL, action_id: EMPTY_ACTION_ID })).body.data;
+  const baselineAnalysis = (await changeSetIntent(page, 'ui.business_config.analysis.audit', { model: EMPTY_MODEL, action_id: EMPTY_ACTION_ID })).body.data;
+  const contractsByView = new Map([
+    ['tree', baselineListSearch.business_config_list_contracts?.find((contract) => contract.name === `${emptyMarker}.tree`)],
+    ['search', baselineListSearch.business_config_search_contracts?.find((contract) => contract.name === `${emptyMarker}.search`)],
+    ...(baselineAnalysis.business_config_analysis_contracts || [])
+      .filter((contract) => contract.name === `${emptyMarker}.${contract.view_type}`)
+      .map((contract) => [contract.view_type, contract]),
+  ]);
+  const emptySet = (await changeSetIntent(page, 'ui.business_config.change_set.open', { name: `${emptyMarker}-empty` })).body.data;
+  for (const target of emptyTargets) {
+    const contract = contractsByView.get(target.view_type);
+    if (!contract?.id) throw new Error(`missing ${target.view_type} baseline contract`);
+    await changeSetIntent(page, 'ui.business_config.change_set.stage', {
+      change_set_token: emptySet.token,
+      ...target,
+      target_key: contract.name,
+      model: EMPTY_MODEL,
+      action_id: EMPTY_ACTION_ID,
+      current_contract_id: contract.id,
+      draft_payload: listSearchAnalysisPayload(target.view_type, true),
+      diff_summary: { summary: `${target.view_type} explicit empty` },
+    });
+  }
+  const emptyValidated = (await changeSetIntent(page, 'ui.business_config.change_set.validate', { change_set_token: emptySet.token })).body.data;
+  const emptyPublished = (await changeSetIntent(page, 'ui.business_config.change_set.publish', { change_set_token: emptySet.token, request_id: `${emptyMarker}-empty-publish` })).body.data;
+  publishedTokens.push(emptySet.token);
+  const versionsBeforeOpen = (await changeSetIntent(page, 'ui.business_config.contract.versions', { model: EMPTY_MODEL, action_id: EMPTY_ACTION_ID, status: 'published' })).body.data;
+  const reopenedListSearch = (await changeSetIntent(page, 'ui.business_config.list_search.audit', { model: EMPTY_MODEL, action_id: EMPTY_ACTION_ID })).body.data;
+  const reopenedAnalysis = (await changeSetIntent(page, 'ui.business_config.analysis.audit', { model: EMPTY_MODEL, action_id: EMPTY_ACTION_ID })).body.data;
+
+  const editorUrl = (extra) => `${BASE_URL}/admin/business-config?db=${encodeURIComponent(DB_NAME)}&root_menu_xmlid=smart_construction_core.menu_sc_root&open_pages=1&model=${encodeURIComponent(EMPTY_MODEL)}&role_key=${encodeURIComponent(ROLE_KEY)}&page_label=${encodeURIComponent('显式空合同验收')}&${extra}`;
+  await page.goto(editorUrl('open_list_search=1'), { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await page.getByRole('heading', { name: '列表与搜索设置' }).waitFor({ timeout: 30000 });
+  const listPanel = page.locator('section.config-editor-panel').filter({ has: page.getByRole('heading', { name: '列表与搜索设置' }) });
+  const listEditorCounts = {};
+  for (const tab of ['列表列', '搜索条件', '默认分组']) {
+    await listPanel.getByRole('button', { name: new RegExp(`^${tab}`) }).click();
+    listEditorCounts[tab] = await listPanel.locator('.field-chip').count();
+  }
+  const listDirty = await listPanel.locator('.edit-dirty').count();
+  const listSuggested = (await page.locator('body').innerText()).includes('建议配置，尚未保存');
+
+  await page.goto(editorUrl('open_analysis=1'), { waitUntil: 'domcontentloaded', timeout: 60000 });
+  await page.getByRole('heading', { name: '分析视图设置' }).waitFor({ timeout: 30000 });
+  const analysisPanel = page.locator('section.config-editor-panel').filter({ has: page.getByRole('heading', { name: '分析视图设置' }) });
+  const analysisEditorCounts = {};
+  for (const tab of ['透视指标', '透视维度', '图表指标', '图表维度']) {
+    await analysisPanel.getByRole('button', { name: new RegExp(`^${tab}`) }).click();
+    analysisEditorCounts[tab] = await analysisPanel.locator('.field-chip').count();
+  }
+  const analysisDirty = await analysisPanel.locator('.edit-dirty').count();
+  const analysisSuggested = (await page.locator('body').innerText()).includes('建议配置，尚未保存');
+  const versionsAfterOpen = (await changeSetIntent(page, 'ui.business_config.contract.versions', { model: EMPTY_MODEL, action_id: EMPTY_ACTION_ID, status: 'published' })).body.data;
+
+  report.journeys['LC-E01-E03'] = {
+    validate_state: emptyValidated.state,
+    publish_state: emptyPublished.state,
+    has_list: reopenedListSearch.has_business_list_config,
+    has_search: reopenedListSearch.has_business_search_config,
+    has_pivot: reopenedAnalysis.has_business_pivot_config,
+    has_graph: reopenedAnalysis.has_business_graph_config,
+    list_editor_counts: listEditorCounts,
+    analysis_editor_counts: analysisEditorCounts,
+    dirty_count: listDirty + analysisDirty,
+    version_count_before_open: versionsBeforeOpen.version_count,
+    version_count_after_open: versionsAfterOpen.version_count,
+  };
+  report.assertions.e01_e03_empty_contracts_reopen_empty = emptyValidated.state === 'ready'
+    && emptyPublished.state === 'published'
+    && reopenedListSearch.has_business_list_config === true
+    && reopenedListSearch.has_business_search_config === true
+    && reopenedAnalysis.has_business_pivot_config === true
+    && reopenedAnalysis.has_business_graph_config === true
+    && [reopenedListSearch.business_config_list_columns, reopenedListSearch.business_config_search_filters, reopenedListSearch.business_config_search_group_by,
+      reopenedAnalysis.pivot_measures, reopenedAnalysis.pivot_dimensions, reopenedAnalysis.graph_measures, reopenedAnalysis.graph_dimensions].every((items) => Array.isArray(items) && items.length === 0)
+    && Object.values(listEditorCounts).every((count) => count === 0)
+    && Object.values(analysisEditorCounts).every((count) => count === 0);
+  report.assertions.e01_e03_reopen_clean_and_read_only = listDirty === 0 && analysisDirty === 0
+    && !listSuggested && !analysisSuggested
+    && versionsBeforeOpen.version_count === versionsAfterOpen.version_count;
+
+  const restored = (await changeSetIntent(page, 'ui.business_config.change_set.rollback', { change_set_token: emptySet.token, request_id: `${emptyMarker}-empty-rollback` })).body.data;
+  publishedTokens.splice(publishedTokens.indexOf(emptySet.token), 1);
+  const restoredListSearch = (await changeSetIntent(page, 'ui.business_config.list_search.audit', { model: EMPTY_MODEL, action_id: EMPTY_ACTION_ID })).body.data;
+  const restoredAnalysis = (await changeSetIntent(page, 'ui.business_config.analysis.audit', { model: EMPTY_MODEL, action_id: EMPTY_ACTION_ID })).body.data;
+  report.journeys['LC-E04'] = {
+    rollback_state: restored.state,
+    list_columns: restoredListSearch.business_config_list_columns,
+    search_filters: restoredListSearch.business_config_search_filters,
+    search_group_by: restoredListSearch.business_config_search_group_by,
+    pivot_measures: restoredAnalysis.pivot_measures,
+    pivot_dimensions: restoredAnalysis.pivot_dimensions,
+    graph_measures: restoredAnalysis.graph_measures,
+    graph_dimensions: restoredAnalysis.graph_dimensions,
+  };
+  report.assertions.e04_rollback_restores_nonempty = restored.state === 'published'
+    && restoredListSearch.business_config_list_columns.length > 0
+    && restoredListSearch.business_config_search_filters.length > 0
+    && restoredListSearch.business_config_search_group_by.length > 0
+    && restoredAnalysis.pivot_measures.length > 0 && restoredAnalysis.pivot_dimensions.length > 0
+    && restoredAnalysis.graph_measures.length > 0 && restoredAnalysis.graph_dimensions.length > 0;
+  report.journeys['LC-E05-E06'] = { evidence: 'backend transaction tests cover stale hash 409 and company/action/role/lifecycle isolation' };
+  report.assertions.e05_e06_backend_evidence_declared = true;
+  await changeSetIntent(page, 'ui.business_config.change_set.rollback', { change_set_token: baselineSet.token, request_id: `${emptyMarker}-baseline-rollback` });
+  publishedTokens.splice(publishedTokens.indexOf(baselineSet.token), 1);
 
   await page.goto(`${BASE_URL}/admin/business-config?db=${encodeURIComponent(DB_NAME)}&root_menu_xmlid=smart_construction_core.menu_sc_root&open_pages=1&model=construction.contract&action_id=${ACTION_ID}&page_label=${encodeURIComponent('合同办理')}`, { waitUntil: 'domcontentloaded', timeout: 60000 });
   await page.waitForTimeout(5000);
@@ -206,8 +348,8 @@ try {
   report.ok = Object.values(report.assertions).every(Boolean);
 } catch (error) {
   report.failure = error instanceof Error ? error.stack || error.message : String(error);
-  if (publishedToken) {
-    try { await changeSetIntent(page, 'ui.business_config.change_set.rollback', { change_set_token: publishedToken, request_id: `emergency-rollback-${Date.now()}` }); } catch { /* report original failure */ }
+  for (const publishedToken of publishedTokens.reverse()) {
+    try { await changeSetIntent(page, 'ui.business_config.change_set.rollback', { change_set_token: publishedToken, request_id: `emergency-rollback-${Date.now()}-${publishedToken.slice(-6)}` }); } catch { /* report original failure */ }
   }
 } finally {
   await browser.close();

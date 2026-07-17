@@ -179,6 +179,8 @@ export interface BusinessConfigAnalysisAuditPayload {
   }>;
   business_config_boundary: 'business_contract' | string;
   user_preference_boundary: 'not_a_source' | string;
+  has_business_pivot_config: boolean;
+  has_business_graph_config: boolean;
   has_business_analysis_config: boolean;
 }
 

@@ -2139,6 +2139,79 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertFalse(data["has_business_list_config"])
         self.assertFalse(data["has_business_search_config"])
 
+    def test_business_config_list_search_audit_preserves_explicit_empty_contracts(self):
+        class Company:
+            id = 7
+
+        class User:
+            groups_id = []
+
+        class PartnerModel:
+            _fields = {"name": object(), "company_id": object()}
+
+            def fields_get(self):
+                return {
+                    "name": {"string": "名称", "type": "char"},
+                    "company_id": {"string": "公司", "type": "many2one"},
+                }
+
+        class Contract:
+            def __init__(self, ident, view_type, spec):
+                self.id = ident
+                self.name = "empty.%s" % view_type
+                self.version_no = 3
+                self.contract_json = {"view_orchestration": {"views": {view_type: spec}}}
+
+        class ContractModel:
+            def __init__(self, search_spec):
+                self.records = {
+                    "tree": [Contract(1, "tree", {"columns": []})],
+                    "search": [Contract(2, "search", search_spec)],
+                }
+
+            def sudo(self):
+                return self
+
+            def _effective_view_orchestration_contracts(self, model, **kwargs):
+                return self.records.get(kwargs.get("view_type"), [])
+
+            def search(self, domain, order=None, limit=None):
+                raise AssertionError("published fallback must not run when an effective contract exists")
+
+        class Env(dict):
+            company = Company()
+            user = User()
+
+        cases = (
+            ({"filters": [], "group_by": [{"field": "company_id"}]}, [], ["company_id"]),
+            ({"filters": [{"field": "name"}], "group_by": []}, ["name"], []),
+            ({"filters": [], "group_by": []}, [], []),
+        )
+        for search_spec, expected_filters, expected_groups in cases:
+            with self.subTest(search_spec=search_spec):
+                env = Env({
+                    "res.partner": PartnerModel(),
+                    "ui.business.config.contract": ContractModel(search_spec),
+                })
+                handler = self.module.BusinessConfigListSearchAuditHandler(
+                    env=env,
+                    params={"model": "res.partner", "action_id": 11, "view_id": 22, "role_key": "config_admin"},
+                )
+                handler._suggested_columns = lambda **kwargs: self.fail("empty list contract must suppress suggestions")
+                handler._suggested_search = lambda **kwargs: self.fail("empty search contract must suppress suggestions")
+
+                data = handler.handle()["data"]
+
+                self.assertTrue(data["contract_authoritative"])
+                self.assertTrue(data["has_business_list_config"])
+                self.assertTrue(data["has_business_search_config"])
+                self.assertEqual(data["business_config_list_columns"], [])
+                self.assertEqual(data["business_config_search_filters"], expected_filters)
+                self.assertEqual(data["business_config_search_group_by"], expected_groups)
+                self.assertEqual(data["suggested_list_columns"], [])
+                self.assertEqual(data["suggested_search_filters"], [])
+                self.assertEqual(data["suggested_search_group_by"], [])
+
     def test_business_config_list_search_set_writes_contracts_not_preferences(self):
         class Company:
             id = 7
@@ -2654,7 +2727,75 @@ class TestFormFieldConfigurationParams(unittest.TestCase):
         self.assertEqual(data["suggested_graph_measures"], ["amount_total"])
         self.assertEqual(data["suggested_graph_dimensions"], ["state"])
         self.assertEqual(data["suggested_graph_type"], "line")
+        self.assertFalse(data["has_business_pivot_config"])
+        self.assertFalse(data["has_business_graph_config"])
         self.assertFalse(data["has_business_analysis_config"])
+
+    def test_business_config_analysis_audit_preserves_explicit_empty_contracts(self):
+        class Company:
+            id = 7
+
+        class User:
+            groups_id = []
+
+        class PartnerModel:
+            _fields = {"amount_total": object(), "company_id": object()}
+
+            def fields_get(self):
+                return {
+                    "amount_total": {"string": "金额", "type": "float"},
+                    "company_id": {"string": "公司", "type": "many2one"},
+                }
+
+        class Contract:
+            def __init__(self, ident, view_type):
+                self.id = ident
+                self.name = "empty.%s" % view_type
+                self.version_no = 4
+                self.contract_json = {"view_orchestration": {"views": {
+                    view_type: {"measures": [], "dimensions": [], "type": "bar"},
+                }}}
+
+        class ContractModel:
+            def __init__(self):
+                self.records = {"pivot": [Contract(1, "pivot")], "graph": [Contract(2, "graph")]}
+
+            def sudo(self):
+                return self
+
+            def _effective_view_orchestration_contracts(self, model, **kwargs):
+                return self.records.get(kwargs.get("view_type"), [])
+
+            def search(self, domain, order=None, limit=None):
+                raise AssertionError("published fallback must not run when an effective contract exists")
+
+        class Env(dict):
+            company = Company()
+            user = User()
+
+        env = Env({
+            "res.partner": PartnerModel(),
+            "ui.business.config.contract": ContractModel(),
+        })
+        handler = self.module.BusinessConfigAnalysisAuditHandler(
+            env=env,
+            params={"model": "res.partner", "action_id": 11, "view_id": 22, "role_key": "config_admin"},
+        )
+        handler._suggested_analysis = lambda **kwargs: self.fail("empty analysis contract must suppress suggestions")
+
+        data = handler.handle()["data"]
+
+        self.assertTrue(data["has_business_pivot_config"])
+        self.assertTrue(data["has_business_graph_config"])
+        self.assertTrue(data["has_business_analysis_config"])
+        self.assertEqual(data["pivot_measures"], [])
+        self.assertEqual(data["pivot_dimensions"], [])
+        self.assertEqual(data["graph_measures"], [])
+        self.assertEqual(data["graph_dimensions"], [])
+        self.assertEqual(data["suggested_pivot_measures"], [])
+        self.assertEqual(data["suggested_pivot_dimensions"], [])
+        self.assertEqual(data["suggested_graph_measures"], [])
+        self.assertEqual(data["suggested_graph_dimensions"], [])
 
     def test_business_config_analysis_bootstrap_derives_from_runtime_view_contracts(self):
         class Company:

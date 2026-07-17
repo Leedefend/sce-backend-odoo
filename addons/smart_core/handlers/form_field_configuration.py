@@ -2212,19 +2212,21 @@ class BusinessConfigListSearchAuditHandler(BaseIntentHandler):
 
         preference_count = self._user_preference_count(model=model, action_id=action_id)
         preference_items = self._user_preference_items(model=model, action_id=action_id)
-        suggested_columns = [] if list_columns else self._suggested_columns(
+        has_list_config = bool(list_contracts)
+        has_search_config = bool(search_contracts)
+        suggested_columns = [] if has_list_config else self._suggested_columns(
             model=model,
             action_id=int(action_id or 0),
             view_id=int(view_id or 0),
         )
         suggested_filters, suggested_group_by = ([], [])
-        if not search_filters and not search_group_by:
+        if not has_search_config:
             suggested_filters, suggested_group_by = self._suggested_search(
                 model=model,
                 action_id=int(action_id or 0),
                 view_id=int(view_id or 0),
             )
-        contract_authoritative = bool(list_items or search_items)
+        contract_authoritative = has_list_config or has_search_config
         has_suggested_defaults = bool(suggested_columns or suggested_filters or suggested_group_by)
         return {
             "ok": True,
@@ -2253,8 +2255,8 @@ class BusinessConfigListSearchAuditHandler(BaseIntentHandler):
                 "user_preference_count": preference_count,
                 "user_preferences": preference_items,
                 "user_preference_boundary": "ui_only",
-                "has_business_list_config": bool(list_columns),
-                "has_business_search_config": bool(search_filters or search_group_by),
+                "has_business_list_config": has_list_config,
+                "has_business_search_config": has_search_config,
             },
             "meta": {"intent": self.INTENT_TYPE, "source_authority": self._source_authority_contract(), "reason_code": REASON_OK},
         }
@@ -2475,6 +2477,7 @@ class BusinessConfigAnalysisAuditHandler(BusinessConfigListSearchAuditHandler):
             contract_model = contract_model.sudo()
         view_types = ["pivot", "graph"]
         configs = {}
+        has_config_by_view = {}
         contract_items = []
         business_fields = self._business_field_name_set(model)
         for view_type in view_types:
@@ -2494,6 +2497,7 @@ class BusinessConfigAnalysisAuditHandler(BusinessConfigListSearchAuditHandler):
                     view_id=int(view_id or 0),
                     role_key=role_key,
                 )
+            has_config_by_view[view_type] = bool(contracts)
             measures = []
             dimensions = []
             chart_type = ""
@@ -2523,14 +2527,14 @@ class BusinessConfigAnalysisAuditHandler(BusinessConfigListSearchAuditHandler):
             }
         suggested_pivot_measures, suggested_pivot_dimensions, suggested_pivot_type = ([], [], "")
         suggested_graph_measures, suggested_graph_dimensions, suggested_graph_type = ([], [], "")
-        if not configs["pivot"]["measures"] and not configs["pivot"]["dimensions"]:
+        if not has_config_by_view["pivot"]:
             suggested_pivot_measures, suggested_pivot_dimensions, suggested_pivot_type = self._suggested_analysis(
                 model=model,
                 view_type="pivot",
                 action_id=int(action_id or 0),
                 view_id=int(view_id or 0),
             )
-        if not configs["graph"]["measures"] and not configs["graph"]["dimensions"]:
+        if not has_config_by_view["graph"]:
             suggested_graph_measures, suggested_graph_dimensions, suggested_graph_type = self._suggested_analysis(
                 model=model,
                 view_type="graph",
@@ -2558,9 +2562,9 @@ class BusinessConfigAnalysisAuditHandler(BusinessConfigListSearchAuditHandler):
                 "available_model_fields": self._available_model_fields(model),
                 "business_config_boundary": "business_contract",
                 "user_preference_boundary": "not_a_source",
-                "has_business_analysis_config": any(
-                    configs[item]["measures"] or configs[item]["dimensions"] for item in view_types
-                ),
+                "has_business_pivot_config": has_config_by_view["pivot"],
+                "has_business_graph_config": has_config_by_view["graph"],
+                "has_business_analysis_config": any(has_config_by_view.values()),
             },
             "meta": {"intent": self.INTENT_TYPE, "source_authority": self._source_authority_contract(), "reason_code": REASON_OK},
         }
