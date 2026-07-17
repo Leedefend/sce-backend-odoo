@@ -16,6 +16,8 @@ type LoadActionContractOptions = {
   sourceMode?: string | null;
   context?: Record<string, unknown> | null;
   contextRaw?: string | null;
+  previewToken?: string | null;
+  previewRoleKey?: string | null;
 };
 
 type LoadModelContractOptions = LoadActionContractOptions & {
@@ -125,6 +127,10 @@ function buildActionContractParams(actionId: number, options?: LoadActionContrac
   if (contextRaw) {
     params.context_raw = contextRaw;
   }
+  const previewToken = String(options?.previewToken || '').trim();
+  if (previewToken) params.preview_token = previewToken;
+  const previewRoleKey = String(options?.previewRoleKey || '').trim();
+  if (previewRoleKey) params.preview_role_key = previewRoleKey;
   return params;
 }
 
@@ -182,6 +188,10 @@ function buildModelContractParams(model: string, options?: LoadModelContractOpti
   if (contextRaw) {
     params.context_raw = contextRaw;
   }
+  const previewToken = String(options?.previewToken || '').trim();
+  if (previewToken) params.preview_token = previewToken;
+  const previewRoleKey = String(options?.previewRoleKey || '').trim();
+  if (previewRoleKey) params.preview_role_key = previewRoleKey;
   return params;
 }
 

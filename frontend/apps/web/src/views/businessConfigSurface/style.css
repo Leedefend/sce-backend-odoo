@@ -1744,3 +1744,15 @@ h1 {
   }
 }
 }
+.business-config-draft-preview { margin-top: 16px; }
+.business-config-draft-preview > header,
+.preview-item > header { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.preview-devices { display: flex; flex-wrap: wrap; gap: 8px; margin-block: 12px; }
+.preview-canvas { width: 100%; margin-inline: auto; display: grid; gap: 12px; }
+.preview-canvas--tablet { max-width: 768px; }
+.preview-canvas--mobile { max-width: 390px; }
+.preview-item { padding: 16px; border: 1px solid var(--sc-app-border); border-radius: 8px; }
+.preview-item dl { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.preview-item dt { color: var(--sc-app-text-secondary); }
+.preview-item dd { margin: 0; color: var(--sc-app-text-primary); }
+@media (max-width: 640px) { .preview-item dl { grid-template-columns: 1fr; } }

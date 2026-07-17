@@ -1,5 +1,6 @@
 import type { Ref } from 'vue';
 import { intentRequest } from '../../api/intents';
+import { stageBusinessConfigChangeSetItem } from '../../api/businessConfig';
 import {
   BUSINESS_CONFIG_ACTION_KEYS,
   BUSINESS_CONFIG_INTENTS,
@@ -13,6 +14,7 @@ import {
 } from './formConfigHelpers';
 import { applyFormRuntimeBusyEvent, applyFormRuntimeStatusEvent } from './runtimeStateApplier';
 import type { BusyKind, FormConfigAuditResult, LowCodeFieldSize, UiStatus } from './types';
+import { saveStandaloneFormConfig } from './saveStandaloneFormConfig';
 
 type LowCodeColumns = 1 | 2 | 3;
 
@@ -53,6 +55,7 @@ export function useFormConfigSaveRuntime(params: {
   lowCodePrecheckWarnings: Ref<string[]>;
   markPendingOperations: (status: 'saved' | 'reverted') => void;
   modelName: () => string;
+  changeSetToken: () => string;
   reload: () => Promise<void>;
   status: Ref<UiStatus>;
 }) {
@@ -97,7 +100,8 @@ export function useFormConfigSaveRuntime(params: {
       busyKind: 'action',
     });
     try {
-      if (hasFieldApplyParams) {
+      const changeSetToken = params.changeSetToken();
+      if (hasFieldApplyParams && !changeSetToken) {
         await intentRequest({
           intent: BUSINESS_CONFIG_INTENTS.lowCodeApply,
           params: applyParams,
@@ -105,21 +109,25 @@ export function useFormConfigSaveRuntime(params: {
         });
       }
       const modelName = String(params.modelName() || '');
-      const saveResult = await intentRequest<{
-        precheck?: { warnings?: string[]; errors?: string[] }
-      }>({
-        intent: BUSINESS_CONFIG_INTENTS.contractSave,
-        params: {
-          ...baseParams,
-          name: lowCodeScopedContractName(modelName || 'unknown', baseParams),
+      const contractName = lowCodeScopedContractName(modelName || 'unknown', baseParams);
+      const contractPayload = {
+        view_orchestration: params.buildLowCodeViewOrchestration(),
+      };
+      const saveResult = changeSetToken
+        ? await stageBusinessConfigChangeSetItem({
+          change_set_token: changeSetToken,
+          config_type: 'form',
+          target_key: contractName,
+          contract_name: contractName,
           model: modelName,
           view_type: 'form',
-          publish: true,
-          contract_json: {
-            view_orchestration: params.buildLowCodeViewOrchestration(),
-          },
-        },
-      });
+          action_id: Number(baseParams.action_id || 0) || undefined,
+          view_id: Number(baseParams.view_id || 0) || undefined,
+          role_key: String(baseParams.role_key || '') || undefined,
+          draft_payload: contractPayload,
+          diff_summary: { summary: saveOperationSummary },
+        })
+        : await saveStandaloneFormConfig({ baseParams, name: contractName, model: modelName, contractPayload });
       const warnings = Array.isArray(saveResult?.precheck?.warnings) ? saveResult.precheck?.warnings || [] : [];
       params.lowCodePrecheckWarnings.value = warnings.map((item) => String(item || '').trim()).filter(Boolean);
       if (Object.keys(changedVisibility).length) {
@@ -151,11 +159,15 @@ export function useFormConfigSaveRuntime(params: {
       params.fieldVisibilityDirty.value = false;
       params.lowCodeContractLoaded.value = false;
       params.formConfigAuditResult.value = null;
-      params.contractModeFeedback.value = '表单设置已保存并发布，刷新页面后按新配置生效';
+      params.contractModeFeedback.value = changeSetToken
+        ? '表单设置已加入待发布变更，可返回工作台检查和预览'
+        : '表单设置已保存并发布，刷新页面后按新配置生效';
       params.markPendingOperations('saved');
-      params.appendOperation('保存发布', saveOperationSummary, 'done');
-      await params.reload();
-      await params.hydrateLowCodeDraftFromContract();
+      params.appendOperation(changeSetToken ? '加入待发布变更' : '保存发布', saveOperationSummary, 'done');
+      if (!changeSetToken) {
+        await params.reload();
+        await params.hydrateLowCodeDraftFromContract();
+      }
       return true;
     } catch (err) {
       applyFormRuntimeStatusEvent(params, {

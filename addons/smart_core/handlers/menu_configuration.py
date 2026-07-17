@@ -1529,6 +1529,7 @@ class MenuConfigurationAuditHandler(MenuConfigurationLoadHandler):
         runtime_state = self._runtime_navigation_state(runtime_configured_by_menu, applicable_rows)
         summary = {
             "runtime_source": runtime_source,
+            **runtime_model._source_display(runtime_source),
             "configured_policy_count": len(policy_rows),
             "policy_table_count": len(policy_rows),
             "runtime_policy_count": len(applicable_by_menu),

@@ -1,12 +1,15 @@
 # -*- coding: utf-8 -*-
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 from odoo import api, fields, models
 from odoo.exceptions import ValidationError
 from odoo.addons.smart_core.utils.backend_contract_boundaries import (
     classify_view_orchestration_contract,
     view_orchestration_apply_order_key,
 )
+from odoo.addons.smart_core.utils.business_config_mutation_audit import record_business_config_mutation
 
 FORMAL_LIST_ACTION_IDS = {
     506, 525, 529, 530, 531, 545, 549, 565, 566, 615,
@@ -55,6 +58,21 @@ class UIBusinessConfigContract(models.Model):
     _sql_constraints = [
         ("name_company_unique", "unique(name, company_id)", "同公司下业务配置名称必须唯一。"),
     ]
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        record_business_config_mutation(records, "create", vals_list)
+        return records
+
+    def write(self, vals):
+        result = super().write(vals)
+        record_business_config_mutation(self, "write", vals)
+        return result
+
+    def unlink(self):
+        record_business_config_mutation(self, "unlink")
+        return super().unlink()
 
     def _normalize_view_orchestration_view_type(self, view_type: str | None) -> str:
         normalized = str(view_type or "").strip()
@@ -380,7 +398,44 @@ class UIBusinessConfigContract(models.Model):
 
         effective = [contract for contract in records if applies(contract)]
 
+        preview_token = str(self.env.context.get("business_config_preview_token") or "").strip()
+        preview_user_id = int(self.env.context.get("business_config_preview_user_id") or 0)
+        if preview_token and preview_user_id and "ui.business.config.change.set" in self.env:
+            change_set = self.env["ui.business.config.change.set"].sudo().search([
+                ("preview_token", "=", preview_token),
+                ("user_id", "=", preview_user_id),
+                ("company_id", "=", self.env.company.id),
+                ("database_name", "=", self.env.cr.dbname),
+                ("state", "=", "ready"),
+                ("preview_expires_at", ">", fields.Datetime.now()),
+            ], limit=1)
+            if change_set:
+                requested_role = str(self.env.context.get("business_config_preview_role_key") or "").strip()
+                if requested_role == str(change_set.role_key or "").strip():
+                    for item in change_set.item_ids.filtered(lambda row: row.config_type != "menu"):
+                        item_view_type = self._normalize_view_orchestration_view_type(item.view_type)
+                        if item.model != model_name or (item_view_type and item_view_type != normalized_view_type):
+                            continue
+                        if item.action_id and int(item.action_id) != int(action_id or 0):
+                            continue
+                        if item.view_id and int(item.view_id) != int(view_id or 0):
+                            continue
+                        effective = [contract for contract in effective if contract.id != item.target_contract_id.id]
+                        effective.append(SimpleNamespace(
+                            id=0,
+                            name="preview:%s" % item.target_key,
+                            contract_json=item.draft_payload or {},
+                            view_type=item.view_type or False,
+                            action_id=SimpleNamespace(id=int(item.action_id or 0)),
+                            view_id=SimpleNamespace(id=int(item.view_id or 0)),
+                            role_key=item.role_key or False,
+                            priority=1_000_000,
+                            version_no=int(item.base_version_no or 0) + 1,
+                        ))
+
         effective = sorted(effective, key=view_orchestration_apply_order_key)
+        if preview_token:
+            return effective
         return self.browse([contract.id for contract in effective])
 
     @api.model
@@ -423,3 +478,13 @@ class UIBusinessConfigContractVersion(models.Model):
     status = fields.Selection([("draft", "Draft"), ("published", "Published")], default="draft", required=True)
     snapshot_json = fields.Json(required=True, default=dict)
     created_by = fields.Many2one("res.users", default=lambda self: self.env.user, readonly=True)
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        record_business_config_mutation(records, "create", vals_list)
+        return records
+
+    def unlink(self):
+        record_business_config_mutation(self, "unlink")
+        return super().unlink()

@@ -111,6 +111,7 @@ async function openDirectSelectedWorkbench(page) {
   await page.goto(configWorkbenchUrl({
     model: CONFIG_MODEL,
     action_id: String(CONFIG_ACTION_ID),
+    menu_id: String(CONFIG_MENU_ID),
     page_label: CONFIG_PAGE_LABEL,
   }), { waitUntil: "domcontentloaded", timeout: 60000 });
   await page.waitForSelector('[data-lowcode-workbench-ia="three-column"] .config-type-tabs', { timeout: 60000 });

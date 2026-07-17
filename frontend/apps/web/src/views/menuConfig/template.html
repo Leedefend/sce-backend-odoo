@@ -1,0 +1,691 @@
+  <section
+    v-if="pageSectionsReady"
+    class="menu-config-page sc-page"
+    :style="pageSectionStyle('root')"
+    :data-contract-sections="pageSectionsFingerprint"
+    data-product-page-mode="admin"
+  >
+    <header class="menu-config-header sc-product-page-header">
+      <div>
+        <p class="eyebrow">{{ companyLabel }}</p>
+        <h1>菜单配置</h1>
+      </div>
+      <div class="header-actions">
+        <span v-if="dirtyCount" class="dirty-count">{{ dirtyCount }} 项未保存</span>
+        <ScButton
+          v-for="action in pageGlobalActions"
+          :key="action.key"
+          type="button"
+          class="ghost"
+          :disabled="action.disabled"
+          @click="executeGlobalPageAction(action.key)"
+        >
+          {{ action.label }}
+        </ScButton>
+        <ScButton v-if="canReturnToBusinessConfig" type="button" class="ghost" @click="returnToBusinessConfig">
+          返回配置工作台
+        </ScButton>
+        <ScButton type="button" class="ghost" :disabled="loading || saving" @click="loadPanel()">刷新菜单配置</ScButton>
+        <ScButton type="button" class="ghost" :disabled="loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('custom')">
+          新增一级菜单
+        </ScButton>
+        <ScButton type="button" class="primary" :disabled="!dirtyCount || saving" @click="requestSaveChanges">
+          {{ saving ? '保存中...' : '保存菜单配置' }}
+        </ScButton>
+      </div>
+    </header>
+
+    <section v-if="showGuide" class="guide-panel">
+      <div>
+        <h2>配置口径</h2>
+        <p>这里只配置当前业务办理范围内的菜单；已隐藏但可重新开放的系统菜单也会进入配置范围。</p>
+      </div>
+      <div class="guide-grid">
+        <article>
+          <strong>菜单名称</strong>
+          <span>填写后覆盖导航显示名；留空则使用默认名称。</span>
+        </article>
+        <article>
+          <strong>排序号</strong>
+          <span>优先在左侧树拖动同级菜单排序；需要精确控制时再填写数字。</span>
+        </article>
+        <article>
+          <strong>移动到上级</strong>
+          <span>可在当前菜单面板选择新的上级菜单，也可在左侧树拖到目标分组；不能移动到自己或自己的下级。</span>
+        </article>
+        <article>
+          <strong>显示</strong>
+          <span>关闭“显示”会对适用范围隐藏菜单；重新勾选后恢复显示。</span>
+        </article>
+        <article>
+          <strong>可见业务角色</strong>
+          <span>留空表示所有业务角色可见；按业务域筛选后，可勾选需要保留菜单的角色。</span>
+        </article>
+        <article>
+          <strong>保存生效</strong>
+          <span>保存后刷新页面或重新进入系统，导航会按新配置展示。</span>
+        </article>
+      </div>
+    </section>
+
+    <div v-if="error" class="status error">{{ error }}</div>
+    <div v-else-if="statusMessage" class="status ok">{{ statusMessage }}</div>
+    <section v-if="auditSummary" class="audit-panel" :class="{ 'audit-panel--warning': auditSummary.notApplicableCount > 0 }">
+      <strong>菜单配置生效检查</strong>
+      <span>
+        配置 {{ auditSummary.configuredCount }} 项，当前用户命中 {{ auditSummary.applicableCount }} 项；
+        配置隐藏 {{ auditSummary.hiddenCount }}，当前显示 {{ auditSummary.runtimeVisibleCount }}，承载显示 {{ auditSummary.runtimeCarrierCount }}；
+        改名 {{ auditSummary.renamedCount }}，移动 {{ auditSummary.movedCount }}，排序 {{ auditSummary.reorderedCount }}。
+      </span>
+      <span v-if="auditSummary.notApplicableCount">
+        {{ auditSummary.notApplicableCount }} 项因业务角色范围未命中当前用户。
+      </span>
+      <span>运行来源：{{ auditSummary.runtimeSourceLabel }}</span>
+    </section>
+    <section v-if="versionPanelOpen" class="version-panel">
+      <div class="version-panel-header">
+        <div>
+          <strong>版本与回滚</strong>
+          <span>每次保存菜单配置都会生成一个已发布版本；回滚会把菜单配置恢复到选中的历史版本。</span>
+        </div>
+        <span v-if="versionState?.contract">当前发布版本 {{ versionState.contract.version_no }}</span>
+        <span v-else>保存后生成版本</span>
+      </div>
+      <div v-if="versionState?.contract" class="version-current-card">
+        <span class="panel-kicker">当前生效</span>
+        <strong>版本 {{ versionState.contract.version_no }}</strong>
+        <span>
+          当前配置 {{ versionState.contract.summary.policy_count }} 项，
+          隐藏 {{ versionState.contract.summary.hidden_count }}，改名 {{ versionState.contract.summary.renamed_count }}，
+          移动 {{ versionState.contract.summary.moved_count }}，排序 {{ versionState.contract.summary.reordered_count }}。
+        </span>
+      </div>
+      <div v-if="versionState?.versions.length" class="version-list">
+        <label
+          v-for="version in versionState.versions"
+          :key="version.id"
+          class="version-item"
+          :class="{ selected: selectedVersionNo === version.version_no, current: version.version_no === versionState?.contract?.version_no }"
+        >
+          <input v-model.number="selectedVersionNo" type="radio" :value="version.version_no" />
+          <span class="version-title">
+            版本 {{ version.version_no }}
+            <b v-if="version.version_no === versionState?.contract?.version_no">当前</b>
+          </span>
+          <span class="version-meta">配置 {{ version.summary.policy_count }} 项</span>
+          <span class="version-meta">隐藏 {{ version.summary.hidden_count }}，改名 {{ version.summary.renamed_count }}</span>
+          <span class="version-meta">移动 {{ version.summary.moved_count }}，排序 {{ version.summary.reordered_count }}</span>
+        </label>
+      </div>
+      <div v-if="selectedRollbackVersion" class="version-preview">
+        <span class="panel-kicker">准备回滚</span>
+        <strong>将恢复到版本 {{ selectedRollbackVersion.version_no }}</strong>
+        <span>
+          回滚后会恢复该版本的显示、隐藏、名称、位置、排序和角色范围；当前未保存修改不会包含在回滚版本中。
+        </span>
+        <span>
+          目标版本包含 {{ selectedRollbackVersion.summary.policy_count }} 项配置，
+          隐藏 {{ selectedRollbackVersion.summary.hidden_count }}，移动 {{ selectedRollbackVersion.summary.moved_count }}。
+        </span>
+        <ScButton type="button" class="danger" :disabled="rollbackButtonDisabled" @click="requestRollbackMenuConfiguration">
+          {{ rollingBack ? '回滚中...' : rollbackButtonText }}
+        </ScButton>
+      </div>
+      <div v-else class="version-empty">
+        保存菜单配置后会自动生成已发布版本；没有历史版本时，当前菜单配置不能回滚。
+      </div>
+    </section>
+    <section v-if="createPanelOpen" class="create-panel">
+      <div class="create-panel-header">
+        <strong>新增菜单入口</strong>
+        <div class="create-shortcuts">
+          <ScButton type="button" class="link-button" :disabled="!selectedMenu" @click="openCreateMenu('sibling')">新增同级菜单</ScButton>
+          <ScButton type="button" class="link-button" :disabled="!selectedMenu" @click="openCreateMenu('child')">新增下级菜单</ScButton>
+          <ScButton type="button" class="link-button" :disabled="!selectedMenu" @click="openCreateMenu('copy')">复制当前菜单入口</ScButton>
+          <ScButton type="button" class="link-button" @click="createPanelOpen = false">收起新增入口</ScButton>
+        </div>
+      </div>
+      <div class="create-form">
+        <label>
+          <span>菜单名称</span>
+          <input v-model="createForm.name" class="cell-input" type="text" placeholder="输入业务菜单名称" />
+        </label>
+        <label>
+          <span>上级菜单</span>
+          <select v-model.number="createForm.parent_menu_id" class="cell-input">
+            <option v-if="!createParentOptions.length" :value="0" disabled>暂无可选业务父级</option>
+            <option v-for="target in createParentOptions" :key="target.id" :value="target.id">
+              {{ parentOptionLabel(target) }}
+            </option>
+          </select>
+        </label>
+        <label>
+          <span>复制已有入口</span>
+          <select v-model.number="createForm.source_menu_id" class="cell-input">
+            <option :value="0">只创建分组菜单</option>
+            <option v-for="source in copySourceOptions" :key="source.id" :value="source.id">
+              {{ menuPathLabel(source) }}
+            </option>
+          </select>
+        </label>
+        <label>
+          <span>排序号</span>
+          <input v-model.number="createForm.sequence" class="cell-input" type="number" placeholder="自动" />
+        </label>
+        <label class="create-check">
+          <input v-model="createForm.visible" type="checkbox" />
+          <span>创建后显示</span>
+        </label>
+        <label>
+          <span>备注</span>
+          <input v-model="createForm.note" class="cell-input" type="text" placeholder="可选" />
+        </label>
+      </div>
+      <div class="create-panel-footer">
+        <span>复制入口会沿用已有菜单打开的页面；长期固定入口需沉淀到用户模块。</span>
+        <ScButton type="button" class="primary" :disabled="creatingMenu || !createForm.name.trim()" @click="createMenuEntry">
+          {{ creatingMenu ? '创建中...' : '创建菜单' }}
+        </ScButton>
+      </div>
+    </section>
+
+    <div class="menu-config-workspace sc-product-workspace sc-product-main-surface sc-lowcode-workspace">
+      <aside class="menu-config-tree">
+        <div class="tree-panel-head">
+          <div>
+            <span class="panel-kicker">菜单目录</span>
+            <strong>{{ treeCountLabel }}</strong>
+          </div>
+          <span class="tree-panel-hint">
+            {{ treeDragEnabled ? '直接拖拽排序' : '搜索时暂停拖拽' }}
+            <b v-if="deletableMenuCount">可删除 {{ deletableMenuCount }}</b>
+          </span>
+        </div>
+        <div class="tree-search">
+          <input v-model="searchText" type="search" placeholder="搜索菜单名称或路径" />
+          <div class="tree-search-summary">
+            <span>{{ treeSearchSummary }}</span>
+            <ScButton
+              type="button"
+              class="link-button tree-clear-filter"
+              :disabled="!treeViewFiltered"
+              @click="clearTreeFilter"
+            >
+              清空筛选
+            </ScButton>
+          </div>
+        </div>
+        <div class="tree-state-tabs" aria-label="菜单状态筛选">
+          <ScButton
+            v-for="option in menuStateFilterOptions"
+            :key="option.value"
+            type="button"
+            :class="{ active: menuStateFilter === option.value }"
+            @click="menuStateFilter = option.value"
+          >
+            <span>{{ option.label }}</span>
+            <b>{{ option.count }}</b>
+          </ScButton>
+        </div>
+        <div class="tree-shortcuts">
+          <ScButton
+            type="button"
+            class="tree-node all"
+            :class="{ active: selectedMenuId === 0 }"
+            @click="selectMenu(0)"
+          >
+            全部菜单
+          </ScButton>
+        </div>
+        <div class="tree-scroll">
+          <MenuConfigTree
+            :nodes="visibleTree"
+            :selected-menu-id="selectedMenuId"
+            :drag-source-menu-id="dragSourceMenuId"
+            :drag-target-menu-id="dragTargetMenuId"
+            :drag-drop-position="dragDropPosition"
+            :drag-enabled="treeDragEnabled"
+            :search-active="treeViewFiltered"
+            :collapsed-menu-ids="collapsedMenuIds"
+            @select="selectMenu"
+            @drag-start="startTreeDrag"
+            @drag-over="updateTreeDragTarget"
+            @drop="applyTreeDrop"
+            @reorder="applyTreeReorder"
+            @drag-end="clearTreeDrag"
+            @order-move="moveTreeNodeOrder"
+            @toggle-collapse="toggleTreeNodeCollapse"
+          />
+        </div>
+      </aside>
+
+      <main class="menu-config-editor">
+        <section v-if="selectedMenu" class="menu-selected-panel menu-primary-panel" aria-label="当前菜单配置">
+          <div class="menu-selected-head">
+            <div>
+              <span class="panel-kicker">当前菜单</span>
+              <h2>{{ menuDisplayLabel(selectedMenu) }}</h2>
+              <p>{{ menuPathLabel(selectedMenu) }}</p>
+            </div>
+            <div class="menu-selected-badges">
+              <span
+                class="menu-origin-badge"
+                :class="menuHandlingStateClass(selectedMenu)"
+              >
+                {{ menuHandlingStateLabel(selectedMenu) }}
+              </span>
+              <span v-if="isUserCreatedMenu(selectedMenu)" class="menu-origin-badge deletable">用户新增，可删除</span>
+              <span v-else class="menu-origin-badge locked">系统菜单，可隐藏</span>
+              <span v-if="isDirty(selectedMenu.id)" class="dirty-count">待保存</span>
+            </div>
+          </div>
+          <div class="menu-detail-section">
+            <div class="menu-detail-section-head">
+              <strong>基础信息</strong>
+            </div>
+            <div class="menu-detail-grid menu-detail-grid--basic">
+              <label>
+                <span>显示名称</span>
+                <input
+                  class="cell-input"
+                  :value="selectedDraft.custom_label"
+                  :placeholder="selectedMenu.name"
+                  @input="updateDraft(selectedMenu.id, { custom_label: inputValue($event) })"
+                />
+              </label>
+              <label>
+                <span>备注</span>
+                <input
+                  class="cell-input"
+                  :value="displayNoteValue(selectedDraft.note)"
+                  placeholder="可选"
+                  @input="updateDraft(selectedMenu.id, { note: inputValue($event) })"
+                />
+              </label>
+            </div>
+          </div>
+          <div class="menu-detail-section">
+            <div class="menu-detail-section-head">
+              <strong>位置与显示</strong>
+            </div>
+            <div class="menu-detail-grid menu-detail-grid--placement">
+              <label>
+                <span>移动到上级</span>
+                <select
+                  class="cell-input"
+                  :value="selectedDraft.target_parent_menu_id || 0"
+                  @change="updateDraft(selectedMenu.id, { target_parent_menu_id: numericValue($event) })"
+                >
+                  <option :value="0">不移动</option>
+                  <option
+                    v-for="target in parentOptions(selectedMenu.id)"
+                    :key="target.id"
+                    :value="target.id"
+                  >
+                    {{ parentOptionLabel(target) }}
+                  </option>
+                </select>
+              </label>
+              <label>
+                <span>排序号</span>
+                <input
+                  class="cell-input"
+                  type="number"
+                  :value="selectedDraft.sequence_override || ''"
+                  :placeholder="String(selectedMenu.sequence || 0)"
+                  @input="updateDraft(selectedMenu.id, { sequence_override: numericValue($event) })"
+                />
+              </label>
+              <label class="menu-visible-toggle">
+                <input
+                  type="checkbox"
+                  :checked="selectedDraft.visible"
+                  @change="updateDraft(selectedMenu.id, { visible: checkedValue($event) })"
+                />
+                <span>显示菜单</span>
+              </label>
+            </div>
+          </div>
+          <div class="menu-role-panel menu-detail-section">
+            <div class="menu-role-head">
+              <strong>可见业务角色</strong>
+              <span>{{ roleScopeSummary(selectedMenu.id) }}</span>
+            </div>
+            <div v-if="selectedDraft.role_group_ids.length" class="group-chip-list">
+              <span
+                v-for="groupId in selectedDraft.role_group_ids"
+                :key="`selected-${selectedMenu.id}-${groupId}`"
+                class="group-chip"
+                :title="roleGroupName(groupId)"
+              >
+                {{ roleGroupName(groupId) }}
+                <ScButton type="button" title="移除业务角色" @click="removeRoleGroup(selectedMenu.id, groupId)">移除</ScButton>
+              </span>
+            </div>
+            <select
+              class="cell-input group-domain-select"
+              :value="roleGroupDomainForMenu(selectedMenu.id)"
+              @change="setRoleGroupDomain(selectedMenu.id, inputValue($event))"
+            >
+              <option v-for="domain in roleGroupDomainOptions" :key="domain" :value="domain">
+                {{ domain }}
+              </option>
+            </select>
+            <div class="group-check-list menu-role-check-list">
+              <label
+                v-for="group in scopedRoleGroupOptions(selectedMenu.id)"
+                :key="`selected-${selectedMenu.id}-scope-${group.id}`"
+                class="group-check-item"
+                :title="group.display_name"
+              >
+                <input
+                  type="checkbox"
+                  :checked="isRoleGroupSelected(selectedMenu.id, group.id)"
+                  @change="toggleRoleGroup(selectedMenu.id, group.id, checkedValue($event))"
+                />
+                <span>{{ group.display_name }}</span>
+              </label>
+            </div>
+            <div class="group-scope-actions">
+              <span class="group-scope-count">{{ scopedRoleGroupSelectionText(selectedMenu.id) }}</span>
+              <ScButton
+                type="button"
+                class="link-button"
+                :disabled="!scopedUnselectedRoleGroupCount(selectedMenu.id)"
+                @click="selectScopedRoleGroups(selectedMenu.id)"
+              >
+                勾选当前分组
+              </ScButton>
+              <ScButton
+                type="button"
+                class="link-button"
+                :disabled="!scopedSelectedRoleGroupCount(selectedMenu.id)"
+                @click="clearScopedRoleGroups(selectedMenu.id)"
+              >
+                清空当前分组
+              </ScButton>
+              <ScButton
+                v-if="selectedDraft.role_group_ids.length"
+                type="button"
+                class="link-button"
+                @click="clearRoleGroups(selectedMenu.id)"
+              >
+                恢复所有角色可见
+              </ScButton>
+            </div>
+          </div>
+        </section>
+        <section v-else class="menu-selected-panel menu-primary-panel menu-selected-panel--empty" aria-label="菜单配置概览">
+          <div>
+            <span class="panel-kicker">菜单配置</span>
+            <h2>全部菜单</h2>
+            <p>从左侧选择一个菜单后，在这里调整名称、父级、显示范围和业务角色。</p>
+          </div>
+        </section>
+
+        <aside class="menu-side-panel" aria-label="菜单配置摘要">
+          <div class="menu-side-panel-head">
+            <span class="panel-kicker">配置摘要</span>
+            <strong>{{ selectedMenu ? menuDisplayLabel(selectedMenu) : '全部菜单' }}</strong>
+          </div>
+          <div class="menu-side-section menu-side-summary">
+            <div class="menu-state-list">
+              <span>
+                <b>{{ selectedMenu && isDirty(selectedMenu.id) ? '待保存' : '已同步' }}</b>
+                当前菜单
+              </span>
+              <span>
+                <b>{{ dirtyCount }}</b>
+                未保存菜单
+              </span>
+              <span>
+                <b>{{ selectedMenu ? selectedDraft.role_group_ids.length : 0 }}</b>
+                限定角色
+              </span>
+            </div>
+          </div>
+          <div class="menu-side-section menu-side-action-group">
+            <span class="menu-side-section-title">新增入口</span>
+            <ScButton type="button" class="ghost" :disabled="!selectedMenu || loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('sibling')">新增同级菜单</ScButton>
+            <ScButton type="button" class="ghost" :disabled="!selectedMenu || loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('child')">新增下级菜单</ScButton>
+            <ScButton type="button" class="ghost" :disabled="!selectedMenu || loading || saving || creatingMenu || deletingMenu" @click="openCreateMenu('copy')">复制当前菜单入口</ScButton>
+            <ScButton
+              type="button"
+              class="ghost danger-ghost"
+              :disabled="!canDeleteSelectedMenu || loading || saving || creatingMenu || deletingMenu"
+              :title="selectedMenuDeleteHint"
+              @click="deleteSelectedMenu"
+            >
+              {{ deletingMenu ? '删除中...' : '删除新增菜单' }}
+            </ScButton>
+            <p class="action-hint">{{ selectedMenuDeleteHint }}</p>
+          </div>
+          <div class="menu-side-section menu-side-action-group">
+            <span class="menu-side-section-title">批量维护</span>
+            <p>用于连续维护多条菜单；日常配置优先使用当前菜单面板。</p>
+            <ScButton type="button" class="ghost" @click="bulkPanelOpen = !bulkPanelOpen">
+              {{ bulkPanelOpen ? '收起批量维护表格' : '展开批量维护表格' }}
+            </ScButton>
+          </div>
+          <div class="menu-side-section menu-side-action-group menu-utility-section">
+            <span class="menu-side-section-title">检查发布</span>
+            <ScButton type="button" class="ghost" @click="showGuide = !showGuide">
+              {{ showGuide ? '收起菜单配置说明' : '查看菜单配置说明' }}
+            </ScButton>
+            <ScButton type="button" class="ghost" :disabled="loading || auditing || saving" @click="auditMenuConfiguration">
+              {{ auditing ? '检查中...' : '检查菜单生效' }}
+            </ScButton>
+            <ScButton type="button" class="ghost" :disabled="loading || versionLoading || saving" @click="toggleVersionPanel">
+              {{ versionPanelOpen ? '收起菜单版本与回滚' : (versionLoading ? '加载中...' : '查看菜单版本与回滚') }}
+            </ScButton>
+          </div>
+        </aside>
+
+        <section class="menu-bulk-panel" aria-label="批量菜单配置">
+          <div class="table-toolbar">
+            <div class="bulk-toolbar-title">
+              <span class="panel-kicker">批量维护</span>
+              <strong>{{ filteredRows.length }} 条菜单</strong>
+              <span>用于连续校对名称、显示范围和可见角色</span>
+            </div>
+            <div class="table-toolbar-actions">
+              <span class="bulk-stat">未保存 {{ dirtyCount }}</span>
+              <label class="toggle-filter">
+                <input v-model="onlyConfigured" type="checkbox" />
+                只看已配置
+              </label>
+              <ScButton type="button" class="ghost" @click="bulkPanelOpen = !bulkPanelOpen">
+                {{ bulkPanelOpen ? '收起批量维护表格' : '展开批量维护表格' }}
+              </ScButton>
+            </div>
+          </div>
+
+          <div v-if="loading" class="loading-state">正在加载菜单配置...</div>
+          <div v-else-if="!bulkPanelOpen" class="bulk-collapsed-state">
+            <span>批量维护已收起，日常调整建议使用当前菜单主编辑区。</span>
+            <ScButton type="button" class="link-button" @click="bulkPanelOpen = true">展开批量维护表格</ScButton>
+          </div>
+          <div v-else class="table-wrap">
+            <table>
+            <colgroup>
+              <col class="index-col" />
+              <col class="name-col" />
+              <col class="default-col" />
+              <col class="status-col" />
+              <col class="parent-col" />
+              <col class="level-col" />
+              <col class="sequence-col" />
+              <col class="move-col" />
+              <col class="check-col" />
+              <col class="groups-col" />
+              <col class="note-col" />
+            </colgroup>
+            <thead>
+              <tr>
+                <th class="index-col">#</th>
+                <th>显示名称</th>
+                <th>默认名称</th>
+                <th>来源</th>
+                <th>当前父级</th>
+                <th class="level-col">级别</th>
+                <th class="sequence-col">顺序</th>
+                <th>移动到上级</th>
+                <th class="check-col">显示</th>
+                <th>可见业务角色</th>
+                <th>备注</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="(row, index) in filteredRows"
+                :key="row.menu.id"
+                :class="{ selected: row.menu.id === selectedMenuId, dirty: isDirty(row.menu.id) }"
+              >
+                <td class="index-col">{{ index + 1 }}</td>
+                <td>
+                  <input
+                    class="cell-input name-input"
+                    :value="draftFor(row.menu.id).custom_label"
+                    :placeholder="menuDisplayLabel(row.menu)"
+                    @input="updateDraft(row.menu.id, { custom_label: inputValue($event) })"
+                  />
+                </td>
+                <td><span class="muted">{{ menuDisplayLabel(row.menu) }}</span></td>
+                <td class="status-col">
+                  <span
+                    class="menu-origin-badge"
+                    :class="isUserCreatedMenu(row.menu) ? 'deletable' : 'locked'"
+                  >
+                    {{ isUserCreatedMenu(row.menu) ? '可删除' : '系统' }}
+                  </span>
+                </td>
+                <td><span class="muted">{{ menuParentLabel(row.menu) }}</span></td>
+                <td class="level-col">{{ row.level }}</td>
+                <td class="sequence-col">
+                  <input
+                    class="cell-input number-input"
+                    type="number"
+                    :value="draftFor(row.menu.id).sequence_override || ''"
+                    :placeholder="String(row.menu.sequence || 0)"
+                    title="可直接在左侧树拖动同级菜单排序，也可在这里输入精确顺序"
+                    @input="updateDraft(row.menu.id, { sequence_override: numericValue($event) })"
+                  />
+                </td>
+                <td>
+                  <select
+                    class="cell-input"
+                    :value="draftFor(row.menu.id).target_parent_menu_id || 0"
+                    @change="updateDraft(row.menu.id, { target_parent_menu_id: numericValue($event) })"
+                  >
+                    <option :value="0">不移动</option>
+                    <option
+                      v-for="target in parentOptions(row.menu.id)"
+                      :key="target.id"
+                      :value="target.id"
+                    >
+                      {{ parentOptionLabel(target) }}
+                    </option>
+                  </select>
+                </td>
+                <td class="check-col">
+                  <input
+                    type="checkbox"
+                    :checked="draftFor(row.menu.id).visible"
+                    @change="updateDraft(row.menu.id, { visible: checkedValue($event) })"
+                  />
+                </td>
+                <td>
+                  <div class="group-cell">
+                    <div v-if="draftFor(row.menu.id).role_group_ids.length" class="group-chip-list">
+                      <span
+                        v-for="groupId in draftFor(row.menu.id).role_group_ids"
+                        :key="`${row.menu.id}-${groupId}`"
+                        class="group-chip"
+                        :title="roleGroupName(groupId)"
+                      >
+                        {{ roleGroupName(groupId) }}
+                        <ScButton type="button" title="移除业务角色" @click="removeRoleGroup(row.menu.id, groupId)">移除</ScButton>
+                      </span>
+                    </div>
+                    <select
+                      class="cell-input group-domain-select"
+                      :value="roleGroupDomainForMenu(row.menu.id)"
+                      @change="setRoleGroupDomain(row.menu.id, inputValue($event))"
+                    >
+                      <option v-for="domain in roleGroupDomainOptions" :key="domain" :value="domain">
+                        {{ domain }}
+                      </option>
+                    </select>
+                    <div class="group-check-list">
+                      <label
+                        v-for="group in scopedRoleGroupOptions(row.menu.id)"
+                        :key="`${row.menu.id}-scope-${group.id}`"
+                        class="group-check-item"
+                        :title="group.display_name"
+                      >
+                        <input
+                          type="checkbox"
+                          :checked="isRoleGroupSelected(row.menu.id, group.id)"
+                          @change="toggleRoleGroup(row.menu.id, group.id, checkedValue($event))"
+                        />
+                        <span>{{ group.display_name }}</span>
+                      </label>
+                    </div>
+                    <div class="group-scope-actions">
+                      <span class="group-scope-count">{{ scopedRoleGroupSelectionText(row.menu.id) }}</span>
+                      <ScButton
+                        type="button"
+                        class="link-button"
+                        :disabled="!scopedUnselectedRoleGroupCount(row.menu.id)"
+                        @click="selectScopedRoleGroups(row.menu.id)"
+                      >
+                        勾选当前分组
+                      </ScButton>
+                      <ScButton
+                        type="button"
+                        class="link-button"
+                        :disabled="!scopedSelectedRoleGroupCount(row.menu.id)"
+                        @click="clearScopedRoleGroups(row.menu.id)"
+                      >
+                        清空当前分组
+                      </ScButton>
+                    </div>
+                    <ScButton
+                      v-if="draftFor(row.menu.id).role_group_ids.length"
+                      type="button"
+                      class="link-button group-clear"
+                      @click="clearRoleGroups(row.menu.id)"
+                    >
+                      恢复所有角色可见
+                    </ScButton>
+                    <small>{{ roleScopeSummary(row.menu.id) }}</small>
+                  </div>
+                </td>
+                <td>
+                  <input
+                    class="cell-input note-input"
+                    :value="displayNoteValue(draftFor(row.menu.id).note)"
+                    placeholder="可选"
+                    @input="updateDraft(row.menu.id, { note: inputValue($event) })"
+                  />
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        </section>
+      </main>
+    </div>
+    <BusinessConfigImpactDialog
+      v-if="impactDialog.open"
+      :open="true"
+      page-label="菜单配置"
+      :role-label="'当前管理员角色'"
+      :company-label="companyLabel"
+      :summary="impactDialog.summary"
+      :immediate="true"
+      :rollback-text="impactDialog.rollbackText"
+      @confirm="resolveImpactDialog(true)"
+      @cancel="resolveImpactDialog(false)"
+    />
+  </section>

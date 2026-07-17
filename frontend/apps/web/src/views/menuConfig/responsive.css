@@ -1,0 +1,370 @@
+.menu-bulk-panel {
+  grid-column: 1 / -1;
+}
+
+.table-toolbar {
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--sc-app-border);
+}
+
+.bulk-toolbar-title {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.bulk-toolbar-title strong {
+  color: var(--sc-app-text-primary);
+  font-size: 16px;
+}
+
+.bulk-toolbar-title span:not(.panel-kicker) {
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+}
+
+.table-toolbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.bulk-stat {
+  border: 1px solid var(--sc-app-border);
+  border-radius: 999px;
+  padding: 3px 8px;
+  background: var(--sc-app-bg);
+  color: var(--sc-app-text-secondary);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.toggle-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--sc-app-text-secondary);
+}
+
+.loading-state {
+  padding: 28px;
+  color: var(--sc-app-text-secondary);
+}
+
+.bulk-collapsed-state {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 12px;
+  color: var(--sc-app-text-secondary);
+  font-size: 13px;
+}
+
+.table-wrap {
+  overflow: auto;
+  max-height: min(420px, calc(100vh - 260px));
+}
+
+table {
+  width: 100%;
+  min-width: 900px;
+  table-layout: fixed;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+th,
+td {
+  min-width: 0;
+  border-bottom: 1px solid var(--sc-app-border);
+  border-right: 1px solid var(--sc-app-border);
+  padding: 6px;
+  vertical-align: middle;
+  overflow: hidden;
+}
+
+th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: var(--sc-app-muted-bg);
+  color: var(--sc-app-text-secondary);
+  font-weight: 600;
+  text-align: left;
+}
+
+tr.selected td {
+  background: var(--sc-app-info-bg);
+}
+
+tr.dirty td:first-child {
+  box-shadow: inset 3px 0 0 var(--sc-app-warning-text);
+}
+
+.index-col,
+.level-col,
+.sequence-col,
+.check-col {
+  text-align: center;
+  white-space: nowrap;
+}
+
+.index-col {
+  width: 36px;
+}
+
+.level-col {
+  width: 42px;
+}
+
+.sequence-col {
+  width: 54px;
+}
+
+.check-col {
+  width: 42px;
+}
+
+.name-col {
+  width: 108px;
+}
+
+.default-col {
+  width: 104px;
+}
+
+.status-col {
+  width: 72px;
+}
+
+.parent-col {
+  width: 106px;
+}
+
+.move-col {
+  width: 120px;
+}
+
+.groups-col {
+  width: 220px;
+}
+
+.note-col {
+  width: 104px;
+}
+
+.muted {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--sc-app-text-secondary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cell-input {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 30px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 4px;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
+  padding: 0 8px;
+}
+
+.number-input {
+  text-align: center;
+}
+
+.group-domain-select {
+  min-width: 0;
+  height: 30px;
+  padding: 0 6px;
+}
+
+.group-cell {
+  display: grid;
+  gap: 3px;
+  min-width: 0;
+}
+
+.group-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  max-height: 64px;
+  overflow: auto;
+}
+
+.group-check-list {
+  display: grid;
+  gap: 4px;
+  max-height: 96px;
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 6px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 4px;
+  background: var(--sc-app-panel);
+}
+
+.group-check-item {
+  display: grid;
+  grid-template-columns: 16px minmax(0, 1fr);
+  align-items: center;
+  min-height: 18px;
+  min-width: 0;
+  gap: 4px;
+  color: var(--sc-app-text-primary);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.group-check-item input {
+  margin: 0;
+}
+
+.group-check-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.group-scope-actions {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  background: var(--sc-app-bg);
+}
+
+.group-scope-count {
+  color: var(--sc-app-text-secondary);
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.group-scope-actions .link-button {
+  padding: 0;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.group-clear {
+  justify-self: start;
+  padding: 0;
+  font-size: 11px;
+  line-height: 1.2;
+}
+
+.group-chip {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  min-width: 0;
+  gap: 4px;
+  border: 1px solid var(--sc-app-border);
+  border-radius: 4px;
+  background: var(--sc-app-panel);
+  color: var(--sc-app-text-primary);
+  font-size: 11px;
+  line-height: 1.4;
+  padding: 2px 4px 2px 6px;
+}
+
+.group-chip button {
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: var(--sc-app-text-secondary);
+  cursor: pointer;
+  font-size: 12px;
+  line-height: 1;
+  padding: 0 2px;
+}
+
+.group-chip button:hover {
+  color: var(--sc-app-danger-text);
+}
+
+.group-cell small {
+  overflow: hidden;
+  color: var(--sc-app-text-secondary);
+  font-size: 11px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.note-input {
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .guide-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .menu-config-workspace {
+    grid-template-columns: 1fr;
+    row-gap: var(--sc-product-workspace-stack-gap);
+  }
+
+  .menu-config-editor {
+    grid-template-columns: 1fr;
+    row-gap: var(--sc-product-workspace-stack-gap);
+  }
+
+  .menu-side-panel,
+  .menu-bulk-panel {
+    grid-column: auto;
+  }
+
+  .menu-side-panel {
+    position: static;
+  }
+
+  .menu-config-tree {
+    border-right: 1px solid var(--sc-app-border);
+  }
+
+  .menu-detail-grid--basic,
+  .menu-detail-grid--placement,
+  .menu-role-check-list {
+    grid-template-columns: 1fr;
+  }
+
+  .menu-selected-head,
+  .menu-role-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .table-toolbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .table-toolbar-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .tree-scroll,
+  .table-wrap {
+    max-height: none;
+  }
+}

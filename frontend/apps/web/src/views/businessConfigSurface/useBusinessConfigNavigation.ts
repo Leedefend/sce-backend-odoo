@@ -27,6 +27,7 @@ export function useBusinessConfigNavigation(options: {
   activeListSearchEditor: Ref<string>;
   activeAnalysisEditor: Ref<string>;
   canOpenDesigner: ComputedRef<boolean>;
+  ensureChangeSetToken: () => Promise<string>;
 }) {
   function workbenchReturnStateQuery() {
     return {
@@ -87,10 +88,15 @@ export function useBusinessConfigNavigation(options: {
     };
   }
 
-  function openMenuConfig(create = false) {
+  async function openMenuConfig(create = false) {
+    const changeSetToken = create ? '' : await options.ensureChangeSetToken();
     void options.router.push({
       path: '/admin/menu-config',
-      query: { ...menuConfigWorkbenchReturnQuery(), ...(create ? { create_menu: '1' } : {}) },
+      query: {
+        ...menuConfigWorkbenchReturnQuery(),
+        ...(changeSetToken ? { change_set_token: changeSetToken } : {}),
+        ...(create ? { create_menu: '1' } : {}),
+      },
     });
   }
 
@@ -109,8 +115,9 @@ export function useBusinessConfigNavigation(options: {
     });
   }
 
-  function openFormConfig() {
+  async function openFormConfig() {
     if (!options.canOpenDesigner.value) return;
+    const changeSetToken = await options.ensureChangeSetToken();
     void options.router.push({
       path: `/f/${encodeURIComponent(options.currentModel.value)}/new`,
       query: {
@@ -121,6 +128,7 @@ export function useBusinessConfigNavigation(options: {
         role_key: options.scopeRole.value || undefined,
         page_label: options.selectedPageLabel.value || undefined,
         config_mode: BUSINESS_CONFIG_MODES.lowCode,
+        change_set_token: changeSetToken || undefined,
         [BUSINESS_CONFIG_ROUTE_FLAGS.returnToBusinessConfig]: '1',
         ...workbenchReturnStateQuery(),
       },
@@ -130,9 +138,9 @@ export function useBusinessConfigNavigation(options: {
   return {
     buildRuntimeReturnQuery,
     openCurrentEffectivePage,
-    openMenuConfig: () => openMenuConfig(false),
-    openCreateMenuConfig: () => openMenuConfig(true),
+    openMenuConfig: () => void openMenuConfig(false),
+    openCreateMenuConfig: () => void openMenuConfig(true),
     openApprovalConfig,
-    openFormConfig,
+    openFormConfig: () => void openFormConfig(),
   };
 }

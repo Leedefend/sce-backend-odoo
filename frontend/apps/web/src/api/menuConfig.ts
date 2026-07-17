@@ -93,6 +93,8 @@ export interface MenuConfigAuditPayload {
   company?: { id: number; name: string } | null;
   summary: {
     runtime_source?: string;
+    source_kind?: string;
+    source_label?: string;
     configured_policy_count: number;
     applicable_policy_count: number;
     hidden_count: number;

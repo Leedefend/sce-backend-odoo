@@ -23,6 +23,10 @@ def _install_odoo_stubs() -> None:
         def model(func):
             return func
 
+        @staticmethod
+        def model_create_multi(func):
+            return func
+
     class _Fields:
         @staticmethod
         def Char(*_args, **_kwargs):
@@ -65,6 +69,8 @@ def _install_odoo_stubs() -> None:
     addons_mod.__path__ = [str(ROOT / "addons")]
     smart_core_mod = types.ModuleType("odoo.addons.smart_core")
     smart_core_mod.__path__ = [str(ROOT / "addons/smart_core")]
+    smart_core_model_mod = types.ModuleType("odoo.addons.smart_core.model")
+    smart_core_model_mod.__path__ = [str(ROOT / "addons/smart_core/model")]
     utils_mod = types.ModuleType("odoo.addons.smart_core.utils")
     utils_mod.__path__ = [str(ROOT / "addons/smart_core/utils")]
     exceptions_mod = types.ModuleType("odoo.exceptions")
@@ -72,13 +78,14 @@ def _install_odoo_stubs() -> None:
     sys.modules["odoo"] = odoo_mod
     sys.modules["odoo.addons"] = addons_mod
     sys.modules["odoo.addons.smart_core"] = smart_core_mod
+    sys.modules["odoo.addons.smart_core.model"] = smart_core_model_mod
     sys.modules["odoo.addons.smart_core.utils"] = utils_mod
     sys.modules["odoo.exceptions"] = exceptions_mod
 
 
 def _load_module():
     _install_odoo_stubs()
-    module_name = "smart_core_test_ui_business_config_contract"
+    module_name = "odoo.addons.smart_core.model.ui_business_config_contract"
     spec = importlib.util.spec_from_file_location(module_name, MODULE_PATH)
     module = importlib.util.module_from_spec(spec)
     sys.modules[module_name] = module

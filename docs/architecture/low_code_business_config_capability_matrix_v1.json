@@ -74,7 +74,7 @@
       "publish_versioning": "contract version_no + published status",
       "rollback": "ui.business_config.contract.rollback",
       "audit": "business-language version panel + business_config_contract_snapshot.py",
-      "acceptance": ["verify.business_config.snapshot", "verify.business_config.safe_open_acceptance", "verify.business_config.low_code_acceptance"],
+      "acceptance": ["verify.business_config.snapshot", "verify.business_config.safe_open_acceptance", "verify.business_config.change_set_acceptance", "verify.business_config.low_code_acceptance"],
       "status": "ready",
       "release_blockers": []
     },

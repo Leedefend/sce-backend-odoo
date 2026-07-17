@@ -1,364 +1,12 @@
-<template>
-  <section
-    v-if="pageSectionsReady"
-    class="business-config-page sc-page"
-    :class="{ 'business-config-page--editor-open': listSearchPanelOpen || approvalPanelOpen || analysisPanelOpen }"
-    :style="pageSectionStyle('root')"
-    :data-contract-sections="pageSectionsFingerprint"
-    data-product-page-mode="admin"
-  >
-    <BusinessConfigContextBar
-      :page-label="selectedPageLabel"
-      :company-label="workbenchCompanyLabel"
-      :role-label="workbenchRoleLabel"
-      :version-label="currentEffectiveVersionLabel"
-      :dirty="hasWorkbenchDraftChanges"
-      :can-open-current-page="Boolean(runtimeRouteTarget.path)"
-      :developer-tools-open="advancedPanelOpen"
-      @open-current-effective-page="openCurrentEffectivePage"
-      @toggle-developer-tools="advancedPanelOpen = !advancedPanelOpen"
-    >
-      <template #actions>
-        <ScButton
-          v-for="action in pageGlobalActions"
-          :key="action.key"
-          variant="ghost"
-          :disabled="action.disabled"
-          @click="executeGlobalPageAction(action.key)"
-        >
-          {{ action.label }}
-        </ScButton>
-        <ScButton variant="secondary" :disabled="scanLoading" @click="scanSystemRootCoverage">
-          {{ scanLoading ? '读取中...' : '选择业务页面' }}
-        </ScButton>
-      </template>
-    </BusinessConfigContextBar>
-
-    <div v-if="error" class="status error">{{ error }}</div>
-    <div v-else-if="message.text" class="status ok">
-      <span>{{ message.text }}</span>
-      <small v-if="advancedPanelOpen && message.detail">{{ message.detail }}</small>
-    </div>
-
-    <BusinessConfigStartPanel
-      v-if="!coverageScan"
-      :selected-page-label="selectedPageLabel"
-      :current-model="currentModel"
-      :start-scope-summary="startScopeSummary"
-      :scan-loading="scanLoading"
-      :runtime-route-path="runtimeRouteTarget.path"
-      :sections="visibleConfigSections"
-      :advanced-panel-open="advancedPanelOpen"
-      :versions-loading="versionsLoading"
-      :list-search-busy="listSearchBusy"
-      :approval-loading="approvalLoading"
-      :can-open-designer="canOpenDesigner"
-      :show-status="Boolean(surface)"
-      :delivery-readiness-status-text="deliveryReadinessStatusText"
-      :visible-delivery-readiness-progress-text="visibleDeliveryReadinessProgressText"
-      :visible-delivery-readiness-items="visibleDeliveryReadinessItems"
-      :section-task-kind-label="sectionTaskKindLabel"
-      :section-display-label="sectionDisplayLabel"
-      :section-status-label="sectionStatusLabel"
-      :section-primary-copy="sectionPrimaryCopy"
-      :section-impact-text="sectionImpactText"
-      :boundary-label="boundaryLabel"
-      :section-help-label="sectionHelpLabel"
-      :section-task-coverage-text="sectionTaskCoverageText"
-      :section-primary-action-label="sectionPrimaryActionLabel"
-      :delivery-readiness-item-status-text="deliveryReadinessItemStatusText"
-      :delivery-readiness-item-meta-text="deliveryReadinessItemMetaText"
-      @scan-system-root-coverage="scanSystemRootCoverage"
-      @open-current-effective-page="openCurrentEffectivePage"
-      @load-versions="loadVersions"
-      @load-list-search-config="loadListSearchConfig"
-      @open-form-config="openFormConfig"
-      @open-menu-config="openMenuConfig"
-      @open-create-menu-config="openCreateMenuConfig"
-      @load-analysis-config="loadAnalysisConfig"
-      @load-approval-config="loadApprovalConfig"
-      @run-delivery-readiness-action="runDeliveryReadinessAction"
-    />
-
-    <section v-if="advancedPanelOpen" class="scope-panel">
-      <label>
-        <span>业务对象</span>
-        <input v-model="scopeModel" type="text" placeholder="输入业务对象编码或名称" />
-      </label>
-      <label>
-        <span>页面编号</span>
-        <input v-model.number="scopeActionId" type="number" min="0" />
-      </label>
-      <label>
-        <span>视图编号</span>
-        <input v-model.number="scopeViewId" type="number" min="0" />
-      </label>
-      <label>
-        <span>角色编码</span>
-        <input v-model="scopeRoleKey" type="text" placeholder="可选：按角色范围读取" />
-      </label>
-      <ScButton type="button" class="ghost small" :disabled="loading" @click="applyScopeAndLoad">读取配置对象</ScButton>
-    </section>
-
-    <section v-if="loading" class="loading-state">正在读取配置能力...</section>
-    <BusinessConfigCoverageWorkspace
-      v-if="coverageScan"
-      v-model:page-search="pageSearch"
-      v-model:page-type-filter="pageTypeFilter"
-      v-model:config-status-filter="configStatusFilter"
-      v-model:active-section-key="activeConfigSectionKey"
-      v-model:show-only-issues="showOnlyIssues"
-      :coverage-scan="coverageScan"
-      :page-type-options="pageTypeOptions"
-      :config-status-options="configStatusOptions"
-      :advanced-panel-open="advancedPanelOpen"
-      :scan-loading="scanLoading"
-      :list-search-saving="listSearchSaving"
-      :versions-loading="versionsLoading"
-      :loading="loading"
-      :surface="surface"
-      :current-model="currentModel"
-      :selected-page-label="selectedPageLabel"
-      :selected-coverage-row="selectedCoverageRow"
-      :visible-coverage-rows="visibleCoverageRows"
-      :visible-config-sections="visibleConfigSections"
-      :coverage-scope-label="coverageScopeLabel"
-      :coverage-issue-rows="coverageIssueRows"
-      :coverage-batch-bootstrap-rows="coverageBatchBootstrapRows"
-      :remediation-summary-items="remediationSummaryItems"
-      :runtime-route-target="runtimeRouteTarget"
-      :can-open-designer="canOpenDesigner"
-      :list-search-busy="listSearchBusy"
-      :approval-loading="approvalLoading"
-      :delivery-readiness-status-text="deliveryReadinessStatusText"
-      :visible-delivery-readiness-progress-text="visibleDeliveryReadinessProgressText"
-      :visible-delivery-readiness-items="visibleDeliveryReadinessItems"
-      :snapshot-summary="snapshotSummary"
-      :coverage-row-key="coverageRowKey"
-      :coverage-row-matches-scope="coverageRowMatchesScope"
-      :page-view-mode-text="pageViewModeText"
-      :row-coverage-progress-text="rowCoverageProgressText"
-      :row-action-hint-text="rowActionHintText"
-      :page-design-status="pageDesignStatus"
-      :runtime-evidence-text="runtimeEvidenceText"
-      :runtime-reason-text="runtimeReasonText"
-      :visible-row-remediation-actions="visibleRowRemediationActions"
-      :view-type-label="viewTypeLabel"
-      :severity-label="severityLabel"
-      :overall-status-label="overallStatusLabel"
-      :boundary-label="boundaryLabel"
-      :section-task-kind-label="sectionTaskKindLabel"
-      :section-display-label="sectionDisplayLabel"
-      :section-status-label="sectionStatusLabel"
-      :section-primary-copy="sectionPrimaryCopy"
-      :section-impact-text="sectionImpactText"
-      :section-help-label="sectionHelpLabel"
-      :section-task-coverage-text="sectionTaskCoverageText"
-      :section-primary-action-label="sectionPrimaryActionLabel"
-      :delivery-readiness-item-status-text="deliveryReadinessItemStatusText"
-      :delivery-readiness-item-meta-text="deliveryReadinessItemMetaText"
-      @copy-coverage-summary="copyCoverageSummary"
-      @bootstrap-coverage-missing="bootstrapCoverageMissing"
-      @focus-scan-row="focusScanRow"
-      @run-remediation-action="runRemediationAction"
-      @open-current-effective-page="openCurrentEffectivePage"
-      @load-versions="loadVersions"
-      @load-list-search-config="loadListSearchConfig"
-      @open-form-config="openFormConfig"
-      @open-menu-config="openMenuConfig"
-      @open-create-menu-config="openCreateMenuConfig"
-      @load-analysis-config="loadAnalysisConfig"
-      @load-approval-config="loadApprovalConfig"
-      @open-approval-config="openApprovalConfig"
-      @run-delivery-readiness-action="runDeliveryReadinessAction"
-    />
-
-    <BusinessConfigAdvancedAuditPanels
-      v-if="advancedPanelOpen"
-      v-model:snapshot-compare-text="snapshotCompareText"
-      :coverage-scan="coverageScan"
-      :visible-coverage-rows="visibleCoverageRows"
-      :snapshot-summary-text="snapshotSummaryText"
-      :snapshot-compare-loading="snapshotCompareLoading"
-      :snapshot-export-loading="snapshotExportLoading"
-      :snapshot-compare-result="snapshotCompareResult"
-      :snapshot-compare-summary="snapshotCompareSummary"
-      :snapshot-remediation-summary="snapshotRemediationSummary"
-      :snapshot-compare-changed-rows="snapshotCompareChangedRows"
-      :snapshot-compare-added-rows="snapshotCompareAddedRows"
-      :snapshot-compare-removed-rows="snapshotCompareRemovedRows"
-      :coverage-row-key="coverageRowKey"
-      :severity-label="severityLabel"
-      :boundary-label="boundaryLabel"
-      :view-type-label="viewTypeLabel"
-      :runtime-evidence-text="runtimeEvidenceText"
-      :runtime-reason-text="runtimeReasonText"
-      @run-remediation-action="runRemediationAction"
-      @open-runtime-route="openRuntimeRoute"
-      @focus-scan-row="focusScanRow"
-      @download-snapshot="downloadSnapshot"
-      @compare-snapshot="compareSnapshot"
-      @download-snapshot-remediation-plan="downloadSnapshotRemediationPlan"
-    />
-
-    <BusinessConfigApprovalPanel
-      v-if="approvalPanelOpen"
-      :policy-label="approvalPolicyLabel"
-      :effect-guide-text="approvalEffectGuideText"
-      :runtime-text="approvalRuntimeText"
-      :impact-summary-text="approvalImpactSummaryText"
-      :boundary-text="boundaryLabel(approvalAudit?.boundary || 'industry_policy_runtime')"
-      :form="approvalForm"
-      :steps="approvalSteps"
-      :mode-options="approvalModeOptions"
-      :scope-options="approvalScopeOptions"
-      :active-step-count="activeApprovalStepCount"
-      :has-draft-changes="hasApprovalDraftChanges"
-      :can-save-draft="canSaveApprovalDraft"
-      :can-open-full-rule="Boolean(approvalSection?.route?.path)"
-      :validation-message="approvalValidationMessage"
-      :loading="approvalLoading"
-      :advanced-panel-open="advancedPanelOpen"
-      :drag-index="approvalStepDragIndex"
-      :drop-index="approvalStepDropIndex"
-      @close="approvalPanelOpen = false"
-      @update-form-field="updateApprovalFormField"
-      @approval-required-change="onApprovalRequiredChange"
-      @add-step="addApprovalStep"
-      @enable-with-default-step="enableApprovalWithDefaultStep"
-      @remove-step="removeApprovalStep"
-      @move-step="moveApprovalStep"
-      @start-step-drag="startApprovalStepDrag"
-      @set-step-drop-index="approvalStepDropIndex = $event"
-      @drop-step="dropApprovalStep"
-      @clear-step-drag="clearApprovalStepDrag"
-      @save="confirmAndSaveApprovalConfig"
-      @reset="resetApprovalDraft"
-      @open-full-rule="approvalSection && openApprovalConfig(approvalSection)"
-    />
-
-    <BusinessConfigVersionPanel
-      v-if="versionsPanelOpen"
-      :title="versionTitle"
-      :description="versionPanelDescription"
-      :guide="versionPanelGuide"
-      :empty-text="versionEmptyText"
-      :contracts="versionContracts"
-      :loading="versionsLoading"
-      :saving="listSearchSaving"
-      :view-type-label="viewTypeLabel"
-      :contract-display-name="versionContractDisplayName"
-      :contract-impact-text="versionContractImpactText"
-      :rollback-button-label="versionRollbackButtonLabel"
-      :contract-decision-text="versionContractDecisionText"
-      :analysis-item-label="analysisItemLabel"
-      :version-status-label="versionStatusLabel"
-      :version-summary-text="versionSummaryText"
-      :version-delta-text="versionDeltaText"
-      @close="versionsPanelOpen = false"
-      @rollback="rollbackContractFromWorkbench"
-    />
-
-    <BusinessConfigEditorPanels
-      :analysis-panel-open="analysisPanelOpen"
-      :list-search-panel-open="listSearchPanelOpen"
-      :list-search-saving="listSearchSaving"
-      :runtime-route-target="runtimeRouteTarget"
-      :has-analysis-draft-changes="hasAnalysisDraftChanges"
-      :has-list-search-draft-changes="hasListSearchDraftChanges"
-      :analysis-editor-tabs="analysisEditorTabs"
-      :list-search-editor-tabs="listSearchEditorTabs"
-      :active-analysis-editor="activeAnalysisEditor"
-      :active-list-search-editor="activeListSearchEditor"
-      :graph-type="graphType"
-      :analysis-field-option-search="analysisFieldOptionSearch"
-      :list-field-option-search="listFieldOptionSearch"
-      :filter-field-option-search="filterFieldOptionSearch"
-      :group-field-option-search="groupFieldOptionSearch"
-      :list-column-draft="listColumnDraft"
-      :search-filter-draft="searchFilterDraft"
-      :search-group-draft="searchGroupDraft"
-      :advanced-panel-open="advancedPanelOpen"
-      :available-analysis-field-options="availableAnalysisFieldOptions"
-      :available-list-field-options="availableListFieldOptions"
-      :available-filter-field-options="availableFilterFieldOptions"
-      :available-group-field-options="availableGroupFieldOptions"
-      :list-columns-text="listColumnsText"
-      :search-filters-text="searchFiltersText"
-      :search-group-by-text="searchGroupByText"
-      :list-search-panel-description="listSearchPanelDescription"
-      :list-search-audit="listSearchAudit"
-      :analysis-audit="analysisAudit"
-      :parse-names="parseNames"
-      :analysis-editor-state="analysisEditorState"
-      :analysis-editor-label="analysisEditorLabel"
-      :analysis-editor-count="analysisEditorCount"
-      :analysis-field-option-candidates="analysisFieldOptionCandidates"
-      :list-search-editor-count="listSearchEditorCount"
-      :field-option-available-count="fieldOptionAvailableCount"
-      :field-display-label="fieldDisplayLabel"
-      :field-help-text="fieldHelpText"
-      :field-option-help-text="fieldOptionHelpText"
-      :field-option-label="fieldOptionLabel"
-      :is-analysis-chip-dragging="isAnalysisChipDragging"
-      :is-analysis-chip-drop-target="isAnalysisChipDropTarget"
-      :is-list-search-chip-dragging="isListSearchChipDragging"
-      :is-list-search-chip-drop-target="isListSearchChipDropTarget"
-      :boundary-label="boundaryLabel"
-      :view-type-label="viewTypeLabel"
-      @inspect-analysis-draft="inspectAnalysisDraft"
-      @open-current-effective-page="openCurrentEffectivePage"
-      @save-analysis-config="saveAnalysisConfig"
-      @reset-analysis-draft="resetAnalysisDraft"
-      @set-active-analysis-editor="setActiveAnalysisEditor"
-      @update-analysis-search="analysisFieldOptionSearch = $event"
-      @set-analysis-draft="setAnalysisDraft"
-      @update-graph-type="graphType = $event"
-      @add-analysis-name="addAnalysisName"
-      @add-visible-analysis-options="addVisibleAnalysisOptions"
-      @remove-analysis-name="removeAnalysisName"
-      @move-analysis-name="moveAnalysisName"
-      @start-analysis-chip-drag="startAnalysisChipDrag"
-      @hover-analysis-chip-drop="hoverAnalysisChipDrop"
-      @drop-analysis-chip="dropAnalysisChip"
-      @clear-chip-drag="clearChipDrag"
-      @close-list-search="listSearchPanelOpen = false"
-      @inspect-list-search-draft="inspectListSearchDraft"
-      @save-list-search-config="saveListSearchConfig"
-      @reset-list-search-draft="resetListSearchDraft"
-      @set-active-list-search-editor="setActiveListSearchEditor"
-      @update-list-search-search="updateListSearchFieldSearch"
-      @update-list-search-draft="updateListSearchDraft"
-      @add-list-search-name="addListSearchName"
-      @add-visible-list-search-options="addVisibleListSearchOptions"
-      @remove-list-search-name="removeListSearchName"
-      @move-list-search-name="moveListSearchName"
-      @start-list-search-chip-drag="startListSearchChipDrag"
-      @hover-list-search-chip-drop="hoverListSearchChipDrop"
-      @drop-list-search-chip="dropListSearchChip"
-    />
-
-    <BusinessConfigImpactDialog
-      :open="impactDialog.open"
-      :page-label="selectedPageLabel"
-      :role-label="workbenchRoleLabel"
-      :company-label="workbenchCompanyLabel"
-      :summary="impactDialog.summary"
-      :immediate="impactDialog.immediate"
-      :rollback-text="impactDialog.rollbackText"
-      @confirm="resolveImpactDialog(true)"
-      @cancel="resolveImpactDialog(false)"
-    />
-  </section>
-</template>
-
+<template src="./businessConfigSurface/template.html"></template>
 <script setup lang="ts">
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { computed, nextTick, onMounted, ref } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import { ApiError } from '../api/client';
 import BusinessConfigAdvancedAuditPanels from './businessConfigSurface/BusinessConfigAdvancedAuditPanels.vue';
 import BusinessConfigApprovalPanel from './businessConfigSurface/BusinessConfigApprovalPanel.vue';
 import BusinessConfigContextBar from './businessConfigSurface/BusinessConfigContextBar.vue';
+import BusinessConfigChangeSetPanel from './businessConfigSurface/BusinessConfigChangeSetPanel.vue';
 import BusinessConfigCoverageWorkspace from './businessConfigSurface/BusinessConfigCoverageWorkspace.vue';
 import BusinessConfigEditorPanels from './businessConfigSurface/BusinessConfigEditorPanels.vue';
 import BusinessConfigImpactDialog from './businessConfigSurface/BusinessConfigImpactDialog.vue';
@@ -373,8 +21,6 @@ import {
   bootstrapBusinessListSearchConfig,
   bootstrapCoverageMissingConfig,
   loadBusinessConfigSurface,
-  saveBusinessAnalysisConfig,
-  saveBusinessListSearchConfig,
   scanBusinessConfigCoverage,
   type BusinessConfigAnalysisAuditPayload,
   type BusinessConfigCoverageScanItem,
@@ -427,10 +73,14 @@ import { useBusinessConfigWorkbenchMeta } from './businessConfigSurface/useBusin
 import { useBusinessConfigProductExperience } from './businessConfigSurface/useBusinessConfigProductExperience';
 import { useBusinessConfigNavigation } from './businessConfigSurface/useBusinessConfigNavigation';
 import { useBusinessConfigImpactDialog } from './businessConfigSurface/useBusinessConfigImpactDialog';
+import { useBusinessConfigDraftSession } from './businessConfigSurface/useBusinessConfigDraftSession';
+import { useBusinessConfigScopeLifecycle } from './businessConfigSurface/useBusinessConfigScopeLifecycle';
+import { useBusinessConfigPublishLifecycle } from './businessConfigSurface/useBusinessConfigPublishLifecycle';
+import { useBusinessConfigRemediationLifecycle } from './businessConfigSurface/useBusinessConfigRemediationLifecycle';
+import { analysisContractPayload, contractTargetKey, listContractPayload, searchContractPayload } from './businessConfigSurface/changeSetPayloads';
 import { clearConsumedOpenIntent, replaceWorkbenchQuerySilently, withSurfaceLoadTimeout } from './businessConfigSurface/workbenchUtils';
+import { focusActiveEditorPanel, focusSelectedConfigPanelOnMobile } from './businessConfigSurface/workbenchFocus';
 const SURFACE_LOAD_TIMEOUT_MS = 20000;
-const ACTIVE_EDITOR_SCROLL_OPTIONS = { block: 'start', behavior: 'auto' } as const;
-const ACTIVE_EDITOR_VIEWPORT_TOP = 96;
 const CORE_DELIVERY_READINESS_SECTIONS = new Set(['form', 'list_search', 'menu', 'approval']);
 const route = useRoute();
 const router = useRouter();
@@ -442,42 +92,20 @@ const pageSectionTagIs = pageContract.sectionTagIs;
 const pageActionIntent = pageContract.actionIntent;
 const pageActionTarget = pageContract.actionTarget;
 const pageGlobalActions = pageContract.globalActions;
-
-async function focusActiveEditorPanel() {
-  await nextTick();
-  const panel = document.querySelector<HTMLElement>('.config-editor-panel');
-  if (!panel) return;
-  await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
-  const scrollContainer = panel.closest<HTMLElement>('.content');
-  const rect = panel.getBoundingClientRect();
-  if (scrollContainer) {
-    const containerRect = scrollContainer.getBoundingClientRect();
-    scrollContainer.scrollBy({
-      top: rect.top - containerRect.top - ACTIVE_EDITOR_VIEWPORT_TOP,
-      behavior: 'auto',
-    });
-    return;
-  }
-  window.scrollBy({ top: rect.top - ACTIVE_EDITOR_VIEWPORT_TOP, behavior: 'auto' });
-}
-
-async function focusSelectedConfigPanelOnMobile() {
-  await nextTick();
-  if (!window.matchMedia('(max-width: 900px)').matches) return;
-  const panel = document.querySelector<HTMLElement>('.page-config-panel');
-  panel?.scrollIntoView(ACTIVE_EDITOR_SCROLL_OPTIONS);
-}
 const pageSectionsReady = computed(() => (
   pageSectionEnabled('root', true)
   && pageSectionEnabled('header', true)
   && pageSectionEnabled('coverage', true)
   && pageSectionEnabled('designer', true)
-  && pageSectionTagIs('root', 'section')
+));
+const pageSectionContractValid = computed(() => (
+  pageSectionTagIs('root', 'section')
   && pageSectionTagIs('header', 'header')
   && pageSectionTagIs('coverage', 'section')
   && pageSectionTagIs('designer', 'section')
 ));
 const pageSectionsFingerprint = computed(() => JSON.stringify([
+  pageSectionContractValid.value,
   pageSectionStyle('header'),
   pageSectionStyle('coverage'),
   pageSectionStyle('designer'),
@@ -507,7 +135,7 @@ const listSearchPanelOpen = ref(false);
 const analysisPanelOpen = ref(false);
 const selectedRuntimeRoute = ref<BusinessConfigCoverageScanItem['runtime_route'] | null>(null);
 const advancedPanelOpen = ref(false);
-let surfaceLoadSeq = 0;
+const surfaceLoadSeq = ref(0);
 const scopeModel = ref(String(route.query.model || '').trim());
 const scopeActionId = ref(numericQuery('action_id') || 0);
 const scopeViewId = ref(numericQuery('view_id') || 0);
@@ -564,8 +192,37 @@ const visibleConfigSections = computed(() => {
   return result;
 });
 const currentModel = computed(() => String(scopeModel.value || surface.value?.model || '').trim());
+const scopeAction = computed(() => { const parsed = Number(scopeActionId.value || 0); return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : undefined; });
+const scopeView = computed(() => { const parsed = Number(scopeViewId.value || 0); return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : undefined; });
+const scopeRole = computed(() => String(scopeRoleKey.value || '').trim() || undefined);
 const currentModelIsRuntimeConfig = computed(() => isBusinessConfigRuntimeModel(currentModel.value));
 const approvalSection = computed(() => visibleConfigSections.value.find((section) => section.key === 'approval') || null);
+const {
+  changeSet,
+  loading: changeSetLoading,
+  publishing: changeSetPublishing,
+  previewing: changeSetPreviewing,
+  stageItem: stageUnifiedDraftItem,
+  validateDraft: validateUnifiedDraft,
+  previewDraft,
+  publishDraft,
+  rollbackPublished,
+  discardDraft,
+  ensureChangeSet,
+  hasUnifiedDraft,
+  resetScope: resetUnifiedDraftScope,
+} = useBusinessConfigDraftSession(() => scopeRole.value || '');
+function resetEditorPanels() {
+  listSearchPanelOpen.value = false; listSearchAudit.value = null;
+  analysisPanelOpen.value = false; analysisAudit.value = null;
+  versionsPanelOpen.value = false; versionContracts.value = [];
+}
+function runtimeReturnQuery(baseQuery: Record<string, string>, options: Record<string, unknown>) { return buildRuntimeReturnQuery(baseQuery, options); }
+const {
+  coverageRowKey, coverageRowMatchesScope, coverageRowActionId, coverageRowViewId,
+  clearMessage, setMessage, loadSurface, scanCoverage, scanSystemRootCoverage, scanCurrentModel,
+  rescanCoverageAfterBootstrap, applyScopeAndLoad, focusScanRow, hydrateSelectedCoverageRowFromScan, openRuntimeRoute,
+} = useBusinessConfigScopeLifecycle({ scopeAction, currentModel, scopeView, message, surfaceLoadSeq, loading, error, withSurfaceLoadTimeout, loadBusinessConfigSurface, SURFACE_LOAD_TIMEOUT_MS, scopeRole, session, router, route, surface, scanLoading, coverageScan, scanBusinessConfigCoverage, rootMenuXmlid, selectedPageLabel, scopeModel, scopeActionId, scopeViewId, selectedRuntimeRoute, replaceWorkbenchQuerySilently, focusSelectedConfigPanelOnMobile, resetEditorPanels, runtimeReturnQuery });
 const {
   approvalLoading,
   approvalAudit,
@@ -608,22 +265,6 @@ const {
     listSearchPanelOpen.value = false;
     analysisPanelOpen.value = false;
   },
-});
-const {
-  sectionImpactText,
-  sectionStatusLabel,
-  sectionTaskCoverageText,
-  deliveryReadinessItemMetaText,
-  runDeliveryReadinessAction,
-} = useBusinessConfigWorkbenchMeta({
-  selectedCoverageRow,
-  selectedPageLabel,
-  advancedPanelOpen,
-  scanSystemRootCoverage,
-  openMenuConfig: () => openMenuConfig(),
-  loadApprovalConfig,
-  loadListSearchConfig,
-  openFormConfig: () => openFormConfig(),
 });
 const canOpenDesigner = computed(() => Boolean(currentModel.value && scopeAction.value && !currentModelIsRuntimeConfig.value));
 const startScopeSummary = computed(() => {
@@ -780,7 +421,9 @@ const {
 const runtimeRouteTarget = computed(() => {
   const runtimeRoute = selectedRuntimeRoute.value || {};
   const runtimePath = String(runtimeRoute.path || '').trim();
-  if (runtimePath) return { path: runtimePath, query: runtimeRoute.query || {} };
+  if (runtimePath && !runtimePath.startsWith('/admin/business-config')) {
+    return { path: runtimePath, query: runtimeRoute.query || {} };
+  }
   if (scopeAction.value) {
     const query: Record<string, string> = {};
     const menuId = String(route.query.menu_id || '').trim();
@@ -789,22 +432,16 @@ const runtimeRouteTarget = computed(() => {
   }
   return { path: '', query: {} };
 });
+const runtimeRouteHref = computed(() => (
+  runtimeRouteTarget.value.path
+    ? router.resolve({ path: runtimeRouteTarget.value.path, query: runtimeRouteTarget.value.query }).href
+    : ''
+));
 function numericQuery(name: string) {
   const parsed = Number(route.query[name] || 0);
   return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : undefined;
 }
 
-const scopeAction = computed(() => {
-  const parsed = Number(scopeActionId.value || 0);
-  return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : undefined;
-});
-
-const scopeView = computed(() => {
-  const parsed = Number(scopeViewId.value || 0);
-  return Number.isFinite(parsed) && parsed > 0 ? Math.trunc(parsed) : undefined;
-});
-
-const scopeRole = computed(() => String(scopeRoleKey.value || '').trim() || undefined);
 const {
   buildRuntimeReturnQuery,
   openCurrentEffectivePage,
@@ -831,6 +468,7 @@ const {
   activeListSearchEditor,
   activeAnalysisEditor,
   canOpenDesigner,
+  ensureChangeSetToken: async () => (await ensureChangeSet()).token,
 });
 
 const {
@@ -883,6 +521,8 @@ const {
   hasListSearchDraftChanges,
   hasAnalysisDraftChanges,
   hasApprovalDraftChanges,
+  hasUnifiedDraft,
+  activeChangeSetToken: computed(() => String(changeSet.value?.token || '')),
   listColumnsText,
   searchFiltersText,
   searchGroupByText,
@@ -894,545 +534,30 @@ const {
   resetListSearchDraft,
   resetAnalysisDraft,
   resetApprovalDraft,
+  resetUnifiedDraftScope,
   loadSurface,
   scanSystemRootCoverage,
   setMessage,
   openImpactDialog,
 });
-
-function coverageRowKey(row: Pick<BusinessConfigCoverageScanItem, 'model' | 'action_id' | 'view_id'>) {
-  return [
-    String(row.model || '').trim(),
-    Number(row.action_id || 0),
-    Number(row.view_id || 0),
-  ].join(':');
-}
-
-function coverageRowMatchesScope(row: Pick<BusinessConfigCoverageScanItem, 'model' | 'action_id' | 'view_id'>) {
-  const actionId = Number(scopeAction.value || 0);
-  if (!actionId || Number(row.action_id || 0) !== actionId) return false;
-  const rowModel = String(row.model || '').trim();
-  const model = String(currentModel.value || '').trim();
-  if (model && rowModel && rowModel !== model) return false;
-  return Number(row.view_id || 0) === Number(scopeView.value || 0);
-}
-
-function coverageRowActionId(row: Pick<BusinessConfigCoverageScanItem, 'action_id'>) {
-  return Number(row.action_id || 0) || undefined;
-}
-
-function coverageRowViewId(row: Pick<BusinessConfigCoverageScanItem, 'view_id'>) {
-  return Number(row.view_id || 0) || undefined;
-}
-
-function clearMessage() {
-  message.value = { text: '', detail: '' };
-}
-
-function setMessage(text: string, detail = '') {
-  message.value = { text, detail };
-}
-
-async function loadSurface() {
-  const seq = ++surfaceLoadSeq;
-  loading.value = true;
-  error.value = '';
-  clearMessage();
-  try {
-    const nextSurface = await withSurfaceLoadTimeout(
-      loadBusinessConfigSurface({
-        model: currentModel.value || undefined,
-        action_id: scopeAction.value,
-        view_id: scopeView.value,
-        role_key: scopeRole.value,
-      }),
-      SURFACE_LOAD_TIMEOUT_MS,
-    );
-    if (seq !== surfaceLoadSeq) return;
-    surface.value = nextSurface;
-  } catch (err) {
-    if (seq !== surfaceLoadSeq) return;
-    if (err instanceof ApiError && err.status === 401) { await session.logout(); await router.replace({ path: '/login', query: { next: route.fullPath } }); return; }
-    if (err instanceof ApiError && err.status === 403) { await router.replace({ path: '/access-denied', query: { from: route.fullPath, reason: err.reasonCode || 'PERMISSION_DENIED' } }); return; }
-    error.value = err instanceof Error ? err.message : '业务配置工作台加载失败';
-  } finally {
-    if (seq === surfaceLoadSeq) {
-      loading.value = false;
-    }
-  }
-}
-
-async function scanCoverage() {
-  scanLoading.value = true;
-  error.value = '';
-  clearMessage();
-  try {
-    coverageScan.value = await scanBusinessConfigCoverage({
-      model: currentModel.value || undefined,
-      view_id: scopeView.value,
-      role_key: scopeRole.value,
-      root_menu_xmlid: rootMenuXmlid.value || undefined,
-      include_all_root_menu_actions: false,
-      limit: 1000,
-    });
-    hydrateSelectedCoverageRowFromScan();
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : '业务配置覆盖检查失败';
-  } finally {
-    scanLoading.value = false;
-  }
-}
-
-async function scanSystemRootCoverage() {
-  if (!surface.value && currentModel.value) { await loadSurface(); if (!surface.value) return; }
-  scanLoading.value = true;
-  error.value = '';
-  clearMessage();
-  try {
-    coverageScan.value = await scanBusinessConfigCoverage({
-      model: currentModel.value || undefined,
-      view_id: scopeView.value,
-      role_key: scopeRole.value,
-      root_menu_xmlid: rootMenuXmlid.value || undefined,
-      include_all_root_menu_actions: true,
-      limit: 1000,
-    });
-    hydrateSelectedCoverageRowFromScan();
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : '系统根菜单覆盖检查失败';
-  } finally {
-    scanLoading.value = false;
-  }
-}
-
-async function scanCurrentModel() {
-  if (!currentModel.value) return;
-  scanLoading.value = true;
-  error.value = '';
-  clearMessage();
-  try {
-    coverageScan.value = await scanBusinessConfigCoverage({
-      model: currentModel.value,
-      view_id: scopeView.value,
-      role_key: scopeRole.value,
-      root_menu_xmlid: rootMenuXmlid.value || undefined,
-      include_all_root_menu_actions: Boolean(coverageScan.value?.include_all_root_menu_actions),
-      limit: 1000,
-    });
-    hydrateSelectedCoverageRowFromScan();
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : '当前业务对象覆盖检查失败';
-  } finally {
-    scanLoading.value = false;
-  }
-}
-
-async function rescanCoverageAfterBootstrap() {
-  if (coverageScan.value?.include_all_root_menu_actions) {
-    await scanSystemRootCoverage();
-    return;
-  }
-  if (coverageScan.value?.model) {
-    await scanCurrentModel();
-    return;
-  }
-  await scanCoverage();
-}
-
-async function applyScopeAndLoad() {
-  listSearchPanelOpen.value = false;
-  listSearchAudit.value = null;
-  analysisPanelOpen.value = false;
-  analysisAudit.value = null;
-  versionsPanelOpen.value = false;
-  versionContracts.value = [];
-  coverageScan.value = null;
-  selectedPageLabel.value = '';
-  await router.replace({
-    path: route.path,
-    query: {
-      ...route.query,
-      model: currentModel.value || undefined,
-      action_id: scopeAction.value ? String(scopeAction.value) : undefined,
-      view_id: scopeView.value ? String(scopeView.value) : undefined,
-      role_key: scopeRole.value || undefined,
-      page_label: undefined,
-    },
-  });
-  await loadSurface();
-}
-
-async function focusScanRow(row: BusinessConfigCoverageScanItem) {
-  scopeModel.value = row.model;
-  scopeActionId.value = row.action_id;
-  scopeViewId.value = Number(row.view_id || 0);
-  selectedPageLabel.value = row.name || row.model;
-  selectedRuntimeRoute.value = row.runtime_route || null;
-  listSearchPanelOpen.value = false;
-  listSearchAudit.value = null;
-  analysisPanelOpen.value = false;
-  analysisAudit.value = null;
-  versionsPanelOpen.value = false;
-  versionContracts.value = [];
-  replaceWorkbenchQuerySilently({
-    model: row.model || undefined,
-    action_id: row.action_id ? String(row.action_id) : undefined,
-    view_id: row.view_id ? String(row.view_id) : undefined,
-    role_key: scopeRole.value || undefined,
-    page_label: row.name || undefined,
-    open_list_search: undefined,
-  });
-  await loadSurface();
-  await focusSelectedConfigPanelOnMobile();
-}
-
-function hydrateSelectedCoverageRowFromScan() {
-  const matched = (coverageScan.value?.items || []).find(coverageRowMatchesScope);
-  if (!matched) return;
-  scopeModel.value = matched.model || scopeModel.value;
-  scopeActionId.value = matched.action_id || scopeActionId.value;
-  scopeViewId.value = Number(matched.view_id || scopeViewId.value || 0);
-  selectedPageLabel.value = matched.name || selectedPageLabel.value || matched.model;
-  selectedRuntimeRoute.value = matched.runtime_route || selectedRuntimeRoute.value;
-}
-
-async function openRuntimeRoute(row: BusinessConfigCoverageScanItem) {
-  const runtimeRoute = row.runtime_route || {};
-  const path = String(runtimeRoute.path || '').trim();
-  if (!path) return;
-  await router.push({
-    path,
-    query: buildRuntimeReturnQuery(runtimeRoute.query || {}, {
-      model: row.model,
-      actionId: row.action_id,
-      viewId: row.view_id,
-      pageLabel: row.name || row.model,
-    }),
-  });
-}
-
-async function runRemediationAction(row: BusinessConfigCoverageScanItem, action: BusinessConfigRemediationAction) {
-  await focusScanRow(row);
-  if (action.code === 'configure_contract') {
-    if (
-      row.runtime_missing_view_types.some((viewType) => ['calendar', 'dashboard'].includes(viewType))
-      && !row.runtime_missing_view_types.some((viewType) => ['form', 'tree', 'search', 'pivot', 'graph'].includes(viewType))
-    ) {
-      await loadAnalysisConfig();
-      return;
-    }
-    await bootstrapMissingContracts(row);
-    return;
-  }
-  if (action.code === 'fix_scope') {
-    await openVersionsForRuntimeGaps(row);
-    setMessage('请检查配置作用域', '当前配置已存在但未命中这个业务页面，请确认页面、视图或角色范围。');
-    return;
-  }
-  if (action.code === 'publish_contract') {
-    await openVersionsForRuntimeGaps(row);
-    return;
-  }
-  if (action.code === 'configure_menu') {
-    openMenuConfig();
-    return;
-  }
-  if (action.code === 'review_user_preference_boundary') {
-    await loadListSearchConfig();
-  }
-}
-
-async function openVersionsForRuntimeGaps(row: BusinessConfigCoverageScanItem) {
-  if (row.runtime_missing_view_types.some((viewType) => viewType === 'tree' || viewType === 'search')) {
-    await loadVersions('list_search');
-  } else if (row.runtime_missing_view_types.some((viewType) => ['pivot', 'graph', 'calendar', 'dashboard'].includes(viewType))) {
-    await loadVersions('analysis');
-  } else {
-    await loadVersions('form');
-  }
-}
-
-async function bootstrapMissingContracts(row: BusinessConfigCoverageScanItem) {
-  if (!row.model) return;
-  const missingContractTypes = rowBootstrapMissingViewTypes(row, ['form', 'tree', 'search', 'pivot', 'graph']);
-  if (!missingContractTypes.length) {
-    await openVersionsForRuntimeGaps(row);
-    setMessage('没有可自动生成的配置项', '当前项目需要检查发布状态或配置作用域。');
-    return;
-  }
-  listSearchSaving.value = true;
-  error.value = '';
-  clearMessage();
-  let savedCount = 0;
-  let formFieldCount = 0;
-  try {
-    if (missingContractTypes.includes('form')) {
-      const formResult = await bootstrapBusinessFormConfig({
-        model: row.model,
-        action_id: coverageRowActionId(row),
-        view_id: coverageRowViewId(row),
-        role_key: scopeRole.value,
-        publish: true,
-      });
-      savedCount += 1;
-      formFieldCount = formResult.field_count || 0;
-    }
-    const listSearchTypes = missingContractTypes
-      .filter((viewType) => viewType === 'tree' || viewType === 'search');
-    if (listSearchTypes.length) {
-      const listResult = await bootstrapBusinessListSearchConfig({
-        model: row.model,
-        action_id: coverageRowActionId(row),
-        view_id: coverageRowViewId(row),
-        role_key: scopeRole.value,
-        view_types: listSearchTypes,
-        publish: true,
-      });
-      savedCount += listResult.saved_count || 0;
-    }
-    const analysisTypes = missingContractTypes
-      .filter((viewType) => viewType === 'pivot' || viewType === 'graph');
-    if (analysisTypes.length) {
-      const analysisResult = await bootstrapBusinessAnalysisConfig({
-        model: row.model,
-        action_id: coverageRowActionId(row),
-        view_id: coverageRowViewId(row),
-        role_key: scopeRole.value,
-        view_types: analysisTypes,
-        publish: true,
-      });
-      savedCount += analysisResult.saved_count || 0;
-    }
-    await loadSurface();
-    await scanCurrentModel();
-    setMessage(
-      '已补齐配置',
-      formFieldCount ? `已发布 ${savedCount} 个业务配置，表单字段 ${formFieldCount}` : `已发布 ${savedCount} 个业务配置`,
-    );
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : '业务配置补齐失败，已打开手工配置';
-    if (missingContractTypes.includes('form')) {
-      openFormConfig();
-    } else {
-      await loadListSearchConfig();
-    }
-  } finally {
-    listSearchSaving.value = false;
-  }
-}
-
-async function bootstrapCoverageMissing() {
-  if (!coverageBatchBootstrapRows.value.length) return;
-  const confirmed = await openImpactDialog({
-    summary: `批量补齐 ${coverageBatchBootstrapRows.value.length} 个页面的缺失配置`,
-    rollbackText: '每个已发布配置均保留版本，可按页面恢复。',
-  });
-  if (!confirmed) return;
-  listSearchSaving.value = true;
-  error.value = '';
-  clearMessage();
-  try {
-    const result = await bootstrapCoverageMissingConfig({
-      model: currentModel.value || undefined,
-      view_id: scopeView.value,
-      role_key: scopeRole.value,
-      root_menu_xmlid: rootMenuXmlid.value || undefined,
-      include_all_root_menu_actions: Boolean(coverageScan.value?.include_all_root_menu_actions),
-      limit: 1000,
-      batch_limit: 300,
-    });
-    await rescanCoverageAfterBootstrap();
-    const failedNames = (result.results || [])
-      .filter((item) => !item.ok)
-      .map((item) => item.name || item.model || String(item.action_id || ''))
-      .filter(Boolean)
-      .slice(0, 5)
-      .join('、');
-    setMessage(
-      result.failed_count ? '已批量补齐配置，部分页面需手工处理' : '已批量补齐配置',
-      result.failed_count
-        ? `已发布 ${result.saved_count} 个业务配置，${result.failed_count} 个页面需手工处理${failedNames ? `：${failedNames}` : ''}`
-        : `已发布 ${result.saved_count} 个业务配置`,
-    );
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : '批量补齐业务配置失败';
-  } finally {
-    listSearchSaving.value = false;
-  }
-}
-
-async function confirmAndSaveApprovalConfig() {
-  const confirmed = await openImpactDialog({
-    summary: approvalImpactSummaryText.value || '调整当前页面的审批规则',
-    rollbackText: '审批规则会立即被运行态消费；请使用可复位配置恢复原状态。',
-  });
-  if (!confirmed) return;
-  await saveApprovalConfig();
-}
-
-async function loadListSearchConfig() {
-  if (!currentModel.value) return;
-  listSearchBusy.value = true;
-  error.value = '';
-  clearMessage();
-  try {
-    const result = await auditBusinessListSearchConfig({
-      model: currentModel.value,
-      action_id: scopeAction.value,
-      view_id: scopeView.value,
-      role_key: scopeRole.value,
-    });
-    listSearchAudit.value = result;
-    const configuredListColumns = result.business_config_list_columns || [];
-    const configuredSearchFilters = result.business_config_search_filters || [];
-    const configuredSearchGroupBy = result.business_config_search_group_by || [];
-    const suggestedListColumns = configuredListColumns.length ? [] : result.suggested_list_columns || [];
-    const suggestedSearchFilters = (configuredSearchFilters.length || configuredSearchGroupBy.length) ? [] : result.suggested_search_filters || [];
-    const suggestedSearchGroupBy = (configuredSearchFilters.length || configuredSearchGroupBy.length) ? [] : result.suggested_search_group_by || [];
-    listColumnsText.value = namesToText(configuredListColumns.length ? configuredListColumns : suggestedListColumns);
-    searchFiltersText.value = namesToText(configuredSearchFilters.length ? configuredSearchFilters : suggestedSearchFilters);
-    searchGroupByText.value = namesToText(configuredSearchGroupBy.length ? configuredSearchGroupBy : suggestedSearchGroupBy);
-    listSearchBase.value = {
-      list: normalizeNamesText(namesToText(configuredListColumns)),
-      filter: normalizeNamesText(namesToText(configuredSearchFilters)),
-      group: normalizeNamesText(namesToText(configuredSearchGroupBy)),
-    };
-    activeListSearchEditor.value = requestedListSearchTab.value;
-    analysisPanelOpen.value = false;
-    approvalPanelOpen.value = false;
-    listSearchPanelOpen.value = true;
-    await focusActiveEditorPanel();
-    if (!configuredListColumns.length && suggestedListColumns.length) {
-      setMessage('已按当前页面生成列表草稿', '调整后点击保存列表与搜索，才会发布为正式业务配置');
-    }
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : '列表与搜索设置读取失败';
-  } finally {
-    listSearchBusy.value = false;
-  }
-}
-
-async function loadAnalysisConfig() {
-  if (!currentModel.value) return;
-  listSearchBusy.value = true;
-  error.value = '';
-  clearMessage();
-  try {
-    const result = await auditBusinessAnalysisConfig({
-      model: currentModel.value,
-      action_id: scopeAction.value,
-      view_id: scopeView.value,
-      role_key: scopeRole.value,
-    });
-    analysisAudit.value = result;
-    const configuredPivotMeasures = result.pivot_measures || [];
-    const configuredPivotDimensions = result.pivot_dimensions || [];
-    const configuredGraphMeasures = result.graph_measures || [];
-    const configuredGraphDimensions = result.graph_dimensions || [];
-    const suggestedPivotMeasures = (configuredPivotMeasures.length || configuredPivotDimensions.length) ? [] : result.suggested_pivot_measures || [];
-    const suggestedPivotDimensions = (configuredPivotMeasures.length || configuredPivotDimensions.length) ? [] : result.suggested_pivot_dimensions || [];
-    const suggestedGraphMeasures = (configuredGraphMeasures.length || configuredGraphDimensions.length) ? [] : result.suggested_graph_measures || [];
-    const suggestedGraphDimensions = (configuredGraphMeasures.length || configuredGraphDimensions.length) ? [] : result.suggested_graph_dimensions || [];
-    const configuredGraphType = (configuredGraphMeasures.length || configuredGraphDimensions.length) ? result.graph_type || 'bar' : '';
-    pivotMeasuresText.value = namesToText(configuredPivotMeasures.length ? configuredPivotMeasures : suggestedPivotMeasures);
-    pivotDimensionsText.value = namesToText(configuredPivotDimensions.length ? configuredPivotDimensions : suggestedPivotDimensions);
-    graphMeasuresText.value = namesToText(configuredGraphMeasures.length ? configuredGraphMeasures : suggestedGraphMeasures);
-    graphDimensionsText.value = namesToText(configuredGraphDimensions.length ? configuredGraphDimensions : suggestedGraphDimensions);
-    graphType.value = configuredGraphType || result.suggested_graph_type || result.graph_type || 'bar';
-    analysisBase.value = {
-      pivotMeasures: normalizeNamesText(namesToText(configuredPivotMeasures)),
-      pivotDimensions: normalizeNamesText(namesToText(configuredPivotDimensions)),
-      graphMeasures: normalizeNamesText(namesToText(configuredGraphMeasures)),
-      graphDimensions: normalizeNamesText(namesToText(configuredGraphDimensions)),
-      graphType: configuredGraphType || 'bar',
-    };
-    listSearchPanelOpen.value = false;
-    approvalPanelOpen.value = false;
-    analysisPanelOpen.value = true;
-    activeAnalysisEditor.value = requestedAnalysisTab.value;
-    await focusActiveEditorPanel();
-    if (
-      (!configuredPivotMeasures.length && !configuredPivotDimensions.length && (suggestedPivotMeasures.length || suggestedPivotDimensions.length))
-      || (!configuredGraphMeasures.length && !configuredGraphDimensions.length && (suggestedGraphMeasures.length || suggestedGraphDimensions.length))
-    ) {
-      setMessage('已按当前页面生成分析草稿', '调整后点击保存分析视图，才会发布为正式业务配置');
-    }
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : '分析视图设置读取失败';
-  } finally {
-    listSearchBusy.value = false;
-  }
-}
-
-async function saveListSearchConfig() {
-  if (!currentModel.value || !hasListSearchDraftChanges.value) return false;
-  listSearchSaving.value = true;
-  error.value = '';
-  clearMessage();
-  try {
-    const result = await saveBusinessListSearchConfig({
-      model: currentModel.value,
-      action_id: scopeAction.value,
-      view_id: scopeView.value,
-      role_key: scopeRole.value,
-      list_columns: parseNames(listColumnsText.value),
-      search_filters: parseNames(searchFiltersText.value),
-      search_group_by: parseNames(searchGroupByText.value),
-      publish: true,
-    });
-    await loadSurface();
-    await loadListSearchConfig();
-    if (coverageScan.value) {
-      await rescanCoverageAfterBootstrap();
-    }
-    if (versionsPanelOpen.value && activeVersionSection.value === 'list_search') {
-      await loadVersions('list_search');
-    }
-    setMessage('列表与搜索配置已保存并发布', `已保存 ${result.saved_count} 个业务配置，刷新页面后按新配置生效`);
-    return true;
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : '列表与搜索设置保存失败';
-    return false;
-  } finally {
-    listSearchSaving.value = false;
-  }
-}
-
-async function saveAnalysisConfig() {
-  if (!currentModel.value || !hasAnalysisDraftChanges.value) return false;
-  listSearchSaving.value = true;
-  error.value = '';
-  clearMessage();
-  try {
-    const result = await saveBusinessAnalysisConfig({
-      model: currentModel.value,
-      action_id: scopeAction.value,
-      view_id: scopeView.value,
-      role_key: scopeRole.value,
-      pivot_measures: parseNames(pivotMeasuresText.value),
-      pivot_dimensions: parseNames(pivotDimensionsText.value),
-      graph_measures: parseNames(graphMeasuresText.value),
-      graph_dimensions: parseNames(graphDimensionsText.value),
-      graph_type: graphType.value || 'bar',
-      publish: true,
-    });
-    await loadSurface();
-    await loadAnalysisConfig();
-    if (coverageScan.value) {
-      await rescanCoverageAfterBootstrap();
-    }
-    if (versionsPanelOpen.value && activeVersionSection.value === 'analysis') {
-      await loadVersions('analysis');
-    }
-    setMessage('分析视图配置已保存并发布', `已保存 ${result.saved_count} 个业务配置，刷新页面后按新配置生效`);
-    return true;
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : '分析视图设置保存失败';
-    return false;
-  } finally {
-    listSearchSaving.value = false;
-  }
-}
+const { loadListSearchConfig, loadAnalysisConfig, saveListSearchConfig, saveAnalysisConfig, previewUnifiedDraft, publishUnifiedDraft, rollbackUnifiedDraft, discardUnifiedDraft } = useBusinessConfigPublishLifecycle({ currentModel, listSearchBusy, error, clearMessage, auditBusinessListSearchConfig, scopeAction, scopeView, scopeRole, listSearchAudit, namesToText, normalizeNamesText, listColumnsText, searchFiltersText, searchGroupByText, listSearchBase, activeListSearchEditor, requestedListSearchTab, analysisPanelOpen, approvalPanelOpen, listSearchPanelOpen, focusActiveEditorPanel, setMessage, auditBusinessAnalysisConfig, analysisAudit, pivotMeasuresText, pivotDimensionsText, graphMeasuresText, graphDimensionsText, graphType, analysisBase, activeAnalysisEditor, requestedAnalysisTab, listSearchSaving, hasListSearchDraftChanges, parseNames, stageUnifiedDraftItem, contractTargetKey, listContractPayload, searchContractPayload, hasAnalysisDraftChanges, analysisContractPayload, previewDraft, openImpactDialog, changeSet, publishDraft, loadSurface, rollbackPublished, discardDraft });
+const {
+  sectionImpactText,
+  sectionStatusLabel,
+  sectionTaskCoverageText,
+  deliveryReadinessItemMetaText,
+  runDeliveryReadinessAction,
+} = useBusinessConfigWorkbenchMeta({
+  selectedCoverageRow,
+  selectedPageLabel,
+  advancedPanelOpen,
+  scanSystemRootCoverage,
+  openMenuConfig,
+  loadApprovalConfig,
+  loadListSearchConfig,
+  openFormConfig,
+});
+const { runRemediationAction, openVersionsForRuntimeGaps, bootstrapMissingContracts, bootstrapCoverageMissing, confirmAndSaveApprovalConfig } = useBusinessConfigRemediationLifecycle({ focusScanRow, loadAnalysisConfig, loadVersions, setMessage, openMenuConfig, loadListSearchConfig, rowBootstrapMissingViewTypes, listSearchSaving, error, clearMessage, bootstrapBusinessFormConfig, coverageRowActionId, coverageRowViewId, scopeRole, bootstrapBusinessListSearchConfig, bootstrapBusinessAnalysisConfig, loadSurface, scanCurrentModel, openFormConfig, coverageBatchBootstrapRows, openImpactDialog, bootstrapCoverageMissingConfig, currentModel, scopeView, rootMenuXmlid, coverageScan, rescanCoverageAfterBootstrap, approvalImpactSummaryText, saveApprovalConfig });
 
 onMounted(() => {
   void (async () => {
@@ -1441,7 +566,8 @@ onMounted(() => {
     const openListSearchOnMount = shouldOpenListSearch.value;
     const openAnalysisOnMount = shouldOpenAnalysis.value;
     await loadSurface();
-    if (!surface.value && error.value) return;
+    if (!surface.value || route.path !== '/admin/business-config') return;
+    await ensureChangeSet();
     if (openPageListOnMount || !coverageScan.value) {
       await scanSystemRootCoverage();
     }

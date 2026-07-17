@@ -1,6 +1,106 @@
 import { intentRequest } from './intents';
 import { APPROVAL_POLICY_INTENTS, BUSINESS_CONFIG_INTENTS } from '../app/businessConfigBoundaries';
 
+export type BusinessConfigChangeSetState = 'draft' | 'validating' | 'ready' | 'publishing' | 'published' | 'failed' | 'discarded' | 'superseded';
+
+export interface BusinessConfigChangeSetItem {
+  id: number;
+  config_type: 'form' | 'list' | 'search' | 'analysis' | 'menu';
+  target_key: string;
+  model: string;
+  view_type: string;
+  action_id: number;
+  view_id: number;
+  role_key: string;
+  current_contract_id: number;
+  current_version: number;
+  current_payload_hash: string;
+  draft_payload?: Record<string, unknown>;
+  diff_summary: Record<string, unknown>;
+  reversible: boolean;
+  risk_level: 'low' | 'medium' | 'high';
+  validation_result: { ok?: boolean; errors?: string[] };
+  publish_result: Record<string, unknown>;
+}
+
+export interface BusinessConfigChangeSet {
+  id: number;
+  token: string;
+  state: BusinessConfigChangeSetState;
+  name: string;
+  user_id: number;
+  company_id: number;
+  role_key: string;
+  database_name: string;
+  expires_at: string;
+  published_at: string;
+  failure_message: string;
+  item_count: number;
+  items: BusinessConfigChangeSetItem[];
+  publish_result: Record<string, unknown>;
+  preview?: {
+    token: string;
+    expires_at: string;
+    creator_only: boolean;
+    company_id: number;
+    role_key: string;
+    device: 'desktop' | 'tablet' | 'mobile';
+    formal_contract_write_count: number;
+    formal_version_write_count: number;
+    formal_config_mutation_count: number;
+    mutation_trace_id: string;
+    items: BusinessConfigChangeSetItem[];
+  };
+}
+
+export interface StageBusinessConfigChangeSetItemParams {
+  change_set_token: string;
+  config_type: BusinessConfigChangeSetItem['config_type'];
+  target_key: string;
+  model: string;
+  view_type?: string;
+  action_id?: number;
+  view_id?: number;
+  role_key?: string;
+  current_contract_id?: number;
+  current_payload_hash?: string;
+  draft_payload: Record<string, unknown>;
+  diff_summary: Record<string, unknown>;
+  risk_level?: BusinessConfigChangeSetItem['risk_level'];
+}
+
+export function openBusinessConfigChangeSet(params: { role_key?: string; name?: string } = {}) {
+  return intentRequest<BusinessConfigChangeSet>({ intent: BUSINESS_CONFIG_INTENTS.changeSetOpen, params });
+}
+
+export function loadBusinessConfigChangeSet(params: { change_set_token: string; role_key?: string }) {
+  return intentRequest<BusinessConfigChangeSet>({ intent: BUSINESS_CONFIG_INTENTS.changeSetGet, params });
+}
+
+export function stageBusinessConfigChangeSetItem(params: StageBusinessConfigChangeSetItemParams) {
+  return intentRequest<BusinessConfigChangeSet>({ intent: BUSINESS_CONFIG_INTENTS.changeSetStage, params });
+}
+
+export function validateBusinessConfigChangeSet(params: { change_set_token: string; role_key?: string }) {
+  return intentRequest<BusinessConfigChangeSet>({ intent: BUSINESS_CONFIG_INTENTS.changeSetValidate, params });
+}
+
+export function previewBusinessConfigChangeSet(params: { change_set_token: string; role_key?: string; device?: string }) {
+  return intentRequest<BusinessConfigChangeSet>({ intent: BUSINESS_CONFIG_INTENTS.changeSetPreview, params });
+}
+
+export function publishBusinessConfigChangeSet(params: { change_set_token: string; role_key?: string; request_id: string }) {
+  return intentRequest<BusinessConfigChangeSet>({ intent: BUSINESS_CONFIG_INTENTS.changeSetPublish, params });
+}
+
+export function rollbackBusinessConfigChangeSet(params: { change_set_token: string; role_key?: string; request_id: string }) {
+  return intentRequest<BusinessConfigChangeSet>({ intent: BUSINESS_CONFIG_INTENTS.changeSetRollback, params });
+}
+
+export function discardBusinessConfigChangeSet(params: { change_set_token: string; role_key?: string }) {
+  return intentRequest<BusinessConfigChangeSet>({ intent: BUSINESS_CONFIG_INTENTS.changeSetDiscard, params });
+}
+
 export interface BusinessConfigListSearchAuditPayload {
   model: string;
   action_id: number;

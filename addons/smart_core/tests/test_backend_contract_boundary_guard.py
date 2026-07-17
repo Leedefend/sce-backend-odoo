@@ -22,11 +22,11 @@ class BackendContractBoundaryGuardTests(unittest.TestCase):
         self.assertEqual(report["schema_version"], "1.0")
         self.assertEqual(report["error_count"], 0)
         self.assertEqual(report["errors"], [])
-        self.assertEqual(report["contract_writer_count"], 5)
+        self.assertEqual(report["contract_writer_count"], 6)
         self.assertEqual(report["approval_policy_writer_count"], 1)
-        self.assertEqual(report["lowcoding_policy_writer_count"], 3)
-        self.assertEqual(report["writer_boundary_count"], 9)
-        self.assertEqual(report["writer_file_count"], 7)
+        self.assertEqual(report["lowcoding_policy_writer_count"], 4)
+        self.assertEqual(report["writer_boundary_count"], 11)
+        self.assertEqual(report["writer_file_count"], 8)
         self.assertIn("addons/smart_core/handlers/form_field_configuration.py", report["writer_paths"])
         self.assertIn("addons/smart_core/handlers/menu_configuration.py", report["writer_paths"])
         self.assertEqual(
@@ -80,6 +80,12 @@ class BackendContractBoundaryGuardTests(unittest.TestCase):
             for row in report["allowed_lowcoding_policy_runtime_writers"]
         }
 
+        self.assertEqual(
+            by_boundary[
+                ("addons/smart_core/handlers/business_config_change_set.py", "atomic_lowcode_change_set_publish")
+            ]["expected_source"],
+            "ui.business.config.change.set",
+        )
         self.assertEqual(
             by_boundary[
                 ("addons/smart_core/handlers/form_field_configuration.py", "form_lowcode_runtime_config")
