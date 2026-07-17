@@ -16,6 +16,9 @@ PRIMARY_RUNTIME = ROOT / "frontend/apps/web/src/pages/contractForm/usePrimaryFor
 FORM_CONFIG_RUNTIME = ROOT / "frontend/apps/web/src/pages/contractForm/useFormConfigSaveRuntime.ts"
 INLINE_POLICY_RUNTIME = ROOT / "frontend/apps/web/src/pages/contractForm/useInlineFieldPolicyRuntime.ts"
 CONTRACT_MODE_RUNTIME = ROOT / "frontend/apps/web/src/pages/contractForm/useContractModeActionRuntime.ts"
+RECORD_PAGE_LIFECYCLE = ROOT / "frontend/apps/web/src/pages/contractForm/useRecordPageLifecycle.ts"
+RECORD_FORM_DESIGNER = ROOT / "frontend/apps/web/src/pages/contractForm/useRecordFormDesigner.ts"
+RECORD_FORM_DESIGNER_PERSISTENCE = ROOT / "frontend/apps/web/src/pages/contractForm/useRecordFormDesignerPersistence.ts"
 CI = ROOT / "make/ci.mk"
 
 
@@ -36,6 +39,9 @@ def main() -> int:
     form_config_runtime = _read(FORM_CONFIG_RUNTIME)
     inline_policy_runtime = _read(INLINE_POLICY_RUNTIME)
     contract_mode_runtime = _read(CONTRACT_MODE_RUNTIME)
+    record_page_lifecycle = _read(RECORD_PAGE_LIFECYCLE)
+    record_form_designer = _read(RECORD_FORM_DESIGNER)
+    record_form_designer_persistence = _read(RECORD_FORM_DESIGNER_PERSISTENCE)
     ci = _read(CI)
 
     if not protocol:
@@ -276,17 +282,25 @@ def main() -> int:
             errors.append(f"{label} still bypasses busy applier")
 
     required_page_status_tokens = [
-        "transaction: 'formReload'",
         "transaction: 'runAction'",
-        "transaction: 'formConfig'",
-        "transaction: 'contractMode'",
         "transaction: 'primaryAction'",
         "errorMessage: '请填写操作原因'",
-        "errorMessage: err instanceof Error ? err.message : '表单加载失败'",
     ]
     for token in required_page_status_tokens:
         if token not in page:
             errors.append(f"ContractFormPage.vue missing status applier token: {token}")
+
+    for token in [
+        "transaction: 'formReload'",
+        "errorMessage: err instanceof Error ? err.message : '表单加载失败'",
+    ]:
+        if token not in record_page_lifecycle:
+            errors.append(f"useRecordPageLifecycle.ts missing status applier token: {token}")
+    if "transaction: 'formConfig'" not in record_form_designer:
+        errors.append("useRecordFormDesigner.ts missing status applier token: transaction: 'formConfig'")
+    for token in ["transaction: 'formConfig'", "transaction: 'contractMode'"]:
+        if token not in record_form_designer_persistence:
+            errors.append(f"useRecordFormDesignerPersistence.ts missing status applier token: {token}")
 
     forbidden_page_status_write_patterns = [
         (r"\bstatus\.value\s*=(?!=)", "status.value assignment"),

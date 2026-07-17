@@ -84,6 +84,9 @@
                 class="native-radio-group"
                 role="radiogroup"
                 :aria-label="field.label"
+                :aria-required="field.required || undefined"
+                :aria-invalid="field.invalid || undefined"
+                :aria-describedby="fieldDescribedBy(field)"
               >
                 <label
                   v-for="option in field.selectionOptions || []"
@@ -117,6 +120,8 @@
                   :checked="Boolean(field.value)"
                   class="input-checkbox"
                   :aria-required="field.required || undefined"
+                  :aria-invalid="field.invalid || undefined"
+                  :aria-describedby="fieldDescribedBy(field)"
                   type="checkbox"
                   @change="emitFieldChange(field, ($event.target as HTMLInputElement).checked)"
                 />
@@ -126,6 +131,8 @@
                   :value="String(field.inputValue ?? '')"
                   class="input"
                   :aria-required="field.required || undefined"
+                  :aria-invalid="field.invalid || undefined"
+                  :aria-describedby="fieldDescribedBy(field)"
                   @change="emitFieldChange(field, ($event.target as HTMLSelectElement).value)"
                 >
                   <option v-if="!field.required" value="">{{ selectPlaceholderText(field) }}</option>
@@ -142,6 +149,8 @@
                       :id="fieldControlId(field)"
                       class="input"
                       :aria-required="field.required || undefined"
+                      :aria-invalid="field.invalid || undefined"
+                      :aria-describedby="fieldDescribedBy(field)"
                       type="text"
                       :value="many2oneTextValue(field)"
                       :placeholder="selectPlaceholderText(field)"
@@ -213,6 +222,8 @@
                     class="input"
                     :aria-label="field.label"
                     :aria-required="field.required || undefined"
+                    :aria-invalid="field.invalid || undefined"
+                    :aria-describedby="fieldDescribedBy(field)"
                     type="date"
                     :placeholder="field.inputPlaceholder || inputPlaceholderText(field)"
                     @input="emitFieldChange(field, ($event.target as HTMLInputElement).value)"
@@ -234,6 +245,8 @@
                   :value="String(field.inputValue ?? '')"
                   class="input input--textarea"
                   :aria-required="field.required || undefined"
+                  :aria-invalid="field.invalid || undefined"
+                  :aria-describedby="fieldDescribedBy(field)"
                   :placeholder="field.inputPlaceholder || inputPlaceholderText(field)"
                   rows="4"
                   @input="emitFieldChange(field, ($event.target as HTMLTextAreaElement).value)"
@@ -244,6 +257,8 @@
                   :value="String(field.inputValue ?? '')"
                   class="input"
                   :aria-required="field.required || undefined"
+                  :aria-invalid="field.invalid || undefined"
+                  :aria-describedby="fieldDescribedBy(field)"
                   :type="inputType(field.type)"
                   :placeholder="field.inputPlaceholder || inputPlaceholderText(field)"
                   @input="emitFieldChange(field, ($event.target as HTMLInputElement).value)"
@@ -255,6 +270,8 @@
                   :value="String(field.inputValue ?? '')"
                   class="input"
                   :aria-required="field.required || undefined"
+                  :aria-invalid="field.invalid || undefined"
+                  :aria-describedby="fieldDescribedBy(field)"
                   :type="inputType(field.type)"
                   :placeholder="field.inputPlaceholder || inputPlaceholderText(field)"
                   @input="emitFieldChange(field, ($event.target as HTMLInputElement).value)"
@@ -262,6 +279,8 @@
               </template>
             </div>
           </div>
+          <p v-if="field.helpText" :id="fieldHelpId(field)" class="field-supporting-text">{{ field.helpText }}</p>
+          <p v-if="field.errorText" :id="fieldErrorId(field)" class="field-error-text" role="alert">{{ field.errorText }}</p>
         </div>
       </template>
       <slot v-else />
@@ -340,6 +359,21 @@ const emit = defineEmits<{
 
 function fieldControlId(field: FormSectionFieldSchema) {
   return `product-form-field-${String(field.key || field.name).replace(/[^A-Za-z0-9_-]/g, '-')}`;
+}
+
+function fieldHelpId(field: FormSectionFieldSchema) {
+  return `${fieldControlId(field)}-help`;
+}
+
+function fieldErrorId(field: FormSectionFieldSchema) {
+  return `${fieldControlId(field)}-error`;
+}
+
+function fieldDescribedBy(field: FormSectionFieldSchema) {
+  const ids = [];
+  if (field.helpText) ids.push(fieldHelpId(field));
+  if (field.errorText) ids.push(fieldErrorId(field));
+  return ids.length ? ids.join(' ') : undefined;
 }
 
 const slots = useSlots();
@@ -685,6 +719,25 @@ function emitFieldSelect(field: FormSectionFieldSchema, event?: Event) {
   margin: -4px 0 10px;
   font-size: 12px;
   color: var(--sc-semantic-text-muted);
+}
+
+.field-supporting-text,
+.field-error-text {
+  margin: 6px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.field-supporting-text {
+  color: var(--sc-semantic-text-muted);
+}
+
+.field-error-text {
+  color: var(--sc-app-danger-text);
+}
+
+.field :is(input, select, textarea)[aria-invalid='true'] {
+  border-color: var(--sc-app-danger-border);
 }
 
 .template-form-section-grid {

@@ -11,6 +11,30 @@ MAIN_TS = WEB_SRC / "main.ts"
 DESIGN_SYSTEM = WEB_SRC / "styles/design-system.css"
 PRODUCT_PATTERNS = WEB_SRC / "styles/product-patterns.css"
 THEME_RUNTIME = WEB_SRC / "styles/theme.ts"
+DESIGN_COMPONENTS = WEB_SRC / "components/design-system"
+FORM_SECTION = WEB_SRC / "components/template/FormSection.vue"
+
+REQUIRED_PRODUCT_COMPONENTS = {
+    "ScPage.vue", "ScPageHeader.vue", "ScSection.vue", "ScPanel.vue",
+    "ScButton.vue", "ScIconButton.vue", "ScStatusBadge.vue", "ScMoney.vue",
+    "ScField.vue", "ScSelect.vue", "ScRelationField.vue", "ScDateField.vue",
+    "ScErrorSummary.vue", "ScEmptyState.vue", "ScErrorState.vue", "ScDialog.vue",
+    "ScDrawer.vue", "ScActionBar.vue", "ScDataTable.vue", "ScMobileRecordCard.vue",
+    "ScRelationshipFlow.vue", "ScAuditTrail.vue",
+}
+
+GENERIC_BOUNDARY_RE = re.compile(
+    r"\b(?:role_code|project_member|payment\.request|construction\.contract|"
+    r"project\.project|sc\.settlement|sc\.payment|menu_[0-9]+|action_[0-9]+)\b",
+    re.IGNORECASE,
+)
+
+SIZE_LIMITS = {
+    WEB_SRC / "layouts/AppShell.vue": 1600,
+    WEB_SRC / "pages/ListPage.vue": 2300,
+    WEB_SRC / "pages/ContractFormPage.vue": 1800,
+    WEB_SRC / "views/ActionView.vue": 3684,
+}
 
 HARDCODE_COLOR_RE = re.compile(r"#[0-9a-fA-F]{3,8}\b|rgba?\(")
 MAX_EXISTING_HARDCODE_COLOR_REFS = 0
@@ -130,6 +154,44 @@ def _check_hardcoded_color_baseline(errors: list[str]) -> None:
         )
 
 
+def _check_product_component_boundary(errors: list[str]) -> None:
+    if not DESIGN_COMPONENTS.is_dir():
+        errors.append(f"missing design-system directory: {_rel(DESIGN_COMPONENTS)}")
+        return
+    present = {path.name for path in DESIGN_COMPONENTS.glob("*.vue")}
+    for missing in sorted(REQUIRED_PRODUCT_COMPONENTS - present):
+        errors.append(f"missing product component: {missing}")
+    for path in sorted(DESIGN_COMPONENTS.glob("*")):
+        if path.suffix not in {".vue", ".ts"}:
+            continue
+        match = GENERIC_BOUNDARY_RE.search(_read(path))
+        if match:
+            errors.append(f"{_rel(path)} crosses generic component boundary: {match.group(0)}")
+
+
+def _check_complexity_and_accessibility(errors: list[str]) -> None:
+    for path, limit in SIZE_LIMITS.items():
+        lines = len(_read(path).splitlines())
+        if not lines:
+            errors.append(f"missing complexity target: {_rel(path)}")
+        elif lines > limit:
+            errors.append(f"{_rel(path)} exceeds {limit} lines: {lines}")
+
+    for path in sorted((WEB_SRC / "pages/contractForm").glob("useRecord*.ts")):
+        lines = len(_read(path).splitlines())
+        if lines > 500:
+            errors.append(f"new record runtime exceeds 500 lines: {_rel(path)}={lines}")
+
+    form_text = _check_required_file(FORM_SECTION, errors)
+    for token in ['aria-required', 'aria-invalid', 'aria-describedby', 'data-field-key']:
+        if token not in form_text:
+            errors.append(f"{_rel(FORM_SECTION)} missing accessible field token: {token}")
+
+    for retired in [WEB_SRC / "views/RecordView.vue", WEB_SRC / "pages/ModelFormPage.vue"]:
+        if retired.exists():
+            errors.append(f"retired compatibility delegate still exists: {_rel(retired)}")
+
+
 def main() -> int:
     errors: list[str] = []
     if not WEB_SRC.is_dir():
@@ -138,6 +200,8 @@ def main() -> int:
     _check_sfc_style_tail(errors)
     _check_style_bootstrap(errors)
     _check_hardcoded_color_baseline(errors)
+    _check_product_component_boundary(errors)
+    _check_complexity_and_accessibility(errors)
 
     if errors:
         return _fail(errors)

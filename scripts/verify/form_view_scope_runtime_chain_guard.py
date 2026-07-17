@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 CONTRACT_API = ROOT / "frontend/apps/web/src/api/contract.ts"
 CONTRACT_FORM = ROOT / "frontend/apps/web/src/pages/ContractFormPage.vue"
-RECORD_VIEW = ROOT / "frontend/apps/web/src/views/RecordView.vue"
+RECORD_PAGE_LIFECYCLE = ROOT / "frontend/apps/web/src/pages/contractForm/useRecordPageLifecycle.ts"
 UI_CONTRACT_V2 = ROOT / "addons/smart_core/handlers/ui_contract_v2.py"
 PAGE_ASSEMBLER = ROOT / "addons/smart_core/app_config_engine/services/assemblers/page_assembler.py"
 APP_VIEW_CONFIG = ROOT / "addons/smart_core/app_config_engine/models/app_view_config.py"
@@ -30,7 +30,7 @@ def main() -> int:
     errors: list[str] = []
     contract_api = _read(CONTRACT_API)
     contract_form = _read(CONTRACT_FORM)
-    record_view = _read(RECORD_VIEW)
+    record_page_lifecycle = _read(RECORD_PAGE_LIFECYCLE)
     ui_contract_v2 = _read(UI_CONTRACT_V2)
     page_assembler = _read(PAGE_ASSEMBLER)
     app_view_config = _read(APP_VIEW_CONFIG)
@@ -39,18 +39,13 @@ def main() -> int:
     _assert("viewId?: number | null;" in contract_api, "contract API options must accept explicit viewId", errors)
     _assert("params.view_id = viewId;" in contract_api, "contract API must send view_id to ui.contract.v2", errors)
     _assert(
-        "const requestedViewId = toPositiveInt(route.query.view_id) || toPositiveInt(route.query.viewId) || 0;" in contract_form,
-        "ContractFormPage must read route view_id/viewId",
+        "const requestedViewId = toPositiveInt(route.query.view_id) || toPositiveInt(route.query.viewId) || 0;" in record_page_lifecycle,
+        "record page lifecycle must read route view_id/viewId",
         errors,
     )
     _assert(
-        "viewId: requestedViewId || undefined" in contract_form,
-        "ContractFormPage must pass requested viewId into contract loaders",
-        errors,
-    )
-    _assert(
-        "ContractFormPage" in record_view and "data-record-view-compatibility-delegate" in record_view,
-        "RecordView must delegate explicit view scope to ContractFormPage",
+        "viewId: requestedViewId || undefined" in record_page_lifecycle,
+        "record page lifecycle must pass requested viewId into contract loaders",
         errors,
     )
     _assert(

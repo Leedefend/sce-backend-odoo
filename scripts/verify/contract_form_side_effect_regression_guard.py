@@ -8,6 +8,8 @@ ROOT = Path(__file__).resolve().parents[2]
 DOC = ROOT / "docs/engineering_convergence/contract_form_side_effect_map.md"
 PAGE = ROOT / "frontend/apps/web/src/pages/ContractFormPage.vue"
 ACTION_RUNTIME = ROOT / "frontend/apps/web/src/pages/contractForm/useFormActionRuntime.ts"
+SAVE_RUNTIME = ROOT / "frontend/apps/web/src/pages/contractForm/useRecordFormActions.ts"
+FORM_STATE_RUNTIME = ROOT / "frontend/apps/web/src/pages/contractForm/useRecordFormState.ts"
 CI = ROOT / "make/ci.mk"
 
 REQUIRED_GUARDS = [
@@ -95,6 +97,8 @@ def main() -> int:
     doc = _read(DOC)
     page = _read(PAGE)
     action_runtime = _read(ACTION_RUNTIME)
+    save_runtime = _read(SAVE_RUNTIME)
+    form_state_runtime = _read(FORM_STATE_RUNTIME)
     ci = _read(CI)
 
     if not doc:
@@ -130,13 +134,13 @@ def main() -> int:
     if "contract_form_side_effect_regression_guard.py" not in ci:
         errors.append("ci.local.quick must run contract_form_side_effect_regression_guard.py")
 
-    save_body = _function_body(page, "saveRecord")
+    save_body = _function_body(save_runtime, "saveRecord")
     if not save_body:
-        errors.append("ContractFormPage.vue must keep saveRecord transaction owner")
+        errors.append("useRecordFormActions.ts must keep saveRecord transaction owner")
     else:
         validation_line = _line_for_token(save_body, "const validation = await validateBeforeSaveRecord({")
         save_busy_line = _line_for_token(save_body, "busyKind.value = 'save';")
-        finally_clear_line = _line_for_token(save_body, "finally {\n    busyKind.value = null;")
+        finally_clear_line = _line_for_token(re.sub(r"\s+", "", save_body), "finally{busyKind.value=null;")
         if validation_line < 0:
             errors.append("saveRecord must keep validateBeforeSaveRecord precheck")
         if save_busy_line < 0:
@@ -158,20 +162,21 @@ def main() -> int:
         if finally_clear_line < 0:
             errors.append("saveRecord must clear save busy in finally")
 
-    onchange_body = _function_body(page, "runOnchangeRoundtrip")
+    onchange_body = _function_body(form_state_runtime, "runOnchangeRoundtrip")
     if not onchange_body:
-        errors.append("ContractFormPage.vue must keep runOnchangeRoundtrip transaction owner")
+        errors.append("useRecordFormState.ts must keep runOnchangeRoundtrip transaction owner")
     else:
+        compact_onchange = re.sub(r"\s+", "", onchange_body)
         for token in [
-            "const response = await triggerOnchange({",
+            "constresponse=awaittriggerOnchange({",
             "normalizeOnchangeResponse(response)",
-            "onchangeWarnings.value = warnings;",
-            "onchangeLinePatches.value = linePatches;",
-            "applyOnchangeLinePatches(linePatches);",
-            "catch {",
-            "Onchange is best-effort; keep current values when roundtrip fails.",
+            "context.onchangeWarnings.value=warnings;",
+            "context.onchangeLinePatches.value=linePatches;",
+            "context.applyOnchangeLinePatches(linePatches);",
+            "catch{",
+            "Onchangepreservescurrentvalueswhentheoptionalroundtripfails.",
         ]:
-            if token not in onchange_body:
+            if token not in compact_onchange:
                 errors.append(f"runOnchangeRoundtrip missing behavior token: {token}")
         if "busyKind.value" in onchange_body:
             errors.append("runOnchangeRoundtrip must stay silent and not own global busyKind")

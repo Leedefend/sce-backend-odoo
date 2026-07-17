@@ -1,0 +1,2 @@
+<template><input class="sc-input" type="text" :value="modelValue" :readonly="readonly" :disabled="disabled" :aria-required="required || undefined" :aria-invalid="invalid || undefined" :aria-describedby="describedBy" autocomplete="off" @input="$emit('update:modelValue',($event.target as HTMLInputElement).value)" /></template>
+<script setup lang="ts">defineProps<{ modelValue:string; readonly?:boolean; disabled?:boolean; required?:boolean; invalid?:boolean; describedBy?:string }>(); defineEmits<{ 'update:modelValue':[value:string] }>();</script>

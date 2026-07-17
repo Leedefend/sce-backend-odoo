@@ -26,6 +26,9 @@ export type FormSectionFieldSchema = {
   widgetSemantics?: Record<string, unknown>;
   required: boolean;
   readonly: boolean;
+  invalid?: boolean;
+  helpText?: string;
+  errorText?: string;
 
   // Presentational override for current template stage.
   // Prefer replacing with semantic span in later phases.

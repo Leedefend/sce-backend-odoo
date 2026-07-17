@@ -1,0 +1,2 @@
+<template><select class="sc-input" :value="modelValue" :disabled="disabled" :aria-required="required || undefined" :aria-invalid="invalid || undefined" :aria-describedby="describedBy" @change="$emit('update:modelValue',($event.target as HTMLSelectElement).value)"><slot /></select></template>
+<script setup lang="ts">defineProps<{ modelValue:string|number; disabled?:boolean; required?:boolean; invalid?:boolean; describedBy?:string }>(); defineEmits<{ 'update:modelValue':[value:string] }>();</script>

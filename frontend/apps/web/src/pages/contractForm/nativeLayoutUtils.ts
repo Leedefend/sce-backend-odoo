@@ -782,13 +782,10 @@ export function applyReadonlyFieldValues(
 export function shouldShowRequiredMark(input: RequiredMarkInput) {
   const node = input.node;
   if (node.kind !== 'field' || node.readonly) return false;
-  if (!node.required) return false;
-  if (input.showHud) return true;
-  if (input.renderProfile !== 'create') return true;
-  if (input.policyRequiredFields.size || input.validationRequiredFields.size) {
-    return input.policyRequiredFields.has(node.name) || input.validationRequiredFields.has(node.name);
-  }
-  return input.coreFieldNames.includes(node.name);
+  // `node.required` is already the merged authoritative result of the field,
+  // policy and runtime-state contracts. Presentation must not weaken that
+  // result merely because another action publishes a narrower required set.
+  return Boolean(node.required);
 }
 
 export function isNativeFieldVisible(input: NativeFieldVisibilityInput) {

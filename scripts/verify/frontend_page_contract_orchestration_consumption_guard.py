@@ -10,7 +10,6 @@ PAGE_BUILDER = ROOT / "addons/smart_core/core/page_contracts_builder.py"
 ACTION_TARGET_SCHEMA = ROOT / "addons/smart_core/core/action_target_schema.py"
 WORKBENCH_VIEW = ROOT / "frontend/apps/web/src/views/WorkbenchView.vue"
 ACTION_VIEW = ROOT / "frontend/apps/web/src/views/ActionView.vue"
-RECORD_VIEW = ROOT / "frontend/apps/web/src/views/RecordView.vue"
 SCENE_VIEW = ROOT / "frontend/apps/web/src/views/SceneView.vue"
 LOGIN_VIEW = ROOT / "frontend/apps/web/src/views/LoginView.vue"
 MENU_VIEW = ROOT / "frontend/apps/web/src/views/MenuView.vue"
@@ -47,7 +46,6 @@ def main() -> int:
     action_target_schema_text = _read(ACTION_TARGET_SCHEMA)
     workbench_text = _read(WORKBENCH_VIEW)
     action_view_text = _read(ACTION_VIEW)
-    record_view_text = _read(RECORD_VIEW)
     scene_view_text = _read(SCENE_VIEW)
     login_view_text = _read(LOGIN_VIEW)
     menu_view_text = _read(MENU_VIEW)
@@ -69,8 +67,6 @@ def main() -> int:
         errors.append(f"missing file: {WORKBENCH_VIEW.relative_to(ROOT).as_posix()}")
     if not action_view_text:
         errors.append(f"missing file: {ACTION_VIEW.relative_to(ROOT).as_posix()}")
-    if not record_view_text:
-        errors.append(f"missing file: {RECORD_VIEW.relative_to(ROOT).as_posix()}")
     if not scene_view_text:
         errors.append(f"missing file: {SCENE_VIEW.relative_to(ROOT).as_posix()}")
     if not login_view_text:
@@ -274,16 +270,6 @@ def main() -> int:
             "@click=\"executeHeaderAction(action.key)\"",
             "async function executeHeaderAction(actionKey: string) {",
             "const handled = await executePageContractAction({",
-        ],
-        errors,
-    )
-    _expect(
-        record_view_text,
-        "RecordView.vue",
-        [
-            "ContractFormPage",
-            "data-record-view-compatibility-delegate",
-            "single authoritative page path",
         ],
         errors,
     )

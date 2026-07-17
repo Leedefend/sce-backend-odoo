@@ -10,7 +10,6 @@ SESSION_STORE = ROOT / "frontend/apps/web/src/stores/session.ts"
 HOME_VIEW = ROOT / "frontend/apps/web/src/views/HomeView.vue"
 HOME_RUNTIME = ROOT / "frontend/apps/web/src/composables/shared-surface/useContractRoleHome.ts"
 ACTION_VIEW = ROOT / "frontend/apps/web/src/views/ActionView.vue"
-RECORD_VIEW = ROOT / "frontend/apps/web/src/views/RecordView.vue"
 SCENE_VIEW = ROOT / "frontend/apps/web/src/views/SceneView.vue"
 WORKBENCH_VIEW = ROOT / "frontend/apps/web/src/views/WorkbenchView.vue"
 USAGE_ANALYTICS_VIEW = ROOT / "frontend/apps/web/src/views/UsageAnalyticsView.vue"
@@ -43,7 +42,6 @@ def main() -> int:
     home_text = _read(HOME_VIEW)
     home_runtime_text = _read(HOME_RUNTIME)
     action_text = _read(ACTION_VIEW)
-    record_text = _read(RECORD_VIEW)
     scene_text = _read(SCENE_VIEW)
     workbench_text = _read(WORKBENCH_VIEW)
     usage_analytics_text = _read(USAGE_ANALYTICS_VIEW)
@@ -64,8 +62,6 @@ def main() -> int:
         errors.append(f"missing file: {HOME_RUNTIME.relative_to(ROOT).as_posix()}")
     if not action_text:
         errors.append(f"missing file: {ACTION_VIEW.relative_to(ROOT).as_posix()}")
-    if not record_text:
-        errors.append(f"missing file: {RECORD_VIEW.relative_to(ROOT).as_posix()}")
     if not scene_text:
         errors.append(f"missing file: {SCENE_VIEW.relative_to(ROOT).as_posix()}")
     if not workbench_text:
@@ -122,11 +118,6 @@ def main() -> int:
         "const pageSectionTagIs = pageContract.sectionTagIs;",
         "pageSectionEnabled('quick_filters', true)",
         "pageSectionEnabled('quick_actions', false)",
-    ]
-    required_record_tokens = [
-        "ContractFormPage",
-        "data-record-view-compatibility-delegate",
-        "single authoritative page path",
     ]
     required_scene_tokens = [
         "const pageSectionEnabled = pageContract.sectionEnabled;",
@@ -210,7 +201,6 @@ def main() -> int:
     ok_home, missing_home = _has_all(home_runtime_text, required_home_tokens)
     ok_shell, missing_shell = _has_all(shell_text, required_shell_tokens)
     ok_action, missing_action = _has_all(action_text, required_action_tokens)
-    ok_record, missing_record = _has_all(record_text, required_record_tokens)
     ok_scene, missing_scene = _has_all(scene_text, required_scene_tokens)
     ok_workbench, missing_workbench = _has_all(workbench_text, required_workbench_tokens)
     ok_usage_analytics, missing_usage_analytics = _has_all(usage_analytics_text, required_usage_analytics_tokens)
@@ -228,8 +218,6 @@ def main() -> int:
         errors.extend([f"AppShell.vue missing token: {token}" for token in missing_shell])
     if not ok_action:
         errors.extend([f"ActionView.vue missing token: {token}" for token in missing_action])
-    if not ok_record:
-        errors.extend([f"RecordView.vue missing token: {token}" for token in missing_record])
     if not ok_scene:
         errors.extend([f"SceneView.vue missing token: {token}" for token in missing_scene])
     if not _has_any(scene_text, [
@@ -257,7 +245,7 @@ def main() -> int:
     report = {
         "ok": len(errors) == 0,
         "summary": {
-            "checked_files": 14,
+            "checked_files": 13,
             "error_count": len(errors),
             "contract_signals": {
                 "capability_groups": "consumed" if ok_session else "missing",
@@ -265,7 +253,6 @@ def main() -> int:
                 "ext_facts.product.bundle": "consumed" if ok_session else "missing",
                 "home_product_surface": "rendered" if ok_home else "missing",
                 "action_section_governance": "rendered" if ok_action else "missing",
-                "record_section_governance": "rendered" if ok_record else "missing",
                 "scene_section_governance": "rendered" if ok_scene else "missing",
                 "workbench_section_governance": "rendered" if ok_workbench else "missing",
                 "usage_analytics_section_governance": "rendered" if ok_usage_analytics else "missing",
