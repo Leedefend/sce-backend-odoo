@@ -84,6 +84,10 @@ def _read(path: Path, errors: list[str]) -> str:
 def main() -> int:
     errors: list[str] = []
     contents = {label: _read(path, errors) for label, path in FILES.items()}
+    make_fragments = sorted((ROOT / "make").glob("*.mk"))
+    contents["makefile"] = "\n".join(
+        _read(path, errors) for path in (ROOT / "Makefile", *make_fragments)
+    )
     for label, tokens in REQUIRED_TOKENS.items():
         text = contents.get(label, "")
         for token in tokens:
