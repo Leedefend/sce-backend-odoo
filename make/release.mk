@@ -81,7 +81,7 @@ release.rehearsal.cleanup: verify.release.guard
 
 # Immutable production candidate. These targets are restricted to dev/test and
 # never point at the production database or production compose project.
-CANDIDATE_SOURCE_SHA ?= f465613835c15827cbb511d097c235928ba6083e
+CANDIDATE_SOURCE_SHA ?= c93e40c5e2613c0b9389492f185365c1d498e7d2
 CANDIDATE_SHORT_SHA := $(shell printf '%s' '$(CANDIDATE_SOURCE_SHA)' | cut -c1-12)
 CANDIDATE_IMAGE ?= sce-production-candidate:$(CANDIDATE_SHORT_SHA)
 CANDIDATE_PROJECT ?= sc-production-candidate

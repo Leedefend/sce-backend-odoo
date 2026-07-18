@@ -9,11 +9,24 @@ if [[ "$(git rev-parse origin/main)" != "$source_sha" ]]; then
   echo "[candidate.build] origin/main no longer matches locked source SHA" >&2
   exit 2
 fi
-if git diff --quiet "$source_sha" -- addons addons_external frontend requirements-odoo.txt config/odoo.conf.template scripts/odoo-entrypoint.sh scripts/render_odoo_conf.py; then
+# Browser acceptance scripts are release evidence tooling and are not consumed by
+# the Vite production build. Every actual frontend workspace/build input remains
+# locked to the candidate source SHA.
+locked_product_paths=(
+  addons
+  addons_external
+  frontend
+  ':(exclude)frontend/apps/web/scripts'
+  requirements-odoo.txt
+  config/odoo.conf.template
+  scripts/odoo-entrypoint.sh
+  scripts/render_odoo_conf.py
+)
+if git diff --quiet "$source_sha" -- "${locked_product_paths[@]}"; then
   :
 else
   echo "[candidate.build] product/runtime files differ from locked source SHA" >&2
-  git diff --name-only "$source_sha" -- addons addons_external frontend requirements-odoo.txt config/odoo.conf.template scripts/odoo-entrypoint.sh scripts/render_odoo_conf.py >&2
+  git diff --name-only "$source_sha" -- "${locked_product_paths[@]}" >&2
   exit 2
 fi
 
