@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: odoo
+      POSTGRES_PASSWORD: odoo
+      POSTGRES_DB: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U odoo -d postgres"]
+      interval: 2s
+      timeout: 3s
+      retries: 60
+    volumes:
+      - migration-safety-db:/var/lib/postgresql/data
+
+  odoo:
+    image: ${BLOCKER_RUNTIME_IMAGE:-sce-blocker-runtime:test}
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      HOST: db
+      PORT: "5432"
+      USER: odoo
+      PASSWORD: odoo
+    volumes:
+      - ./addons:/mnt/extra-addons:ro
+      - ./addons_external:/mnt/addons_external:ro
+      - migration-safety-odoo:/var/lib/odoo
+
+volumes:
+  migration-safety-db:
+  migration-safety-odoo:
