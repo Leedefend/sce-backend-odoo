@@ -672,7 +672,7 @@ verify.unified_page_contract.lite: guard.prod.forbid
 # ----------------------------------------------------------------------
 # v1.1 Engineering Convergence quality entries
 # ----------------------------------------------------------------------
-.PHONY: ci ci.local.quick ci.generated_reports.guard refresh.generated_reports test.frontend test.unit test.odoo.integration test.contract test.e2e.preflight test.e2e.fixed_data.odoo test.e2e test.all test.inventory test.inventory.summary test.e2e.matrix architecture.module_dependency_map architecture.complexity_report architecture.complexity_baseline_lock architecture.split_plan_queue github.remote_execution_plan security.secret_scan security.secrets.scan security.legacy_credential_guard
+.PHONY: ci ci.local.quick ci.generated_reports.guard refresh.generated_reports test.frontend test.unit test.odoo.integration test.contract test.e2e.preflight test.e2e.fixed_data.odoo test.e2e test.all test.inventory test.inventory.summary test.e2e.matrix architecture.module_dependency_map architecture.complexity_report architecture.complexity_baseline_lock architecture.split_plan_queue github.remote_execution_plan security.secret_scan security.secrets.scan security.legacy_credential_guard verify.menu_config_tree_editor.behavior
 
 ci: guard.prod.forbid security.secrets.scan security.legacy_credential_guard ci.generated_reports.guard architecture.complexity_baseline_lock verify.unified_page_contract.v2.web_architecture test.unit test.frontend test.contract test.e2e.preflight
 	@git diff --check
@@ -688,6 +688,9 @@ ci.generated_reports.guard: guard.prod.forbid
 	@python3 scripts/ci/generate_github_remote_execution_plan.py
 	@echo "[OK] tracked generated reports are current"
 
+verify.menu_config_tree_editor.behavior: guard.prod.forbid
+	@scripts/verify/menu_config_tree_editor_behavior_guard.sh
+
 refresh.generated_reports: guard.prod.forbid
 	@python3 scripts/ci/generate_test_inventory.py --write
 	@python3 scripts/ci/summarize_test_inventory.py --write
@@ -698,7 +701,7 @@ refresh.generated_reports: guard.prod.forbid
 	@python3 scripts/ci/generate_github_remote_execution_plan.py --write
 	@echo "[OK] tracked generated reports refreshed; review and commit any changes before push"
 
-ci.local.quick: guard.prod.forbid security.secrets.scan security.legacy_credential_guard ci.generated_reports.guard architecture.complexity_baseline_lock verify.unified_page_contract.v2.web_architecture
+ci.local.quick: guard.prod.forbid security.secrets.scan security.legacy_credential_guard ci.generated_reports.guard architecture.complexity_baseline_lock verify.unified_page_contract.v2.web_architecture verify.menu_config_tree_editor.behavior
 	@python3 scripts/ci/verify_contract_form_split_evidence.py
 	@python3 scripts/verify/contract_form_runtime_state_protocol_guard.py
 	@scripts/verify/contract_form_runtime_state_behavior_guard.sh
@@ -756,7 +759,7 @@ ci.local.quick: guard.prod.forbid security.secrets.scan security.legacy_credenti
 	@git diff --check
 	@echo "[OK] local quick gate passed"
 
-test.frontend: guard.prod.forbid
+test.frontend: guard.prod.forbid verify.menu_config_tree_editor.behavior
 	@scripts/dev/pnpm_exec.sh -C frontend/apps/web lint:src
 	@scripts/dev/pnpm_exec.sh -C frontend/apps/web typecheck:strict
 	@scripts/dev/pnpm_exec.sh -C frontend/apps/web build
