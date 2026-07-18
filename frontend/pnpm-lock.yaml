@@ -73,6 +73,9 @@ importers:
       '@vitejs/plugin-vue':
         specifier: ^5.2.1
         version: 5.2.4(vite@5.4.21(@types/node@22.19.7)(terser@5.46.2))(vue@3.5.27(typescript@5.9.3))
+      esbuild:
+        specifier: 0.21.5
+        version: 0.21.5
       eslint:
         specifier: ^8.57.1
         version: 8.57.1

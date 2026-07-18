@@ -10,16 +10,36 @@ export function useMenuTreeEditor(options: {
   dragSourceMenuId: Ref<number>;
   dragTargetMenuId: Ref<number>;
   dragDropPosition: Ref<DropPosition>;
+  treeDragEnabled: Readonly<Ref<boolean>>;
   tree: Ref<MenuConfigMenu[]>;
   message: Ref<string>;
   selectedMenuPath: (items: MenuConfigMenu[], menuId: number) => Set<number>;
   menuById: (menuId: number) => MenuConfigMenu | null;
+  treeMenuById: (menuId: number) => MenuConfigMenu | null;
+  isRuntimeMenuGroup: (menu: MenuConfigMenu | null | undefined) => boolean;
   parentOptionIds: (menuId: number) => Set<number>;
   draftFor: (menuId: number) => EditableDraft | undefined;
   setSaveNotice: (value: string) => void;
 }) {
-  const { selectedMenuId, collapsedMenuIds, dragSourceMenuId, dragTargetMenuId, dragDropPosition, tree, message } = options;
-  const { selectedMenuPath, menuById, parentOptionIds, draftFor, setSaveNotice } = options;
+  const {
+    selectedMenuId,
+    collapsedMenuIds,
+    dragSourceMenuId,
+    dragTargetMenuId,
+    dragDropPosition,
+    treeDragEnabled,
+    tree,
+    message,
+  } = options;
+  const {
+    selectedMenuPath,
+    menuById,
+    treeMenuById,
+    isRuntimeMenuGroup,
+    parentOptionIds,
+    draftFor,
+    setSaveNotice,
+  } = options;
   function initializeTreeCollapse(items: MenuConfigMenu[]) {
     const selectedPath = selectedMenuPath(items, selectedMenuId.value);
     const next = new Set<number>();

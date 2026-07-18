@@ -4,19 +4,19 @@ Generated from `test_inventory.csv`.
 
 ## Totals
 
-- Total assets: `1196`
+- Total assets: `1197`
 - Review queue: `4`
 - Unknown runtime: `3`
 - Long-running assets: `332`
 - Manual gate review: `4`
 - Aggregate-covered assets: `230`
-- PR dedupe candidates: `634`
+- PR dedupe candidates: `635`
 
 ## By Layer
 
 | Layer | Count |
 | --- | ---: |
-| governance | 371 |
+| governance | 372 |
 | contract | 310 |
 | data_migration | 217 |
 | unit | 156 |
@@ -30,7 +30,7 @@ Generated from `test_inventory.csv`.
 
 | Decision Gate | Count |
 | --- | ---: |
-| pr_candidate | 858 |
+| pr_candidate | 859 |
 | integration_candidate | 293 |
 | release_candidate | 36 |
 | manual_review | 4 |
@@ -43,7 +43,7 @@ Generated from `test_inventory.csv`.
 
 | Disposition | Count |
 | --- | ---: |
-| deduplicate_before_required | 634 |
+| deduplicate_before_required | 635 |
 | keep_integration_or_release_only | 292 |
 | covered_by_aggregate | 225 |
 | keep_release_only | 36 |
@@ -146,7 +146,7 @@ Generated from `test_inventory.csv`.
 
 | Runtime | Count |
 | --- | ---: |
-| <5m | 860 |
+| <5m | 861 |
 | 10-30m | 294 |
 | 30-60m | 38 |
 | unknown | 3 |
@@ -156,7 +156,7 @@ Generated from `test_inventory.csv`.
 
 | Owner | Count |
 | --- | ---: |
-| architecture owner | 371 |
+| architecture owner | 372 |
 | platform owner | 310 |
 | data owner | 217 |
 | test owner | 157 |
@@ -169,7 +169,7 @@ Generated from `test_inventory.csv`.
 
 | Directory | Count |
 | --- | ---: |
-| scripts/verify | 887 |
+| scripts/verify | 888 |
 | scripts/migration | 215 |
 | scripts/ops | 37 |
 | frontend/apps/web/scripts | 28 |
@@ -281,7 +281,7 @@ Generated from `test_inventory.csv`.
 | T-ASSET-375 | security | `scripts/verify/construction_core_extension_actor_roles_split_guard.py` | security owner |
 | T-ASSET-376 | governance | `scripts/verify/construction_core_extension_capability_rows_split_guard.py` | architecture owner |
 | T-ASSET-377 | contract | `scripts/verify/construction_core_extension_contract_helpers_split_guard.py` | platform owner |
-| ... | ... | 554 more | ... |
+| ... | ... | 555 more | ... |
 
 ## Dedupe Hotspots
 
