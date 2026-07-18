@@ -575,7 +575,7 @@ def ensure_fixture(env) -> Dict[str, Any]:
         "Demo Role Finance",
         company_a,
         [company_a, company_b],
-        ["smart_construction_custom.group_sc_role_finance"],
+        ["smart_construction_core.group_sc_role_finance_manager"],
     )
     project_member = _user(
         env,
@@ -594,7 +594,7 @@ def ensure_fixture(env) -> Dict[str, Any]:
         "Demo Role PM",
         company_a,
         [company_a],
-        ["smart_construction_custom.group_sc_role_pm"],
+        ["smart_construction_core.group_sc_role_project_manager"],
     )
     owner = _user(
         env,
@@ -602,7 +602,7 @@ def ensure_fixture(env) -> Dict[str, Any]:
         "Demo Role Owner",
         company_a,
         [company_a],
-        ["smart_construction_custom.group_sc_role_owner"],
+        ["smart_construction_core.group_sc_role_owner"],
     )
     executive = _user(
         env,
@@ -610,7 +610,7 @@ def ensure_fixture(env) -> Dict[str, Any]:
         "Demo Role Executive",
         company_a,
         [company_a],
-        ["smart_construction_custom.group_sc_role_executive"],
+        ["smart_construction_core.group_sc_role_executive"],
     )
 
     partner_a = _partner(env, "A", company_a)

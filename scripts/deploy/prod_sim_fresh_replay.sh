@@ -28,7 +28,7 @@ ARTIFACT_ROOT="${MIGRATION_ARTIFACT_ROOT:-$ROOT_DIR/artifacts/migration/${RUN_ID
 CONTAINER_ARTIFACT_ROOT="${MIGRATION_CONTAINER_ARTIFACT_ROOT:-/mnt/artifacts/migration/${RUN_ID}}"
 DATA_REPLAY_ASSET_ROOT="${DATA_REPLAY_ASSET_ROOT:-$ROOT_DIR}"
 SCBS_REPLAY_ASSET_ROOT="${SCBS_REPLAY_ASSET_ROOT:-/mnt/artifacts/migration/scbs_replay_asset_v1}"
-PRODUCTION_MODULES="${HISTORY_PRODUCTION_MODULES:-smart_construction_bootstrap,smart_core,smart_scene,smart_construction_core,smart_construction_custom,smart_construction_portal,smart_construction_scene,smart_license_core,smart_owner_core,smart_owner_bundle,smart_construction_bundle,smart_construction_seed}"
+PRODUCTION_MODULES="${HISTORY_PRODUCTION_MODULES:-smart_construction_bootstrap,smart_core,smart_scene,smart_construction_core,smart_construction_portal,smart_construction_scene,smart_license_core,smart_owner_core,smart_owner_bundle,smart_construction_bundle,smart_construction_seed}"
 
 export COMPOSE_FILES
 export RUN_ID

@@ -100,11 +100,11 @@ PY
     ;;
   upgrade)
     start_s="$(date +%s)"
-    modules="${CANDIDATE_FORMAL_MODULES:-smart_core,smart_construction_core,smart_construction_portal,smart_construction_custom}"
+    modules="${CANDIDATE_FORMAL_MODULES:-smart_construction_bundle}"
     set +e
     "${candidate_compose[@]}" run --rm --no-deps --entrypoint odoo odoo \
       --db_host=db --db_port=5432 --db_user="$DB_USER" --db_password="$DB_PASSWORD" \
-      --addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,/mnt/addons_external/oca_server_ux \
+      --addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/product-addons,/mnt/customer-addons,/mnt/addons_external/oca_server_ux \
       --data-dir=/var/lib/odoo -d "$candidate_db" --no-http --workers=0 --max-cron-threads=0 \
       -u "$modules" --without-demo=all --stop-after-init 2>&1 | tee "$artifacts/history-upgrade.log"
     odoo_status="${PIPESTATUS[0]}"

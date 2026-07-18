@@ -4,13 +4,5 @@
         <record id="base.user_admin" model="res.users">
             <field name="groups_id" eval="[(3, ref('smart_construction_core.group_sc_cap_config_admin'))]"/>
         </record>
-
-        <!-- 真实业务配置管理员：按登录名绑定业务角色，避免依赖迁移库中的用户 XMLID。 -->
-        <function model="res.users" name="write">
-            <function model="res.users" name="search">
-                <value eval="[('login', '=', 'wutao')]"/>
-            </function>
-            <value eval="{'groups_id': [(4, ref('smart_construction_core.group_sc_role_business_admin'))]}"/>
-        </function>
     </data>
 </odoo>

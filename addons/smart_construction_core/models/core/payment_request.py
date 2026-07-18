@@ -1114,14 +1114,10 @@ class PaymentRequest(models.Model):
         return (
             self.env.user.has_group("smart_construction_core.group_sc_cap_business_initiator")
             or self.env.user.has_group("smart_construction_core.group_sc_cap_finance_user")
-            or self.env.user.has_group("smart_construction_custom.group_sc_role_finance")
         )
 
     def _has_finance_approve_access(self):
-        return (
-            self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager")
-            or self.env.user.has_group("smart_construction_custom.group_sc_role_finance")
-        )
+        return self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager")
 
     def _assert_finance_approve_access(self):
         if not self._has_finance_approve_access():
@@ -1790,10 +1786,7 @@ class PaymentRequest(models.Model):
         return result or {"warnings": advisory_result}
 
     def action_done(self):
-        has_finance_done_access = (
-            self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager")
-            or self.env.user.has_group("smart_construction_custom.group_sc_role_finance")
-        )
+        has_finance_done_access = self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager")
         if not has_finance_done_access:
             raise ValidationError(_("你没有完成付款/收款申请的权限。"))
         advisory_result = {}
@@ -1879,10 +1872,7 @@ class PaymentRequest(models.Model):
         return Ledger.create(vals)
 
     def action_cancel(self):
-        has_finance_cancel_access = (
-            self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager")
-            or self.env.user.has_group("smart_construction_custom.group_sc_role_finance")
-        )
+        has_finance_cancel_access = self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager")
         if not has_finance_cancel_access:
             raise ValidationError(_("你没有取消付款/收款申请的权限。"))
         for rec in self:

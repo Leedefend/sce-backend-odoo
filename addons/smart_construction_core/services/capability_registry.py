@@ -35,7 +35,6 @@ CAPABILITY_GROUPS: list[dict[str, Any]] = [
     {"key": "others", "label": "常用入口", "icon": "grid", "sequence": 80},
 ]
 
-ROLE_GROUP_PREFIX = "smart_construction_custom.group_sc_role_"
 ROLE_GROUP_PREFIX_CORE = "smart_construction_core.group_sc_role_"
 ROLE_SUFFIX_MAP = {
     "project_manager": "pm",
@@ -181,10 +180,6 @@ def _resolve_role_codes_for_user(user) -> set[str]:
     group_xmlids = set(user.groups_id.get_external_id().values())
     for xmlid in group_xmlids:
         text = str(xmlid or "").strip()
-        if text.startswith(ROLE_GROUP_PREFIX):
-            suffix = text[len(ROLE_GROUP_PREFIX):]
-            roles.add(ROLE_SUFFIX_MAP.get(suffix, suffix))
-            continue
         if text.startswith(ROLE_GROUP_PREFIX_CORE):
             suffix = text[len(ROLE_GROUP_PREFIX_CORE):]
             roles.add(ROLE_SUFFIX_MAP.get(suffix, suffix))

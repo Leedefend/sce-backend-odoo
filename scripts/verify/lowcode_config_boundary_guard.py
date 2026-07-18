@@ -906,7 +906,11 @@ def build_report() -> dict:
     source_statuses = set(getattr(boundaries, "LOWCODE_SOURCE_STATUSES", set()))
     system_config_menu_xmlids = set(getattr(boundaries, "LOWCODE_SYSTEM_CONFIG_MENU_XMLIDS", set()))
     capability_ids = _validate_lowcode_capability_boundaries(errors)
-    _validate_customer_config_baseline_manifest(errors)
+    # Customer replay assets are verified by each independently delivered P2
+    # package. The product repository owns only the generic low-code protocol.
+    legacy_customer_root = ROOT / "addons" / "smart_construction_custom"
+    if legacy_customer_root.is_dir():
+        _validate_customer_config_baseline_manifest(errors)
     _validate_lowcode_release_verification_docs(errors)
     _validate_menu_config_runtime_authority(errors)
 
@@ -973,19 +977,20 @@ def build_report() -> dict:
             "message": "fresh installs must backfill explicit low-code source_status",
         })
 
-    custom_hook_text = _read(ROOT / "addons" / "smart_construction_custom" / "hooks.py")
-    if "backfill_lowcode_contract_source_status" not in custom_hook_text:
-        errors.append({
-            "category": "custom_fresh_install_source_status_backfill",
-            "message": "custom fresh installs must backfill explicit low-code source_status after user preferences",
-        })
+    if legacy_customer_root.is_dir():
+        custom_hook_text = _read(legacy_customer_root / "hooks.py")
+        if "backfill_lowcode_contract_source_status" not in custom_hook_text:
+            errors.append({
+                "category": "custom_fresh_install_source_status_backfill",
+                "message": "custom fresh installs must backfill explicit low-code source_status after user preferences",
+            })
 
-    custom_user_pref_text = _read(ROOT / "addons" / "smart_construction_custom" / "models" / "user_preferences.py")
-    if "ensure_lowcode_contract_source_status" not in custom_user_pref_text:
-        errors.append({
-            "category": "custom_user_preference_source_status",
-            "message": "custom user preference contracts must stamp explicit source_status when generated",
-        })
+        custom_user_pref_text = _read(legacy_customer_root / "models" / "user_preferences.py")
+        if "ensure_lowcode_contract_source_status" not in custom_user_pref_text:
+            errors.append({
+                "category": "custom_user_preference_source_status",
+                "message": "custom user preference contracts must stamp explicit source_status when generated",
+            })
 
     migration_text = _read(ROOT / "addons" / "smart_construction_core" / "migrations" / "17.0.0.59" / "post-migration.py")
     if "ensure_lowcode_contract_source_status" not in migration_text:
@@ -994,12 +999,13 @@ def build_report() -> dict:
             "message": "module upgrades must backfill explicit low-code source_status",
         })
 
-    custom_migration_text = _read(ROOT / "addons" / "smart_construction_custom" / "migrations" / "17.0.1.1" / "post-migration.py")
-    if "ensure_lowcode_contract_source_status" not in custom_migration_text:
-        errors.append({
-            "category": "custom_upgrade_source_status_backfill",
-            "message": "custom module upgrades must backfill explicit low-code source_status",
-        })
+    if legacy_customer_root.is_dir():
+        custom_migration_text = _read(legacy_customer_root / "migrations" / "17.0.1.1" / "post-migration.py")
+        if "ensure_lowcode_contract_source_status" not in custom_migration_text:
+            errors.append({
+                "category": "custom_upgrade_source_status_backfill",
+                "message": "custom module upgrades must backfill explicit low-code source_status",
+            })
 
     construction_extension_text = "\n".join((
         _read(ROOT / "addons" / "smart_construction_core" / "core_extension.py"),

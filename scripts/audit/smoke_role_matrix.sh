@@ -144,30 +144,30 @@ FIXTURE_SPECS = {
         "name": "Demo Project Read",
         "groups_xmlids": [
             "base.group_user",
-            "smart_construction_custom.group_sc_role_project_read",
-            "smart_construction_custom.group_sc_role_contract_read",
-            "smart_construction_custom.group_sc_role_settlement_read",
-            "smart_construction_custom.group_sc_role_payment_read",
+            "smart_construction_core.group_sc_cap_project_read",
+            "smart_construction_core.group_sc_cap_contract_read",
+            "smart_construction_core.group_sc_cap_settlement_read",
+            "smart_construction_core.group_sc_cap_finance_read",
         ],
     },
     "demo_role_project_user": {
         "name": "Demo Project User",
         "groups_xmlids": [
             "base.group_user",
-            "smart_construction_custom.group_sc_role_project_user",
-            "smart_construction_custom.group_sc_role_contract_user",
-            "smart_construction_custom.group_sc_role_settlement_user",
-            "smart_construction_custom.group_sc_role_payment_user",
+            "smart_construction_core.group_sc_cap_project_user",
+            "smart_construction_core.group_sc_cap_contract_user",
+            "smart_construction_core.group_sc_cap_settlement_user",
+            "smart_construction_core.group_sc_cap_finance_user",
         ],
     },
     "demo_role_project_manager": {
         "name": "Demo Project Manager",
         "groups_xmlids": [
             "base.group_user",
-            "smart_construction_custom.group_sc_role_project_manager",
-            "smart_construction_custom.group_sc_role_contract_manager",
-            "smart_construction_custom.group_sc_role_settlement_manager",
-            "smart_construction_custom.group_sc_role_payment_manager",
+            "smart_construction_core.group_sc_cap_project_manager",
+            "smart_construction_core.group_sc_cap_contract_manager",
+            "smart_construction_core.group_sc_cap_settlement_manager",
+            "smart_construction_core.group_sc_cap_finance_manager",
             "smart_construction_core.group_sc_cap_purchase_manager",
             "smart_construction_core.group_sc_cap_cost_manager",
             "smart_construction_core.group_sc_role_contract_admin",
@@ -178,19 +178,19 @@ FIXTURE_SPECS = {
     },
     "demo_role_owner": {
         "name": "Demo Role Owner",
-        "groups_xmlids": ["base.group_user", "smart_construction_custom.group_sc_role_owner"],
+        "groups_xmlids": ["base.group_user", "smart_construction_core.group_sc_role_owner"],
     },
     "demo_role_pm": {
         "name": "Demo Role PM",
-        "groups_xmlids": ["base.group_user", "smart_construction_custom.group_sc_role_pm"],
+        "groups_xmlids": ["base.group_user", "smart_construction_core.group_sc_role_project_manager"],
     },
     "demo_role_finance": {
         "name": "Demo Role Finance",
-        "groups_xmlids": ["base.group_user", "smart_construction_custom.group_sc_role_finance"],
+        "groups_xmlids": ["base.group_user", "smart_construction_core.group_sc_role_finance_manager"],
     },
     "demo_role_executive": {
         "name": "Demo Role Executive",
-        "groups_xmlids": ["base.group_user", "smart_construction_custom.group_sc_role_executive"],
+        "groups_xmlids": ["base.group_user", "smart_construction_core.group_sc_role_executive"],
     },
 }
 

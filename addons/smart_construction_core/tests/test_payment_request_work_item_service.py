@@ -42,7 +42,7 @@ class TestPaymentRequestWorkItemService(TransactionCase):
         )
         cls.executive = cls._user(
             "work_item_executive",
-            ["smart_construction_core.group_sc_cap_finance_manager"],
+            ["smart_construction_core.group_sc_role_executive"],
         )
         cls.member = cls._user(
             "work_item_member",
@@ -114,9 +114,9 @@ class TestPaymentRequestWorkItemService(TransactionCase):
             context={},
         )
         if user == self.finance:
-            service._group_xmlids.add("smart_construction_custom.group_sc_role_finance")
+            service._group_xmlids.add("smart_construction_core.group_sc_role_finance_manager")
         if user == self.executive:
-            service._group_xmlids.add("smart_construction_custom.group_sc_role_executive")
+            service._group_xmlids.add("smart_construction_core.group_sc_role_executive")
         return service.build()
 
     def test_finance_sees_submit_and_own_items_with_matching_counts(self):

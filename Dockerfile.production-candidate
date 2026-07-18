@@ -16,7 +16,16 @@ RUN apt-get update \
     && pip3 install --no-cache-dir -r /tmp/requirements-odoo.txt \
     && rm -rf /var/lib/apt/lists/* /tmp/requirements-odoo.txt
 
-COPY addons /mnt/extra-addons
+RUN mkdir -p /mnt/product-addons /mnt/customer-addons /mnt/test-addons /mnt/source-addons \
+    && ln -s /mnt/product-addons /mnt/extra-addons
+COPY addons/sc_norm_engine /mnt/product-addons/sc_norm_engine
+COPY addons/smart_core /mnt/product-addons/smart_core
+COPY addons/smart_scene /mnt/product-addons/smart_scene
+COPY addons/smart_license_core /mnt/product-addons/smart_license_core
+COPY addons/smart_construction_core /mnt/product-addons/smart_construction_core
+COPY addons/smart_construction_portal /mnt/product-addons/smart_construction_portal
+COPY addons/smart_construction_scene /mnt/product-addons/smart_construction_scene
+COPY addons/smart_construction_bundle /mnt/product-addons/smart_construction_bundle
 COPY addons_external/oca_server_ux /mnt/addons_external/oca_server_ux
 COPY config/odoo.conf.template /etc/odoo/odoo.conf.template
 COPY config/nginx/conf.d/production-candidate.conf /etc/nginx/conf.d/default.conf
@@ -26,9 +35,9 @@ COPY frontend/apps/web/dist-production-candidate /usr/share/nginx/html
 
 RUN chmod 0755 /usr/local/bin/odoo-entrypoint.sh /usr/local/bin/render_odoo_conf.py \
     && rm -f /etc/nginx/sites-enabled/default \
-    && find /mnt/extra-addons /mnt/addons_external -type d -exec chmod 0755 {} + \
-    && find /mnt/extra-addons /mnt/addons_external -type f -exec chmod 0644 {} + \
-    && chown -R root:root /mnt/extra-addons /mnt/addons_external /usr/share/nginx/html
+    && find /mnt/product-addons /mnt/customer-addons /mnt/test-addons /mnt/source-addons /mnt/addons_external -type d -exec chmod 0755 {} + \
+    && find /mnt/product-addons /mnt/customer-addons /mnt/test-addons /mnt/source-addons /mnt/addons_external -type f -exec chmod 0644 {} + \
+    && chown -R root:root /mnt/product-addons /mnt/customer-addons /mnt/test-addons /mnt/source-addons /mnt/addons_external /usr/share/nginx/html
 
 ARG SOURCE_SHA
 ARG FRONTEND_BUILD_SHA256

@@ -16,6 +16,10 @@ tmp
 runtime
 out
 migration_assets
+customer_addons
+payloads
+*.tar.zst
+*.age
 frontend/**/node_modules
 frontend/apps/web/.vite
 frontend/**/dist

@@ -26,9 +26,9 @@ class TestProjectMemberRoleSurface(TransactionCase):
         resolver = self._resolver()
         matrix = {
             "project_member": {"smart_construction_core.group_sc_cap_project_read"},
-            "finance": {"smart_construction_custom.group_sc_role_finance"},
-            "pm": {"smart_construction_custom.group_sc_role_pm", "smart_construction_core.group_sc_cap_project_read"},
-            "owner": {"smart_construction_custom.group_sc_role_owner", "smart_construction_core.group_sc_cap_project_read"},
+            "finance": {"smart_construction_core.group_sc_role_finance_manager"},
+            "pm": {"smart_construction_core.group_sc_role_project_manager", "smart_construction_core.group_sc_cap_project_read"},
+            "owner": {"smart_construction_core.group_sc_role_owner", "smart_construction_core.group_sc_cap_project_read"},
         }
         for expected, groups in matrix.items():
             with self.subTest(expected=expected):
@@ -37,10 +37,10 @@ class TestProjectMemberRoleSurface(TransactionCase):
     def test_formal_role_surface_uses_authoritative_product_label_and_home(self):
         resolver = self._resolver()
         matrix = {
-            "finance": ({"smart_construction_custom.group_sc_role_finance"}, "财务主管"),
+            "finance": ({"smart_construction_core.group_sc_role_finance_manager"}, "财务主管"),
             "project_member": ({"smart_construction_core.group_sc_cap_project_read"}, "项目成员"),
-            "pm": ({"smart_construction_custom.group_sc_role_pm"}, "项目经理"),
-            "owner": ({"smart_construction_custom.group_sc_role_owner"}, "企业负责人"),
+            "pm": ({"smart_construction_core.group_sc_role_project_manager"}, "项目经理"),
+            "owner": ({"smart_construction_core.group_sc_role_owner"}, "企业负责人"),
         }
         for role, (groups, label) in matrix.items():
             with self.subTest(role=role):
@@ -133,10 +133,10 @@ class TestProjectMemberRoleSurface(TransactionCase):
             "pm": set(),
         }
         role_groups = {
-            "finance": {"smart_construction_custom.group_sc_role_finance"},
+            "finance": {"smart_construction_core.group_sc_role_finance_manager"},
             "project_member": {"smart_construction_core.group_sc_cap_project_read"},
-            "owner": {"smart_construction_custom.group_sc_role_owner"},
-            "pm": {"smart_construction_custom.group_sc_role_pm"},
+            "owner": {"smart_construction_core.group_sc_role_owner"},
+            "pm": {"smart_construction_core.group_sc_role_project_manager"},
         }
         for role, groups in role_groups.items():
             with self.subTest(role=role):

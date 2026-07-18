@@ -6,7 +6,7 @@ db_password = ${DB_PASSWORD}
 db_name = ${ODOO_DB}
 admin_passwd = ${ADMIN_PASSWD}
 
-addons_path = /usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,/mnt/addons_external/oca_server_ux
+addons_path = /usr/lib/python3/dist-packages/odoo/addons,/mnt/product-addons,/mnt/customer-addons,/mnt/test-addons,/mnt/source-addons,/mnt/addons_external/oca_server_ux
 server_wide_modules = web,smart_core
 logfile =
 

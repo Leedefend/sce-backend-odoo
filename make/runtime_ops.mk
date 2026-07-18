@@ -1927,9 +1927,11 @@ verify.frontend.shell_usability.browser: guard.prod.forbid check-compose-project
 	$(RUN_ENV) DB_NAME=$(FRONTEND_ACCEPTANCE_DB) SC_ENVIRONMENT=acceptance SC_ALLOW_DEMO_DATA=1 FRONTEND_URL=$${FRONTEND_URL:-http://127.0.0.1:5175} ARTIFACTS_DIR=artifacts/frontend-shell-usability FRONTEND_DELIVERY_HARDENING_TARGETS_JSON="$${FRONTEND_DELIVERY_HARDENING_TARGETS_JSON}" node scripts/verify/frontend_shell_usability_browser.mjs
 
 policy.apply.business_full: guard.prod.danger check-compose-project check-compose-env
-	@$(RUN_ENV) POLICY_MODULE=smart_construction_custom DB_NAME=$(DB_NAME) bash scripts/audit/apply_business_full_policy.sh
+	@test -n "$(CUSTOMER_MODULE)" || { echo "CUSTOMER_MODULE is required (for example, sce_customer_<tenant_key>)" >&2; exit 2; }
+	@$(RUN_ENV) POLICY_MODULE=$(CUSTOMER_MODULE) DB_NAME=$(DB_NAME) bash scripts/audit/apply_business_full_policy.sh
 policy.apply.role_matrix: guard.prod.danger check-compose-project check-compose-env
-	@$(RUN_ENV) POLICY_MODULE=smart_construction_custom DB_NAME=$(DB_NAME) bash scripts/audit/apply_role_matrix.sh
+	@test -n "$(CUSTOMER_MODULE)" || { echo "CUSTOMER_MODULE is required (for example, sce_customer_<tenant_key>)" >&2; exit 2; }
+	@$(RUN_ENV) POLICY_MODULE=$(CUSTOMER_MODULE) DB_NAME=$(DB_NAME) bash scripts/audit/apply_role_matrix.sh
 	@echo "⚠️  policy.apply.role_matrix finished; restarting Odoo to refresh ACL caches"
 	@$(MAKE) restart
 smoke.business_full: check-compose-project check-compose-env
@@ -1943,7 +1945,6 @@ policy.ensure.role_surface_demo: guard.prod.forbid check-compose-project check-c
 	  echo "[policy.ensure.role_surface_demo] already satisfied"; \
 	elif [ "$${AUTO_FIX_ROLE_SURFACE_DEMO:-0}" = "1" ]; then \
 	  echo "[policy.ensure.role_surface_demo] applying auto-fix for role surface demo baseline"; \
-	  $(MAKE) --no-print-directory mod.install MODULE=smart_construction_custom DB_NAME=$(DB_NAME); \
 	  $(MAKE) --no-print-directory mod.install MODULE=smart_construction_seed DB_NAME=$(DB_NAME); \
 	  $(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/link_existing_demo_user_xmlids.sh; \
 	  $(MAKE) --no-print-directory mod.install MODULE=smart_construction_demo DB_NAME=$(DB_NAME); \

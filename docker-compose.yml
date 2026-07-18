@@ -83,7 +83,11 @@ services:
 
     volumes:
       - odoo_data:/var/lib/odoo
-      - ./addons:/mnt/extra-addons
+      # Development source mount. Immutable production candidates do not use
+      # this path; they contain only /mnt/product-addons and may mount one
+      # private customer artifact under /mnt/customer-addons.
+      - ./addons:/mnt/source-addons
+      - ${SC_CUSTOMER_ADDONS_ROOT:-./customer_addons}:/mnt/customer-addons:ro
       - ./addons_external:/mnt/addons_external
       - ./artifacts:/mnt/artifacts
       - ./migration_assets:/mnt/migration_assets:ro

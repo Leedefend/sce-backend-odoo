@@ -4,7 +4,7 @@ set -euo pipefail
 source "$(dirname "$0")/../_lib/common.sh"
 
 ROOT_DIR="${ROOT_DIR:-$(cd "$(dirname "$0")/../.." && pwd)}"
-PROD_SIM_MODULES="${PROD_SIM_MODULES:-smart_construction_bootstrap,smart_core,smart_scene,smart_construction_core,smart_construction_custom,smart_construction_portal,smart_construction_scene,smart_license_core,smart_owner_core,smart_owner_bundle,smart_construction_bundle,smart_construction_seed}"
+PROD_SIM_MODULES="${PROD_SIM_MODULES:-smart_construction_bootstrap,smart_core,smart_scene,smart_construction_core,smart_construction_portal,smart_construction_scene,smart_license_core,smart_owner_core,smart_owner_bundle,smart_construction_bundle,smart_construction_seed}"
 
 if [[ ",${PROD_SIM_MODULES}," == *",smart_construction_demo,"* && "${SC_ALLOW_DEMO_DATA:-}" != "1" ]]; then
   echo "❌ prod-sim deploy refuses smart_construction_demo. Set SC_ALLOW_DEMO_DATA=1 only for an intentional demo rebuild." >&2

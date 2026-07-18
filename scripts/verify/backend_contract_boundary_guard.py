@@ -53,12 +53,6 @@ ALLOWED_DIRECT_CONTRACT_WRITERS = {
         "reason": "atomically publishes validated reversible low-code contract items and owns batch rollback",
         "expected_source": "ui.business.config.change.set",
     },
-    "addons/smart_construction_custom/models/user_preferences.py": {
-        "layer": "L3",
-        "boundary": "user_preference_projection",
-        "reason": "initializes customer-specific menu and form preferences",
-        "expected_source": "smart_construction_custom.*preference",
-    },
     "addons/smart_construction_core/models/support/formal_list_contract_sync.py": {
         "layer": "L2",
         "boundary": "industry_formal_list_contract_projection",

@@ -40,7 +40,8 @@ services:
 
     volumes:
       - odoodata:/var/lib/odoo
-      - ./addons:/mnt/extra-addons
+      - ./addons:/mnt/source-addons
+      - ${SC_CUSTOMER_ADDONS_ROOT:-./customer_addons}:/mnt/customer-addons:ro
       - ./addons_external:/mnt/addons_external
       - ./docs:/mnt/docs:ro
       - ./config/odoo.ci.conf:/etc/odoo/odoo.conf:ro
@@ -48,7 +49,7 @@ services:
 
     environment:
       PYTHONUNBUFFERED: "1"
-      PYTHONPATH: /mnt/extra-addons
+      PYTHONPATH: /mnt/source-addons
       DB_HOST: db
       DB_PORT: "5432"
       DB_USER: odoo

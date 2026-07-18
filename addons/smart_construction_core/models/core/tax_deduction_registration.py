@@ -426,10 +426,7 @@ class ScTaxDeductionRegistration(models.Model):
             )
 
     def _has_finance_deduct_access(self):
-        return (
-            self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager")
-            or self.env.user.has_group("smart_construction_custom.group_sc_role_finance")
-        )
+        return self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager")
 
     def _assert_finance_deduct_access(self):
         if not self._has_finance_deduct_access():

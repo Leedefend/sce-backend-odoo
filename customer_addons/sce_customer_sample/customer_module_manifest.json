@@ -1,0 +1,21 @@
+{
+  "schema_version": "sce.customer_module_manifest.v1",
+  "module_key": "sce_customer_sample",
+  "customer_key": "sample",
+  "tenant_key": "sample",
+  "module_name": "sce_customer_sample",
+  "module_version": "17.0.1.0.0",
+  "minimum_product_version": "17.0.0",
+  "maximum_tested_product_version": "17.0.0",
+  "payload_manifest_version": "sce.customer_payload_manifest.v1",
+  "install_mode": "customer_database_only",
+  "product_bundle": "smart_construction_bundle",
+  "product_version_range": {
+    "min_inclusive": "17.0.0",
+    "max_exclusive": "18.0.0"
+  },
+  "payload_required": false,
+  "company_keys": [],
+  "role_keys": [],
+  "uninstall_policy": "fail_closed"
+}

@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sce.local/schemas/tenant_delivery/customer_module_manifest.schema.json",
+  "title": "SCE customer module manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "module_key",
+    "customer_key",
+    "tenant_key",
+    "module_name",
+    "module_version",
+    "minimum_product_version",
+    "maximum_tested_product_version",
+    "payload_manifest_version",
+    "install_mode",
+    "product_bundle",
+    "product_version_range",
+    "payload_required",
+    "uninstall_policy"
+  ],
+  "properties": {
+    "schema_version": {"const": "sce.customer_module_manifest.v1"},
+    "module_key": {"type": "string", "pattern": "^sce_customer_[a-z0-9_]+$"},
+    "customer_key": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,62}$"},
+    "tenant_key": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,62}$"},
+    "module_name": {"type": "string", "pattern": "^sce_customer_[a-z0-9_]+$"},
+    "module_version": {"type": "string", "minLength": 1},
+    "minimum_product_version": {"type": "string"},
+    "maximum_tested_product_version": {"type": "string"},
+    "payload_manifest_version": {"const": "sce.customer_payload_manifest.v1"},
+    "install_mode": {"const": "customer_database_only"},
+    "product_bundle": {"const": "smart_construction_bundle"},
+    "product_version_range": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["min_inclusive", "max_exclusive"],
+      "properties": {
+        "min_inclusive": {"type": "string"},
+        "max_exclusive": {"type": "string"}
+      }
+    },
+    "payload_required": {"type": "boolean"},
+    "company_keys": {
+      "type": "array",
+      "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,62}$"},
+      "uniqueItems": true
+    },
+    "role_keys": {
+      "type": "array",
+      "items": {"type": "string", "pattern": "^[a-z][a-z0-9_.-]{2,127}$"},
+      "uniqueItems": true
+    },
+    "uninstall_policy": {"const": "fail_closed"}
+  }
+}

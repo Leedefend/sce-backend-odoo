@@ -19,7 +19,7 @@ guard_prod_danger
 RUN_ID="${RUN_ID:-prod_history_init_$(date +%Y%m%dT%H%M%S)}"
 ARTIFACT_ROOT="${MIGRATION_ARTIFACT_ROOT:-/tmp/history_continuity/${DB_NAME}/${RUN_ID}}"
 ALLOWLIST="${MIGRATION_REPLAY_DB_ALLOWLIST:-${DB_NAME}}"
-PRODUCTION_MODULES="${HISTORY_PRODUCTION_MODULES:-smart_construction_bootstrap,smart_core,smart_scene,smart_construction_core,smart_construction_custom,smart_construction_portal,smart_construction_scene,smart_license_core,smart_owner_core,smart_owner_bundle,smart_construction_bundle,smart_construction_seed}"
+PRODUCTION_MODULES="${HISTORY_PRODUCTION_MODULES:-smart_construction_bootstrap,smart_core,smart_scene,smart_construction_core,smart_construction_portal,smart_construction_scene,smart_license_core,smart_owner_core,smart_owner_bundle,smart_construction_bundle,smart_construction_seed}"
 INSTALL_MODULES="${HISTORY_PRODUCTION_INSTALL_MODULES:-1}"
 
 export RUN_ID

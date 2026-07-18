@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sce.local/schemas/tenant_delivery/customer_payload_manifest.schema.json",
+  "title": "SCE signed customer payload manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "payload_id",
+    "tenant_key",
+    "payload_version",
+    "product_version_range",
+    "created_at",
+    "source_cutoff_at",
+    "files",
+    "import_order",
+    "attachments",
+    "encryption",
+    "signature",
+    "acceptance_fingerprints"
+  ],
+  "properties": {
+    "schema_version": {"const": "sce.customer_payload_manifest.v1"},
+    "payload_id": {"type": "string", "pattern": "^[a-zA-Z0-9][a-zA-Z0-9._-]{2,127}$"},
+    "tenant_key": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,62}$"},
+    "payload_version": {"type": "string", "minLength": 1},
+    "product_version_range": {
+      "type": "object",
+      "required": ["min_inclusive", "max_exclusive"],
+      "properties": {
+        "min_inclusive": {"type": "string"},
+        "max_exclusive": {"type": "string"}
+      }
+    },
+    "created_at": {"type": "string", "format": "date-time"},
+    "source_cutoff_at": {"type": "string", "format": "date-time"},
+    "files": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["path", "media_type", "rows", "bytes", "sha256"],
+        "properties": {
+          "path": {"type": "string"},
+          "media_type": {"type": "string"},
+          "rows": {"type": "integer", "minimum": 0},
+          "bytes": {"type": "integer", "minimum": 0},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "import_order": {"type": "array", "items": {"type": "string"}},
+    "attachments": {"type": "object"},
+    "encryption": {
+      "type": "object",
+      "required": ["algorithm", "key_id"],
+      "properties": {
+        "algorithm": {"type": "string", "minLength": 1},
+        "key_id": {"type": "string", "minLength": 1},
+        "recipients": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "signature": {
+      "type": "object",
+      "required": ["algorithm", "key_id", "value"],
+      "properties": {
+        "algorithm": {"const": "hmac-sha256"},
+        "key_id": {"type": "string", "minLength": 1},
+        "value": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "acceptance_fingerprints": {"type": "object"}
+  }
+}

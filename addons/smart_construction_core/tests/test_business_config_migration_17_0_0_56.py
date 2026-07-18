@@ -43,7 +43,7 @@ class BusinessConfigMigration170056Tests(unittest.TestCase):
 
     def test_system_env_marks_business_config_remediation_context(self):
         env = _FakeEnv(context={"lang": "zh_CN"})
-        user = types.SimpleNamespace(login="wutao")
+        user = types.SimpleNamespace(login="sc_fx_config_admin")
 
         system_env = self.migration._system_env(env, user=user)
 
@@ -153,7 +153,13 @@ class BusinessConfigMigration170056Tests(unittest.TestCase):
         self.assertEqual(calls, ["scan", "bootstrap"])
 
     def test_representative_logins_include_acceptance_and_role_accounts(self):
-        self.assertIn("wutao", self.migration.REPRESENTATIVE_LOGINS)
+        self.assertIn("sc_fx_config_admin", self.migration.REPRESENTATIVE_LOGINS)
+        self.assertTrue(
+            all(
+                login == "admin" or login.startswith(("demo_", "sc_fx_"))
+                for login in self.migration.REPRESENTATIVE_LOGINS
+            )
+        )
         self.assertIn("demo_business_full", self.migration.REPRESENTATIVE_LOGINS)
         self.assertIn("sc_fx_finance", self.migration.REPRESENTATIVE_LOGINS)
         self.assertIn("sc_fx_pm", self.migration.REPRESENTATIVE_LOGINS)

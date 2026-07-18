@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<odoo>
-    <data noupdate="0">
-        <function model="sc.user.preference.initialization" name="apply_user_menu_preferences"/>
-        <function model="sc.user.preference.initialization" name="backfill_lowcode_contract_source_status"/>
-        <function model="sc.user.preference.initialization" name="enforce_product_menu_runtime_cleanup"/>
-    </data>
-</odoo>

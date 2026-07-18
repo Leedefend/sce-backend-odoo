@@ -76,21 +76,20 @@ ROLE_SURFACE_OVERRIDES = {
 }
 
 ROLE_GROUPS_EXPLICIT = {
+    "owner": {
+        "smart_construction_core.group_sc_role_owner",
+    },
     "business_config_admin": {
         "smart_construction_core.group_sc_cap_business_config_admin",
     },
     "executive": {
-        "smart_construction_custom.group_sc_role_executive",
+        "smart_construction_core.group_sc_role_executive",
     },
     "pm": {
-        "smart_construction_custom.group_sc_role_pm",
-        "smart_construction_custom.group_sc_role_project_manager",
         "smart_construction_core.group_sc_role_project_manager",
+        "smart_construction_core.group_sc_role_project_user",
     },
     "finance": {
-        "smart_construction_custom.group_sc_role_finance",
-        "smart_construction_custom.group_sc_role_payment_manager",
-        "smart_construction_custom.group_sc_role_payment_user",
         "smart_construction_core.group_sc_role_finance_manager",
         "smart_construction_core.group_sc_role_finance_user",
     },
@@ -106,7 +105,7 @@ ROLE_GROUPS_CAPABILITY_FALLBACK = {
     },
 }
 
-ROLE_PRECEDENCE = ("business_config_admin", "executive", "pm", "finance")
+ROLE_PRECEDENCE = ("business_config_admin", "executive", "owner", "pm", "finance")
 
 NAV_MENU_SCENE_MAP = {
     "smart_construction_core.menu_sc_project_initiation": "projects.intake",

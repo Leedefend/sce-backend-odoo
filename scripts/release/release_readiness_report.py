@@ -24,7 +24,7 @@ def read_json(name: str) -> dict | None:
 
 def manifest_versions() -> dict[str, str]:
     result = {}
-    for name in ("smart_core", "smart_construction_core", "smart_construction_custom", "smart_construction_demo"):
+    for name in ("smart_core", "smart_construction_core", "smart_construction_bundle", "smart_construction_demo"):
         data = ast.literal_eval((ROOT / "addons" / name / "__manifest__.py").read_text())
         result[name] = str(data.get("version", "unknown"))
     return result

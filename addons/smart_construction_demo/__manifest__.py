@@ -4,8 +4,7 @@
     "summary": "Demo dataset for Smart Construction Core (projects, partners, light links)",
     "category": "Smart Construction",
     "depends": [
-        "smart_construction_core",
-        "smart_construction_custom",
+        "smart_construction_bundle",
         "account",
     ],
     "data": [
