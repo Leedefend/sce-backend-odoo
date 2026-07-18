@@ -19,6 +19,17 @@ fi
 
 changed_files="$(git diff --name-only "${base_branch}...HEAD" || true)"
 file_count="$(echo "${changed_files}" | sed '/^$/d' | wc -l | tr -d ' ')"
+architecture_impact="${PR_ARCHITECTURE_IMPACT:-Repository-level change; review the generated file summary and validation evidence.}"
+layer_target="${PR_LAYER_TARGET:-Not provided by the caller.}"
+affected_modules="${PR_AFFECTED_MODULES:-$(
+  printf '%s\n' "${changed_files}" \
+    | sed -n 's#^\(addons/[^/]*\)/.*#\1#p' \
+    | sort -u \
+    | head -n 20 \
+    | paste -sd ',' - \
+    | sed 's/,/, /g'
+)}"
+affected_modules="${affected_modules:-repository tooling/config/docs}"
 change_sample_limit=100
 change_sample="$(
   printf '%s\n' "${changed_files}" \
@@ -47,6 +58,15 @@ latest_dir="$(ls -1dt "${evidence_dir}"/* 2>/dev/null | head -n 1 || true)"
   echo "- head: ${head_sha}"
   echo "- changed files: ${file_count}"
   echo "- upgrade needed: ${upgrade_needed}"
+  echo
+  echo "## Architecture Impact"
+  echo "${architecture_impact}"
+  echo
+  echo "## Layer Target"
+  echo "${layer_target}"
+  echo
+  echo "## Affected Modules"
+  echo "${affected_modules}"
   echo
   echo "## Evidence"
   if [[ -n "${latest_dir}" ]]; then
