@@ -1,0 +1,18 @@
+FROM node:22.17.0-bookworm-slim@sha256:b04ce4ae4e95b522112c2e5c52f781471a5cbc3b594527bcddedee9bc48c03a0
+
+WORKDIR /build/frontend
+COPY frontend/ ./
+ARG VITE_ODOO_DB=sc_user_data_rehearsal_candidate
+ENV VITE_ODOO_DB=${VITE_ODOO_DB} \
+    VITE_ODOO_DB_LOCKED=1 \
+    VITE_APP_ENV=production \
+    VITE_BUILD_MODE=production \
+    VITE_BUILD_OUT_DIR=/build/frontend/apps/web/dist
+RUN corepack enable \
+    && corepack prepare pnpm@9.12.3 --activate \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends python3 \
+    && rm -rf /var/lib/apt/lists/* \
+    && pnpm install --frozen-lockfile \
+    && pnpm -C packages/design-tokens build \
+    && pnpm -C apps/web exec vite build --mode production

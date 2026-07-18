@@ -8,7 +8,7 @@ const DB_NAME = process.env.DB_NAME || "sc_demo";
 const LOGIN = process.env.E2E_LOGIN || "wutao";
 const PASSWORD = process.env.E2E_PASSWORD || "123456";
 const CONFIG_MODEL = "construction.contract";
-const CONFIG_ACTION_ID = 1002;
+const CONFIG_ACTION_ID = Number(process.env.LOW_CODE_CONFIG_ACTION_ID || "1002");
 const CONFIG_PAGE_LABEL = "合同办理";
 const ALTERNATE_PAGE_LABEL = "项目合同汇总";
 
@@ -55,9 +55,14 @@ const LOW_CODE_BOUNDARY_EXCLUDED_SEGMENTS = new Set([
 const LOW_CODE_BOUNDARY_ALLOW_FILES = new Set([
   "frontend/apps/web/src/app/businessConfigBoundaries.ts",
   "addons/smart_core/utils/backend_contract_boundaries.py",
+  "addons/smart_core/handlers/business_config_change_set.py",
 ]);
 const FRONTEND_BOUNDARY_FILE = "frontend/apps/web/src/app/businessConfigBoundaries.ts";
 const BACKEND_BOUNDARY_FILE = "addons/smart_core/utils/backend_contract_boundaries.py";
+const LOW_CODE_BACKEND_ONLY_RUNTIME_MODELS = new Set([
+  "ui.business.config.change.set",
+  "ui.business.config.change.set.item",
+]);
 const LOW_CODE_LEGACY_WRITE_GUARD_FILES = [
   "frontend/apps/web/src/pages/ContractFormPage.vue",
   "frontend/apps/web/scripts/low_code_business_config_acceptance.mjs",
@@ -250,7 +255,8 @@ async function auditLowCodeBoundaryParity() {
     compareValueSets(
       "business_config_runtime_models",
       extractObjectStringValues(frontend, "BUSINESS_CONFIG_MODELS"),
-      extractPythonSetValues(backend, "BUSINESS_CONFIG_RUNTIME_MODELS"),
+      extractPythonSetValues(backend, "BUSINESS_CONFIG_RUNTIME_MODELS")
+        .filter((value) => !LOW_CODE_BACKEND_ONLY_RUNTIME_MODELS.has(value)),
     ),
     compareValueSets(
       "business_config_modes",
@@ -291,6 +297,7 @@ async function auditLowCodeBoundaryParity() {
   return {
     frontendFile: FRONTEND_BOUNDARY_FILE,
     backendFile: BACKEND_BOUNDARY_FILE,
+    backendOnlyRuntimeModels: Array.from(LOW_CODE_BACKEND_ONLY_RUNTIME_MODELS).sort(),
     comparisons,
     mismatches: comparisons.filter((item) => item.missingFrontend.length || item.missingBackend.length),
   };

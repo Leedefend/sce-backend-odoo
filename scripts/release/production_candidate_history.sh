@@ -5,44 +5,67 @@ action="${1:?action is required}"
 root="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$root"
 
-source_db="${HISTORY_SOURCE_DB:-sc_user_data_rehearsal}"
+source_db="${HISTORY_SOURCE_DB:-sc_demo}"
 candidate_db="${CANDIDATE_DB:-sc_user_data_rehearsal_candidate}"
-dev_project="${DAILY_DEV_PROJECT:-sc-backend-odoo-dev}"
 candidate_project="${CANDIDATE_PROJECT:-sc-production-candidate}"
 candidate_image="${CANDIDATE_IMAGE:?CANDIDATE_IMAGE is required}"
 artifacts="${CANDIDATE_ARTIFACTS:-artifacts/release/immutable-production-candidate-v1}"
+source_backup="${HISTORY_SOURCE_BACKUP:-artifacts/production-blocker/source/daily-dev-history-source-backup}"
 backup="$artifacts/history-source-backup"
 mkdir -p "$backup" "$artifacts/fingerprints"
 
-dev_compose=(docker compose -p "$dev_project" -f docker-compose.yml)
 candidate_compose=(docker compose -p "$candidate_project" -f docker-compose.production-candidate.yml)
 export CANDIDATE_IMAGE="$candidate_image" CANDIDATE_DB="$candidate_db" CANDIDATE_PROJECT="$candidate_project"
 
-database_exists() {
-  [[ "$("${dev_compose[@]}" exec -T db psql -U "$DB_USER" -d postgres -Atc "SELECT 1 FROM pg_database WHERE datname='$source_db'")" == "1" ]]
+validate_daily_dev_pair() {
+  python3 - "$source_backup" "$source_db" <<'PY'
+import hashlib
+import json
+import sys
+from pathlib import Path
+
+root = Path(sys.argv[1])
+expected_database = sys.argv[2]
+manifest = json.loads((root / "manifest.json").read_text())
+source = manifest.get("source") or {}
+if source.get("environment") != "daily_development_server":
+    raise SystemExit("history source is not the daily development server")
+if source.get("database") != expected_database:
+    raise SystemExit("history source database does not match approval")
+if source.get("database_access") != "read_only_export":
+    raise SystemExit("history source was not captured read-only")
+if not (manifest.get("watermarks") or {}).get("pair_stable_during_capture"):
+    raise SystemExit("database/filestore pair was not stable during capture")
+for name, expected in (manifest.get("checksums") or {}).items():
+    path = root / name
+    if not path.is_file():
+        raise SystemExit(f"history source file missing: {name}")
+    actual = hashlib.sha256(path.read_bytes()).hexdigest()
+    if actual != expected:
+        raise SystemExit(f"history source checksum mismatch: {name}")
+PY
 }
 
 case "$action" in
   source-probe)
-    database_exists || { echo "[candidate.history] source database unavailable: $source_db" >&2; exit 2; }
-    db_size="$("${dev_compose[@]}" exec -T db psql -U "$DB_USER" -d postgres -Atc "SELECT pg_database_size('$source_db')")"
-    file_count="$("${dev_compose[@]}" exec -T odoo sh -c "find '/var/lib/odoo/filestore/$source_db' -type f 2>/dev/null | wc -l")"
-    file_bytes="$("${dev_compose[@]}" exec -T odoo sh -c "find '/var/lib/odoo/filestore/$source_db' -type f -printf '%s\\n' 2>/dev/null | awk '{s+=\$1} END {print s+0}'")"
-    "${dev_compose[@]}" exec -T db pg_dump -U "$DB_USER" -d "$source_db" -Fc >/dev/null
-    SOURCE_DB="$source_db" DB_SIZE="$db_size" FILE_COUNT="$file_count" FILE_BYTES="$file_bytes" python3 - <<'PY'
+    validate_daily_dev_pair
+    SOURCE_DB="$source_db" SOURCE_BACKUP="$source_backup" CANDIDATE_ARTIFACTS="$artifacts" python3 - <<'PY'
 import json, os
 from pathlib import Path
 out=Path(os.environ.get("CANDIDATE_ARTIFACTS","artifacts/release/immutable-production-candidate-v1"))
-payload={"schema_version":1,"database":os.environ["SOURCE_DB"],"source_class":"authorized_isolated_history_copy","database_bytes":int(os.environ["DB_SIZE"]),"filestore":{"file_count":int(os.environ["FILE_COUNT"]),"bytes":int(os.environ["FILE_BYTES"])},"standard_pg_dump":True,"production_database_write_count":0,"authorized":True}
+source=Path(os.environ["SOURCE_BACKUP"])
+manifest=json.loads((source/"manifest.json").read_text())
+watermarks=manifest["watermarks"]
+payload={"schema_version":1,"database":os.environ["SOURCE_DB"],"source_class":"authorized_daily_development_server_pair","source_repo_head":manifest["source"]["repo_head"],"database_bytes":watermarks["database_after"]["database_bytes"],"filestore":{"file_count":watermarks["filestore_after"]["file_count"],"bytes":watermarks["filestore_after"]["total_bytes"],"content_path_sha256":watermarks["filestore_after"]["content_path_sha256"]},"pair_stable_during_capture":watermarks["pair_stable_during_capture"],"checksums":manifest["checksums"],"production_database_write_count":0,"authorized":True}
 (out/"history-source.json").write_text(json.dumps(payload,indent=2)+"\n")
 PY
-    echo "[candidate.history] source-probe PASS db=$source_db standard_pg_dump=true"
+    echo "[candidate.history] source-probe PASS source=daily-development-server db=$source_db paired=true"
     ;;
   backup)
-    database_exists || { echo "[candidate.history] source database unavailable: $source_db" >&2; exit 2; }
+    validate_daily_dev_pair
     start_s="$(date +%s)"; started="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-    "${dev_compose[@]}" exec -T db pg_dump -U "$DB_USER" -d "$source_db" -Fc > "$backup/database.dump"
-    "${dev_compose[@]}" exec -T odoo sh -c "test -d '/var/lib/odoo/filestore/$source_db' && tar -C /var/lib/odoo/filestore -czf - '$source_db'" > "$backup/filestore.tar.gz"
+    cp "$source_backup/database.dump" "$backup/database.dump"
+    cp "$source_backup/filestore.tar.gz" "$backup/filestore.tar.gz"
     db_sha="$(sha256sum "$backup/database.dump" | awk '{print $1}')"
     fs_sha="$(sha256sum "$backup/filestore.tar.gz" | awk '{print $1}')"
     duration="$(( $(date +%s) - start_s ))"; finished="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
@@ -50,7 +73,7 @@ PY
 import json,os
 from pathlib import Path
 p=Path(os.environ.get("CANDIDATE_ARTIFACTS","artifacts/release/immutable-production-candidate-v1"))/"history-source-backup"
-payload={"schema_version":1,"database":os.environ["SOURCE_DB"],"started_at":os.environ["STARTED"],"finished_at":os.environ["FINISHED"],"duration_seconds":int(os.environ["DURATION"]),"database_bytes":(p/"database.dump").stat().st_size,"filestore_bytes":(p/"filestore.tar.gz").stat().st_size,"checksums":{"database.dump":os.environ["DB_SHA"],"filestore.tar.gz":os.environ["FS_SHA"]},"paired":True}
+payload={"schema_version":1,"database":os.environ["SOURCE_DB"],"source_class":"authorized_daily_development_server_pair","started_at":os.environ["STARTED"],"finished_at":os.environ["FINISHED"],"duration_seconds":int(os.environ["DURATION"]),"database_bytes":(p/"database.dump").stat().st_size,"filestore_bytes":(p/"filestore.tar.gz").stat().st_size,"checksums":{"database.dump":os.environ["DB_SHA"],"filestore.tar.gz":os.environ["FS_SHA"]},"paired":True,"production_database_write_count":0}
 (p/"manifest.json").write_text(json.dumps(payload,indent=2)+"\n")
 PY
     echo "[candidate.history] backup PASS duration=${duration}s"
@@ -106,9 +129,9 @@ PY
       echo "[candidate.history] upgrade FAIL status=$odoo_status duration=${duration}s" >&2
       exit "$odoo_status"
     fi
-    module_rows="$("${candidate_compose[@]}" exec -T db psql -U "$DB_USER" -d "$candidate_db" -At \
-      -v module_csv="$modules" \
-      -c "SELECT name || '=' || state FROM ir_module_module WHERE name = ANY(string_to_array(:'module_csv', ',')) ORDER BY name")"
+    all_module_rows="$("${candidate_compose[@]}" exec -T db psql -U "$DB_USER" -d "$candidate_db" -At \
+      -c "SELECT name || '=' || state FROM ir_module_module ORDER BY name")"
+    module_rows="$(awk -F= -v wanted=",$modules," 'index(wanted, "," $1 ",") {print}' <<<"$all_module_rows")"
     installed_count="$(printf '%s\n' "$module_rows" | awk -F= '$2 == "installed" {count++} END {print count+0}')"
     expected_count="$(awk -F, '{print NF}' <<<"$modules")"
     pending_count="$("${candidate_compose[@]}" exec -T db psql -U "$DB_USER" -d "$candidate_db" -Atc \

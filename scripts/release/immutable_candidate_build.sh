@@ -21,19 +21,25 @@ artifacts="${CANDIDATE_ARTIFACTS:-artifacts/release/immutable-production-candida
 dist="frontend/apps/web/dist-production-candidate"
 short_sha="${source_sha:0:12}"
 image="${CANDIDATE_IMAGE:-sce-production-candidate:${short_sha}}"
+frontend_builder="sce-production-frontend-builder:${short_sha}"
 build_time="${CANDIDATE_BUILD_TIME:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}"
-node_version="$(node --version)"
-pnpm_version="$(scripts/dev/pnpm_exec.sh --version)"
+node_version="v22.17.0-build-only"
+pnpm_version="9.12.3-build-only"
 python_version="$(docker run --rm --entrypoint python3 odoo:17.0 --version | awk '{print $2}')"
 
 mkdir -p "$artifacts"
 rm -rf "$dist"
-VITE_ODOO_DB=sc_user_data_rehearsal_candidate \
-VITE_ODOO_DB_LOCKED=1 \
-VITE_APP_ENV=production \
-VITE_BUILD_MODE=production \
-VITE_BUILD_OUT_DIR="$root/$dist" \
-  scripts/dev/pnpm_exec.sh -C frontend/apps/web exec vite build --mode production
+docker build \
+  --file Dockerfile.production-frontend-builder \
+  --tag "$frontend_builder" \
+  --build-arg "VITE_ODOO_DB=sc_user_data_rehearsal_candidate" \
+  .
+builder_container="$(docker create "$frontend_builder")"
+trap 'docker rm -f "$builder_container" >/dev/null 2>&1 || true' EXIT
+mkdir -p "$dist"
+docker cp "$builder_container:/build/frontend/apps/web/dist/." "$dist/"
+docker rm "$builder_container" >/dev/null
+trap - EXIT
 
 frontend_hash="$(find "$dist" -type f -print0 | sort -z | xargs -0 sha256sum | sha256sum | awk '{print $1}')"
 printf '%s\n' "$frontend_hash" > "$artifacts/frontend-build.sha256"
@@ -52,6 +58,10 @@ docker build \
 image_id="$(docker image inspect "$image" --format '{{.Id}}')"
 odoo_version="$(docker run --rm --entrypoint odoo "$image" --version | head -1)"
 image_python="$(docker run --rm --entrypoint python3 "$image" --version | awk '{print $2}')"
+if docker run --rm --entrypoint sh "$image" -c "command -v node || command -v lessc || command -v rtlcss || dpkg-query -W 'node-*' 'libnode*' 2>/dev/null"; then
+  echo "[candidate.build] Node runtime package or executable remains" >&2
+  exit 1
+fi
 archive="$artifacts/candidate-image.tar"
 docker save --output "$archive" "$image"
 archive_sha="$(sha256sum "$archive" | awk '{print $1}')"
