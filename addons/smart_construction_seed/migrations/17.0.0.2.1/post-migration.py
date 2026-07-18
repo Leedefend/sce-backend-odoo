@@ -1,4 +1,11 @@
 # -*- coding: utf-8 -*-
+"""Record demo-ownership risk without mutating owned records or XML IDs.
+
+Database names and deployment environments are not data-ownership facts.  A
+restored historical database must therefore produce exactly the same result
+under every database name.  Any cleanup requires a separately approved,
+fingerprint-bound operational workflow.
+"""
 
 import logging
 
@@ -7,58 +14,48 @@ from odoo import SUPERUSER_ID, api
 
 _logger = logging.getLogger(__name__)
 
-_DEMO_DBS = {"sc_demo", "sc_test"}
-_DEMO_MODULES = ("smart_construction_demo",)
-_ARCHIVE_MODELS = ("project.project", "res.partner")
+_DEMO_MODULE = "smart_construction_demo"
+_MARKER_PREFIX = "sc.demo_ownership_review.v17_0_0_2_1"
 
 
-def _is_demo_db(env):
-    db_name = str(env.cr.dbname or "").strip()
-    return db_name in _DEMO_DBS or db_name.startswith("sc_demo_") or db_name.startswith("sc_test_")
-
-
-def _safe_unlink_or_archive(record):
-    if not record.exists():
-        return "missing"
-    try:
-        with record.env.cr.savepoint():
-            record.unlink()
-        return "unlinked"
-    except Exception as exc:  # pragma: no cover - depends on live FK graph
-        record = record.exists().sudo()
-        if record and "active" in record._fields:
-            record.write({"active": False})
-            return f"archived:{type(exc).__name__}"
-        return f"kept:{type(exc).__name__}"
+def _risk_summary(env):
+    rows = env["ir.model.data"].sudo().search([("module", "=", _DEMO_MODULE)])
+    model_counts = {}
+    existing_record_count = 0
+    missing_record_count = 0
+    for row in rows:
+        model = str(row.model or "")
+        model_counts[model] = model_counts.get(model, 0) + 1
+        if model not in env:
+            missing_record_count += 1
+            continue
+        record = env[model].sudo().with_context(active_test=False).browse(row.res_id).exists()
+        if record:
+            existing_record_count += 1
+        else:
+            missing_record_count += 1
+    return {
+        "xmlid_count": len(rows),
+        "model_count": len(model_counts),
+        "existing_record_count": existing_record_count,
+        "missing_record_count": missing_record_count,
+    }
 
 
 def migrate(cr, version):
+    del version
     env = api.Environment(cr, SUPERUSER_ID, {})
-    if _is_demo_db(env):
-        _logger.info("smart_construction_seed migration: keep demo XMLIDs in demo database %s", env.cr.dbname)
-        return
-
-    actions = []
-    rows = env["ir.model.data"].sudo().search([("module", "in", list(_DEMO_MODULES))])
-    for row in rows:
-        action = "xmlid-only"
-        if row.model == "res.users":
-            action = "xmlid-only-user-kept"
-        elif row.model in env:
-            rec = env[row.model].sudo().with_context(active_test=False).browse(row.res_id).exists()
-            if rec:
-                if row.model in _ARCHIVE_MODELS and "active" in rec._fields:
-                    action = _safe_unlink_or_archive(rec)
-                else:
-                    action = _safe_unlink_or_archive(rec)
-        actions.append("%s.%s:%s:%s" % (row.module, row.name, row.model, action))
-        row.exists().unlink()
-
+    summary = _risk_summary(env)
     ICP = env["ir.config_parameter"].sudo()
-    ICP.set_param("sc.demo_data_cleanup.v17_0_0_2_1.done", "1")
-    ICP.set_param("sc.demo_data_cleanup.v17_0_0_2_1.count", str(len(actions)))
-    _logger.info(
-        "smart_construction_seed migration: removed demo XMLID residues in %s actions=%s",
-        env.cr.dbname,
-        actions,
+    values = {
+        "mode": "report_only",
+        "cleanup_required": "1" if summary["xmlid_count"] else "0",
+        **{key: str(value) for key, value in summary.items()},
+    }
+    for key, value in values.items():
+        ICP.set_param(f"{_MARKER_PREFIX}.{key}", value)
+    _logger.warning(
+        "smart_construction_seed migration retained all demo-owned XML IDs and records; "
+        "explicit fingerprint-bound ownership review required; summary=%s",
+        summary,
     )
