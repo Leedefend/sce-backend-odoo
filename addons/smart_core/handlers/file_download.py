@@ -41,11 +41,8 @@ _logger = logging.getLogger(__name__)
 LEGACY_FILE_URL_PREFIX = "legacy-file://"
 LEGACY_FILE_ID_URL_PREFIX = "legacy-file-id://"
 LEGACY_ATTACHMENT_LABEL_RE = re.compile(r"^附件\([1-9]\d*\)$")
-DEFAULT_ONLINE_LEGACY_BASE_URL = "https://www.builderp.cn/SCBSLY_V2"
-DEFAULT_LEGACY_FILE_HTTP_BASE_URLS = (
-    "https://www.builderp.cn/SCBS",
-    "https://www.builderp.cn/SCBSLY_V2",
-)
+DEFAULT_ONLINE_LEGACY_BASE_URL = ""
+DEFAULT_LEGACY_FILE_HTTP_BASE_URLS = ()
 DEFAULT_LEGACY_FILE_ROOTS = (
     "/mnt/artifacts/legacy-online-mirror",
     "/mnt/legacy-online-mirror",
@@ -563,16 +560,6 @@ def _online_legacy_base_url_for_attachment(attachment) -> str:
 
 
 def _online_legacy_base_url_for_record(record) -> str:
-    source_table = ""
-    if record:
-        try:
-            source_table = str(getattr(record, "legacy_source_table", "") or "")
-        except Exception:
-            source_table = ""
-    if source_table.startswith("online_old_scbs:"):
-        return os.environ.get("SC_ONLINE_LEGACY_SCBS_BASE_URL", "https://www.builderp.cn/SCBS").rstrip("/")
-    if source_table.startswith("online_old_scbsly"):
-        return os.environ.get("SC_ONLINE_LEGACY_SCBSLY_BASE_URL", "https://www.builderp.cn/SCBSLY_V2").rstrip("/")
     return os.environ.get("SC_ONLINE_LEGACY_BASE_URL", DEFAULT_ONLINE_LEGACY_BASE_URL).rstrip("/")
 
 
@@ -584,13 +571,11 @@ def _prefer_online_legacy_attachment_lookup(record) -> bool:
         source_system = str(getattr(record, "source_system", "") or "")
     except Exception:
         return False
-    return source_table.startswith(("online_old_scbs:", "online_old_scbsly")) or source_system.startswith(
-        ("online_old_scbs", "online_old_scbsly")
-    )
+    return source_table.startswith("online_legacy:") or source_system.startswith("online_legacy")
 
 
 def _online_legacy_attachment_fallback_enabled() -> bool:
-    value = os.environ.get(LEGACY_ONLINE_ATTACHMENT_FALLBACK_ENV, "1").strip().lower()
+    value = os.environ.get(LEGACY_ONLINE_ATTACHMENT_FALLBACK_ENV, "0").strip().lower()
     return value not in {"0", "false", "no", "off"}
 
 
@@ -599,6 +584,8 @@ def _fetch_online_legacy_file_by_bill_id(bill_id: str, base_url: str | None = No
     if not clean:
         return None
     base_url = (base_url or os.environ.get("SC_ONLINE_LEGACY_BASE_URL", DEFAULT_ONLINE_LEGACY_BASE_URL)).rstrip("/")
+    if not base_url:
+        return None
     url = f"{base_url}/api/System/FileApi/GetFileByBillId?BillId={clean}"
     try:
         request = Request(url, headers={"User-Agent": "Mozilla/5.0"})
@@ -625,7 +612,7 @@ def _is_online_legacy_file_url(url: str) -> bool:
     if not clean:
         return False
     base_url = os.environ.get("SC_ONLINE_LEGACY_BASE_URL", DEFAULT_ONLINE_LEGACY_BASE_URL).rstrip("/")
-    return clean.startswith(f"{base_url}/Api/System/FileApi/ShowFileById/")
+    return bool(base_url) and clean.startswith(f"{base_url}/Api/System/FileApi/ShowFileById/")
 
 
 def _legacy_file_index_relative_path(file_index) -> str:

@@ -1,9 +1,0 @@
-﻿map_id,material_key,material_name,spec_model,uom_text,amount_total,line_rows,target_catalog_id,target_catalog_name,action
-1,|商品混凝土|C25|m3,商品混凝土,C25,m3,2021000.0,1,48,商品混凝土,link_existing_catalog
-2,|镀锌钢管|DN25|吨,镀锌钢管,DN25,吨,107800.0,2,1538,镀锌钢管,create_material_catalog
-3,|商品混凝土|C20|m3,商品混凝土,C20,m3,100800.0,1,17,商品混凝土,link_existing_catalog
-4,|汉邦高科监视器|HB-LED21.5A-2K/21.5寸|台,汉邦高科监视器,HB-LED21.5A-2K/21.5寸,台,8000.0,1,1539,汉邦高科监视器,create_material_catalog
-5,|铸铁补芯|DN25*20|个,铸铁补芯,DN25*20,个,516.0,3,1540,铸铁补芯,create_material_catalog
-6,"|钢格栅盖板|\""1300*1800* 50mm\""|个",钢格栅盖板,"\""1300*1800* 50mm\""",个,276.0,1,1541,钢格栅盖板,create_material_catalog
-7,|铸铁盖板|400*500|块,铸铁盖板,400*500,块,42.0,1,1542,铸铁盖板,create_material_catalog
-8,|球墨铸铁井盖（消防）|700*800（100T）|个,球墨铸铁井盖（消防）,700*800（100T）,个,20.0,1,1543,球墨铸铁井盖（消防）,create_material_catalog

@@ -1,8 +1,0 @@
-{
-  "batch_count": 0,
-  "database": "sc_prod_sim",
-  "manifest_csv": "/mnt/artifacts/migration/scbs_mapping_decision_split_workbooks_manifest_v1.csv",
-  "status": "PASS",
-  "status_counts": {},
-  "summary_csv": "/tmp/scbs_mapping_decision_batch_validate_summary_v1.csv"
-}

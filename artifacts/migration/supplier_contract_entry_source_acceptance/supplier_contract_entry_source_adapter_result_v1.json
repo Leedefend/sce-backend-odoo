@@ -1,9 +1,0 @@
-{
-  "input_csv": "artifacts/business-fact-audit/sc_acceptance_audit_20260510_after_restore/contract_supplier_entry_source_missing_rows_v1.csv",
-  "missing_rows": 12,
-  "mode": "supplier_contract_entry_source_adapter",
-  "output_csv": "artifacts/migration/supplier_contract_entry_source_acceptance/supplier_contract_entry_source_from_legacy_mssql_v1.csv",
-  "output_rows": 5436,
-  "required_count": 5448,
-  "status": "PASS"
-}

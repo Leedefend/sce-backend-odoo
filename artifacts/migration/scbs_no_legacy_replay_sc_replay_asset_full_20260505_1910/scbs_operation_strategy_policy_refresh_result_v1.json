@@ -1,9 +1,0 @@
-{
-  "contract_joint_rows_after": 0,
-  "database": "sc_replay_asset_full_20260505_1910",
-  "payment_joint_rows_after": 0,
-  "plan_csv": "/tmp/scbs_no_legacy_replay_sc_replay_asset_full_20260505_1910/scbs_operation_strategy_policy_refresh_plan_v1.csv",
-  "planned_project_updates": 0,
-  "scbs_project_count": 62,
-  "status": "APPLIED"
-}

@@ -1,6 +1,0 @@
-﻿category,rows,amount_total,residual_reason,target_model,next_condition
-payment_no_project,0,0,no_source_project_clue,sc.legacy.enterprise.business.fact,Write to enterprise no-project carrier unless source-chain evidence identifies a real project.
-payment_negative_project_confirmed,0,0,negative_payment_requires_refund_or_reversal_target,none,Write only after refund/reversal or historical adjustment target semantics are defined.
-supplier_contract_no_project,0,0,no_source_project_clue,sc.legacy.enterprise.business.fact,Write to enterprise no-project carrier unless source-chain evidence identifies a real project.
-stock_in_zero_amount_no_line,3,0.0,zero_amount_no_legacy_lines,none,Keep as audit residual; do not create empty material inbound documents.
-inactive_non_business_or_dirty_residual,33,8139399.0,archived_from_projection_pool,none,Do not project unless business reclassifies the source row as real operational fact.

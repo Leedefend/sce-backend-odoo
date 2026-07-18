@@ -1,9 +1,0 @@
-{
-  "active_rows": 35,
-  "amount_total": 566791.92,
-  "header_rows": 35,
-  "mode": "legacy_a_scbs_material_inbound_adapter",
-  "payload_csv": "artifacts/migration/legacy_a_scbs_material_inbound_headers_v1.csv",
-  "source": "legacy-mssql-restore:LegacyDb.dbo.A_SCBS_CLRKD",
-  "status": "PASS"
-}

@@ -1,5 +1,0 @@
-﻿fact_family,source_table,active_rows,amount_total,with_project,with_partner,with_business_entity,min_date,max_date,target_model,idempotency_key,existing_target_rows,new_projection_rows,projection_status
-fund_daily,D_SCBSJS_ZJGL_ZJSZ_ZJRBB,3798,1290762428.64,0,0,3798,2024-03-02,2026-04-16,reporting_snapshot,source_table + legacy_record_id,0,3798,reporting_only_no_formal_write_target
-payment,T_FK_Supplier,9107,359251657.39,7992,9095,3120,2018-09-01,2026-04-14,sc.payment.execution,legacy_source_model + legacy_record_id,0,9107,PARTIAL_READY_PROJECT_BUCKET_POLICY_REQUIRED
-stock_in,T_RK_RKD,700,88592370.17,700,696,700,2021-04-20,2024-12-31,sc.material.inbound,legacy_fact_model + legacy_fact_id,0,700,READY_WITH_LINE_AMOUNT_AND_MISMATCH_AUDIT_POLICY
-supplier_contract,T_GYSHT_INFO,1585,273565406.25,1576,1585,1345,2021-10-10,2026-03-31,sc.general.contract,legacy_source_model + legacy_record_id,0,1585,PARTIAL_READY_PROJECT_BUCKET_POLICY_REQUIRED

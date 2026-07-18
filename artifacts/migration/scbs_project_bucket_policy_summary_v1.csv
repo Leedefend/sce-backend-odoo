@@ -1,4 +1,0 @@
-﻿fact_family,source_table,rows,amount_total,with_business_entity,business_entity_count,with_partner,partner_count
-payment,T_FK_Supplier,2608,110459119.00,1493,19,2608,302
-stock_in,T_RK_RKD,345,50030375.39,345,6,341,156
-supplier_contract,T_GYSHT_INFO,440,96955707.99,431,11,440,244

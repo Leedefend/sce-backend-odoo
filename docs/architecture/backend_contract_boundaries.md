@@ -12,7 +12,7 @@
 | --- | --- | --- |
 | 平台内核产品 | `smart_core` | 提供契约、配置、版本、发布、回滚、审计和通用装配机制 |
 | 施工行业标准产品 | `smart_construction_core` | 发布施工行业默认模型、菜单、表单、列表、搜索、审批和业务分类 |
-| 特定用户产品 | `smart_construction_custom` 或独立客户模块 | 发布客户确认的菜单、表单、字段、角色、初始化数据和用户偏好投影 |
+| 特定用户产品 | 仓外私有 `sce_customer_<tenant_key>` 模块 | 发布客户确认的菜单、表单、字段、角色、初始化数据和用户偏好投影 |
 | 低代码配置产品 | 配置工作台和运行时配置表 | 保存管理员显式配置，并通过版本、审计、回滚覆盖默认配置 |
 | 运维交付工具 | `scripts`、迁移、runbook | 迁移、修复、重放和验证；不能成为长期事实权威 |
 
@@ -23,7 +23,7 @@
 | L0 平台内核 | `addons/smart_core/core`、intent envelope、认证、路由、基础契约协议 | 提供稳定协议、调度、权限与基础投影能力 | 写行业业务规则、写特定用户偏好、承载客户字段顺序 |
 | L1 契约基础设施 | `ui.business.config.contract`、`ui.form.field.policy`、`ui.menu.config.policy`、contract assembler | 保存和合并配置，声明 source authority 与覆盖顺序 | 通过前端兜底猜测业务语义；用文件名后缀临时决定权威 |
 | L2 行业标准版 | `smart_construction_core` 数据、模型、菜单、行业默认表单/列表/审批 | 发布行业通用默认配置和业务对象 | 承载单一客户偏好；覆盖用户运行时配置 |
-| L3 用户模块 | `smart_construction_custom` 用户偏好、客户定制菜单、默认三栏风格 | 承载特定用户/企业的默认体验和上线初始化 | 直接修改平台内核；伪装成低代码用户即时配置 |
+| L3 用户模块 | 仓外私有 `sce_customer_<tenant_key>` 模块 | 承载特定用户/企业的默认体验和上线初始化 | 直接修改平台内核；伪装成低代码用户即时配置 |
 | L4 低代码运行时配置 | 配置工作台保存的表单、列表、菜单、审批配置 | 承载用户管理员在界面上的显式调整 | 修改业务事实；绕过版本、审计和作用域 |
 
 ## 运行时覆盖顺序
@@ -45,8 +45,8 @@
 - 低代码审批启用、审批方式、审批步骤编排属于行业审批运行时策略，写入 `sc.approval.policy` / `sc.approval.step`，不写入表单或菜单契约；`source_authority` 必须声明 `lowcode_boundary = approval_policy`、`policy_source = sc.approval.policy`。
 - 低代码“新增菜单”只创建运行时菜单入口和菜单配置策略，满足管理员即时调整；长期交付菜单必须沉淀到 L2 行业模块或 L3 用户模块。
 - 低代码写入意图的 `source_authority` 必须声明 `lowcode_boundary` 和 `contract_source`，让审计能从响应元信息直接识别边界。
-- 用户模块表单偏好必须写入 `view_orchestration.context.source = smart_construction_custom.*_form_preference`；即便契约名称是 `view_orchestration:*`，分类器也必须把它归入 L3 用户偏好投影。
-- 用户模块可以写入偏好投影，但必须带 `smart_construction_custom.*preference` source，不能冒充低代码配置。
+- 用户模块表单偏好必须写入租户模块命名空间下的 `view_orchestration.context.source`；即便契约名称是 `view_orchestration:*`，分类器也必须把它归入 L3 用户偏好投影。
+- 用户模块可以写入偏好投影，但必须带客户包声明的 source，不能冒充低代码配置。
 - 行业标准数据只能给默认结构和默认策略，不能处理特定用户看面。
 - 运行时页面装配器不得给配置对象自身注入通用表单设计入口；审批、菜单、字段策略等对象使用专用配置面板。
 - 通用 `api.data.write` / `api.data.create` 写代理不得写运行时配置模型；`ui.business.config.contract`、`ui.form.field.policy`、`ui.menu.config.policy`、`sc.approval.policy`、`sc.approval.step` 等必须走专用配置入口。
@@ -91,7 +91,7 @@
 
 - 通用机制进入 `smart_core`；不得带施工行业或客户语义。
 - 施工行业默认进入 `smart_construction_core`；不得承载单一客户偏好。
-- 客户确认且需要重放的体验进入 `smart_construction_custom` 或客户模块；不得冒充低代码即时配置。
+- 客户确认且需要重放的体验进入仓外私有客户模块；不得冒充低代码即时配置。
 - 管理员在界面保存的即时调整进入低代码运行时配置；若确认长期生效，必须再沉淀到用户模块或行业模块。
 - 一次性修复、迁移和验收进入脚本或 runbook；不得作为长期事实来源。
 
@@ -121,7 +121,6 @@
 | `addons/smart_core/handlers/form_field_configuration.py` | L4 | 表单低代码运行时配置：`form_lowcode_runtime_config` | `smart_core.lowcode.form_field_policy` |
 | `addons/smart_core/handlers/menu_configuration.py` | L4 | 菜单低代码运行时配置：`menu_lowcode_runtime_config` | `smart_core.lowcode.menu_config` |
 | `addons/smart_core/handlers/business_config_change_set.py` | L1/L4 | 统一可逆配置变更集原子发布与批次回滚：`atomic_lowcode_change_set_publish` | `ui.business.config.change.set` |
-| `addons/smart_construction_custom/models/user_preferences.py` | L3 | 用户偏好投影初始化：`user_preference_projection` | `smart_construction_custom.*preference` |
 | `addons/smart_construction_core/models/support/formal_list_contract_sync.py` | L2 | 行业正式列表契约投影：`industry_formal_list_contract_projection` | `smart_construction_core.formal_settlement_list_contract_sync` |
 | `addons/smart_construction_core/migrations/17.0.0.61/post-migration.py` | L2 | 行业过期契约作用域清理迁移：`industry_stale_contract_scope_cleanup_migration` | `smart_construction_core.stale_contract_scope_cleanup` |
 

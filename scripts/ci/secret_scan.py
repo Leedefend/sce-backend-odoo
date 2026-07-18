@@ -53,28 +53,25 @@ PATTERN_MARKERS: dict[str, tuple[str, ...]] = {
 }
 
 ONLINE_ASSIGNMENT = re.compile(
-    r"\b(?P<name>OLD_SCBS_(?:USERNAME|PASSWORD|TOKEN)|SCBSLY_(?:USERNAME|PASSWORD|TOKEN))"
+    r"\b(?P<name>(?:LEGACY|MIGRATION)_(?!TOKEN\b)[A-Z0-9_]*(?:USERNAME|PASSWORD|TOKEN))"
     r"\s*=\s*(?P<value>[^\s`\\]+)"
 )
 URL_CREDENTIALS = re.compile(r"https?://(?P<value>[^\s/@:]+:[^\s/@]+)@", re.IGNORECASE)
 ONLINE_LITERAL_DEFAULTS = (
     re.compile(
-        r"os\.(?:getenv|environ\.get)\(\s*['\"](?:OLD_SCBS|SCBSLY)_(?:USERNAME|PASSWORD|TOKEN)['\"]\s*,\s*['\"](?P<value>[^'\"]+)['\"]"
+        r"os\.(?:getenv|environ\.get)\(\s*['\"](?:LEGACY|MIGRATION)_(?!TOKEN['\"])[A-Z0-9_]*(?:USERNAME|PASSWORD|TOKEN)['\"]\s*,\s*['\"](?P<value>[^'\"]+)['\"]"
     ),
     re.compile(
-        r"process\.env\.(?:OLD_SCBS|SCBSLY)_(?:USERNAME|PASSWORD|TOKEN)\s*\|\|\s*['\"](?P<value>[^'\"]+)['\"]"
+        r"process\.env\.(?:LEGACY|MIGRATION)_(?!TOKEN\b)[A-Z0-9_]*(?:USERNAME|PASSWORD|TOKEN)\s*\|\|\s*['\"](?P<value>[^'\"]+)['\"]"
     ),
-)
-SCBSLY_CROSS_FALLBACK = re.compile(
-    r"SCBSLY_(?:USERNAME|PASSWORD|TOKEN).*(?:OLD_SCBS_(?:USERNAME|PASSWORD|TOKEN))"
 )
 PLACEHOLDER_MARKERS = (
     "<redacted>",
     "<provided-via-secret-environment>",
     "<revoked_legacy_username>",
     "<revoked_legacy_secret>",
-    "${old_scbs_",
-    "${scbsly_",
+    "${legacy_",
+    "${migration_",
     "example.invalid",
     "...",
 )
@@ -113,19 +110,17 @@ def scan_line(line: str) -> list[Finding]:
         match = pattern.search(line)
         if match:
             findings.append(Finding(name, fingerprint(match.group(0))))
-    assignment = ONLINE_ASSIGNMENT.search(line) if ("OLD_SCBS_" in line or "SCBSLY_" in line) else None
+    assignment = ONLINE_ASSIGNMENT.search(line) if ("LEGACY_" in line or "MIGRATION_" in line) else None
     if assignment and not is_placeholder(assignment.group("value")):
         findings.append(Finding("online_credential_assignment", fingerprint(assignment.group("value"))))
     url_match = URL_CREDENTIALS.search(line) if "http" in lowered and "@" in line else None
     if url_match and not is_placeholder(url_match.group("value")):
         findings.append(Finding("url_embedded_credentials", fingerprint(url_match.group("value"))))
-    if "OLD_SCBS" in line or "SCBSLY" in line:
+    if "LEGACY_" in line or "MIGRATION_" in line:
         for pattern in ONLINE_LITERAL_DEFAULTS:
             default_match = pattern.search(line)
             if default_match and not is_placeholder(default_match.group("value")):
                 findings.append(Finding("online_credential_literal_default", fingerprint(default_match.group("value"))))
-    if "SCBSLY" in line and "OLD_SCBS" in line and SCBSLY_CROSS_FALLBACK.search(line):
-        findings.append(Finding("scbsly_cross_system_credential_fallback", fingerprint("scbsly-cross-fallback")))
     return findings
 
 
@@ -179,7 +174,9 @@ def load_legacy_catalog(path: Path = LEGACY_CATALOG) -> tuple[dict[str, str], se
         if not re.fullmatch(r"[0-9a-f]{12}", digest) or not fingerprint_id:
             raise ValueError("invalid legacy fingerprint entry")
         known[digest] = fingerprint_id
-        if str(entry.get("disposition", "")).startswith("CONFIRMED_"):
+        if str(entry.get("disposition", "")).startswith("CONFIRMED_") or str(
+            entry.get("disposition", "")
+        ) == "ACTIVE_WITH_EXPLICIT_TEMPORARY_RISK_ACCEPTANCE":
             enforced.add(fingerprint_id)
     return known, enforced, payload
 
@@ -216,7 +213,11 @@ def legacy_inputs(known: dict[str, str], base: str, pr_jsonl: Path | None) -> tu
         scanned_files += 1
         findings.extend(scan_legacy_text(text, str(path.relative_to(ROOT)), known))
     diff = subprocess.run(
-        ["git", "diff", "--unified=0", base, "--"], cwd=ROOT, text=True,
+        ["git", "diff", "--unified=0", "--diff-filter=ACMR", base, "--"],
+        cwd=ROOT,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True,
     ).stdout
     added = "\n".join(line[1:] for line in diff.splitlines() if line.startswith("+") and not line.startswith("+++"))
@@ -238,25 +239,21 @@ def legacy_result(
         item
         for item in findings
         if item.fingerprint_id in enforced
-        and (item.fingerprint_id.startswith("HC-") or item.location.startswith("PR#"))
+        and (item.fingerprint_id.startswith(("HC-", "CRED-")) or item.location.startswith("PR#"))
     ]
     contextual_nonblocking = [
         item for item in findings if item.fingerprint_id in enforced and item not in blocking
     ]
-    candidate_counts: dict[str, int] = {}
-    for item in findings:
-        if item.fingerprint_id not in enforced:
-            candidate_counts[item.fingerprint_id] = candidate_counts.get(item.fingerprint_id, 0) + 1
+    candidate_count = sum(item.fingerprint_id not in enforced for item in findings)
     return {
         "schema_version": 1,
         "scanned_files": scanned_files,
         "scanned_pr_bodies": scanned_prs,
         "blocking_matches": len(blocking),
         "contextual_nonblocking_matches": len(contextual_nonblocking),
-        "unreviewed_candidate_matches": sum(candidate_counts.values()),
-        "unreviewed_candidate_matches_by_fingerprint": candidate_counts,
+        "unreviewed_candidate_matches": candidate_count,
         "matches": [
-            {"location": item.location, "line": item.line, "rule_id": "known_legacy_fingerprint", "fingerprint_id": item.fingerprint_id}
+            {"location": item.location, "line": item.line, "rule_id": "known_legacy_credential"}
             for item in blocking
         ],
         "secret_values_recorded": False,
@@ -289,10 +286,7 @@ def main(argv: list[str] | None = None) -> int:
         if result["blocking_matches"]:
             print("[legacy_credential_guard] FAIL", file=sys.stderr)
             for item in result["matches"]:
-                print(
-                    f"{item['location']}:{item['line']}: {item['rule_id']}: fingerprint_id={item['fingerprint_id']}",
-                    file=sys.stderr,
-                )
+                print(f"{item['location']}:{item['line']}: {item['rule_id']}", file=sys.stderr)
             return 1
         print(f"[legacy_credential_guard] PASS files={file_count} pr_bodies={pr_count} values_recorded=false")
         return 0
@@ -304,7 +298,7 @@ def main(argv: list[str] | None = None) -> int:
         rel = path.relative_to(ROOT)
         for line_no, line in enumerate(text.splitlines(), start=1):
             for finding in scan_line(line):
-                findings.append(f"{rel}:{line_no}: {finding.rule}: fingerprint={finding.fingerprint}")
+                findings.append(f"{rel}:{line_no}: {finding.rule}")
     if findings:
         print("[FAIL] high-confidence secret pattern found", file=sys.stderr)
         for item in findings:

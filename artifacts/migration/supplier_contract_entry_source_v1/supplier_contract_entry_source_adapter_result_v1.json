@@ -1,9 +1,0 @@
-{
-  "input_csv": "/home/odoo/workspace/sce-backend-odoo/artifacts/business-fact-audit/sc_demo_after_scbs_source_creator_supplement/contract_supplier_entry_source_missing_rows_v1.csv",
-  "missing_rows": 8,
-  "mode": "supplier_contract_entry_source_adapter",
-  "output_csv": "/home/odoo/workspace/sce-backend-odoo/artifacts/migration/supplier_contract_entry_source_v1/supplier_contract_entry_source_from_legacy_mssql_v1.csv",
-  "output_rows": 5436,
-  "required_count": 5444,
-  "status": "PASS"
-}

@@ -1,3 +1,0 @@
-partner_id,partner_name,source_table,legacy_record_id,creator_name,created_time,routes,updated_fields
-334,中国人民财产保险股份有限公司德阳市分公司,ZJGL_SZQR_ZFQRB_CB,4c749b070b9e43b7ad45bedf61e6879b,焦玲,2020-04-23 10:09:01.000,sc.legacy.payment.residual.fact,sc_source_created_at;sc_source_created_by
-179,德阳市浙民电器设备有限公司,ZJGL_SZQR_ZFQRB_CB,e2e1fdfdf40c47609ace7e14f735bd55,焦玲,2020-04-23 10:09:01.000,sc.legacy.payment.residual.fact,sc_source_created_at;sc_source_created_by

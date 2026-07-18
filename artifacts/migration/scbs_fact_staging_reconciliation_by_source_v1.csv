@@ -1,5 +1,0 @@
-source_table,fact_family,row_count,amount_total,min_date,max_date
-D_SCBSJS_ZJGL_ZJSZ_ZJRBB,fund_daily,3798,1290762428.64,2024-03-02,2026-04-16
-T_FK_Supplier,payment,9107,359251657.39,2018-09-01,2026-04-14
-T_GYSHT_INFO,supplier_contract,1585,273565406.25,2021-10-10,2026-03-31
-T_RK_RKD,stock_in,700,88592370.17,2021-04-20,2024-12-31

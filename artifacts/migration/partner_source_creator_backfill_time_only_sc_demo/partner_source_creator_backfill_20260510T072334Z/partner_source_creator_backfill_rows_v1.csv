@@ -1,9 +1,0 @@
-partner_id,partner_name,source_table,legacy_record_id,creator_name,created_time,routes,updated_fields
-7817,德阳市区怡鑫悦烘焙服务部,T_FK_Supplier,1acb0419d7ca4a96a7993cd39fe2ec37,,2023-10-12 17:00:08.000,sc.payment.execution,sc_source_created_at
-7330,惠州市鑫业兴实业有限公司,T_FK_Supplier,309e8658bdfc4db2ab2863bcc74eb592,,2024-08-21 16:13:32.000,sc.payment.execution,sc_source_created_at
-7648,德阳路亿建筑劳务有限公司,T_FK_Supplier,37576e4d98fb48da84918795ee658df7,,2023-10-12 14:26:09.000,sc.payment.execution,sc_source_created_at
-7574,德阳中民招标代理有限公司,T_FK_Supplier,5324b3c608344bbeb9b30addd5ee0e98,,2024-09-25 10:02:15.000,sc.payment.execution,sc_source_created_at
-7603,德阳市方兴建筑设备租赁有限责任公司,T_FK_Supplier,6e2f36109aa44c3dbfe4f5bfe7772278,,2023-10-12 16:28:40.000,sc.payment.execution,sc_source_created_at
-7326,四川朗照律师事务所,T_FK_Supplier,9deb4ed0d0b642669621db763460c8a4,,2023-10-12 13:39:52.000,sc.payment.execution,sc_source_created_at
-7823,德阳市旌阳区八角井街道衡山路社区,T_FK_Supplier,e417dc8debf94ae4bc8aed0ffd7cb36e,,2023-10-12 14:02:42.000,sc.payment.execution,sc_source_created_at
-7634,德阳精简商务服务有限公司,T_FK_Supplier,f5c3eecee6f74b41b123f420b2de1722,,2023-10-12 14:25:08.000,sc.payment.execution,sc_source_created_at

@@ -1,4 +1,0 @@
-map_id,legacy_gcmc,suggested_state,mapping_state,map_match_method,suggested_action,fact_rows,fact_amount,candidate_rank,match_reason,confidence,candidate_project_id,candidate_name,candidate_active,candidate_company,candidate_stage
-26,公司综合平台,not_real_project_review,conflict,none,ignore_if_not_real_project,7,2168206.0,1,name_exact,0.95,748,公司综合平台,True,,筹备中
-43,一公司项目,not_real_project_review,conflict,none,ignore_if_not_real_project,11,1800.0,,no_target_candidate_found,0.0,,,,,
-46,测试项目,ignored_test_candidate,ignored,none,ignore_or_conflict_test_value,5,171793.0,,no_target_candidate_found,0.0,,,,,

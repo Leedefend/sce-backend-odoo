@@ -1,3 +1,0 @@
-dimension,map_model,map_id,source_table,legacy_key,legacy_name,mapping_state,suggested_state,match_method,target_id,target_name,fact_rows,fact_amount,suggested_action,decision,decision_target_id,decision_note
-project,sc.legacy.project.map,26,SCBS_GCMC_PROJECT_CANDIDATE,公司综合平台,公司综合平台,conflict,not_real_project_review,none,,,7,2168206.0,ignore_if_not_real_project,,,
-project,sc.legacy.project.map,43,SCBS_GCMC_PROJECT_CANDIDATE,一公司项目,一公司项目,conflict,not_real_project_review,none,,,11,1800.0,ignore_if_not_real_project,,,

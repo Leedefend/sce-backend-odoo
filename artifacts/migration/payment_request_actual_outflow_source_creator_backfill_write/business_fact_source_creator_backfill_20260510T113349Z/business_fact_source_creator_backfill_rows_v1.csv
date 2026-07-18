@@ -1,2 +1,0 @@
-model,record_id,source_table,legacy_record_id,updated_fields
-payment.request,25149,T_FK_Supplier,9d371fc8dc764d1086abd758b477fe2e,creator_legacy_user_id;creator_name;legacy_record_id;legacy_source_table

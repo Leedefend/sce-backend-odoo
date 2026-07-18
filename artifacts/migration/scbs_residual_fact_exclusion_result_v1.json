@@ -1,7 +1,0 @@
-{
-  "excluded_rows": 33,
-  "mode": "apply",
-  "plan_csv": "/tmp/scbs_residual_fact_exclusion/scbs_residual_fact_exclusion_plan_v1.csv",
-  "planned_rows": 33,
-  "result_json": "/tmp/scbs_residual_fact_exclusion/scbs_residual_fact_exclusion_result_v1.json"
-}

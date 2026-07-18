@@ -16,14 +16,8 @@ FORBIDDEN_MODULES = {
     "smart_construction_seed",
     "smart_construction_bootstrap",
 }
-CUSTOMER_MARKERS = (
-    "四川保盛建设集团有限公司",
-    "legacy_10000007",
-    "legacy_10000009",
-    "legacy_10000020",
-    "legacy_10000063",
-    "legacy_10000077",
-)
+CUSTOMER_EXTERNAL_ID = re.compile(r"\blegacy_\d{8,}\b")
+NON_EXAMPLE_LEGAL_COMPANY = re.compile(r"[\u4e00-\u9fff]{4,}(?:建设|建筑)?集团有限公司")
 
 
 def allowlist() -> list[str]:
@@ -114,9 +108,11 @@ def main() -> int:
                 text = path.read_text(encoding="utf-8")
             except UnicodeDecodeError:
                 continue
-            for marker in CUSTOMER_MARKERS:
-                if marker in text:
-                    errors.append(f"customer marker in product module: {path.relative_to(ROOT)}")
+            if CUSTOMER_EXTERNAL_ID.search(text):
+                errors.append(f"customer external identifier in product module: {path.relative_to(ROOT)}")
+            for match in NON_EXAMPLE_LEGAL_COMPANY.finditer(text):
+                if not any(marker in match.group(0) for marker in ("示例", "某某")):
+                    errors.append(f"customer company identity in product module: {path.relative_to(ROOT)}")
                     break
     if errors:
         print("[product_image_tenant_neutral_guard] FAIL", file=sys.stderr)

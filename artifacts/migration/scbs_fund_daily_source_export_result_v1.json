@@ -1,9 +1,0 @@
-{
-  "account_balance_total": 1290762428.64,
-  "bank_balance_total": 1347394662.1200001,
-  "bank_system_difference_total": -56632233.48,
-  "database": "LegacyScbs20260417",
-  "output_csv": "artifacts/migration/scbs_fund_daily_source_v1.csv",
-  "rows": 3798,
-  "status": "PASS"
-}

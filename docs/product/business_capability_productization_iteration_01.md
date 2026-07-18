@@ -8,7 +8,7 @@
 
 锁定菜单整合矩阵：`artifacts/user_confirmed_62_business_entry_integration_matrix.md`
 
-在线可见面核实协议：`docs/product/online_visible_surface_verification_protocol_2026-06-11.md`
+客户旧系统在线核实协议属于私有迁移交付物，不进入标准产品仓库。
 
 门禁：`scripts/verify/user_business_productization_baseline_guard.py`
 

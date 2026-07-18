@@ -1,9 +1,0 @@
-{
-  "input_csv": "/home/odoo/workspace/sce-backend-odoo/artifacts/business-fact-audit/sc_demo_after_contract_entry_backfill_committed/contract_amount_missing_rows_v1.csv",
-  "mode": "supplier_contract_amount_source_adapter",
-  "output_csv": "/home/odoo/workspace/sce-backend-odoo/artifacts/migration/supplier_contract_amount_source_v1/supplier_contract_amount_source_from_legacy_mssql_v1.csv",
-  "output_rows": 131,
-  "required_count": 247,
-  "status": "PASS",
-  "zero_or_missing_rows": 116
-}

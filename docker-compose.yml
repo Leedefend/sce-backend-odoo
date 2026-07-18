@@ -72,7 +72,6 @@ services:
       SCENE_ROLLBACK: ${SCENE_ROLLBACK}
 
       REDIS_HOST: redis
-      SC_LEGACY_FILE_ROOTS: ${SC_LEGACY_FILE_ROOTS:-/mnt/legacy-files:/mnt/legacy-online-mirror}
       # === 新增：runtime 明确配置出口 ===
       ODOO_CONF_OUT: /var/lib/odoo/odoo.conf
       ODOO_DB: ${DB_NAME}
@@ -85,17 +84,12 @@ services:
       - odoo_data:/var/lib/odoo
       # Development source mount. Immutable production candidates do not use
       # this path; they contain only /mnt/product-addons and may mount one
-      # private customer artifact under /mnt/customer-addons.
+      # private customer artifact through docker-compose.customer-addons.yml.
       - ./addons:/mnt/source-addons
-      - ${SC_CUSTOMER_ADDONS_ROOT:-./customer_addons}:/mnt/customer-addons:ro
       - ./addons_external:/mnt/addons_external
       - ./artifacts:/mnt/artifacts
-      - ./migration_assets:/mnt/migration_assets:ro
-      - ${SC_LEGACY_FILE_ROOT:-/opt/sce-legacy-files}:/mnt/legacy-files:ro
-      - ${SC_LEGACY_ONLINE_MIRROR_ROOT:-/opt/sce-legacy-online-mirror}:/mnt/legacy-online-mirror:ro
       - ./scripts:/mnt/scripts:ro
       - ./docs:/mnt/docs:ro
-      - ./tmp:/mnt/tmp:ro
       - ./config/odoo.conf.template:/etc/odoo/odoo.conf.template:ro
       - ./scripts/render_odoo_conf.py:/usr/local/bin/render_odoo_conf.py:ro
       - ./scripts/odoo-entrypoint.sh:/usr/local/bin/odoo-entrypoint.sh:ro

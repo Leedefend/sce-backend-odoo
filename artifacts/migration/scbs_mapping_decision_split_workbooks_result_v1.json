@@ -1,8 +1,0 @@
-{
-  "manifest": [],
-  "manifest_csv": "artifacts/migration/scbs_mapping_decision_split_workbooks_manifest_v1.csv",
-  "mapping_rows": 0,
-  "source_csv": "artifacts/migration/scbs_mapping_decision_workbook_v1.csv",
-  "split_files": 0,
-  "status": "PASS"
-}

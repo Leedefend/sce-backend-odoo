@@ -1,5 +1,0 @@
-fact_family,mapping_gate_state,row_count,amount_total,with_entity_map,with_project_map,with_partner_map
-fund_daily,projection_ready,3798,1290762428.64,3798,0,0
-payment,projection_ready,9107,359251657.39,3120,6499,9095
-stock_in,projection_ready,700,88592370.17,700,355,696
-supplier_contract,projection_ready,1585,273565406.25,1345,1145,1585

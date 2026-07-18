@@ -44,18 +44,6 @@ def _ensure_company_currency(env, code):
     env["ir.config_parameter"].sudo().set_param("sc.bootstrap.currency", code)
 
 
-def _ensure_company_name(env, name):
-    company_name = (name or "").strip()
-    if not company_name:
-        return
-    company = env.ref("base.main_company", raise_if_not_found=False)
-    if not company:
-        company = env.company
-    if company:
-        company.sudo().write({"name": company_name})
-    env["ir.config_parameter"].sudo().set_param("sc.bootstrap.company_name", company_name)
-
-
 def _ensure_language(env, code):
     lang = env["res.lang"].sudo().with_context(active_test=False).search(
         [("code", "=", code)],
@@ -103,19 +91,16 @@ def post_init_hook(env_or_cr, registry=None):
     lang = icp.get_param("sc.bootstrap.lang", "zh_CN")
     tz = icp.get_param("sc.bootstrap.tz", "Asia/Shanghai")
     cur = icp.get_param("sc.bootstrap.currency", "CNY")
-    company_name = icp.get_param("sc.bootstrap.company_name", "四川保盛建设集团有限公司")
     lang = _ensure_language(env, lang)
     _ensure_user_preferences(env, lang, tz)
     _ensure_res_users_notification_default(env)
     icp.set_param("sc.bootstrap.lang", lang)
     icp.set_param("sc.bootstrap.tz", tz)
     _ensure_company_currency(env, cur)
-    _ensure_company_name(env, company_name)
 
     _logger.info(
-        "Construction bootstrap compatibility applied: lang=%s tz=%s currency=%s company_name=%s",
+        "Construction bootstrap compatibility applied: lang=%s tz=%s currency=%s",
         lang,
         tz,
         cur,
-        company_name,
     )

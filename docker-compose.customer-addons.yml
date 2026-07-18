@@ -1,0 +1,4 @@
+services:
+  odoo:
+    volumes:
+      - ${SC_CUSTOMER_ADDONS_ROOT:?SC_CUSTOMER_ADDONS_ROOT must point to one external customer addons directory}:/mnt/customer-addons:ro

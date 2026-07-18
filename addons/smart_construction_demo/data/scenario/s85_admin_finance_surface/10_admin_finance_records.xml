@@ -55,7 +55,7 @@
       <field name="business_date">2025-05-07</field>
       <field name="certificate_name">安全生产许可证</field>
       <field name="certificate_no">S85-CERT-0001</field>
-      <field name="holder_name">四川保盛建设集团有限公司</field>
+      <field name="holder_name">示例建设集团有限公司</field>
       <field name="issue_authority">四川省住房和城乡建设厅</field>
       <field name="issue_date">2025-01-01</field>
       <field name="valid_until">2028-01-01</field>
@@ -125,7 +125,7 @@
       <field name="id_number">510600199001010001</field>
       <field name="period_year">2025</field>
       <field name="period_month">5</field>
-      <field name="payer_unit">四川保盛建设集团有限公司</field>
+      <field name="payer_unit">示例建设集团有限公司</field>
       <field name="salary_base">18000.0</field>
       <field name="gross_amount">18500.0</field>
       <field name="deduction_amount">2300.0</field>

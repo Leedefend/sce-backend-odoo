@@ -1,9 +1,0 @@
-{
-  "contract_joint_rows_after": 0,
-  "database": "sc_demo",
-  "payment_joint_rows_after": 0,
-  "plan_csv": "/mnt/artifacts/migration/scbs_replay_to_sc_demo_20260511_material_facts/scbs_operation_strategy_policy_refresh_plan_v1.csv",
-  "planned_project_updates": 0,
-  "scbs_project_count": 61,
-  "status": "APPLIED"
-}

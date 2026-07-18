@@ -2045,7 +2045,11 @@ verify.user_module.data_baseline.runtime_audit: guard.prod.forbid check-compose-
 	@python3 -m py_compile scripts/verify/user_module_data_baseline_runtime_audit.py
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/user_module_data_baseline_runtime_audit.py
 
-.PHONY: verify.tenant_delivery.protocol verify.product_image.tenant_neutral verify.product_to_customer.dependency verify.customer_module.extraction verify.tenant_architecture.boundary
+.PHONY: verify.tenant.product_payload_boundary verify.tenant_delivery.protocol verify.product_image.tenant_neutral verify.product_to_customer.dependency verify.customer_module.extraction verify.tenant_architecture.boundary
+verify.tenant.product_payload_boundary: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/tenant_product_payload_boundary_guard.py
+	@python3 scripts/verify/tenant_product_payload_boundary_guard.py
+
 verify.tenant_delivery.protocol: guard.prod.forbid
 	@python3 -m py_compile \
 		addons/smart_core/utils/tenant_delivery_manifest.py \
@@ -2067,7 +2071,7 @@ verify.customer_module.extraction: guard.prod.forbid
 	@python3 -m py_compile scripts/verify/customer_module_extraction_guard.py
 	@python3 scripts/verify/customer_module_extraction_guard.py
 
-verify.tenant_architecture.boundary: guard.prod.forbid verify.product_image.tenant_neutral verify.product_to_customer.dependency verify.customer_module.extraction
+verify.tenant_architecture.boundary: guard.prod.forbid verify.tenant.product_payload_boundary verify.product_image.tenant_neutral verify.product_to_customer.dependency verify.customer_module.extraction
 	@echo "[verify.tenant_architecture.boundary] PASS"
 
 verify.docs.all: guard.prod.forbid verify.docs.inventory verify.docs.links verify.docs.temp_guard verify.docs.contract_sync verify.docs.product_boundary

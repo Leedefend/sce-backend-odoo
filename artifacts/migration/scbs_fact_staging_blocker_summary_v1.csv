@@ -1,8 +1,0 @@
-source_table,fact_family,mapping_gate_state,row_count,amount_total,missing_entity_map,missing_project_map,missing_partner_map,conflict_entity_map,conflict_project_map,conflict_partner_map
-D_SCBSJS_ZJGL_ZJSZ_ZJRBB,fund_daily,staging_ready,3798,1290762428.64,0,0,0,0,0,0
-T_FK_Supplier,payment,conflict,280,22363058.52,0,0,0,6,17,257
-T_FK_Supplier,payment,staging_ready,8850,342333354.87,0,0,0,0,0,0
-T_GYSHT_INFO,supplier_contract,conflict,161,16559188.81,0,0,0,1,1,159
-T_GYSHT_INFO,supplier_contract,staging_ready,1431,257955010.44,0,0,0,0,0,0
-T_RK_RKD,stock_in,conflict,110,12376588.91,0,0,0,3,0,107
-T_RK_RKD,stock_in,staging_ready,593,77961631.26,0,0,0,0,0,0
