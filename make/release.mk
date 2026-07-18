@@ -78,3 +78,59 @@ release.pilot.all: verify.release.tooling release.rehearsal.prepare release.rehe
 
 release.rehearsal.cleanup: verify.release.guard
 	@$(RELEASE_ENV) $(RELEASE_COMPOSE) down --remove-orphans
+
+# Immutable production candidate. These targets are restricted to dev/test and
+# never point at the production database or production compose project.
+CANDIDATE_SOURCE_SHA ?= 7010bed829e0a7f34fdea45073a2a4e5034d6ab7
+CANDIDATE_SHORT_SHA := $(shell printf '%s' '$(CANDIDATE_SOURCE_SHA)' | cut -c1-12)
+CANDIDATE_IMAGE ?= sce-production-candidate:$(CANDIDATE_SHORT_SHA)
+CANDIDATE_PROJECT ?= sc-production-candidate
+CANDIDATE_DB ?= sc_user_data_rehearsal_candidate
+HISTORY_SOURCE_DB ?= sc_user_data_rehearsal
+DAILY_DEV_PROJECT ?= sc-backend-odoo-dev
+CANDIDATE_ARTIFACTS ?= artifacts/release/immutable-production-candidate-v1
+
+.PHONY: release.production.readonly_baseline release.candidate.build release.candidate.scan
+.PHONY: release.history.source_probe release.history.backup release.history.restore release.history.upgrade
+.PHONY: release.history.source_restore
+.PHONY: release.history.runtime_up release.history.runtime_down release.history.fingerprint.source_pre
+.PHONY: release.history.fingerprint.candidate_pre release.history.fingerprint.candidate_post
+
+release.production.readonly_baseline: guard.prod.readonly check-compose-project check-compose-env
+	@CANDIDATE_ARTIFACTS="$(CANDIDATE_ARTIFACTS)" bash scripts/release/production_readonly_baseline.sh
+
+release.candidate.build: guard.prod.forbid
+	@CANDIDATE_SOURCE_SHA="$(CANDIDATE_SOURCE_SHA)" CANDIDATE_IMAGE="$(CANDIDATE_IMAGE)" CANDIDATE_ARTIFACTS="$(CANDIDATE_ARTIFACTS)" bash scripts/release/immutable_candidate_build.sh
+
+release.candidate.scan: guard.prod.forbid
+	@CANDIDATE_ARTIFACTS="$(CANDIDATE_ARTIFACTS)" bash scripts/release/immutable_candidate_scan.sh
+
+release.history.source_probe: guard.prod.forbid check-compose-project check-compose-env
+	@HISTORY_SOURCE_DB="$(HISTORY_SOURCE_DB)" DAILY_DEV_PROJECT="$(DAILY_DEV_PROJECT)" CANDIDATE_ARTIFACTS="$(CANDIDATE_ARTIFACTS)" CANDIDATE_IMAGE="$(CANDIDATE_IMAGE)" bash scripts/release/production_candidate_history.sh source-probe
+
+release.history.source_restore: guard.prod.forbid check-compose-project check-compose-env
+	@HISTORY_SOURCE_DB="$(HISTORY_SOURCE_DB)" DAILY_DEV_PROJECT="$(DAILY_DEV_PROJECT)" CANDIDATE_ARTIFACTS="$(CANDIDATE_ARTIFACTS)" bash scripts/release/restore_authorized_history_source.sh
+
+release.history.backup: guard.prod.forbid check-compose-project check-compose-env
+	@HISTORY_SOURCE_DB="$(HISTORY_SOURCE_DB)" DAILY_DEV_PROJECT="$(DAILY_DEV_PROJECT)" CANDIDATE_ARTIFACTS="$(CANDIDATE_ARTIFACTS)" CANDIDATE_IMAGE="$(CANDIDATE_IMAGE)" bash scripts/release/production_candidate_history.sh backup
+
+release.history.restore: guard.prod.forbid check-compose-project check-compose-env
+	@HISTORY_SOURCE_DB="$(HISTORY_SOURCE_DB)" CANDIDATE_DB="$(CANDIDATE_DB)" CANDIDATE_PROJECT="$(CANDIDATE_PROJECT)" CANDIDATE_ARTIFACTS="$(CANDIDATE_ARTIFACTS)" CANDIDATE_IMAGE="$(CANDIDATE_IMAGE)" bash scripts/release/production_candidate_history.sh restore
+
+release.history.upgrade: guard.prod.forbid check-compose-project check-compose-env
+	@CANDIDATE_DB="$(CANDIDATE_DB)" CANDIDATE_PROJECT="$(CANDIDATE_PROJECT)" CANDIDATE_ARTIFACTS="$(CANDIDATE_ARTIFACTS)" CANDIDATE_IMAGE="$(CANDIDATE_IMAGE)" CANDIDATE_FORMAL_MODULES="$${CANDIDATE_FORMAL_MODULES:-smart_core,smart_construction_core,smart_construction_portal,smart_construction_custom}" bash scripts/release/production_candidate_history.sh upgrade
+
+release.history.runtime_up: guard.prod.forbid check-compose-project check-compose-env
+	@CANDIDATE_DB="$(CANDIDATE_DB)" CANDIDATE_PROJECT="$(CANDIDATE_PROJECT)" CANDIDATE_ARTIFACTS="$(CANDIDATE_ARTIFACTS)" CANDIDATE_IMAGE="$(CANDIDATE_IMAGE)" bash scripts/release/production_candidate_history.sh runtime-up
+
+release.history.runtime_down: guard.prod.forbid check-compose-project check-compose-env
+	@CANDIDATE_DB="$(CANDIDATE_DB)" CANDIDATE_PROJECT="$(CANDIDATE_PROJECT)" CANDIDATE_ARTIFACTS="$(CANDIDATE_ARTIFACTS)" CANDIDATE_IMAGE="$(CANDIDATE_IMAGE)" bash scripts/release/production_candidate_history.sh runtime-down
+
+release.history.fingerprint.source_pre: guard.prod.forbid check-compose-project check-compose-env
+	@HISTORY_SOURCE_DB="$(HISTORY_SOURCE_DB)" DAILY_DEV_PROJECT="$(DAILY_DEV_PROJECT)" CANDIDATE_ARTIFACTS="$(CANDIDATE_ARTIFACTS)" CANDIDATE_IMAGE="$(CANDIDATE_IMAGE)" bash scripts/release/production_candidate_fingerprint.sh source source-pre
+
+release.history.fingerprint.candidate_pre: guard.prod.forbid check-compose-project check-compose-env
+	@CANDIDATE_DB="$(CANDIDATE_DB)" CANDIDATE_PROJECT="$(CANDIDATE_PROJECT)" CANDIDATE_ARTIFACTS="$(CANDIDATE_ARTIFACTS)" CANDIDATE_IMAGE="$(CANDIDATE_IMAGE)" bash scripts/release/production_candidate_fingerprint.sh candidate candidate-pre
+
+release.history.fingerprint.candidate_post: guard.prod.forbid check-compose-project check-compose-env
+	@CANDIDATE_DB="$(CANDIDATE_DB)" CANDIDATE_PROJECT="$(CANDIDATE_PROJECT)" CANDIDATE_ARTIFACTS="$(CANDIDATE_ARTIFACTS)" CANDIDATE_IMAGE="$(CANDIDATE_IMAGE)" bash scripts/release/production_candidate_fingerprint.sh candidate candidate-post

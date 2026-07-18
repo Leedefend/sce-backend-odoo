@@ -1,0 +1,45 @@
+FROM odoo:17.0
+
+ARG SOURCE_SHA
+ARG FRONTEND_BUILD_SHA256
+ARG BUILD_TIME
+ARG ODOO_VERSION=17.0
+ARG PYTHON_VERSION
+ARG NODE_VERSION
+ARG PNPM_VERSION
+
+USER root
+
+COPY requirements-odoo.txt /tmp/requirements-odoo.txt
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get dist-upgrade -y \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends gettext-base nginx \
+    && pip3 install --no-cache-dir -r /tmp/requirements-odoo.txt \
+    && pip3 install --no-cache-dir "PyJWT>=2.8,<3" \
+    && rm -rf /var/lib/apt/lists/* /tmp/requirements-odoo.txt
+
+COPY addons /mnt/extra-addons
+COPY addons_external /mnt/addons_external
+COPY config/odoo.conf.template /etc/odoo/odoo.conf.template
+COPY config/nginx/conf.d/production-candidate.conf /etc/nginx/conf.d/default.conf
+COPY scripts/render_odoo_conf.py /usr/local/bin/render_odoo_conf.py
+COPY scripts/odoo-entrypoint.sh /usr/local/bin/odoo-entrypoint.sh
+COPY frontend/apps/web/dist-production-candidate /usr/share/nginx/html
+
+RUN chmod 0755 /usr/local/bin/odoo-entrypoint.sh /usr/local/bin/render_odoo_conf.py \
+    && find /mnt/extra-addons /mnt/addons_external -type d -exec chmod 0755 {} + \
+    && find /mnt/extra-addons /mnt/addons_external -type f -exec chmod 0644 {} + \
+    && chown -R root:root /mnt/extra-addons /mnt/addons_external /usr/share/nginx/html
+
+LABEL org.opencontainers.image.revision="${SOURCE_SHA}" \
+      org.opencontainers.image.created="${BUILD_TIME}" \
+      org.opencontainers.image.title="SCE immutable production candidate" \
+      org.opencontainers.image.version="${SOURCE_SHA}" \
+      com.sce.frontend.sha256="${FRONTEND_BUILD_SHA256}" \
+      com.sce.odoo.version="${ODOO_VERSION}" \
+      com.sce.python.version="${PYTHON_VERSION}" \
+      com.sce.node.version="${NODE_VERSION}" \
+      com.sce.pnpm.version="${PNPM_VERSION}"
+
+USER odoo
+ENTRYPOINT ["/usr/local/bin/odoo-entrypoint.sh"]
