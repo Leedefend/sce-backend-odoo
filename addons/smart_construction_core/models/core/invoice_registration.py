@@ -442,10 +442,7 @@ class ScInvoiceRegistration(models.Model):
             rec._audit_transition("invoice_registered", before, rec._snapshot_audit_payload(), action_name="action_register")
 
     def _has_finance_register_access(self):
-        return (
-            self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager")
-            or self.env.user.has_group("smart_construction_custom.group_sc_role_finance")
-        )
+        return self.env.user.has_group("smart_construction_core.group_sc_cap_finance_manager")
 
     def _assert_finance_register_access(self):
         if not self._has_finance_register_access():

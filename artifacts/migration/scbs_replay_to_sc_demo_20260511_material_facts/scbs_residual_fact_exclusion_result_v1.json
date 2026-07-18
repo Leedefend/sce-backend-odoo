@@ -1,7 +1,0 @@
-{
-  "excluded_rows": 3094,
-  "mode": "apply",
-  "plan_csv": "/mnt/artifacts/migration/scbs_replay_to_sc_demo_20260511_material_facts/scbs_residual_fact_exclusion_plan_v1.csv",
-  "planned_rows": 3094,
-  "result_json": "/mnt/artifacts/migration/scbs_replay_to_sc_demo_20260511_material_facts/scbs_residual_fact_exclusion_result_v1.json"
-}

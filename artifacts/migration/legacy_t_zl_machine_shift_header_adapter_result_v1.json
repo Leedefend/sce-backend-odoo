@@ -1,8 +1,0 @@
-{
-  "active_rows": 53,
-  "header_rows": 54,
-  "mode": "legacy_t_zl_machine_shift_header_adapter",
-  "payload_csv": "artifacts/migration/legacy_t_zl_machine_shift_headers_v1.csv",
-  "source": "legacy-mssql-restore:LegacyDb.dbo.T_ZL_MachineShift",
-  "status": "PASS"
-}

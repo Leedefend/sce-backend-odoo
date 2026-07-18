@@ -1,9 +1,0 @@
-$ python3 scripts/verify/scbs_55_old_system_list_count_probe.py
-[old-count] seq=022 name=借款申请 status=PASS count=37 error=
-[old-count] seq=023 name=还款登记 status=PASS count=25 error=
-[old-count] seq=027 name=承包人还项目款 status=PASS count=157 error=
-[old-count] seq=028 name=承包人借项目款 status=PASS count=166 error=
-[old-count] seq=032 name=账户间资金往来 status=PASS count=485 error=
-[old-count] seq=037 name=项目借公司款登记 status=PASS count=164 error=
-[old-count] seq=038 name=项目还公司款登记 status=PASS count=155 error=
-SCBS55_OLD_LIST_COUNT=PASS output=/home/lidefend/workspace/sce-backend-odoo/artifacts/migration/scbs_55_old_system_list_count_probe_result_v1.json

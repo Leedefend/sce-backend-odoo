@@ -5,7 +5,6 @@
     </record>
 
     <record id="base.main_company" model="res.company">
-        <field name="name">四川保盛建设集团有限公司</field>
         <field name="currency_id" ref="base.CNY"/>
     </record>
 

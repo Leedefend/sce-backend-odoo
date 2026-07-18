@@ -903,9 +903,7 @@ def smart_core_surface_aliases(env):
 
 def smart_core_runtime_business_config_productization_sources(env):
     del env
-    return [
-        "smart_construction_custom.user_menu_preference",
-    ]
+    return []
 
 
 def smart_core_resolve_record_context_config(env, params):

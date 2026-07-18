@@ -73,7 +73,7 @@ compose ${COMPOSE_TEST_FILES} run --rm -T \
     exec /usr/bin/odoo \
       --db_host=db --db_port=5432 --db_user=${DB_USER} --db_password=${DB_PASSWORD} \
       -d ${DB_CI} \
-      --addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,${ADDONS_EXTERNAL_MOUNT} \
+      --addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/source-addons,${ADDONS_EXTERNAL_MOUNT} \
       -i ${MODULE} \
       --without-demo=all \
       --no-http --workers=0 --max-cron-threads=0 \

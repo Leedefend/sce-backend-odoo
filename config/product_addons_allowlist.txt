@@ -1,0 +1,11 @@
+# One module per line. Dockerfiles and tenant-neutral guards must match this
+# list exactly. Customer, demo, seed, bootstrap and migration modules are not
+# product-image assets.
+sc_norm_engine
+smart_core
+smart_scene
+smart_license_core
+smart_construction_core
+smart_construction_portal
+smart_construction_scene
+smart_construction_bundle

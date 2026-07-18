@@ -1,2 +1,0 @@
-$ python3 scripts/verify/scbsly_direct_project_old_identity_lock.py
-SCBSLY_DIRECT_PROJECT_OLD_IDENTITY_LOCK=PASS output=/home/lidefend/workspace/sce-backend-odoo/artifacts/migration/scbsly_direct_project_old_identity_lock_v1.json

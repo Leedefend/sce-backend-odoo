@@ -362,33 +362,13 @@ class TestFileDownloadLocatorPolicy(unittest.TestCase):
         self.assertEqual(seen["url"], "https://files.example/legacy/UploadFile/UserFile/2026/a%20b.pdf")
         self.assertEqual(result["datas"], "cmVtb3Rl")
 
-    def test_reads_remote_legacy_file_from_default_old_system_base(self):
+    def test_remote_legacy_file_has_no_customer_specific_default_base(self):
         module = _load_handler()
-
-        class _Response:
-            headers = None
-
-            def __enter__(self):
-                return self
-
-            def __exit__(self, *_args):
-                return False
-
-            def read(self):
-                return b"remote"
-
         seen = []
         old_base = os.environ.get("SC_LEGACY_FILE_HTTP_BASE")
         old_urlopen = module.urlopen
         os.environ.pop("SC_LEGACY_FILE_HTTP_BASE", None)
-
-        def _urlopen(request, timeout=0):
-            seen.append(request.full_url)
-            if request.full_url.startswith("https://www.builderp.cn/SCBS/UploadFile/"):
-                return _Response()
-            raise OSError("missing")
-
-        module.urlopen = _urlopen
+        module.urlopen = lambda request, timeout=0: seen.append(request.full_url)
         try:
             result = module._read_remote_legacy_file_path("UploadFile/UserFile/2026/a.pdf")
         finally:
@@ -396,8 +376,8 @@ class TestFileDownloadLocatorPolicy(unittest.TestCase):
             if old_base is not None:
                 os.environ["SC_LEGACY_FILE_HTTP_BASE"] = old_base
 
-        self.assertIn("https://www.builderp.cn/SCBS/UploadFile/UserFile/2026/a.pdf", seen)
-        self.assertEqual(result["datas"], "cmVtb3Rl")
+        self.assertEqual(seen, [])
+        self.assertTrue(result["error"])
 
     def test_reads_remote_legacy_home_file_new_path_from_oldsystem_base(self):
         module = _load_handler()

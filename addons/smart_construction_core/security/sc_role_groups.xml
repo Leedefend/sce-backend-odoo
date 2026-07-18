@@ -37,6 +37,16 @@
             ])]"/>
         </record>
 
+        <record id="group_sc_role_owner" model="res.groups">
+            <field name="name">SC 角色 - 企业负责人</field>
+            <field name="category_id" ref="smart_construction_core.module_category_smart_construction"/>
+            <field name="implied_ids" eval="[(6, 0, [
+                ref('smart_construction_core.group_sc_cap_project_read'),
+                ref('smart_construction_core.group_sc_cap_contract_read'),
+                ref('smart_construction_core.group_sc_cap_data_read')
+            ])]"/>
+        </record>
+
         <!-- 项目角色 -->
         <record id="group_sc_role_project_user" model="res.groups">
             <field name="name">SC 角色 - 项目部/工程部经办</field>

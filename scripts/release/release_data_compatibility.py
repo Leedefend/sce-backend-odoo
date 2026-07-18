@@ -11,7 +11,7 @@ model_names = [
     "sc.settlement.order", "payment.request", "sc.payment.execution",
     "payment.ledger", "res.partner", "res.currency", "ir.attachment",
 ]
-modules = ["smart_core", "smart_construction_core", "smart_construction_custom", "smart_construction_demo"]
+modules = ["smart_core", "smart_construction_core", "smart_construction_bundle", "smart_construction_demo"]
 module_rows = env["ir.module.module"].search_read([("name", "in", modules)], ["name", "state", "installed_version"])
 module_map = {row["name"]: {"state": row["state"], "version": row.get("installed_version") or ""} for row in module_rows}
 

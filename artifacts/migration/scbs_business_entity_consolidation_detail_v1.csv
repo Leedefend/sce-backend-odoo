@@ -1,3 +1,0 @@
-legacy_name,map_id,source_table,legacy_xmid,mapping_state,suggested_entity_type,business_entity_id,business_entity_name,partner_id,partner_name,fact_rows,fact_amount,group_mapping_rows,group_target_entity_count,suggested_action,decision,decision_target_id,decision_note
-测试项目,19,SCBS_FACT_BUSINESS_ENTITY_CANDIDATE,43397eaacc004addb36fa18d2cf83e34,conflict,unknown,,,,,9,5797600.0,1,0,ignore_or_conflict_test_value,,,
-测试01,44,SCBS_FACT_BUSINESS_ENTITY_CANDIDATE,0f88b91125f44373afbc75ee7b00b85a,conflict,unknown,,,,,1,0.0,1,0,ignore_or_conflict_test_value,,,

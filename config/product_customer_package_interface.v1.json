@@ -1,0 +1,7 @@
+{
+  "schema_version": "sce.product_customer_package_interface.v1",
+  "product_api_version": "17.0.0",
+  "odoo_major_version": "17.0",
+  "customer_package_interface_version": "sce.customer_module_manifest.v1",
+  "minimum_customer_package_version": "17.0.2.0.0"
+}

@@ -17,8 +17,7 @@ import secret_scan
 
 
 class SecretScanTest(unittest.TestCase):
-    online_password_name = "OLD_" + "SCBS_" + "PASSWORD"
-    direct_password_name = "SCBSLY_" + "PASSWORD"
+    online_password_name = "LEGACY_SOURCE_PASSWORD"
 
     def test_online_assignment_is_redacted(self) -> None:
         secret = "fixture-value-that-must-not-be-printed"
@@ -35,12 +34,6 @@ class SecretScanTest(unittest.TestCase):
         findings = secret_scan.scan_line(f'os.getenv("{self.online_password_name}", "not-a-placeholder")')
         self.assertEqual(findings[0].rule, "online_credential_literal_default")
 
-    def test_cross_system_fallback_is_rejected(self) -> None:
-        findings = secret_scan.scan_line(
-            f"{self.direct_password_name} = os.getenv('{self.direct_password_name}') or os.getenv('{self.online_password_name}')"
-        )
-        self.assertIn("scbsly_cross_system_credential_fallback", [item.rule for item in findings])
-
     def test_main_output_never_echoes_matching_value(self) -> None:
         secret = "fixture-value-that-must-not-be-printed"
         stderr = io.StringIO()
@@ -52,7 +45,8 @@ class SecretScanTest(unittest.TestCase):
         ):
             self.assertEqual(secret_scan.main([]), 1)
         self.assertNotIn(secret, stderr.getvalue())
-        self.assertIn("fingerprint=", stderr.getvalue())
+        self.assertIn("online_credential_assignment", stderr.getvalue())
+        self.assertNotIn("fingerprint=", stderr.getvalue())
 
     def test_cloud_and_bearer_shapes_are_rejected(self) -> None:
         cloud_value = "AKIA" + "A" * 16
@@ -69,6 +63,7 @@ class SecretScanTest(unittest.TestCase):
         )
         self.assertEqual(result["blocking_matches"], 1)
         self.assertNotIn(value, json.dumps(result))
+        self.assertNotIn("fingerprint", json.dumps(result))
 
     def test_legacy_placeholders_are_allowed(self) -> None:
         for placeholder in ("<REVOKED_LEGACY_USERNAME>", "<REVOKED_LEGACY_SECRET>"):
@@ -90,6 +85,7 @@ class SecretScanTest(unittest.TestCase):
             ):
                 run.return_value.stdout = ""
                 findings, _, count = secret_scan.legacy_inputs({digest: "TEST-LC-001"}, "origin/main", source)
+        self.assertIn("--diff-filter=ACMR", run.call_args.args[0])
         self.assertEqual(count, 1)
         self.assertEqual(findings[0].location, "PR#7")
 

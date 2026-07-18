@@ -190,7 +190,7 @@ ADDONS_EXTERNAL_HOST  ?= $(ROOT_DIR)/addons_external/oca_server_ux
 # odoo 容器内的挂载路径
 ADDONS_EXTERNAL_MOUNT ?= /mnt/addons_external/oca_server_ux
 
-BASE_ADDONS_PATH := /usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons
+BASE_ADDONS_PATH := /usr/lib/python3/dist-packages/odoo/addons,/mnt/source-addons
 EXTRA_ADDONS_PATH := $(shell \
   if [ -n "$(ADDONS_EXTERNAL_HOST)" ] && [ -d "$(ADDONS_EXTERNAL_HOST)" ]; then \
     echo ",$(ADDONS_EXTERNAL_MOUNT)"; \

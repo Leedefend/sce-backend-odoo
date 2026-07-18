@@ -1,9 +1,0 @@
-{
-  "active_rows": 3,
-  "amount_total": 3053466.63,
-  "mode": "legacy_project_contract_deposit_adapter",
-  "payload_csv": "artifacts/migration/legacy_project_contract_deposit_lines_v1.csv",
-  "rows": 5,
-  "source": "legacy-mssql-restore:LegacyDb.dbo.T_ProjectContract_Out_CB_BZJ",
-  "status": "PASS"
-}

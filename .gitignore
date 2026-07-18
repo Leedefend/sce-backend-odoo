@@ -79,6 +79,7 @@ frontend/apps/web/dist/
 frontend/apps/web/dist-dev/
 frontend/apps/web/dist-release/
 frontend/apps/web/dist-release-rehearsal/
+frontend/apps/web/dist-production-candidate/
 .runtime/
 config/odoo.conf
 

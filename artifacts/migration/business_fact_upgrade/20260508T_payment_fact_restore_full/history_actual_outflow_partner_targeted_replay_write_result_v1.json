@@ -1,9 +1,0 @@
-{
-  "status": "PASS",
-  "mode": "history_actual_outflow_partner_targeted_replay_write",
-  "database": "sc_partner_acceptance",
-  "input_rows": 3857,
-  "created_rows": 52,
-  "skipped_existing": 3805,
-  "db_writes": 52
-}

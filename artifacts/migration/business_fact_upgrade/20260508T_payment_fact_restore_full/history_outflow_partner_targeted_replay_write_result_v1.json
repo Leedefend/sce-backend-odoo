@@ -1,9 +1,0 @@
-{
-  "status": "PASS",
-  "mode": "history_outflow_partner_targeted_replay_write",
-  "database": "sc_partner_acceptance",
-  "input_rows": 3919,
-  "created_rows": 3919,
-  "skipped_existing": 0,
-  "rollback_csv": "/mnt/artifacts/migration/business_fact_upgrade/20260508T_payment_fact_restore_full/history_outflow_partner_targeted_replay_rollback_targets_v1.csv"
-}

@@ -108,7 +108,7 @@ ROLE_SURFACE_OVERRIDES = {
 
 ROLE_GROUPS_EXPLICIT = {
     "owner": {
-        "smart_construction_custom.group_sc_role_owner",
+        "smart_construction_core.group_sc_role_owner",
     },
     "project_member": {
         "smart_construction_core.group_sc_cap_project_read",
@@ -117,19 +117,13 @@ ROLE_GROUPS_EXPLICIT = {
         "smart_construction_core.group_sc_cap_business_config_admin",
     },
     "executive": {
-        "smart_construction_custom.group_sc_role_executive",
+        "smart_construction_core.group_sc_role_executive",
     },
     "pm": {
-        "smart_construction_custom.group_sc_role_pm",
-        "smart_construction_custom.group_sc_role_project_manager",
-        "smart_construction_custom.group_sc_role_project_user",
         "smart_construction_core.group_sc_role_project_manager",
+        "smart_construction_core.group_sc_role_project_user",
     },
     "finance": {
-        "smart_construction_custom.group_sc_role_finance",
-        "smart_construction_custom.group_sc_role_payment_manager",
-        "smart_construction_custom.group_sc_role_payment_user",
-        "smart_construction_custom.group_sc_role_payment_read",
         "smart_construction_core.group_sc_role_finance_manager",
         "smart_construction_core.group_sc_role_finance_user",
     },

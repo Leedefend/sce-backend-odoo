@@ -13,10 +13,10 @@
             <field name="company_id" ref="base.main_company"/>
             <field name="groups_id" eval="[
                 (4, ref('base.group_user')),
-                (4, ref('smart_construction_custom.group_sc_role_project_read')),
-                (4, ref('smart_construction_custom.group_sc_role_contract_read')),
-                (4, ref('smart_construction_custom.group_sc_role_settlement_read')),
-                (4, ref('smart_construction_custom.group_sc_role_payment_read'))
+                (4, ref('smart_construction_core.group_sc_cap_project_read')),
+                (4, ref('smart_construction_core.group_sc_cap_contract_read')),
+                (4, ref('smart_construction_core.group_sc_cap_settlement_read')),
+                (4, ref('smart_construction_core.group_sc_cap_finance_read'))
             ]"/>
         </record>
 
@@ -32,10 +32,10 @@
             <field name="company_id" ref="base.main_company"/>
             <field name="groups_id" eval="[
                 (4, ref('base.group_user')),
-                (4, ref('smart_construction_custom.group_sc_role_project_user')),
-                (4, ref('smart_construction_custom.group_sc_role_contract_user')),
-                (4, ref('smart_construction_custom.group_sc_role_settlement_user')),
-                (4, ref('smart_construction_custom.group_sc_role_payment_user'))
+                (4, ref('smart_construction_core.group_sc_cap_project_user')),
+                (4, ref('smart_construction_core.group_sc_cap_contract_user')),
+                (4, ref('smart_construction_core.group_sc_cap_settlement_user')),
+                (4, ref('smart_construction_core.group_sc_cap_finance_user'))
             ]"/>
         </record>
 
@@ -51,10 +51,10 @@
             <field name="company_id" ref="base.main_company"/>
             <field name="groups_id" eval="[
                 (4, ref('base.group_user')),
-                (4, ref('smart_construction_custom.group_sc_role_project_manager')),
-                (4, ref('smart_construction_custom.group_sc_role_contract_manager')),
-                (4, ref('smart_construction_custom.group_sc_role_settlement_manager')),
-                (4, ref('smart_construction_custom.group_sc_role_payment_manager'))
+                (4, ref('smart_construction_core.group_sc_cap_project_manager')),
+                (4, ref('smart_construction_core.group_sc_cap_contract_manager')),
+                (4, ref('smart_construction_core.group_sc_cap_settlement_manager')),
+                (4, ref('smart_construction_core.group_sc_cap_finance_manager'))
             ]"/>
         </record>
 
@@ -70,7 +70,7 @@
             <field name="company_id" ref="base.main_company"/>
             <field name="groups_id" eval="[
                 (4, ref('base.group_user')),
-                (4, ref('smart_construction_custom.group_sc_role_project_read')),
+                (4, ref('smart_construction_core.group_sc_cap_project_read')),
                 (4, ref('smart_construction_core.group_sc_cap_project_manager'))
             ]"/>
         </record>
@@ -87,7 +87,7 @@
             <field name="company_id" ref="base.main_company"/>
             <field name="groups_id" eval="[
                 (4, ref('base.group_user')),
-                (4, ref('smart_construction_custom.group_sc_role_owner'))
+                (4, ref('smart_construction_core.group_sc_role_owner'))
             ]"/>
         </record>
 
@@ -103,7 +103,7 @@
             <field name="company_id" ref="base.main_company"/>
             <field name="groups_id" eval="[
                 (4, ref('base.group_user')),
-                (4, ref('smart_construction_custom.group_sc_role_pm'))
+                (4, ref('smart_construction_core.group_sc_role_project_manager'))
             ]"/>
         </record>
 
@@ -119,7 +119,7 @@
             <field name="company_id" ref="base.main_company"/>
             <field name="groups_id" eval="[
                 (4, ref('base.group_user')),
-                (4, ref('smart_construction_custom.group_sc_role_finance'))
+                (4, ref('smart_construction_core.group_sc_role_finance_manager'))
             ]"/>
         </record>
 
@@ -152,7 +152,7 @@
             <field name="company_id" ref="base.main_company"/>
             <field name="groups_id" eval="[
                 (4, ref('base.group_user')),
-                (4, ref('smart_construction_custom.group_sc_role_executive'))
+                (4, ref('smart_construction_core.group_sc_role_executive'))
             ]"/>
         </record>
     </data>

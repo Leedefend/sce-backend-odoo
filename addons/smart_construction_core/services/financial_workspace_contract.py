@@ -441,10 +441,7 @@ def build_financial_workspace_contract(env, model_name, record_id):
     if record._name == "sc.settlement.order" and _text(record.state) == "approve":
         PaymentRequest = env["payment.request"]
         can_create = bool(PaymentRequest.check_access_rights("create", raise_exception=False))
-        has_finance_capability = bool(
-            env.user.has_group("smart_construction_core.group_sc_cap_finance_user")
-            or env.user.has_group("smart_construction_custom.group_sc_role_finance")
-        )
+        has_finance_capability = bool(env.user.has_group("smart_construction_core.group_sc_cap_finance_user"))
         menu = env.ref("smart_construction_core.menu_sc_user_payment_apply_acceptance", raise_if_not_found=False)
         action = menu.action if menu else None
         category = env.ref(

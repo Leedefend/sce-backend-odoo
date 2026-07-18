@@ -1,9 +1,0 @@
-{
-  "database": "sc_prod_sim",
-  "existing_joint_projects": 807,
-  "plan_csv": "/mnt/artifacts/migration/fresh_replay_validity_20260508T1720/scbs_project_operation_strategy_backfill_plan_v1.csv",
-  "scbs_direct_projects": 61,
-  "status": "APPLIED",
-  "updated": 47,
-  "would_update": 0
-}

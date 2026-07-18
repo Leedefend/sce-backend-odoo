@@ -31,7 +31,7 @@ compose ${COMPOSE_FILES} run ${RUN_RM} -T "${RUN_NAME[@]}" \
     exec /usr/bin/odoo \
       --db_host=db --db_port=5432 --db_user=${DB_USER} --db_password=${DB_PASSWORD} \
       -d ${DB_NAME} \
-      --addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,${ADDONS_EXTERNAL_MOUNT} \
+      --addons-path=/usr/lib/python3/dist-packages/odoo/addons,/mnt/source-addons,${ADDONS_EXTERNAL_MOUNT} \
       --no-http --workers=0 --max-cron-threads=0 \
       --test-enable \
       --test-tags \"${TEST_TAGS_FINAL}\" \

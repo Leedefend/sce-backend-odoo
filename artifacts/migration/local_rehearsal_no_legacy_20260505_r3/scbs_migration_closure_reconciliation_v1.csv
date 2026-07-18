@@ -1,6 +1,0 @@
-﻿fact_family,source_rows,source_amount,formal_rows,formal_amount,residual_rows,residual_amount,delta_amount,status,note
-payment,9098,355521662.2099997,9098,355521662.20999986,0,0,-2.2351741790771484e-07,PASS_STRICT_AMOUNT_CLOSED,positive project-confirmed rows written to payment execution; negative project-confirmed rows written to historical adjustment facts; no-project rows written to enterprise facts or registered
-supplier_contract,1583,271345661.0699998,1583,271345661.0699998,0,0,0.0,PASS_STRICT_AMOUNT_CLOSED,project-confirmed rows written; no-project rows written to enterprise facts or registered
-stock_in,700,88592370.17000006,697,88601224.17000006,0,0,-8854.0,PASS_WITH_HEADER_LINE_POLICY_DELTA,formal amount follows legacy line facts; source amount is header signal; expected delta is -8854.00
-fund_daily,3798,1290762428.6400077,3798,1290762428.6400077,0,0.0,0.0,PASS_ENTERPRISE_DOCUMENT_CLOSED,enterprise business-entity fund daily documents written without project binding
-inactive_residual,44,14089139.36,0,0.0,44,14089139.36,0.0,PASS_ARCHIVED_RESIDUAL_REGISTERED,inactive dirty/non-business rows are excluded from operational projection

@@ -101,7 +101,7 @@ class BackendContractBoundaryTests(unittest.TestCase):
     def test_user_preference_source_wins_over_view_orchestration_name(self):
         boundary = classify_view_orchestration_contract(
             "view_orchestration:res.partner:form:action:1:view:0",
-            {"view_orchestration": {"context": {"source": "smart_construction_custom.partner_form_preference"}}},
+            {"view_orchestration": {"context": {"source": "sce_customer_sample.partner_form_preference"}}},
         )
 
         self.assertEqual(boundary["kind"], "user_preference_projection")
@@ -114,7 +114,7 @@ class BackendContractBoundaryTests(unittest.TestCase):
             _contract(
                 3,
                 "view_orchestration:project.project:form:action:506:view:0:custom_user_flat",
-                "smart_construction_custom.user_form_preference",
+                "sce_customer_sample.user_form_preference",
                 action_id=506,
                 priority=600,
             ),
@@ -151,7 +151,7 @@ class BackendContractBoundaryTests(unittest.TestCase):
             _contract(
                 2,
                 "view_orchestration:purchase.order:form:action:581:view:0:custom_user_flat",
-                "smart_construction_custom.user_form_preference",
+                "sce_customer_sample.user_form_preference",
                 action_id=581,
                 priority=600,
             ),

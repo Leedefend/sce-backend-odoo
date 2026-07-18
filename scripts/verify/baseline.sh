@@ -7,7 +7,6 @@ source "$(dirname "$0")/../_lib/common.sh"
 : "${COMPOSE_FILES:?COMPOSE_FILES required}"
 
 DB_PASSWORD=${DB_PASSWORD:-${DB_USER}}
-EXPECTED_COMPANY_NAME="${SC_BASELINE_COMPANY_NAME:-四川保盛建设集团有限公司}"
 EXPECTED_CURRENCY="${SC_BASELINE_CURRENCY:-CNY}"
 
 psql_cmd() {
@@ -81,45 +80,9 @@ check_company_currency_cny() {
   echo "[verify.baseline] PASS item=main company currency value=${val} (auto-fixed)"
 }
 
-check_main_company_name() {
-  local val
-  val="$(psql_cmd "SELECT c.name
-                    FROM ir_model_data imd
-                    JOIN res_company c ON c.id=imd.res_id
-                   WHERE imd.module='base' AND imd.name='main_company' AND imd.model='res.company'
-                   LIMIT 1;")"
-  if [[ "${val}" == "${EXPECTED_COMPANY_NAME}" ]]; then
-    echo "[verify.baseline] PASS item=main company name value=${val}"
-    return
-  fi
-
-  if ! autofix_enabled; then
-    fail "main company name" "${EXPECTED_COMPANY_NAME}" "${val:-<empty>} (hint: BASELINE_AUTO_FIX=1 make verify.baseline DB_NAME=${DB_NAME})"
-  fi
-
-  echo "[verify.baseline] FIX item=main company name -> ${EXPECTED_COMPANY_NAME}"
-  psql_cmd "UPDATE res_company
-               SET name=$(sql_literal "${EXPECTED_COMPANY_NAME}")
-             WHERE id=(SELECT res_id FROM ir_model_data WHERE module='base' AND name='main_company' AND model='res.company' LIMIT 1);" >/dev/null
-  psql_cmd "INSERT INTO ir_config_parameter (key, value, create_uid, create_date, write_uid, write_date)
-            VALUES ('sc.bootstrap.company_name', $(sql_literal "${EXPECTED_COMPANY_NAME}"), 1, NOW(), 1, NOW())
-            ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, write_uid=1, write_date=NOW();" >/dev/null
-
-  val="$(psql_cmd "SELECT c.name
-                    FROM ir_model_data imd
-                    JOIN res_company c ON c.id=imd.res_id
-                   WHERE imd.module='base' AND imd.name='main_company' AND imd.model='res.company'
-                   LIMIT 1;")"
-  if [[ "${val}" != "${EXPECTED_COMPANY_NAME}" ]]; then
-    fail "main company name" "${EXPECTED_COMPANY_NAME}" "${val:-<empty>} (after auto-fix)"
-  fi
-  echo "[verify.baseline] PASS item=main company name value=${val} (auto-fixed)"
-}
-
 check_eq "lang zh_CN active" "1" "SELECT active::int FROM res_lang WHERE code='zh_CN';"
 check_eq "admin lang" "zh_CN" "SELECT lang FROM res_partner WHERE id=(SELECT partner_id FROM res_users WHERE login='admin');"
 check_eq "admin tz" "Asia/Shanghai" "SELECT tz FROM res_partner WHERE id=(SELECT partner_id FROM res_users WHERE login='admin');"
-check_main_company_name
 check_company_currency_cny
 check_eq "module smart_construction_bootstrap installed" "installed" "SELECT state FROM ir_module_module WHERE name='smart_construction_bootstrap';"
 

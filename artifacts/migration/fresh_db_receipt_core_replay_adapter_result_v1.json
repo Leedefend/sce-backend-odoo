@@ -1,8 +1,0 @@
-{
-  "status": "PASS",
-  "mode": "fresh_db_receipt_core_replay_adapter",
-  "source_mode": "asset_xml",
-  "replay_payload_rows": 5355,
-  "expected_rows": 5355,
-  "db_writes": 0
-}

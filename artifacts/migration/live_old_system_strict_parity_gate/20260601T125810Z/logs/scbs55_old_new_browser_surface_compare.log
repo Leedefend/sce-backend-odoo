@@ -1,3 +1,0 @@
-$ node scripts/verify/scbs_55_old_new_browser_surface_compare.js
-[scbs55_old_new_browser_surface_compare] FAIL old login failed: 10001 登录失败，密码错误
-[scbs55_old_new_browser_surface_compare] artifacts=/home/lidefend/workspace/sce-backend-odoo/artifacts/browser/scbs55-old-new-surface-compare/20260601T125812

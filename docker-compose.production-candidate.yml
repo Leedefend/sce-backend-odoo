@@ -1,0 +1,87 @@
+services:
+  db:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${CANDIDATE_DB:-sc_user_data_rehearsal_candidate}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - candidate_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${CANDIDATE_DB:-sc_user_data_rehearsal_candidate}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - candidate_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  odoo:
+    image: ${CANDIDATE_IMAGE:?CANDIDATE_IMAGE is required}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${CANDIDATE_DB:-sc_user_data_rehearsal_candidate}
+      ODOO_DB: ${CANDIDATE_DB:-sc_user_data_rehearsal_candidate}
+      ODOO_DBFILTER: ^${CANDIDATE_DB:-sc_user_data_rehearsal_candidate}$$
+      ODOO_CONF_OUT: /var/lib/odoo/odoo.conf
+      ADMIN_PASSWD: ${ADMIN_PASSWD}
+      JWT_SECRET: ${JWT_SECRET}
+      REDIS_HOST: redis
+      SC_ENVIRONMENT: production_candidate_rehearsal
+      SC_ALLOW_DEMO_DATA: "0"
+      SCENE_CHANNEL: ${SCENE_CHANNEL:-stable}
+      SCENE_USE_PINNED: ${SCENE_USE_PINNED:-1}
+      SCENE_ROLLBACK: ${SCENE_ROLLBACK:-0}
+    volumes:
+      - candidate_odoo_data:/var/lib/odoo
+    ports:
+      - "${CANDIDATE_ODOO_PORT:-18089}:8069"
+    healthcheck:
+      test: ["CMD-SHELL", "python3 -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8069/web/login', timeout=8)\""]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 90s
+
+  nginx:
+    image: ${CANDIDATE_IMAGE:?CANDIDATE_IMAGE is required}
+    user: root
+    entrypoint: ["/usr/sbin/nginx", "-g", "daemon off;"]
+    restart: unless-stopped
+    depends_on:
+      odoo:
+        condition: service_healthy
+    ports:
+      - "${CANDIDATE_NGINX_PORT:-18088}:80"
+    healthcheck:
+      test: ["CMD-SHELL", "nginx -t"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  candidate_db_data:
+    name: ${CANDIDATE_PROJECT:-sc-production-candidate}-db
+  candidate_redis_data:
+    name: ${CANDIDATE_PROJECT:-sc-production-candidate}-redis
+  candidate_odoo_data:
+    name: ${CANDIDATE_PROJECT:-sc-production-candidate}-odoo

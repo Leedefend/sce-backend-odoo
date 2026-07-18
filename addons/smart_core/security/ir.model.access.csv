@@ -26,3 +26,4 @@ access_ui_business_config_change_set_item_admin,access.ui.business.config.change
 access_ui_business_config_mutation_audit_admin,access.ui.business.config.mutation.audit.admin,model_ui_business_config_mutation_audit,smart_core.group_smart_core_business_config_admin,1,0,0,0
 access_ui_business_config_mutation_audit_platform,access.ui.business.config.mutation.audit.platform,model_ui_business_config_mutation_audit,smart_core.group_smart_core_admin,1,0,0,0
 access_ui_menu_config_policy_admin,access.ui.menu.config.policy.admin,model_ui_menu_config_policy,smart_core.group_smart_core_business_config_admin,1,1,1,1
+access_sc_tenant_payload_import_batch_admin,access.sc.tenant.payload.import.batch.admin,model_sc_tenant_payload_import_batch,smart_core.group_smart_core_admin,1,1,1,0

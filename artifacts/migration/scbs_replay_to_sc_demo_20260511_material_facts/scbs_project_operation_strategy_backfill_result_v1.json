@@ -1,9 +1,0 @@
-{
-  "database": "sc_demo",
-  "existing_joint_projects": 827,
-  "plan_csv": "/mnt/artifacts/migration/scbs_replay_to_sc_demo_20260511_material_facts/scbs_project_operation_strategy_backfill_plan_v1.csv",
-  "scbs_direct_projects": 61,
-  "status": "APPLIED",
-  "updated": 47,
-  "would_update": 0
-}

@@ -11,7 +11,7 @@ IGNORED_BOOTSTRAP_FAILURES = {
 REPRESENTATIVE_LOGINS = [
     "admin",
     "demo_business_full",
-    "wutao",
+    "sc_fx_config_admin",
     "sc_fx_contract_admin",
     "sc_fx_cost_user",
     "sc_fx_executive",

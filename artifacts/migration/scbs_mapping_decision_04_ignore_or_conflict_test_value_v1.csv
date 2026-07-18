@@ -1,4 +1,0 @@
-dimension,map_model,map_id,source_table,legacy_key,legacy_name,mapping_state,suggested_state,match_method,target_id,target_name,fact_rows,fact_amount,suggested_action,decision,decision_target_id,decision_note
-business_entity,sc.legacy.business.entity.map,19,SCBS_FACT_BUSINESS_ENTITY_CANDIDATE,43397eaacc004addb36fa18d2cf83e34,测试项目,conflict,unknown,,,,9,5797600.0,ignore_or_conflict_test_value,,,
-project,sc.legacy.project.map,46,SCBS_FACT_PROJECT_CANDIDATE,测试项目,测试项目,ignored,ignored_test_candidate,none,,,5,171793.0,ignore_or_conflict_test_value,,,
-business_entity,sc.legacy.business.entity.map,44,SCBS_FACT_BUSINESS_ENTITY_CANDIDATE,0f88b91125f44373afbc75ee7b00b85a,测试01,conflict,unknown,,,,1,0.0,ignore_or_conflict_test_value,,,

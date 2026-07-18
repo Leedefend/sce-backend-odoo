@@ -1,5 +1,0 @@
-fact_family,source_table,staged_rows,staged_amount,projection_ready,staging_ready,conflict,blocked,overlap_method,overlap_rows,overlap_amount,projection_policy
-fund_daily,D_SCBSJS_ZJGL_ZJSZ_ZJRBB,3798,1290762428.64,3798,0,0,0,enterprise_fund_daily_source_id_unique,3798,1290762428.64,enterprise_business_document_written_no_project_binding
-payment,T_FK_Supplier,9130,364696413.39,9107,0,23,0,payment_project_partner_date_amount_exact,0,0.0,requires_payment_duplicate_review
-stock_in,T_RK_RKD,703,90338220.17,700,0,3,0,material_inbound_legacy_fact_id_unique,697,88601224.17,formal_material_inbound_written_by_legacy_fact_id
-supplier_contract,T_GYSHT_INFO,1592,274514199.25,1585,5,2,0,contract_legacy_id_exact,0,0.0,block_duplicates_by_legacy_contract_id

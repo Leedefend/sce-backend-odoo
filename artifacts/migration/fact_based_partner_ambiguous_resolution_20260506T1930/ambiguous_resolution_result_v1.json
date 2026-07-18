@@ -1,8 +1,0 @@
-{
-  "database": "sc_prod_sim",
-  "input_ambiguous_rows": 250,
-  "candidate_score_rows": 594,
-  "auto_updated_rows": 40,
-  "manual_remaining_rows": 210,
-  "output_dir": "/mnt/artifacts/migration/fact_based_partner_ambiguous_resolution_20260506T1930"
-}

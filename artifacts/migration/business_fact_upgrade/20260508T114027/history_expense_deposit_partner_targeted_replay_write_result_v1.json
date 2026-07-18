@@ -1,9 +1,0 @@
-{
-  "status": "PASS",
-  "mode": "history_expense_deposit_partner_targeted_replay_write",
-  "database": "sc_partner_acceptance",
-  "input_rows": 276,
-  "created_rows": 191,
-  "skipped_existing": 85,
-  "db_writes": 191
-}

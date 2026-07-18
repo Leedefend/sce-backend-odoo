@@ -1704,8 +1704,6 @@ verify.product.release.ready: guard.prod.forbid \
 	verify.docs.product_boundary \
 	verify.industry_module.product_boundary \
 	verify.user_module.product_boundary \
-	verify.lowcode_config.customer_module_asset.pipeline \
-	verify.lowcode_config.customer_module_asset.release_hardening.guard \
 	verify.product.surface.clean \
 	verify.product.menu.release.ready \
 	verify.product.complexity.bound \
@@ -2039,15 +2037,42 @@ verify.industry_module.product_boundary: guard.prod.forbid
 
 .PHONY: verify.user_module.product_boundary
 verify.user_module.product_boundary: guard.prod.forbid
-	@python3 -m py_compile scripts/verify/user_module_product_boundary_guard.py
-	@python3 -m py_compile scripts/verify/user_module_data_rebaseline_contract_guard.py
-	@python3 scripts/verify/user_module_product_boundary_guard.py
-	@python3 scripts/verify/user_module_data_rebaseline_contract_guard.py
+	@python3 scripts/verify/customer_module_extraction_guard.py
+	@echo "[verify.user_module.product_boundary] PASS external-customer-package"
 
 .PHONY: verify.user_module.data_baseline.runtime_audit
 verify.user_module.data_baseline.runtime_audit: guard.prod.forbid check-compose-project check-compose-env verify.user_module.product_boundary
 	@python3 -m py_compile scripts/verify/user_module_data_baseline_runtime_audit.py
 	@$(RUN_ENV) DB_NAME=$(DB_NAME) bash scripts/ops/odoo_shell_exec.sh < scripts/verify/user_module_data_baseline_runtime_audit.py
+
+.PHONY: verify.tenant.product_payload_boundary verify.tenant_delivery.protocol verify.product_image.tenant_neutral verify.product_to_customer.dependency verify.customer_module.extraction verify.tenant_architecture.boundary
+verify.tenant.product_payload_boundary: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/tenant_product_payload_boundary_guard.py
+	@python3 scripts/verify/tenant_product_payload_boundary_guard.py
+
+verify.tenant_delivery.protocol: guard.prod.forbid
+	@python3 -m py_compile \
+		addons/smart_core/utils/tenant_delivery_manifest.py \
+		addons/smart_core/models/tenant_payload_import_batch.py \
+		scripts/verify/tenant_delivery_protocol_guard.py \
+		scripts/verify/product_image_tenant_neutral_guard.py \
+		scripts/verify/product_to_customer_dependency_guard.py \
+		scripts/verify/test_tenant_delivery_manifest.py
+	@python3 scripts/verify/test_tenant_delivery_manifest.py
+	@python3 scripts/verify/tenant_delivery_protocol_guard.py
+
+verify.product_image.tenant_neutral: guard.prod.forbid verify.tenant_delivery.protocol
+	@python3 scripts/verify/product_image_tenant_neutral_guard.py
+
+verify.product_to_customer.dependency: guard.prod.forbid
+	@python3 scripts/verify/product_to_customer_dependency_guard.py
+
+verify.customer_module.extraction: guard.prod.forbid
+	@python3 -m py_compile scripts/verify/customer_module_extraction_guard.py
+	@python3 scripts/verify/customer_module_extraction_guard.py
+
+verify.tenant_architecture.boundary: guard.prod.forbid verify.tenant.product_payload_boundary verify.product_image.tenant_neutral verify.product_to_customer.dependency verify.customer_module.extraction
+	@echo "[verify.tenant_architecture.boundary] PASS"
 
 verify.docs.all: guard.prod.forbid verify.docs.inventory verify.docs.links verify.docs.temp_guard verify.docs.contract_sync verify.docs.product_boundary
 	@echo "[OK] verify.docs.all done"

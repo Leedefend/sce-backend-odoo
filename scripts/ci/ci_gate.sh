@@ -12,14 +12,15 @@ source "$ROOT_DIR/scripts/common/guard_prod.sh"
 source "$ROOT_DIR/scripts/common/compose.sh"
 
 DB="${DB_CI:-sc_test}"
-ADDONS="/usr/lib/python3/dist-packages/odoo/addons,/mnt/extra-addons,/mnt/addons_external/oca_server_ux"
+ADDONS="/usr/lib/python3/dist-packages/odoo/addons,/mnt/source-addons,/mnt/addons_external/oca_server_ux"
 
 guard_prod_forbid
 
 compose_testdeps run --rm -T \
   -v "${ROOT_DIR}/docs:/mnt/docs:ro" \
+  -v "${ROOT_DIR}/config:/mnt/config:ro" \
   --entrypoint bash odoo -lc "
-    pip3 install -q -r /mnt/extra-addons/config/requirements-test.txt &&
+    pip3 install -q -r /mnt/config/requirements-test.txt &&
     exec /usr/bin/odoo \
       --db_host=db --db_port=5432 --db_user=odoo --db_password=odoo \
       -d ${DB} \

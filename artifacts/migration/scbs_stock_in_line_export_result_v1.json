@@ -1,8 +1,0 @@
-{
-  "amount": 90454874.17,
-  "database": "LegacyScbs20260417",
-  "headers": 700,
-  "output_csv": "artifacts/migration/scbs_stock_in_legacy_lines_v1.csv",
-  "rows": 2209,
-  "status": "PASS"
-}

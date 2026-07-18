@@ -1,8 +1,0 @@
-dimension,map_model,map_id,source_table,legacy_key,legacy_name,mapping_state,suggested_state,match_method,target_id,target_name,fact_rows,fact_amount,suggested_action,decision,decision_target_id,decision_note
-partner,sc.legacy.partner.map,559,SCBS_FACT_PARTNER_CANDIDATE,代付工资||fact_partner_candidate,代付工资,candidate,fact_partner_candidate,none,,,105,11653464.93,review_non_counterparty_label,,,
-partner,sc.legacy.partner.map,560,SCBS_FACT_PARTNER_CANDIDATE,高地库房||fact_partner_candidate,高地库房,candidate,fact_partner_candidate,none,,,41,11457433.15,review_non_counterparty_label,,,
-partner,sc.legacy.partner.map,223,SCBS_PARTNER_DUPLICATE_CANDIDATE,工资||duplicate_same_carrier_or_empty_tax,工资,candidate,duplicate_same_carrier_or_empty_tax,none,,,59,10613910.52,review_non_counterparty_label,,,
-partner,sc.legacy.partner.map,587,SCBS_FACT_PARTNER_CANDIDATE,备用金.||fact_partner_candidate,备用金.,candidate,fact_partner_candidate,none,,,15,2334635.0,review_non_counterparty_label,,,
-partner,sc.legacy.partner.map,593,SCBS_FACT_PARTNER_CANDIDATE,嘉陵江路库房||fact_partner_candidate,嘉陵江路库房,candidate,fact_partner_candidate,none,,,8,1883939.58,review_non_counterparty_label,,,
-partner,sc.legacy.partner.map,381,SCBS_PARTNER_DUPLICATE_CANDIDATE,人工费（工资表）||duplicate_across_carriers,人工费（工资表）,candidate,duplicate_across_carriers,none,,,3,919317.6,review_non_counterparty_label,,,
-partner,sc.legacy.partner.map,920,SCBS_FACT_PARTNER_CANDIDATE,代发工资||fact_partner_candidate,代发工资,candidate,fact_partner_candidate,none,,,1,4232.0,review_non_counterparty_label,,,

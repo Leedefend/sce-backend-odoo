@@ -59,7 +59,7 @@
       <field name="receipt_type">工程进度款</field>
       <field name="income_category">主营业务收入</field>
       <field name="payment_method">银行转账</field>
-      <field name="receiving_account_name">四川保盛建设集团有限公司</field>
+      <field name="receiving_account_name">示例建设集团有限公司</field>
       <field name="receiving_account_no">6222000000000701</field>
       <field name="amount">1200000.0</field>
       <field name="settlement_amount">1200000.0</field>
@@ -163,7 +163,7 @@
       <field name="title">主体结构施工日报</field>
       <field name="diary_type">施工日报</field>
       <field name="category">主体结构</field>
-      <field name="construction_unit">四川保盛建设集团有限公司</field>
+      <field name="construction_unit">示例建设集团有限公司</field>
       <field name="project_manager">测试-项目经理A</field>
       <field name="weather">晴</field>
       <field name="manpower_count">86</field>
